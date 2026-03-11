@@ -1,0 +1,76 @@
+services:
+  # PostgreSQL database (always available, no profile needed)
+  # Start DB only:  docker compose up postgres -d
+  # Start all (CPU): docker compose --profile cpu up -d
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=subtitle
+      - POSTGRES_PASSWORD=subtitle
+      - POSTGRES_DB=subtitle_generator
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U subtitle -d subtitle_generator"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # CPU-only mode
+  subtitle-generator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./outputs:/app/outputs
+      - ./logs:/app/logs
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://subtitle:subtitle@postgres:5432/subtitle_generator
+      - API_KEYS=${API_KEYS:-}
+      - HF_TOKEN=${HF_TOKEN:-}
+      - FILE_RETENTION_HOURS=${FILE_RETENTION_HOURS:-24}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    profiles:
+      - cpu
+
+  # GPU mode (requires NVIDIA Container Toolkit)
+  subtitle-generator-gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile.gpu
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./outputs:/app/outputs
+      - ./logs:/app/logs
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://subtitle:subtitle@postgres:5432/subtitle_generator
+      - API_KEYS=${API_KEYS:-}
+      - HF_TOKEN=${HF_TOKEN:-}
+      - FILE_RETENTION_HOURS=${FILE_RETENTION_HOURS:-24}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    profiles:
+      - gpu
+
+volumes:
+  pgdata:

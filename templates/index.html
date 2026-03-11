@@ -1,0 +1,2562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subtitle Generator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f0f; color: #e0e0e0;
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+        }
+        .container { max-width: 700px; width: 100%; padding: 40px 24px; }
+        h1 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; color: #fff; }
+        .page-subtitle { color: #888; margin-bottom: 24px; font-size: 0.95rem; }
+
+        /* Options */
+        .options-panel { display: flex; gap: 12px; margin-bottom: 20px; }
+        .option-group { flex: 1; background: #161616; border-radius: 8px; padding: 12px 14px; }
+        .option-label { font-size: 0.7rem; color: #555; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .option-buttons { display: flex; gap: 6px; }
+        .opt-btn {
+            flex: 1; padding: 8px 4px; border-radius: 6px; font-size: 0.8rem;
+            font-weight: 500; cursor: pointer; border: 1px solid #333;
+            background: #1a1a1a; color: #888; transition: all 0.2s; text-align: center;
+        }
+        .opt-btn:hover { border-color: #555; color: #ccc; }
+        .opt-btn.selected { background: #1a1a2e; color: #4f8ff7; border-color: #4f8ff7; }
+        .opt-btn.gpu-selected { background: #1a2e1a; color: #27ae60; border-color: #27ae60; }
+        .opt-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .opt-btn .opt-detail { font-size: 0.65rem; color: #555; display: block; margin-top: 2px; }
+        .opt-btn.selected .opt-detail { color: #4f8ff788; }
+        .opt-btn.gpu-selected .opt-detail { color: #27ae6088; }
+        .opt-btn.warning .opt-detail { color: #f39c12; }
+        .opt-btn.too-large .opt-detail { color: #e74c3c; }
+        .gpu-badge { display: inline-block; font-size: 0.7rem; color: #27ae60; background: #27ae6018; padding: 2px 8px; border-radius: 4px; margin-top: 6px; }
+        .no-gpu-badge { display: inline-block; font-size: 0.7rem; color: #e74c3c; background: #e74c3c18; padding: 2px 8px; border-radius: 4px; margin-top: 6px; }
+
+        /* Drop zone */
+        .drop-zone {
+            border: 2px dashed #333; border-radius: 12px; padding: 48px 24px;
+            text-align: center; cursor: pointer; transition: all 0.2s; background: #161616;
+        }
+        .drop-zone:hover, .drop-zone.dragover { border-color: #4f8ff7; background: #1a1a2e; }
+        .drop-zone-icon { font-size: 48px; margin-bottom: 16px; }
+        .drop-zone-text { font-size: 1.1rem; color: #aaa; margin-bottom: 8px; }
+        .drop-zone-hint { font-size: 0.8rem; color: #555; }
+        .drop-zone input[type="file"] { display: none; }
+
+        /* Warning banner */
+        .warning-banner {
+            display: none; background: #2e2a1a; border: 1px solid #f39c1244;
+            border-radius: 8px; padding: 10px 14px; margin-bottom: 16px;
+            font-size: 0.85rem; color: #f39c12;
+        }
+
+        /* Progress */
+        .progress-section { display: none; margin-top: 32px; }
+        .file-info {
+            display: flex; align-items: center; gap: 12px; padding: 16px;
+            background: #161616; border-radius: 8px; margin-bottom: 20px;
+        }
+        .file-icon { font-size: 28px; }
+        .file-name { font-weight: 500; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+        .file-meta { font-size: 0.8rem; color: #666; white-space: nowrap; text-align: right; }
+        .file-meta span { display: block; }
+        .device-badge { display: inline-block; font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; margin-left: 8px; }
+        .device-badge.gpu { color: #27ae60; background: #27ae6018; }
+        .device-badge.cpu { color: #f39c12; background: #f39c1218; }
+
+        .steps { display: flex; gap: 8px; margin-bottom: 20px; }
+        .step {
+            flex: 1; text-align: center; padding: 10px 4px; background: #1a1a1a;
+            border-radius: 6px; font-size: 0.75rem; color: #555; transition: all 0.3s; border: 1px solid transparent;
+        }
+        .step.active { background: #1a1a2e; color: #4f8ff7; border-color: #4f8ff733; }
+        .step.completed { background: #1a2e1a; color: #27ae60; border-color: #27ae6033; }
+        .step.paused { background: #2e2a1a; color: #f39c12; border-color: #f39c1233; }
+        .step-num { font-weight: 700; font-size: 0.9rem; display: block; margin-bottom: 2px; }
+        .step-time { display: block; font-size: 0.7rem; color: #555; margin-top: 2px; min-height: 16px; font-variant-numeric: tabular-nums; font-weight: 600; letter-spacing: 0.02em; }
+        .step.completed .step-time { color: #27ae60; }
+        .step.active .step-time { color: #4f8ff7; animation: fade-in-time 0.3s ease; }
+        @keyframes fade-in-time { from { opacity: 0; } to { opacity: 1; } }
+
+        .progress-wrapper { margin-bottom: 12px; }
+        .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .progress-label { font-size: 0.85rem; color: #aaa; font-weight: 500; }
+        .progress-percent { font-size: 0.85rem; color: #4f8ff7; font-weight: 600; font-variant-numeric: tabular-nums; }
+        .progress-bar-container { background: #222; border-radius: 8px; height: 10px; overflow: hidden; }
+        .progress-bar {
+            height: 100%; width: 0%; background: linear-gradient(90deg, #4f8ff7, #6c5ce7);
+            border-radius: 8px; transition: width 0.3s ease; position: relative;
+        }
+        .progress-bar.active::after {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15) 50%, transparent);
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+        .progress-bar.error { background: #e74c3c; }
+        .progress-bar.done { background: linear-gradient(90deg, #27ae60, #2ecc71); }
+        .progress-bar.paused { background: linear-gradient(90deg, #f39c12, #e67e22); }
+
+        .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+        .detail-box { background: #161616; border-radius: 6px; padding: 10px 12px; }
+        .detail-label { font-size: 0.7rem; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }
+        .detail-value { font-size: 0.9rem; color: #ccc; font-weight: 500; font-variant-numeric: tabular-nums; margin-top: 2px; }
+
+        .status-text { font-size: 0.85rem; color: #888; margin-bottom: 16px; }
+        .status-text.error { color: #e74c3c; }
+        .status-text.paused { color: #f39c12; }
+
+        /* Speed indicator */
+        .speed-indicator {
+            display: none; font-size: 0.75rem; color: #555;
+            text-align: right; margin-bottom: 8px;
+        }
+        .speed-value { color: #4f8ff7; font-weight: 600; }
+        .speed-value.slow { color: #e74c3c; }
+        .speed-value.fast { color: #27ae60; }
+
+        /* Live subtitle preview */
+        .preview-panel {
+            display: none; background: #111; border: 1px solid #222; border-radius: 8px;
+            margin-bottom: 16px; overflow: hidden;
+        }
+        .preview-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 14px; background: #161616; border-bottom: 1px solid #222;
+        }
+        .preview-title { font-size: 0.8rem; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .preview-count { font-size: 0.75rem; color: #555; }
+        .preview-body {
+            max-height: 200px; overflow-y: auto; padding: 8px 0;
+            scroll-behavior: smooth;
+        }
+        .preview-segment {
+            padding: 6px 14px; font-size: 0.85rem; display: flex; gap: 10px;
+            animation: fadeIn 0.3s ease;
+        }
+        .preview-segment:hover { background: #1a1a1a; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        .seg-time { color: #4f8ff7; font-size: 0.75rem; white-space: nowrap; min-width: 110px; font-variant-numeric: tabular-nums; padding-top: 1px; }
+        .seg-text { color: #ddd; line-height: 1.4; }
+        .seg-new { background: #4f8ff708; }
+
+        /* Connection indicator */
+        .connection-indicator {
+            display: none; position: fixed; top: 12px; right: 12px;
+            font-size: 0.7rem; padding: 4px 10px; border-radius: 12px;
+        }
+        .connection-indicator.connected { background: #27ae6022; color: #27ae60; }
+        .connection-indicator.disconnected { background: #e74c3c22; color: #e74c3c; }
+
+        /* System health indicator */
+        .health-indicator {
+            position: fixed; top: 12px; left: 12px; display: flex; align-items: center;
+            gap: 6px; padding: 4px 10px; border-radius: 12px; background: #161616;
+            border: 1px solid #222; cursor: pointer; font-size: 0.72rem; color: #888;
+            z-index: 1000; transition: all 0.3s; user-select: none;
+        }
+        .health-indicator:hover { background: #1a1a1a; border-color: #333; }
+        .health-dot {
+            width: 8px; height: 8px; border-radius: 50%; background: #555; transition: background 0.5s;
+        }
+        .health-dot.healthy { background: #27ae60; box-shadow: 0 0 6px #27ae6066; }
+        .health-dot.warning { background: #f39c12; box-shadow: 0 0 6px #f39c1266; }
+        .health-dot.critical { background: #e74c3c; box-shadow: 0 0 6px #e74c3c66; animation: pulse-health 2s infinite; }
+        .health-dot.offline { background: #666; box-shadow: 0 0 4px #66666644; }
+        @keyframes pulse-health {
+            0%, 100% { box-shadow: 0 0 6px #e74c3c66; }
+            50% { box-shadow: 0 0 12px #e74c3caa; }
+        }
+        .health-load-bar { width: 32px; height: 4px; background: #222; border-radius: 2px; overflow: hidden; margin-left: 2px; }
+        .health-load-fill { height: 100%; border-radius: 2px; transition: width 0.8s ease, background 0.5s ease; }
+        .health-row-gauge { display: flex; align-items: center; gap: 6px; }
+        .health-mini-bar { width: 60px; height: 6px; background: #222; border-radius: 3px; overflow: hidden; }
+        .health-mini-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+        .health-latency-badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 0.72rem; font-weight: 600; }
+        .health-latency-badge.good { background: #27ae6020; color: #27ae60; }
+        .health-latency-badge.medium { background: #f39c1220; color: #f39c12; }
+        .health-latency-badge.slow { background: #e74c3c20; color: #e74c3c; }
+
+        /* Service unavailable banner */
+        .service-banner {
+            display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 999;
+            padding: 10px 20px; text-align: center; font-size: 0.85rem; font-weight: 600;
+            animation: slide-down-banner 0.3s ease;
+        }
+        .service-banner.critical {
+            background: linear-gradient(135deg, #e74c3c, #c0392b); color: #fff;
+        }
+        .service-banner.warning {
+            background: linear-gradient(135deg, #f39c12, #e67e22); color: #fff;
+        }
+        .service-banner.hidden { display: none; }
+        @keyframes slide-down-banner {
+            from { transform: translateY(-100%); } to { transform: translateY(0); }
+        }
+        .drop-zone.disabled {
+            opacity: 0.4; pointer-events: none; cursor: not-allowed;
+        }
+        .health-panel {
+            display: none; position: fixed; top: 42px; left: 12px; width: 300px;
+            background: #161616; border: 1px solid #333; border-radius: 10px;
+            z-index: 1001; box-shadow: 0 8px 32px rgba(0,0,0,0.4); font-size: 0.82rem;
+        }
+        .health-panel.open { display: block; }
+        .health-panel-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 14px; border-bottom: 1px solid #222; font-weight: 600; color: #ccc;
+        }
+        .health-panel-close {
+            background: none; border: none; color: #666; font-size: 1.2rem; cursor: pointer; padding: 0 4px;
+        }
+        .health-panel-close:hover { color: #e74c3c; }
+        .health-panel-body { padding: 12px 14px; }
+        .health-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 6px 0; border-bottom: 1px solid #1a1a1a;
+        }
+        .health-row:last-child { border-bottom: none; }
+        .health-row-label { color: #888; }
+        .health-row-value { color: #ccc; font-weight: 500; }
+        .health-row-value.ok { color: #27ae60; }
+        .health-row-value.warn { color: #f39c12; }
+        .health-row-value.bad { color: #e74c3c; }
+        .health-alerts { margin-top: 8px; padding: 8px 10px; background: #1a1a1a; border-radius: 6px; font-size: 0.78rem; }
+        .health-alert-item { padding: 4px 0; color: #f39c12; }
+        .health-alert-item.critical { color: #e74c3c; }
+        @media (max-width: 480px) {
+            .health-indicator { top: auto; bottom: 12px; left: 12px; }
+            .health-panel { top: auto; bottom: 42px; }
+        }
+
+        /* Unified embed section */
+        .embed-card {
+            display: none; margin-top: 18px; background: #111; border-radius: 12px;
+            border: 1px solid #222; overflow: hidden; text-align: left;
+        }
+        .embed-card-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 18px; background: #161616; border-bottom: 1px solid #222; cursor: pointer;
+        }
+        .embed-card-title { font-size: 0.88rem; font-weight: 600; color: #ccc; display: flex; align-items: center; gap: 8px; }
+        .embed-card-title .embed-icon { font-size: 1rem; }
+        .embed-card-toggle { font-size: 0.7rem; color: #555; transition: transform 0.2s; }
+        .embed-card-body { padding: 16px 18px; }
+        .embed-card-body.collapsed { display: none; }
+
+        /* Timing summary bar */
+        .timing-summary {
+            display: none; margin-top: 12px; padding: 10px 14px; background: #111; border-radius: 8px;
+            border: 1px solid #222; font-size: 0.78rem;
+        }
+        .timing-summary-row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; }
+        .timing-summary-label { color: #888; }
+        .timing-summary-value { color: #ccc; font-weight: 600; font-variant-numeric: tabular-nums; }
+        .timing-summary-total { color: #4f8ff7; font-weight: 700; font-size: 0.85rem; border-top: 1px solid #222; padding-top: 6px; margin-top: 4px; }
+
+        /* Embed style controls */
+        .embed-tabs { display:flex;gap:0;margin-bottom:20px;background:#0a0a0a;border-radius:8px;padding:3px; }
+        .embed-tab { flex:1;padding:10px;text-align:center;border-radius:6px;font-size:0.82rem;font-weight:500;cursor:pointer;color:#888;border:none;background:none;transition:all 0.2s; }
+        .embed-tab.active { background:#1a1a2e;color:#4f8ff7; }
+        .embed-tab:hover:not(.active) { color:#ccc; }
+        .embed-tab small { display:block;font-size:0.7rem;color:#555;margin-top:2px;font-weight:400; }
+        .embed-tab.active small { color:#4f8ff788; }
+        .embed-grid { display:grid;grid-template-columns:1fr 1fr;gap:14px; }
+        .embed-field { display:flex;flex-direction:column;gap:4px; }
+        .embed-field label { font-size:0.72rem;color:#666;text-transform:uppercase;letter-spacing:0.5px; }
+        .embed-field select, .embed-field input[type=file] { background:#0a0a0a;border:1px solid #333;border-radius:6px;padding:8px 10px;color:#ddd;font-size:0.82rem; }
+        .embed-field select:focus { border-color:#4f8ff7;outline:none; }
+        .embed-style-opts { display:none;margin-top:16px;padding-top:16px;border-top:1px solid #1a1a1a; }
+        .embed-style-opts.show { display:block; }
+        .embed-style-grid { display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px; }
+        .embed-field input[type=color] { width:36px;height:36px;border:1px solid #333;border-radius:6px;background:#0a0a0a;cursor:pointer;padding:2px; }
+        .embed-field input[type=range] { accent-color:#4f8ff7;width:100%; }
+        .embed-preview-bar { margin-top:16px;background:#000;border-radius:8px;padding:24px 16px;text-align:center;position:relative;min-height:80px;display:flex;align-items:center;justify-content:center; }
+        .embed-preview-text { font-size:1.1rem;line-height:1.4;max-width:90%; }
+        .embed-actions { margin-top:16px;display:flex;gap:12px;align-items:center; }
+
+        /* Controls */
+        .controls { display: flex; gap: 10px; justify-content: center; }
+        .ctrl-btn {
+            padding: 10px 24px; border-radius: 8px; font-size: 0.9rem;
+            font-weight: 500; cursor: pointer; border: none; transition: all 0.2s;
+        }
+        .ctrl-btn:hover { opacity: 0.85; }
+        .ctrl-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-pause { background: #f39c12; color: #000; }
+        .btn-resume { background: #27ae60; color: #fff; }
+        .btn-cancel { background: #333; color: #e74c3c; border: 1px solid #e74c3c44; }
+        .btn-cancel:hover { background: #e74c3c22; }
+
+        /* Download */
+        .download-section { display: none; margin-top: 24px; text-align: center; }
+        .download-btn {
+            display: inline-block; padding: 14px 32px;
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: #fff; text-decoration: none; border-radius: 8px;
+            font-size: 1rem; font-weight: 600; transition: opacity 0.2s;
+        }
+        .download-btn:hover { opacity: 0.85; }
+        .result-info { margin-top: 12px; font-size: 0.8rem; color: #666; }
+        .new-btn {
+            display: inline-block; padding: 10px 24px;
+            background: transparent; border: 1px solid #333; color: #aaa;
+            border-radius: 8px; cursor: pointer; font-size: 0.9rem;
+        }
+        .new-btn:hover { border-color: #555; color: #fff; }
+        .result-top-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px;
+        }
+        .result-top-bar .result-title { font-size: 1.1rem; font-weight: 600; color: #27ae60; }
+        .new-again-btn {
+            padding: 8px 20px; background: #1a1a2e; border: 1px solid #4f8ff744;
+            color: #4f8ff7; border-radius: 8px; cursor: pointer; font-size: 0.85rem;
+            font-weight: 500; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+        }
+        .new-again-btn:hover { background: #4f8ff722; border-color: #4f8ff7; color: #fff; }
+        .embed-start-btn {
+            padding: 10px 24px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+            cursor: pointer; border: none; background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: #fff; transition: all 0.2s;
+        }
+        .embed-start-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .embed-start-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        .embed-progress { margin-top: 12px; display: none; }
+        .embed-progress-bar { height: 4px; background: #1a1a1a; border-radius: 2px; overflow: hidden; }
+        .embed-progress-fill { height: 100%; background: linear-gradient(90deg, #27ae60, #2ecc71); border-radius: 2px; transition: width 0.3s; width: 0%; }
+        .embed-status { font-size: 0.8rem; color: #888; margin-top: 8px; }
+        .embed-status.success { color: #27ae60; }
+        .embed-status.error { color: #e74c3c; }
+        .embed-result { display: none; margin-top: 12px; background: #0a2e0a; border: 1px solid #27ae6044; border-radius: 8px; padding: 12px 16px; text-align: center; }
+        .embed-result a { color: #4ade80; font-weight: 600; text-decoration: none; }
+        .embed-result a:hover { text-decoration: underline; }
+        .cancelled-section { display: none; margin-top: 24px; text-align: center; }
+        .cancelled-text { color: #e74c3c; margin-bottom: 16px; }
+
+        /* S2-1: Subtitle editor */
+        .editor-section { display: none; margin-top: 20px; }
+        .editor-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px;
+        }
+        .editor-title { font-size: 0.95rem; font-weight: 600; color: #ccc; }
+        .editor-actions { display: flex; gap: 8px; }
+        .editor-btn {
+            padding: 6px 16px; border-radius: 6px; font-size: 0.8rem;
+            font-weight: 500; cursor: pointer; border: none; transition: all 0.2s;
+        }
+        .editor-btn:hover { opacity: 0.85; }
+        .editor-btn.save { background: #27ae60; color: #fff; }
+        .editor-btn.cancel-edit { background: #333; color: #aaa; }
+        .editor-table {
+            width: 100%; border-collapse: collapse; font-size: 0.82rem;
+        }
+        .editor-table th {
+            text-align: left; padding: 8px 10px; background: #161616;
+            color: #555; font-size: 0.7rem; text-transform: uppercase;
+            letter-spacing: 0.5px; border-bottom: 1px solid #222;
+        }
+        .editor-table td { padding: 4px 6px; border-bottom: 1px solid #1a1a1a; }
+        .editor-table .seg-num { color: #555; width: 30px; text-align: center; }
+        .editor-table input[type="text"] {
+            width: 100%; background: #1a1a1a; border: 1px solid #333;
+            border-radius: 4px; padding: 5px 8px; color: #ddd; font-size: 0.82rem;
+        }
+        .editor-table input[type="text"]:focus {
+            border-color: #4f8ff7; outline: none;
+        }
+        .editor-table .ts-input {
+            width: 90px; font-variant-numeric: tabular-nums; text-align: center;
+        }
+        .editor-table .text-input { min-width: 200px; }
+        .editor-table .del-btn {
+            background: none; border: none; color: #e74c3c44; cursor: pointer;
+            font-size: 1rem; padding: 2px 6px;
+        }
+        .editor-table .del-btn:hover { color: #e74c3c; }
+        .editor-scroll { max-height: 400px; overflow-y: auto; border: 1px solid #222; border-radius: 8px; }
+
+        /* S2-2: Video preview */
+        .video-preview-section { display: none; margin-top: 20px; }
+        .video-preview-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px;
+        }
+        .video-preview-title { font-size: 0.85rem; color: #888; font-weight: 600; text-transform: uppercase; }
+        .video-preview-load {
+            padding: 6px 14px; border-radius: 6px; font-size: 0.8rem;
+            background: #1a1a2e; color: #4f8ff7; border: 1px solid #4f8ff744;
+            cursor: pointer;
+        }
+        .video-preview-load:hover { border-color: #4f8ff7; }
+        .video-container {
+            position: relative; background: #000; border-radius: 8px; overflow: hidden;
+        }
+        .video-container video {
+            width: 100%; max-height: 400px; display: block;
+        }
+        .video-container input[type="file"] { display: none; }
+
+        /* S2-3: Batch queue */
+        .batch-queue { margin-top: 16px; }
+        .batch-item {
+            display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+            background: #161616; border-radius: 8px; margin-bottom: 8px;
+            font-size: 0.82rem; animation: fadeIn 0.3s ease;
+        }
+        .batch-item .bi-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #ccc; }
+        .batch-item .bi-status {
+            font-size: 0.7rem; padding: 2px 8px; border-radius: 4px;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .bi-status.queued { background: #333; color: #888; }
+        .bi-status.active { background: #1a1a2e; color: #4f8ff7; }
+        .bi-status.done { background: #1a2e1a; color: #27ae60; }
+        .bi-status.error { background: #2e1a1a; color: #e74c3c; }
+        .batch-item .bi-progress {
+            width: 80px; height: 4px; background: #333; border-radius: 2px; overflow: hidden;
+        }
+        .batch-item .bi-bar { height: 100%; background: #4f8ff7; border-radius: 2px; transition: width 0.3s; }
+        .batch-item .bi-bar.done { background: #27ae60; }
+
+        /* S2-5: Enhanced drag-drop */
+        .drop-zone.dragover {
+            border-color: #4f8ff7; background: #1a1a2e;
+            box-shadow: 0 0 20px rgba(79, 143, 247, 0.1);
+            transform: scale(1.01);
+        }
+        .drop-zone-file-preview {
+            display: none; margin-top: 8px; font-size: 0.8rem; color: #4f8ff7;
+            background: #4f8ff710; padding: 6px 12px; border-radius: 6px;
+        }
+        .drop-zone.dragover .drop-zone-text { color: #4f8ff7; }
+        .drop-zone.dragover .drop-zone-icon { transform: scale(1.1); transition: transform 0.2s; }
+
+        /* S2-6: Task queue panel */
+        /* Task Queue — fixed side panel */
+        .task-queue-panel {
+            display: none; position: fixed; right: 0; top: 50%; transform: translateY(-50%);
+            width: 280px; max-height: 70vh; background: #111; border: 1px solid #222;
+            border-radius: 12px 0 0 12px; border-right: none; z-index: 90;
+            box-shadow: -4px 0 24px rgba(0,0,0,0.4); overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        .task-queue-panel.collapsed {
+            transform: translateY(-50%) translateX(calc(100% - 36px));
+        }
+        .tq-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 14px; background: #161616; border-bottom: 1px solid #222;
+            cursor: pointer;
+        }
+        .tq-title { font-size: 0.8rem; color: #888; font-weight: 600; text-transform: uppercase; }
+        .tq-toggle { font-size: 0.75rem; color: #555; transition: transform 0.3s; }
+        .tq-body { max-height: calc(70vh - 44px); overflow-y: auto; }
+        .tq-item {
+            display: flex; align-items: center; gap: 10px; padding: 8px 14px;
+            border-bottom: 1px solid #1a1a1a; font-size: 0.8rem;
+        }
+        .tq-item:last-child { border-bottom: none; }
+        .tq-item .tq-dot {
+            width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+        }
+        .tq-dot.queued { background: #888; }
+        .tq-dot.extracting, .tq-dot.transcribing { background: #4f8ff7; animation: pulse 1s infinite; }
+        .tq-dot.done { background: #27ae60; }
+        .tq-dot.error, .tq-dot.cancelled { background: #e74c3c; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .tq-item .tq-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #aaa; }
+        .tq-item .tq-pct { font-variant-numeric: tabular-nums; color: #555; min-width: 35px; text-align: right; }
+        @media (max-width: 600px) {
+            .task-queue-panel { width: 220px; max-height: 50vh; }
+        }
+
+        /* Speaker labels */
+        .speaker-label {
+            font-size: 0.7rem; font-weight: 600; padding: 1px 6px; border-radius: 3px;
+            margin-right: 4px; display: inline-block;
+        }
+        .speaker-0 { background: #38bdf822; color: #38bdf8; }
+        .speaker-1 { background: #4ade8022; color: #4ade80; }
+        .speaker-2 { background: #fbbf2422; color: #fbbf24; }
+        .speaker-3 { background: #f8717122; color: #f87171; }
+        .speaker-4 { background: #a78bfa22; color: #a78bfa; }
+
+        /* Advanced options */
+        .advanced-toggle {
+            text-align: center; margin-bottom: 16px;
+        }
+        .advanced-toggle button {
+            background: none; border: 1px solid #333; color: #666; padding: 6px 16px;
+            border-radius: 6px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s;
+        }
+        .advanced-toggle button:hover { border-color: #555; color: #aaa; }
+        .advanced-panel {
+            display: none; background: #161616; border-radius: 8px; padding: 14px;
+            margin-bottom: 16px; border: 1px solid #222;
+        }
+        .advanced-panel.show { display: block; }
+        .adv-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+        .adv-row:last-child { margin-bottom: 0; }
+        .adv-label { font-size: 0.8rem; color: #888; min-width: 130px; }
+        .adv-check { accent-color: #4f8ff7; width: 16px; height: 16px; cursor: pointer; }
+        .adv-input {
+            background: #1a1a1a; border: 1px solid #333; border-radius: 4px;
+            padding: 5px 8px; color: #ddd; font-size: 0.82rem; flex: 1;
+        }
+        .adv-input:focus { border-color: #4f8ff7; outline: none; }
+
+        /* S2-4: Mobile responsive */
+        @media (max-width: 600px) {
+            body { align-items: flex-start; }
+            .container { padding: 20px 12px; }
+            h1 { font-size: 1.5rem; }
+            .options-panel { flex-direction: column; }
+            .option-buttons { flex-wrap: wrap; }
+            .opt-btn { min-width: 0; font-size: 0.7rem; padding: 6px 2px; }
+            .opt-btn .opt-detail { font-size: 0.55rem; }
+            .drop-zone { padding: 32px 16px; }
+            .drop-zone-icon { font-size: 36px; }
+            .drop-zone-text { font-size: 0.95rem; }
+            .file-info { flex-direction: column; text-align: center; gap: 6px; }
+            .file-meta { text-align: center; }
+            .steps { gap: 4px; }
+            .step { font-size: 0.65rem; padding: 8px 2px; }
+            .step-num { font-size: 0.75rem; }
+            .details-grid { grid-template-columns: 1fr; }
+            .preview-segment { flex-direction: column; gap: 2px; }
+            .seg-time { min-width: 0; }
+            .download-btn { padding: 12px 20px; font-size: 0.9rem; }
+            .editor-scroll { max-height: 300px; }
+            .editor-table .ts-input { width: 70px; font-size: 0.7rem; }
+            .editor-table .text-input { min-width: 120px; }
+            .video-container video { max-height: 250px; }
+            .embed-grid { grid-template-columns: 1fr; }
+            .embed-style-grid { grid-template-columns: 1fr 1fr; }
+            .embed-tabs { flex-direction: column; }
+            .embed-preview-text { font-size: 16px !important; }
+        }
+        @media (max-width: 400px) {
+            .options-panel { gap: 8px; margin-bottom: 12px; }
+            .option-group { padding: 8px 10px; }
+            .download-section > div { flex-direction: column; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="connection-indicator" id="connIndicator"></div>
+    <!-- System Health Indicator -->
+    <div class="service-banner hidden" id="serviceBanner"></div>
+    <div class="health-indicator" id="healthIndicator" onclick="toggleHealthPanel()">
+        <span class="health-dot" id="healthDot"></span>
+        <span class="health-label" id="healthLabel">System</span>
+        <span class="health-load-bar"><span class="health-load-fill" id="healthLoadFill" style="width:0%;background:#27ae60;"></span></span>
+    </div>
+    <div class="health-panel" id="healthPanel">
+        <div class="health-panel-header">
+            <span>System Status</span>
+            <button class="health-panel-close" onclick="toggleHealthPanel()">&times;</button>
+        </div>
+        <div class="health-panel-body" id="healthPanelBody">Loading...</div>
+    </div>
+    <div class="container">
+        <h1>Subtitle Generator</h1>
+        <p class="page-subtitle">Upload a video and get subtitles (SRT/VTT) powered by AI</p>
+
+        <!-- Warning banner -->
+        <div class="warning-banner" id="warningBanner"></div>
+
+        <!-- Options -->
+        <div class="options-panel" id="optionsPanel">
+            <div class="option-group">
+                <div class="option-label">Processing Device</div>
+                <div class="option-buttons" id="deviceButtons">
+                    <button class="opt-btn gpu-selected" data-value="cuda" id="btnCuda">GPU<span class="opt-detail">Fast</span></button>
+                    <button class="opt-btn" data-value="cpu" id="btnCpu">CPU<span class="opt-detail">Slow</span></button>
+                </div>
+                <div id="gpuInfo"></div>
+            </div>
+            <div class="option-group">
+                <div class="option-label">Model Quality</div>
+                <div class="option-buttons" id="modelButtons">
+                    <button class="opt-btn selected" data-value="auto">Auto<span class="opt-detail">Best fit</span></button>
+                    <button class="opt-btn" data-value="tiny">Tiny<span class="opt-detail">~75MB</span></button>
+                    <button class="opt-btn" data-value="base">Base<span class="opt-detail">~140MB</span></button>
+                    <button class="opt-btn" data-value="small">Small<span class="opt-detail">~460MB</span></button>
+                    <button class="opt-btn" data-value="medium">Med<span class="opt-detail">~1.5GB</span></button>
+                    <button class="opt-btn" data-value="large">Large<span class="opt-detail">~3GB</span></button>
+                </div>
+            </div>
+        </div>
+        <div class="options-panel" id="optionsPanel2">
+            <div class="option-group">
+                <div class="option-label">Language</div>
+                <select id="languageSelect" style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid #333;background:#1a1a1a;color:#ccc;font-size:0.85rem;cursor:pointer;">
+                    <option value="auto" selected>Auto-detect</option>
+                </select>
+            </div>
+            <div class="option-group">
+                <div class="option-label">Output Format</div>
+                <div class="option-buttons" id="formatButtons">
+                    <button class="opt-btn selected" data-value="srt">SRT<span class="opt-detail">Standard</span></button>
+                    <button class="opt-btn" data-value="vtt">VTT<span class="opt-detail">Web</span></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Options -->
+        <div class="advanced-toggle" id="advancedToggle">
+            <button onclick="toggleAdvanced()">Advanced Options</button>
+        </div>
+        <div class="advanced-panel" id="advancedPanel">
+            <div class="adv-row">
+                <span class="adv-label">Word Timestamps</span>
+                <input type="checkbox" class="adv-check" id="advWordTimestamps">
+                <span style="font-size:0.75rem;color:#555">Karaoke-style timing</span>
+            </div>
+            <div class="adv-row">
+                <span class="adv-label">Speaker Diarization</span>
+                <input type="checkbox" class="adv-check" id="advDiarize">
+                <span style="font-size:0.75rem;color:#555">Who is speaking</span>
+            </div>
+            <div class="adv-row">
+                <span class="adv-label">Translate to English</span>
+                <input type="checkbox" class="adv-check" id="advTranslate">
+                <span style="font-size:0.75rem;color:#555">Any language → English</span>
+            </div>
+            <div class="adv-row" style="border-top:1px solid #1a1a1a;padding-top:10px;margin-top:4px;">
+                <span class="adv-label">Auto-embed subtitles</span>
+                <select id="advAutoEmbed" style="background:#1a1a1a;border:1px solid #333;border-radius:4px;padding:5px 8px;color:#ddd;font-size:0.82rem;">
+                    <option value="">Off</option>
+                    <option value="soft">Soft Mux (fast, selectable track)</option>
+                    <option value="hard">Hard Burn (permanent, styled)</option>
+                </select>
+            </div>
+            <div class="adv-row">
+                <span class="adv-label">Custom Vocabulary</span>
+                <input type="text" class="adv-input" id="advVocabulary" placeholder="Domain-specific terms (e.g., product names, jargon)">
+            </div>
+            <div class="adv-row">
+                <span class="adv-label">Max chars/line</span>
+                <input type="range" id="advMaxChars" min="20" max="80" value="42" style="flex:1;accent-color:#4f8ff7">
+                <span id="advMaxCharsValue" style="font-size:0.8rem;color:#888;min-width:30px">42</span>
+            </div>
+        </div>
+
+        <!-- Upload -->
+        <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-icon">&#127916;</div>
+            <div class="drop-zone-text">Drop your video(s) here or click to browse</div>
+            <div class="drop-zone-hint">MP4, MKV, AVI, WebM, MOV, MP3, WAV, FLAC &bull; Max 2 GB &bull; Multiple files supported</div>
+            <div class="drop-zone-file-preview" id="dropPreview"></div>
+            <input type="file" id="fileInput" accept=".mp4,.mkv,.avi,.webm,.mov,.mp3,.wav,.flac" multiple>
+        </div>
+
+        <!-- S2-3: Batch queue -->
+        <div class="batch-queue" id="batchQueue"></div>
+
+        <!-- Progress -->
+        <div class="progress-section" id="progressSection">
+            <div class="file-info">
+                <div class="file-icon">&#128196;</div>
+                <div class="file-name" id="fileName"></div>
+                <div class="file-meta"><span id="fileDuration"></span><span id="fileSize"></span></div>
+            </div>
+            <div class="steps">
+                <div class="step" id="step1"><span class="step-num">1</span>Upload<span class="step-time" id="stepTime1"></span></div>
+                <div class="step" id="step2"><span class="step-num">2</span>Extract<span class="step-time" id="stepTime2"></span></div>
+                <div class="step" id="step3"><span class="step-num">3</span>Transcribe<span class="step-time" id="stepTime3"></span></div>
+                <div class="step" id="step4"><span class="step-num">4</span>Done<span class="step-time" id="stepTime4"></span></div>
+            </div>
+            <div class="progress-wrapper">
+                <div class="progress-header">
+                    <span class="progress-label" id="progressLabel">Uploading...</span>
+                    <span class="progress-percent" id="progressPercent">0%</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar active" id="progressBar"></div>
+                </div>
+            </div>
+            <div class="speed-indicator" id="speedIndicator">
+                Speed: <span class="speed-value" id="speedValue">-</span>
+            </div>
+            <div class="details-grid" id="detailsGrid" style="display:none;">
+                <div class="detail-box"><div class="detail-label">Data Processed</div><div class="detail-value" id="detailBytes">-</div></div>
+                <div class="detail-box"><div class="detail-label">Time Remaining</div><div class="detail-value" id="detailEta">-</div></div>
+                <div class="detail-box"><div class="detail-label">Elapsed</div><div class="detail-value" id="detailElapsed">-</div></div>
+                <div class="detail-box"><div class="detail-label">Audio Progress</div><div class="detail-value" id="detailAudio">-</div></div>
+            </div>
+
+            <!-- Live subtitle preview -->
+            <div class="preview-panel" id="previewPanel">
+                <div class="preview-header">
+                    <span class="preview-title">Live Subtitles</span>
+                    <span class="preview-count" id="previewCount">0 segments</span>
+                </div>
+                <div class="preview-body" id="previewBody"></div>
+            </div>
+
+            <div class="status-text" id="statusText">Starting...</div>
+            <div class="controls" id="controls" style="display:none;">
+                <button class="ctrl-btn btn-pause" id="pauseBtn" onclick="pauseTask()">Pause</button>
+                <button class="ctrl-btn btn-cancel" id="cancelBtn" onclick="cancelTask()">Cancel</button>
+            </div>
+        </div>
+
+        <!-- Download -->
+        <div class="download-section" id="downloadSection">
+            <!-- Top bar: title + Generate Another -->
+            <div class="result-top-bar">
+                <span class="result-title">Subtitles Ready</span>
+                <button class="new-again-btn" onclick="resetUI()">&#8634; New File</button>
+            </div>
+
+            <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+                <a class="download-btn" id="downloadBtnSrt" href="#">&#11015; Download .SRT</a>
+                <a class="download-btn" id="downloadBtnVtt" href="#" style="background:linear-gradient(135deg,#4f8ff7,#6c5ce7);">&#11015; Download .VTT</a>
+                <a class="download-btn" id="downloadBtnJson" href="#" style="display:none;background:linear-gradient(135deg,#a78bfa,#6c5ce7);">&#11015; Download .JSON</a>
+            </div>
+            <div class="result-info" id="resultInfo"></div>
+
+            <!-- Timing summary -->
+            <div class="timing-summary" id="timingSummary">
+                <div class="timing-summary-row"><span class="timing-summary-label">Upload & Probe</span><span class="timing-summary-value" id="tsSummaryUpload">-</span></div>
+                <div class="timing-summary-row"><span class="timing-summary-label">Audio Extraction</span><span class="timing-summary-value" id="tsSummaryExtract">-</span></div>
+                <div class="timing-summary-row"><span class="timing-summary-label">Transcription</span><span class="timing-summary-value" id="tsSummaryTranscribe">-</span></div>
+                <div class="timing-summary-row"><span class="timing-summary-label">File Generation</span><span class="timing-summary-value" id="tsSummaryFinalize">-</span></div>
+                <div class="timing-summary-row timing-summary-total"><span class="timing-summary-label">Total</span><span class="timing-summary-value" id="tsSummaryTotal">-</span></div>
+            </div>
+
+            <!-- Unified Embed Section (shows only for video uploads) -->
+            <div class="embed-card" id="embedCard">
+                <div class="embed-card-header" onclick="toggleEmbedCard()">
+                    <span class="embed-card-title"><span class="embed-icon">&#9654;</span> Embed Subtitles into Video</span>
+                    <span class="embed-card-toggle" id="embedCardToggle">&#9660;</span>
+                </div>
+                <div class="embed-card-body" id="embedCardBody">
+                    <!-- Mode tabs -->
+                    <div class="embed-tabs">
+                        <button class="embed-tab active" onclick="setEmbedMode('soft')" id="embedTabSoft">
+                            Soft Mux<small>Fast &middot; Selectable track</small>
+                        </button>
+                        <button class="embed-tab" onclick="setEmbedMode('hard')" id="embedTabHard">
+                            Hard Burn<small>Permanent &middot; Styled on video</small>
+                        </button>
+                    </div>
+
+                    <!-- Preset row -->
+                    <div class="embed-grid" style="grid-template-columns:1fr;">
+                        <div class="embed-field">
+                            <label>Style Preset</label>
+                            <select id="embedPreset" onchange="applyPreset(this.value);updateEmbedPreview()">
+                                <option value="default">Default</option>
+                                <option value="youtube_white">YouTube White</option>
+                                <option value="youtube_yellow">YouTube Yellow</option>
+                                <option value="cinema">Cinema</option>
+                                <option value="large_bold">Large Bold</option>
+                                <option value="top_position">Top Position</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Custom style options (hard burn only) -->
+                    <div id="embedStyleOpts" class="embed-style-opts">
+                        <div class="embed-style-grid">
+                            <div class="embed-field">
+                                <label>Font</label>
+                                <select id="embedFont" onchange="updateEmbedPreview()">
+                                    <option value="Arial">Arial</option>
+                                    <option value="Roboto">Roboto</option>
+                                    <option value="Open Sans">Open Sans</option>
+                                    <option value="Verdana">Verdana</option>
+                                    <option value="Tahoma">Tahoma</option>
+                                    <option value="Courier New">Courier New</option>
+                                </select>
+                            </div>
+                            <div class="embed-field">
+                                <label>Size: <span id="embedSizeVal">24</span>px</label>
+                                <input type="range" id="embedFontSize" min="12" max="56" value="24" onchange="$('embedSizeVal').textContent=this.value;updateEmbedPreview()">
+                            </div>
+                            <div class="embed-field">
+                                <label>Color</label>
+                                <input type="color" id="embedFontColor" value="#ffffff" onchange="updateEmbedPreview()">
+                            </div>
+                            <div class="embed-field">
+                                <label>Position</label>
+                                <select id="embedPosition" onchange="updateEmbedPreview()">
+                                    <option value="bottom">Bottom</option>
+                                    <option value="center">Center</option>
+                                    <option value="top">Top</option>
+                                </select>
+                            </div>
+                            <div class="embed-field">
+                                <label>Background: <span id="embedBgVal">75</span>%</label>
+                                <input type="range" id="embedBgOpacity" min="0" max="100" value="75" onchange="$('embedBgVal').textContent=this.value;updateEmbedPreview()">
+                            </div>
+                            <div class="embed-field">
+                                <label style="padding-top:16px;">
+                                    <input type="checkbox" id="embedBold" onchange="updateEmbedPreview()"> Bold
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live preview -->
+                    <div class="embed-preview-bar" id="embedPreviewBar">
+                        <span class="embed-preview-text" id="embedPreviewText" style="color:#fff;font-family:Arial;font-size:24px;">
+                            Sample subtitle text preview
+                        </span>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="embed-actions">
+                        <button class="embed-start-btn" id="embedStartBtn" onclick="startUnifiedEmbed()">Embed Now</button>
+                    </div>
+
+                    <!-- Progress -->
+                    <div class="embed-progress" id="embedProgress">
+                        <div class="embed-progress-bar"><div class="embed-progress-fill" id="embedProgressFill"></div></div>
+                        <div class="embed-status" id="embedStatus">Preparing...</div>
+                    </div>
+
+                    <!-- Result -->
+                    <div class="embed-result" id="embedResult">
+                        <div id="embedResultMsg">Embedding complete!</div>
+                        <a id="embedDownloadLink" href="#" style="display:inline-block;margin-top:8px;padding:8px 20px;background:#27ae60;border-radius:6px;color:#fff;text-decoration:none;">Download Video</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap;">
+                <button class="new-btn" onclick="openEditor()">Edit Subtitles</button>
+                <button class="new-btn" onclick="openVideoPreview()">Preview with Video</button>
+            </div>
+        </div>
+        <!-- S2-1: Subtitle editor -->
+        <div class="editor-section" id="editorSection">
+            <div class="editor-header">
+                <span class="editor-title">Edit Subtitles</span>
+                <div class="editor-actions">
+                    <button class="editor-btn cancel-edit" onclick="closeEditor()">Close</button>
+                    <button class="editor-btn save" onclick="saveEdits()">Save & Regenerate</button>
+                </div>
+            </div>
+            <div class="editor-scroll">
+                <table class="editor-table">
+                    <thead><tr><th>#</th><th>Start</th><th>End</th><th>Text</th><th></th></tr></thead>
+                    <tbody id="editorBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- S2-2: Video preview -->
+        <div class="video-preview-section" id="videoPreviewSection">
+            <div class="video-preview-header">
+                <span class="video-preview-title">Preview with Subtitles</span>
+                <div style="display:flex;gap:8px;">
+                    <button class="video-preview-load" onclick="$('videoFileInput').click()">Load Video</button>
+                    <button class="video-preview-load" onclick="$('videoPreviewSection').style.display='none'" style="color:#e74c3c;border-color:#e74c3c44;">Close</button>
+                </div>
+            </div>
+            <div class="video-container" id="videoContainer">
+                <video id="videoPlayer" controls crossorigin="anonymous">
+                    <track id="subtitleTrack" kind="subtitles" srclang="en" label="Subtitles" default>
+                </video>
+                <input type="file" id="videoFileInput" accept=".mp4,.mkv,.avi,.webm,.mov">
+            </div>
+        </div>
+
+        <div class="cancelled-section" id="cancelledSection">
+            <div class="cancelled-text">Task was cancelled.</div>
+            <button class="new-btn" onclick="resetUI()">Try again</button>
+        </div>
+    </div>
+
+    <!-- Task Queue — fixed side panel -->
+    <div class="task-queue-panel" id="taskQueuePanel">
+        <div class="tq-header" onclick="toggleTaskQueue()">
+            <span class="tq-title">Task Queue</span>
+            <span class="tq-toggle" id="tqToggle">&#9664;</span>
+        </div>
+        <div class="tq-body" id="tqBody"></div>
+    </div>
+
+    <script>
+        const $ = id => document.getElementById(id);
+        const dropZone = $('dropZone'), fileInput = $('fileInput');
+        const progressSection = $('progressSection'), progressBar = $('progressBar');
+        const progressLabel = $('progressLabel'), progressPercent = $('progressPercent');
+        const statusText = $('statusText'), detailsGrid = $('detailsGrid');
+        const downloadSection = $('downloadSection');
+        const downloadBtnSrt = $('downloadBtnSrt'), downloadBtnVtt = $('downloadBtnVtt');
+        const resultInfo = $('resultInfo'), fileName = $('fileName');
+        const fileDuration = $('fileDuration'), fileSize = $('fileSize');
+        const controls = $('controls'), pauseBtn = $('pauseBtn'), cancelBtn = $('cancelBtn');
+        const cancelledSection = $('cancelledSection'), optionsPanel = $('optionsPanel');
+        const optionsPanel2 = $('optionsPanel2');
+        const gpuInfo = $('gpuInfo');
+        const languageSelect = $('languageSelect');
+        const previewPanel = $('previewPanel'), previewBody = $('previewBody'), previewCount = $('previewCount');
+        const connIndicator = $('connIndicator');
+        const warningBanner = $('warningBanner');
+        const speedIndicator = $('speedIndicator'), speedValue = $('speedValue');
+
+        const steps = [$('step1'), $('step2'), $('step3'), $('step4')];
+        const stepTimeEls = [$('stepTime1'), $('stepTime2'), $('stepTime3'), $('stepTime4')];
+        let eventSource = null, pollInterval = null, currentTaskId = null, isPaused = false;
+        let sseRetryTimeout = null, sseRetryDelay = 1000, sseLastEventTime = 0;
+        let selectedDevice = 'cuda', selectedModel = 'auto', selectedFormat = 'srt';
+        let lastSegmentCount = 0;
+        let modelRecommendations = {};
+        let autoModelName = 'medium';
+
+        // Step timing state
+        let stepTimerInterval = null;
+        let stepStartedAt = null;
+        let activeStepIndex = -1;
+        let completedTimings = {}; // {upload: 2.3, extract: 5.1, ...}
+
+        function formatStepDuration(sec) {
+            if (sec < 10) return sec.toFixed(1) + 's';
+            if (sec < 60) return Math.round(sec) + 's';
+            var m = Math.floor(sec / 60), s = Math.round(sec % 60);
+            return m + 'm ' + s + 's';
+        }
+
+        function startStepTimer(stepIdx) {
+            stopStepTimer();
+            activeStepIndex = stepIdx;
+            stepStartedAt = Date.now();
+            stepTimerInterval = setInterval(function() {
+                var elapsed = (Date.now() - stepStartedAt) / 1000;
+                if (stepTimeEls[stepIdx]) stepTimeEls[stepIdx].textContent = formatStepDuration(elapsed) + '...';
+            }, 100);
+        }
+
+        function stopStepTimer() {
+            if (stepTimerInterval) { clearInterval(stepTimerInterval); stepTimerInterval = null; }
+            activeStepIndex = -1;
+        }
+
+        function updateCompletedTimings(timingData) {
+            if (!timingData) return;
+            var keys = ['upload', 'extract', 'transcribe', 'finalize'];
+            var elMap = [0, 1, 2, 3];
+            for (var i = 0; i < keys.length; i++) {
+                if (timingData[keys[i]] !== undefined) {
+                    completedTimings[keys[i]] = timingData[keys[i]];
+                    if (stepTimeEls[elMap[i]]) stepTimeEls[elMap[i]].textContent = formatStepDuration(timingData[keys[i]]);
+                }
+            }
+        }
+
+        function resetStepTimings() {
+            stopStepTimer();
+            completedTimings = {};
+            stepTimeEls.forEach(function(el) { if (el) el.textContent = ''; });
+        }
+
+        // ── Language List ──
+        async function loadLanguages() {
+            try {
+                const res = await fetch('/languages');
+                const data = await res.json();
+                const langs = data.languages || {};
+                languageSelect.innerHTML = '';
+                for (const [code, name] of Object.entries(langs)) {
+                    const opt = document.createElement('option');
+                    opt.value = code;
+                    opt.textContent = code === 'auto' ? 'Auto-detect' : `${name} (${code})`;
+                    languageSelect.appendChild(opt);
+                }
+            } catch (e) { console.error('Failed to load languages:', e); }
+        }
+        loadLanguages();
+
+        // ── Format Selection ──
+        document.querySelectorAll('#formatButtons .opt-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('#formatButtons .opt-btn').forEach(b => b.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedFormat = this.dataset.value;
+            });
+        });
+
+        // ── System Info ──
+        async function loadSystemInfo() {
+            try {
+                const res = await fetch('/system-info');
+                const info = await res.json();
+                modelRecommendations = info.model_recommendations || {};
+                if (info.cuda_available) {
+                    gpuInfo.innerHTML = `<span class="gpu-badge">${info.gpu_name} (${info.gpu_vram} GB)</span>`;
+                    selectedDevice = 'cuda';
+                    if (info.auto_model) {
+                        autoModelName = info.auto_model;
+                        const autoBtn = document.querySelector('#modelButtons .opt-btn[data-value="auto"]');
+                        if (autoBtn) autoBtn.querySelector('.opt-detail').textContent = info.auto_model;
+                    }
+                    updateModelWarnings();
+                } else {
+                    gpuInfo.innerHTML = '<span class="no-gpu-badge">No GPU detected</span>';
+                    $('btnCuda').disabled = true;
+                    $('btnCuda').classList.remove('gpu-selected');
+                    $('btnCpu').classList.add('selected');
+                    selectedDevice = 'cpu';
+                }
+            } catch (e) { console.error('Failed to load system info:', e); }
+        }
+        loadSystemInfo();
+
+        function updateModelWarnings() {
+            if (selectedDevice !== 'cuda') {
+                document.querySelectorAll('#modelButtons .opt-btn').forEach(btn => {
+                    btn.classList.remove('warning', 'too-large');
+                });
+                warningBanner.style.display = 'none';
+                return;
+            }
+            document.querySelectorAll('#modelButtons .opt-btn').forEach(btn => {
+                const model = btn.dataset.value;
+                const rec = modelRecommendations[model];
+                btn.classList.remove('warning', 'too-large');
+                if (rec === 'tight') {
+                    btn.querySelector('.opt-detail').textContent = 'Tight fit';
+                    btn.classList.add('warning');
+                } else if (rec === 'too_large') {
+                    btn.querySelector('.opt-detail').textContent = 'Too large!';
+                    btn.classList.add('too-large');
+                }
+            });
+            const selRec = modelRecommendations[selectedModel];
+            if (selRec === 'too_large') {
+                warningBanner.textContent = 'Warning: This model may not fit in GPU VRAM. Performance will be significantly slower. Consider Medium or smaller.';
+                warningBanner.style.display = 'block';
+            } else if (selRec === 'tight') {
+                warningBanner.textContent = 'Note: This model is a tight fit for your GPU. Performance may vary.';
+                warningBanner.style.display = 'block';
+            } else {
+                warningBanner.style.display = 'none';
+            }
+        }
+
+        // ── Device / Model Selection ──
+        $('btnCuda').addEventListener('click', function() {
+            if (this.disabled) return;
+            selectedDevice = 'cuda';
+            this.classList.add('gpu-selected'); $('btnCpu').classList.remove('selected');
+            updateModelWarnings();
+        });
+        $('btnCpu').addEventListener('click', function() {
+            selectedDevice = 'cpu';
+            this.classList.add('selected'); $('btnCuda').classList.remove('gpu-selected');
+            updateModelWarnings();
+        });
+        document.querySelectorAll('#modelButtons .opt-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('#modelButtons .opt-btn').forEach(b => b.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedModel = this.dataset.value;
+                updateModelWarnings();
+            });
+        });
+
+        // ── Advanced Options ──
+        function toggleAdvanced() {
+            $('advancedPanel').classList.toggle('show');
+        }
+        $('advMaxChars').addEventListener('input', function() {
+            $('advMaxCharsValue').textContent = this.value;
+        });
+
+        // ── Session Reconnection ──
+        (function reconnectSession() {
+            const savedTaskId = sessionStorage.getItem('sg_currentTaskId');
+            if (!savedTaskId) return;
+            // Check if this task still exists and is in-progress
+            fetch(`/progress/${savedTaskId}`).then(r => {
+                if (!r.ok) { sessionStorage.removeItem('sg_currentTaskId'); return Promise.reject('not found'); }
+                return r.json();
+            }).then(data => {
+                if (!data || !data.status) { sessionStorage.removeItem('sg_currentTaskId'); return; }
+                if (data.status === 'done' || data.status === 'error' || data.status === 'cancelled') {
+                    sessionStorage.removeItem('sg_currentTaskId');
+                    return;
+                }
+                // Task is still running - reconnect
+                currentTaskId = savedTaskId;
+                fileName.textContent = data.filename || 'Reconnected task';
+                dropZone.style.display = 'none';
+                optionsPanel.style.display = 'none';
+                optionsPanel2.style.display = 'none';
+                $('advancedToggle').style.display = 'none';
+                $('advancedPanel').style.display = 'none';
+                progressSection.style.display = 'block';
+                progressBar.className = 'progress-bar active';
+                progressLabel.textContent = 'Reconnecting...';
+                handleProgressData(data);
+                connectSSE(savedTaskId);
+            }).catch(() => {
+                sessionStorage.removeItem('sg_currentTaskId');
+            });
+        })();
+
+        function setStep(i, paused = false) {
+            steps.forEach((s, j) => {
+                s.classList.remove('active', 'completed', 'paused');
+                if (j < i) s.classList.add('completed');
+                else if (j === i) s.classList.add(paused ? 'paused' : 'active');
+            });
+        }
+
+        // ── File Drop (S2-3: batch, S2-5: enhanced feedback) ──
+        let dragCounter = 0;
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragenter', e => {
+            e.preventDefault(); dragCounter++;
+            dropZone.classList.add('dragover');
+            // S2-5: Show file count preview on drag
+            const items = e.dataTransfer.items;
+            if (items && items.length > 0) {
+                const count = items.length;
+                $('dropPreview').style.display = 'block';
+                $('dropPreview').textContent = count === 1 ? '1 file ready to drop' : `${count} files ready to drop`;
+            }
+        });
+        dropZone.addEventListener('dragover', e => { e.preventDefault(); });
+        dropZone.addEventListener('dragleave', e => {
+            dragCounter--;
+            if (dragCounter <= 0) {
+                dragCounter = 0;
+                dropZone.classList.remove('dragover');
+                $('dropPreview').style.display = 'none';
+            }
+        });
+        dropZone.addEventListener('drop', e => {
+            e.preventDefault(); dragCounter = 0;
+            dropZone.classList.remove('dragover');
+            $('dropPreview').style.display = 'none';
+            const files = Array.from(e.dataTransfer.files);
+            if (files.length > 1) handleBatch(files);
+            else if (files.length === 1) handleFile(files[0]);
+        });
+        fileInput.addEventListener('change', () => {
+            const files = Array.from(fileInput.files);
+            if (files.length > 1) handleBatch(files);
+            else if (files.length === 1) handleFile(files[0]);
+        });
+
+        const ALLOWED_EXTS = ['.mp4','.mkv','.avi','.webm','.mov','.mp3','.wav','.flac'];
+        function validateFile(file) {
+            const ext = '.' + file.name.split('.').pop().toLowerCase();
+            if (!ALLOWED_EXTS.includes(ext)) return 'Unsupported format: ' + file.name;
+            if (file.size > 2147483648) return 'File too large: ' + file.name;
+            return null;
+        }
+
+        function handleFile(file) {
+            const err = validateFile(file);
+            if (err) { alert(err); return; }
+            fileName.textContent = file.name;
+            fileDuration.textContent = '';
+            fileSize.textContent = formatBytes(file.size);
+            uploadFile(file);
+        }
+
+        function formatBytes(b) {
+            if (b < 1024) return b + ' B';
+            if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+            if (b < 1073741824) return (b / 1048576).toFixed(1) + ' MB';
+            return (b / 1073741824).toFixed(2) + ' GB';
+        }
+        function formatDuration(s) {
+            if (s < 1) return '<1s';
+            if (s < 60) return Math.floor(s) + 's';
+            const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+            if (m < 60) return m + 'm ' + sec + 's';
+            return Math.floor(m / 60) + 'h ' + (m % 60) + 'm';
+        }
+
+        // ── Upload ──
+        function uploadFile(file) {
+            const fd = new FormData();
+            fd.append('file', file);
+            fd.append('device', selectedDevice);
+            fd.append('model_size', selectedModel);
+            fd.append('language', languageSelect.value);
+            // Advanced options
+            if ($('advWordTimestamps').checked) fd.append('word_timestamps', 'true');
+            if ($('advDiarize').checked) fd.append('diarize', 'true');
+            if ($('advTranslate').checked) fd.append('translate_to_english', 'true');
+            const vocab = $('advVocabulary').value.trim();
+            if (vocab) fd.append('initial_prompt', vocab);
+            fd.append('max_line_chars', $('advMaxChars').value);
+            const autoEmbed = $('advAutoEmbed').value;
+            if (autoEmbed) fd.append('auto_embed', autoEmbed);
+
+            dropZone.style.display = 'none';
+            optionsPanel.style.display = 'none';
+            optionsPanel2.style.display = 'none';
+            $('advancedToggle').style.display = 'none';
+            $('advancedPanel').style.display = 'none';
+            warningBanner.style.display = 'none';
+            progressSection.style.display = 'block';
+            downloadSection.style.display = 'none';
+            cancelledSection.style.display = 'none';
+            detailsGrid.style.display = 'none';
+            controls.style.display = 'none';
+            previewPanel.style.display = 'none';
+            speedIndicator.style.display = 'none';
+            previewBody.innerHTML = '';
+            lastSegmentCount = 0;
+            setStep(0);
+            progressBar.className = 'progress-bar active';
+            progressLabel.textContent = 'Uploading...';
+            isPaused = false;
+
+            const xhr = new XMLHttpRequest();
+            xhr.upload.addEventListener('progress', e => {
+                if (e.lengthComputable) {
+                    const pct = Math.round((e.loaded / e.total) * 100);
+                    progressBar.style.width = (pct * 0.05) + '%';
+                    progressPercent.textContent = pct + '%';
+                    statusText.textContent = `Uploading ${formatBytes(e.loaded)} / ${formatBytes(e.total)}`;
+                }
+            });
+            xhr.addEventListener('load', () => {
+                if (xhr.status === 200) {
+                    const data = JSON.parse(xhr.responseText);
+                    currentTaskId = data.task_id;
+                    sessionStorage.setItem('sg_currentTaskId', data.task_id);
+                    if (data.model_size) selectedModel = data.model_size;
+                    progressLabel.textContent = 'Processing...';
+                    connectSSE(data.task_id);
+                } else {
+                    let msg = 'Upload failed.';
+                    let suggestion = '';
+                    try { msg = JSON.parse(xhr.responseText).detail; } catch {}
+                    if (xhr.status === 413) suggestion = ' Try a smaller file (max 2 GB).';
+                    else if (xhr.status === 429) suggestion = ' Please wait for active tasks to finish.';
+                    else if (xhr.status === 400) suggestion = ' Check the file format and try again.';
+                    showError(msg + suggestion);
+                }
+            });
+            xhr.addEventListener('error', () => {
+                showError('Connection lost. Check if the server is running and try again.');
+            });
+            xhr.addEventListener('timeout', () => {
+                showError('Upload timed out. Try a smaller file or check your connection.');
+            });
+            xhr.open('POST', '/upload');
+            xhr.send(fd);
+        }
+
+        // ── SSE (Event-Driven Real-Time Updates) ──
+        function connectSSE(taskId) {
+            if (sseRetryTimeout) { clearTimeout(sseRetryTimeout); sseRetryTimeout = null; }
+            if (eventSource) { eventSource.close(); }
+
+            eventSource = new EventSource(`/events/${taskId}`);
+            connIndicator.style.display = 'block';
+            connIndicator.className = 'connection-indicator connected';
+            connIndicator.textContent = 'Live';
+            sseLastEventTime = Date.now();
+
+            // Also start polling as fallback
+            startPollingFallback(taskId);
+
+            function onSSEData() { sseLastEventTime = Date.now(); sseRetryDelay = 1000; }
+
+            eventSource.addEventListener('state', e => {
+                onSSEData(); handleProgressData(JSON.parse(e.data));
+            });
+
+            eventSource.addEventListener('progress', e => {
+                onSSEData(); handleProgressData(JSON.parse(e.data));
+            });
+
+            eventSource.addEventListener('step_change', e => {
+                onSSEData(); handleProgressData(JSON.parse(e.data));
+            });
+
+            eventSource.addEventListener('heartbeat', e => { onSSEData(); });
+
+            eventSource.addEventListener('segment', e => {
+                onSSEData();
+                const data = JSON.parse(e.data);
+                if (data.segment) { addSegment(data.segment, data.segment_count); }
+            });
+
+            eventSource.addEventListener('warning', e => {
+                onSSEData();
+                const data = JSON.parse(e.data);
+                warningBanner.textContent = data.message;
+                warningBanner.style.display = 'block';
+            });
+
+            eventSource.addEventListener('done', e => {
+                onSSEData();
+                const data = JSON.parse(e.data);
+                handleDone(data, taskId);
+                // Keep SSE open if auto-embed is pending
+                if (!$('advAutoEmbed').value) closeSSE();
+            });
+
+            eventSource.addEventListener('embed_progress', e => {
+                onSSEData();
+                const data = JSON.parse(e.data);
+                statusText.textContent = data.message || 'Embedding subtitles...';
+                progressLabel.textContent = 'Embedding';
+                progressBar.style.width = '100%';
+                progressBar.classList.remove('done'); progressBar.classList.add('active');
+            });
+
+            eventSource.addEventListener('embed_done', e => {
+                onSSEData();
+                const data = JSON.parse(e.data);
+                // Show embed download button
+                const embedResult = $('embedResult');
+                if (embedResult) {
+                    embedResult.style.display = 'block';
+                    $('embedResultMsg').textContent = data.message || 'Subtitles embedded!';
+                    $('embedDownloadLink').href = data.download_url || `/embed/download/${taskId}`;
+                }
+                statusText.textContent = data.message || 'Subtitles embedded!';
+                progressBar.classList.remove('active'); progressBar.classList.add('done');
+                progressLabel.textContent = 'Complete!';
+                closeSSE();
+            });
+
+            eventSource.addEventListener('embed_error', e => {
+                onSSEData();
+                const data = JSON.parse(e.data);
+                statusText.textContent = 'Embed failed: ' + (data.message || 'Unknown error');
+                closeSSE();
+            });
+
+            eventSource.addEventListener('cancelled', e => {
+                onSSEData(); handleCancelled(); closeSSE();
+            });
+
+            eventSource.addEventListener('critical_abort', e => {
+                onSSEData();
+                const data = JSON.parse(e.data);
+                closeSSE();
+                // Show error state on progress
+                progressBar.classList.add('error'); progressBar.classList.remove('active');
+                statusText.classList.add('error');
+                statusText.textContent = data.message || 'System critical — task aborted';
+                progressLabel.textContent = 'Aborted';
+                controls.style.display = 'none';
+                // Trigger full UI lockdown
+                enterCriticalLockdown(data.reasons || []);
+            });
+
+            eventSource.addEventListener('error', e => {
+                // SSE connection error - close broken connection, retry with backoff
+                connIndicator.className = 'connection-indicator disconnected';
+                connIndicator.textContent = 'Reconnecting...';
+                if (eventSource) { eventSource.close(); eventSource = null; }
+                sseRetryTimeout = setTimeout(() => {
+                    // Check task still active before reconnecting
+                    fetch(`/progress/${taskId}`).then(r => r.json()).then(data => {
+                        if (data.status === 'done') { handleDone(data, taskId); closeSSE(); return; }
+                        if (data.status === 'cancelled') { handleCancelled(); closeSSE(); return; }
+                        if (data.status === 'error') { closeSSE(); return; }
+                        connectSSE(taskId); // Reconnect
+                    }).catch(() => {
+                        // Server unreachable, keep retrying
+                        sseRetryDelay = Math.min(sseRetryDelay * 2, 30000);
+                        connIndicator.textContent = 'Offline - retrying...';
+                        sseRetryTimeout = setTimeout(() => connectSSE(taskId), sseRetryDelay);
+                    });
+                }, sseRetryDelay);
+                sseRetryDelay = Math.min(sseRetryDelay * 2, 30000);
+            });
+
+            eventSource.addEventListener('paused', e => {
+                onSSEData();
+                const data = JSON.parse(e.data);
+                setStep(2, true);
+                progressLabel.textContent = 'Paused';
+                progressPercent.style.color = '#f39c12';
+                progressBar.className = 'progress-bar paused';
+                statusText.className = 'status-text paused';
+                statusText.textContent = data.message || 'Paused';
+                isPaused = true;
+                pauseBtn.textContent = 'Resume';
+                pauseBtn.className = 'ctrl-btn btn-resume';
+            });
+
+            eventSource.addEventListener('resumed', e => {
+                onSSEData();
+                isPaused = false;
+                pauseBtn.textContent = 'Pause';
+                pauseBtn.className = 'ctrl-btn btn-pause';
+                progressBar.className = 'progress-bar active';
+                statusText.className = 'status-text';
+                progressPercent.style.color = '#4f8ff7';
+            });
+        }
+
+        function closeSSE() {
+            if (sseRetryTimeout) { clearTimeout(sseRetryTimeout); sseRetryTimeout = null; }
+            if (eventSource) { eventSource.close(); eventSource = null; }
+            if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+            stopStepTimer();
+            sseRetryDelay = 1000;
+            connIndicator.style.display = 'none';
+        }
+
+        function handleProgressData(data) {
+            if (data.percent !== undefined) {
+                progressBar.style.width = data.percent + '%';
+                progressPercent.textContent = data.percent + '%';
+            }
+            if (data.message) {
+                statusText.textContent = data.message;
+                statusText.className = 'status-text';
+            }
+            if (data.duration) fileDuration.textContent = data.duration;
+            if (data.file_size_fmt) fileSize.textContent = data.file_size_fmt;
+
+            if (data.bytes_processed_fmt) {
+                detailsGrid.style.display = 'grid';
+                $('detailBytes').textContent = data.bytes_processed_fmt + ' / ' + data.bytes_total_fmt;
+                $('detailEta').textContent = data.eta || '-';
+                $('detailElapsed').textContent = data.elapsed || '-';
+                if (data.processed_sec !== undefined) {
+                    $('detailAudio').textContent = formatDuration(data.processed_sec) + ' / ' + formatDuration(data.total_sec);
+                }
+            }
+
+            // Speed indicator
+            if (data.speed_x > 0) {
+                speedIndicator.style.display = 'block';
+                const speed = data.speed_x;
+                speedValue.textContent = speed.toFixed(1) + 'x realtime';
+                speedValue.className = 'speed-value' + (speed < 1 ? ' slow' : speed > 10 ? ' fast' : '');
+            }
+
+            // Update step indicators + timing
+            if (data.step_timing) updateCompletedTimings(data.step_timing);
+            if (data.step_started_at) stepStartedAt = data.step_started_at * 1000; // server timestamp
+
+            const status = data.status;
+            if (status === 'queued') { setStep(0); startStepTimer(0); progressLabel.textContent = 'Starting...'; controls.style.display = 'none'; }
+            else if (status === 'extracting') { setStep(1); startStepTimer(1); progressLabel.textContent = 'Extracting audio...'; controls.style.display = 'flex'; pauseBtn.style.display = 'none'; }
+            else if (status === 'transcribing') {
+                setStep(2); startStepTimer(2);
+                const dev = data.device || selectedDevice.toUpperCase();
+                const mdl = data.model_size || selectedModel;
+                progressLabel.innerHTML = `Transcribing <span class="device-badge ${dev === 'CUDA' ? 'gpu' : 'cpu'}">${dev} | ${mdl}</span>`;
+                controls.style.display = 'flex'; pauseBtn.style.display = 'inline-block';
+                if (!isPaused) {
+                    pauseBtn.textContent = 'Pause'; pauseBtn.className = 'ctrl-btn btn-pause';
+                    progressBar.className = 'progress-bar active';
+                }
+            } else if (status === 'writing') {
+                setStep(3); startStepTimer(3); progressLabel.textContent = 'Generating subtitles...'; controls.style.display = 'none';
+            }
+            if (status && status !== 'paused') progressPercent.style.color = '#4f8ff7';
+
+            // Render segments from polling fallback
+            if (data.segments_preview) {
+                renderSegmentsFromArray(data.segments_preview);
+            }
+        }
+
+        function addSegment(seg, count) {
+            previewPanel.style.display = 'block';
+            previewCount.textContent = count + ' segment' + (count !== 1 ? 's' : '');
+
+            if (count <= lastSegmentCount) return;
+
+            const div = document.createElement('div');
+            div.className = 'preview-segment seg-new';
+            div.innerHTML = `<span class="seg-time">${seg.start_fmt} -> ${seg.end_fmt}</span><span class="seg-text">${escapeHtml(seg.text)}</span>`;
+            previewBody.appendChild(div);
+            setTimeout(() => div.classList.remove('seg-new'), 1000);
+            lastSegmentCount = count;
+            previewBody.scrollTop = previewBody.scrollHeight;
+        }
+
+        function renderSegmentsFromArray(segments) {
+            if (!segments || segments.length <= lastSegmentCount) return;
+            previewPanel.style.display = 'block';
+            previewCount.textContent = segments.length + ' segment' + (segments.length !== 1 ? 's' : '');
+            for (let i = lastSegmentCount; i < segments.length; i++) {
+                const seg = segments[i];
+                const div = document.createElement('div');
+                div.className = 'preview-segment seg-new';
+                div.innerHTML = `<span class="seg-time">${seg.start_fmt} -> ${seg.end_fmt}</span><span class="seg-text">${escapeHtml(seg.text)}</span>`;
+                previewBody.appendChild(div);
+                setTimeout(() => div.classList.remove('seg-new'), 1000);
+            }
+            lastSegmentCount = segments.length;
+            previewBody.scrollTop = previewBody.scrollHeight;
+        }
+
+        function handleDone(data, taskId) {
+            sessionStorage.removeItem('sg_currentTaskId');
+            stopStepTimer();
+            setStep(3);
+            progressBar.style.width = '100%';
+            progressPercent.textContent = '100%';
+            progressBar.classList.remove('active'); progressBar.classList.add('done');
+            progressLabel.textContent = 'Complete!';
+            progressPercent.style.color = '#27ae60';
+            controls.style.display = 'none';
+            statusText.textContent = data.message || 'Done!';
+            downloadBtnSrt.href = `/download/${taskId}?format=srt`;
+            downloadBtnVtt.href = `/download/${taskId}?format=vtt`;
+            // Show JSON download if word timestamps or diarization was used
+            const jsonBtn = $('downloadBtnJson');
+            if ($('advWordTimestamps').checked || $('advDiarize').checked) {
+                jsonBtn.href = `/download/${taskId}?format=json`;
+                jsonBtn.style.display = '';
+            } else {
+                jsonBtn.style.display = 'none';
+            }
+            let info = '';
+            if (data.segments) info += data.segments + ' segments';
+            if (data.language) info += ` | ${data.language}`;
+            if (data.speed_factor) info += ` | ${data.speed_factor.toFixed(1)}x realtime`;
+            if (data.total_time_sec) info += ` | ${data.total_time_sec.toFixed(1)}s total`;
+            resultInfo.textContent = info;
+            downloadSection.style.display = 'block';
+
+            // Show final step timings
+            if (data.step_timings) {
+                updateCompletedTimings(data.step_timings);
+                var ts = data.step_timings;
+                $('tsSummaryUpload').textContent = ts.upload != null ? formatStepDuration(ts.upload) : '-';
+                $('tsSummaryExtract').textContent = ts.extract != null ? formatStepDuration(ts.extract) : '-';
+                $('tsSummaryTranscribe').textContent = ts.transcribe != null ? formatStepDuration(ts.transcribe) : '-';
+                $('tsSummaryFinalize').textContent = ts.finalize != null ? formatStepDuration(ts.finalize) : '-';
+                var total = (ts.upload || 0) + (ts.extract || 0) + (ts.transcribe || 0) + (ts.finalize || 0);
+                $('tsSummaryTotal').textContent = formatStepDuration(total);
+                $('timingSummary').style.display = 'block';
+            }
+
+            // Show unified embed card if input was a video file
+            if (data.is_video) {
+                $('embedCard').style.display = 'block';
+                $('embedResult').style.display = 'none';
+                $('embedProgress').style.display = 'none';
+                $('embedStartBtn').disabled = false;
+            }
+
+            // If auto-embed is active, show embedding status
+            if ($('advAutoEmbed').value) {
+                statusText.textContent = 'Embedding subtitles into video...';
+                progressLabel.textContent = 'Embedding';
+                progressBar.classList.remove('done'); progressBar.classList.add('active');
+            }
+        }
+
+        // startQuickEmbed removed — unified into startUnifiedEmbed
+
+        function handleCancelled() {
+            sessionStorage.removeItem('sg_currentTaskId');
+            stopStepTimer();
+            controls.style.display = 'none';
+            progressSection.style.display = 'none';
+            cancelledSection.style.display = 'block';
+        }
+
+        function showError(msg) {
+            sessionStorage.removeItem('sg_currentTaskId');
+            stopStepTimer();
+            statusText.textContent = msg;
+            statusText.classList.add('error');
+            progressBar.classList.add('error'); progressBar.classList.remove('active');
+            progressLabel.textContent = 'Error';
+            controls.style.display = 'none';
+            // Show retry button
+            cancelledSection.querySelector('.cancelled-text').textContent = msg;
+            cancelledSection.style.display = 'block';
+            progressSection.style.display = 'none';
+        }
+
+        function escapeHtml(t) {
+            const d = document.createElement('div');
+            d.textContent = t;
+            return d.innerHTML;
+        }
+
+        // ── Polling Fallback (in case SSE drops) ──
+        function startPollingFallback(taskId) {
+            if (pollInterval) clearInterval(pollInterval);
+            pollInterval = setInterval(async () => {
+                try {
+                    const res = await fetch(`/progress/${taskId}`);
+                    const data = await res.json();
+                    // Use polling data if SSE is not actively delivering events
+                    const sseActive = eventSource && eventSource.readyState === EventSource.OPEN
+                        && (Date.now() - sseLastEventTime < 10000);
+                    if (!sseActive) {
+                        handleProgressData(data);
+                        if (sseActive === false && eventSource && eventSource.readyState === EventSource.OPEN) {
+                            connIndicator.className = 'connection-indicator connected';
+                            connIndicator.textContent = 'Polling';
+                        }
+                        if (data.status === 'done') { handleDone(data, taskId); closeSSE(); }
+                        else if (data.status === 'cancelled') { handleCancelled(); closeSSE(); }
+                        else if (data.status === 'error') {
+                            closeSSE();
+                            progressBar.classList.add('error'); progressBar.classList.remove('active');
+                            statusText.classList.add('error'); progressLabel.textContent = 'Error';
+                            controls.style.display = 'none';
+                        }
+                    }
+                } catch (err) { /* ignore polling errors */ }
+            }, 2000);
+        }
+
+        // ── Controls ──
+        async function pauseTask() {
+            if (!currentTaskId) return;
+            pauseBtn.disabled = true;
+            if (!isPaused) {
+                // Show immediate "Pausing..." feedback (actual pause happens at next segment boundary)
+                pauseBtn.textContent = 'Pausing...';
+                pauseBtn.className = 'ctrl-btn btn-pause';
+                statusText.textContent = 'Pausing after current segment...';
+            } else {
+                pauseBtn.textContent = 'Resuming...';
+            }
+            try {
+                await fetch(`/${isPaused ? 'resume' : 'pause'}/${currentTaskId}`, { method: 'POST' });
+            } finally {
+                // Re-enable after a short delay to prevent spam clicks
+                setTimeout(() => { pauseBtn.disabled = false; }, 1000);
+            }
+        }
+        async function cancelTask() {
+            if (!currentTaskId || !confirm('Cancel the transcription?')) return;
+            cancelBtn.disabled = true;
+            await fetch(`/cancel/${currentTaskId}`, { method: 'POST' });
+        }
+
+        function resetUI() {
+            closeSSE();
+            sessionStorage.removeItem('sg_currentTaskId');
+            dropZone.style.display = 'block'; optionsPanel.style.display = 'flex'; optionsPanel2.style.display = 'flex';
+            $('advancedToggle').style.display = ''; $('advancedPanel').className = 'advanced-panel';
+            progressSection.style.display = 'none'; downloadSection.style.display = 'none';
+            cancelledSection.style.display = 'none'; detailsGrid.style.display = 'none';
+            controls.style.display = 'none'; previewPanel.style.display = 'none';
+            speedIndicator.style.display = 'none'; warningBanner.style.display = 'none';
+            $('editorSection').style.display = 'none';
+            $('videoPreviewSection').style.display = 'none';
+            // Reset embed card
+            $('embedCard').style.display = 'none';
+            $('embedResult').style.display = 'none';
+            $('embedProgress').style.display = 'none';
+            $('embedStatus').textContent = '';
+            $('embedProgressFill').style.width = '0%';
+            $('embedProgressFill').style.background = '';
+            embedMode = 'soft'; setEmbedMode('soft');
+            // Reset video player
+            const vp = $('videoPlayer'); vp.pause(); vp.removeAttribute('src'); vp.load();
+            $('subtitleTrack').removeAttribute('src');
+            // Reset state
+            previewBody.innerHTML = ''; lastSegmentCount = 0;
+            progressBar.style.width = '0%'; progressBar.className = 'progress-bar active';
+            statusText.className = 'status-text';
+            progressPercent.textContent = '0%'; progressPercent.style.color = '#4f8ff7';
+            progressLabel.textContent = ''; fileInput.value = '';
+            fileDuration.textContent = ''; fileSize.textContent = '';
+            cancelBtn.disabled = false; isPaused = false; currentTaskId = null;
+            steps.forEach(s => s.classList.remove('active', 'completed', 'paused'));
+            batchFiles = []; $('batchQueue').innerHTML = '';
+            // Reset step timings
+            resetStepTimings();
+            $('timingSummary').style.display = 'none';
+            // Reset embed card body state
+            $('embedCardBody').classList.remove('collapsed');
+            $('embedCardToggle').innerHTML = '&#9660;';
+            refreshTaskQueue();
+        }
+
+        // ── S2-3: Batch Upload ──
+        let batchFiles = [];
+        let batchIndex = 0;
+
+        function handleBatch(files) {
+            const valid = files.filter(f => !validateFile(f));
+            const invalid = files.filter(f => validateFile(f));
+            if (invalid.length > 0) {
+                alert(`Skipping ${invalid.length} invalid file(s):\n` + invalid.map(f => validateFile(f)).join('\n'));
+            }
+            if (valid.length === 0) return;
+
+            batchFiles = valid.map(f => ({ file: f, status: 'queued', taskId: null, percent: 0 }));
+            batchIndex = 0;
+
+            dropZone.style.display = 'none';
+            optionsPanel.style.display = 'none';
+            optionsPanel2.style.display = 'none';
+            warningBanner.style.display = 'none';
+            renderBatchQueue();
+            processBatchNext();
+        }
+
+        function renderBatchQueue() {
+            const bq = $('batchQueue');
+            bq.innerHTML = '<div style="font-size:0.85rem;color:#888;margin-bottom:10px;font-weight:600;">Batch Processing (' +
+                batchFiles.filter(b => b.status === 'done').length + '/' + batchFiles.length + ' complete)</div>';
+            batchFiles.forEach((b, i) => {
+                const statusClass = b.status === 'transcribing' || b.status === 'extracting' ? 'active' : b.status;
+                const barClass = b.status === 'done' ? 'done' : '';
+                bq.innerHTML += `<div class="batch-item">
+                    <span class="bi-name">${escapeHtml(b.file.name)}</span>
+                    <div class="bi-progress"><div class="bi-bar ${barClass}" style="width:${b.percent}%"></div></div>
+                    <span class="bi-status ${statusClass}">${b.status}</span>
+                </div>`;
+            });
+        }
+
+        function processBatchNext() {
+            if (batchIndex >= batchFiles.length) {
+                // All done
+                $('batchQueue').innerHTML += '<div style="text-align:center;margin-top:12px;">' +
+                    '<button class="new-btn" onclick="resetUI()">Generate more</button></div>';
+                return;
+            }
+            const item = batchFiles[batchIndex];
+            item.status = 'uploading';
+            renderBatchQueue();
+
+            fileName.textContent = item.file.name;
+            fileDuration.textContent = '';
+            fileSize.textContent = formatBytes(item.file.size);
+            progressSection.style.display = 'block';
+            downloadSection.style.display = 'none';
+            previewBody.innerHTML = ''; lastSegmentCount = 0;
+            setStep(0);
+            progressBar.className = 'progress-bar active';
+            progressBar.style.width = '0%';
+            progressLabel.textContent = `Uploading (${batchIndex + 1}/${batchFiles.length})...`;
+            progressPercent.textContent = '0%';
+            statusText.className = 'status-text';
+            statusText.textContent = 'Starting...';
+            controls.style.display = 'none';
+            detailsGrid.style.display = 'none';
+            previewPanel.style.display = 'none';
+            speedIndicator.style.display = 'none';
+
+            const fd = new FormData();
+            fd.append('file', item.file);
+            fd.append('device', selectedDevice);
+            fd.append('model_size', selectedModel);
+            fd.append('language', languageSelect.value);
+
+            const xhr = new XMLHttpRequest();
+            xhr.upload.addEventListener('progress', e => {
+                if (e.lengthComputable) {
+                    const pct = Math.round((e.loaded / e.total) * 100);
+                    progressBar.style.width = (pct * 0.05) + '%';
+                    progressPercent.textContent = pct + '%';
+                }
+            });
+            xhr.addEventListener('load', () => {
+                if (xhr.status === 200) {
+                    const data = JSON.parse(xhr.responseText);
+                    item.taskId = data.task_id;
+                    currentTaskId = data.task_id;
+                    item.status = 'processing';
+                    renderBatchQueue();
+                    connectBatchSSE(data.task_id, batchIndex);
+                } else {
+                    item.status = 'error';
+                    renderBatchQueue();
+                    batchIndex++;
+                    processBatchNext();
+                }
+            });
+            xhr.addEventListener('error', () => {
+                item.status = 'error'; renderBatchQueue();
+                batchIndex++; processBatchNext();
+            });
+            xhr.open('POST', '/upload');
+            xhr.send(fd);
+        }
+
+        function connectBatchSSE(taskId, idx) {
+            if (eventSource) eventSource.close();
+            eventSource = new EventSource(`/events/${taskId}`);
+
+            eventSource.addEventListener('state', e => handleProgressData(JSON.parse(e.data)));
+            eventSource.addEventListener('progress', e => {
+                const data = JSON.parse(e.data);
+                handleProgressData(data);
+                if (batchFiles[idx]) { batchFiles[idx].percent = data.percent || 0; renderBatchQueue(); }
+            });
+            eventSource.addEventListener('step_change', e => {
+                const data = JSON.parse(e.data);
+                handleProgressData(data);
+                if (batchFiles[idx] && data.status) { batchFiles[idx].status = data.status; renderBatchQueue(); }
+            });
+            eventSource.addEventListener('segment', e => {
+                const data = JSON.parse(e.data);
+                if (data.segment) addSegment(data.segment, data.segment_count);
+            });
+            eventSource.addEventListener('done', e => {
+                const data = JSON.parse(e.data);
+                if (batchFiles[idx]) { batchFiles[idx].status = 'done'; batchFiles[idx].percent = 100; }
+                renderBatchQueue();
+                eventSource.close(); eventSource = null;
+                // Move to next file
+                batchIndex++;
+                if (batchIndex < batchFiles.length) {
+                    processBatchNext();
+                } else {
+                    // Last file done - show final results
+                    handleDone(data, taskId);
+                    $('batchQueue').innerHTML += '<div style="text-align:center;margin-top:12px;">' +
+                        '<button class="new-btn" onclick="resetUI()">Generate more</button></div>';
+                }
+            });
+            eventSource.addEventListener('error', e => {
+                if (batchFiles[idx]) { batchFiles[idx].status = 'error'; }
+                renderBatchQueue();
+                if (eventSource) { eventSource.close(); eventSource = null; }
+                batchIndex++; processBatchNext();
+            });
+            eventSource.addEventListener('cancelled', e => {
+                if (batchFiles[idx]) { batchFiles[idx].status = 'cancelled'; }
+                renderBatchQueue();
+                if (eventSource) { eventSource.close(); eventSource = null; }
+                batchIndex++; processBatchNext();
+            });
+        }
+
+        // ── S2-1: Subtitle Editor ──
+        let editorSegments = [];
+
+        async function openEditor() {
+            if (!currentTaskId) return;
+            try {
+                const res = await fetch(`/subtitles/${currentTaskId}`);
+                if (!res.ok) { alert('Failed to load subtitles.'); return; }
+                const data = await res.json();
+                editorSegments = data.segments;
+                renderEditor();
+                $('editorSection').style.display = 'block';
+            } catch (e) { alert('Failed to load subtitles: ' + e.message); }
+        }
+
+        function renderEditor() {
+            const body = $('editorBody');
+            body.innerHTML = '';
+            editorSegments.forEach((seg, i) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="seg-num">${i + 1}</td>
+                    <td><input type="text" class="ts-input" value="${formatTs(seg.start)}" data-idx="${i}" data-field="start"></td>
+                    <td><input type="text" class="ts-input" value="${formatTs(seg.end)}" data-idx="${i}" data-field="end"></td>
+                    <td><input type="text" class="text-input" value="${escapeAttr(seg.text)}" data-idx="${i}" data-field="text"></td>
+                    <td><button class="del-btn" onclick="deleteSegment(${i})" title="Delete">x</button></td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        function formatTs(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            const ms = Math.round((seconds % 1) * 1000);
+            return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms).padStart(3,'0')}`;
+        }
+
+        function parseTs(ts) {
+            const parts = ts.replace(',', '.').split(':');
+            if (parts.length !== 3) return 0;
+            return parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseFloat(parts[2]);
+        }
+
+        function escapeAttr(s) {
+            return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function deleteSegment(idx) {
+            editorSegments.splice(idx, 1);
+            renderEditor();
+        }
+
+        function closeEditor() {
+            $('editorSection').style.display = 'none';
+        }
+
+        async function saveEdits() {
+            // Read values from inputs
+            const inputs = $('editorBody').querySelectorAll('input');
+            inputs.forEach(inp => {
+                const idx = parseInt(inp.dataset.idx);
+                const field = inp.dataset.field;
+                if (field === 'text') editorSegments[idx].text = inp.value;
+                else if (field === 'start') editorSegments[idx].start = parseTs(inp.value);
+                else if (field === 'end') editorSegments[idx].end = parseTs(inp.value);
+            });
+
+            try {
+                const res = await fetch(`/subtitles/${currentTaskId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ segments: editorSegments }),
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    alert(`Saved! ${data.segments} segments updated.`);
+                    closeEditor();
+                } else {
+                    const err = await res.json();
+                    alert('Save failed: ' + (err.detail || 'Unknown error'));
+                }
+            } catch (e) { alert('Save failed: ' + e.message); }
+        }
+
+        // ── S2-2: Video Preview ──
+        function openVideoPreview() {
+            $('videoPreviewSection').style.display = 'block';
+            if (currentTaskId) {
+                $('subtitleTrack').src = `/download/${currentTaskId}?format=vtt`;
+            }
+        }
+
+        function loadVideoFile(fileInput) {
+            if (!fileInput.files.length) return;
+            const file = fileInput.files[0];
+            const videoUrl = URL.createObjectURL(file);
+            const player = $('videoPlayer');
+            player.src = videoUrl;
+            // Recreate track element so browser picks it up after src change
+            const oldTrack = $('subtitleTrack');
+            if (oldTrack) oldTrack.remove();
+            const track = document.createElement('track');
+            track.id = 'subtitleTrack';
+            track.kind = 'subtitles';
+            track.srclang = 'en';
+            track.label = 'Subtitles';
+            track.default = true;
+            if (currentTaskId) track.src = `/download/${currentTaskId}?format=vtt`;
+            player.appendChild(track);
+            player.play().catch(() => {});
+        }
+
+        if ($('videoFileInput')) {
+            $('videoFileInput').addEventListener('change', function() { loadVideoFile(this); });
+        }
+
+        // ── S2-6: Task Queue ──
+        let tqOpen = false;
+
+        function toggleTaskQueue() {
+            tqOpen = !tqOpen;
+            var panel = $('taskQueuePanel');
+            if (tqOpen) {
+                panel.classList.remove('collapsed');
+                $('tqToggle').innerHTML = '&#9654;';
+            } else {
+                panel.classList.add('collapsed');
+                $('tqToggle').innerHTML = '&#9664;';
+            }
+            if (tqOpen) refreshTaskQueue();
+        }
+
+        async function refreshTaskQueue() {
+            try {
+                const res = await fetch('/tasks');
+                const data = await res.json();
+                const tasks = data.tasks || [];
+                if (tasks.length === 0) {
+                    $('taskQueuePanel').style.display = 'none';
+                    return;
+                }
+                var panel = $('taskQueuePanel');
+                panel.style.display = 'block';
+                if (!tqOpen) panel.classList.add('collapsed');
+                const body = $('tqBody');
+                body.innerHTML = '';
+                tasks.reverse().forEach(t => {
+                    const pct = t.status === 'done' ? '100%' : t.percent + '%';
+                    body.innerHTML += `<div class="tq-item">
+                        <span class="tq-dot ${t.status}"></span>
+                        <span class="tq-name">${escapeHtml(t.filename)}</span>
+                        <span class="tq-pct">${pct}</span>
+                    </div>`;
+                });
+            } catch (e) { /* ignore */ }
+        }
+
+        // Refresh task queue periodically when visible
+        setInterval(() => { if (tqOpen) refreshTaskQueue(); }, 5000);
+        // Initial load
+        setTimeout(refreshTaskQueue, 1000);
+
+        // ── S10-5: Subtitle Embedding ──
+        let embedMode = 'soft';
+
+        function toggleEmbedCard() {
+            var body = $('embedCardBody');
+            var toggle = $('embedCardToggle');
+            if (body.classList.contains('collapsed')) {
+                body.classList.remove('collapsed');
+                toggle.innerHTML = '&#9660;';
+                updateEmbedPreview();
+            } else {
+                body.classList.add('collapsed');
+                toggle.innerHTML = '&#9654;';
+            }
+        }
+
+        // Keep old name as alias for any remaining references
+        function toggleEmbedPanel() { toggleEmbedCard(); }
+
+        function setEmbedMode(mode) {
+            embedMode = mode;
+            $('embedTabSoft').className = 'embed-tab' + (mode === 'soft' ? ' active' : '');
+            $('embedTabHard').className = 'embed-tab' + (mode === 'hard' ? ' active' : '');
+            $('embedStyleOpts').className = 'embed-style-opts' + (mode === 'hard' ? ' show' : '');
+            updateEmbedPreview();
+        }
+
+        const EMBED_PRESETS = {
+            'default':        { font:'Arial', size:24, color:'#ffffff', bold:false, position:'bottom', bg:50 },
+            'youtube_white':  { font:'Arial', size:24, color:'#ffffff', bold:false, position:'bottom', bg:75 },
+            'youtube_yellow': { font:'Arial', size:24, color:'#ffff00', bold:false, position:'bottom', bg:75 },
+            'cinema':         { font:'Arial', size:28, color:'#ffffff', bold:false, position:'bottom', bg:0 },
+            'large_bold':     { font:'Arial', size:36, color:'#ffffff', bold:true,  position:'bottom', bg:0 },
+            'top_position':   { font:'Arial', size:24, color:'#ffffff', bold:false, position:'top',    bg:50 },
+        };
+
+        function applyPreset(name) {
+            const p = EMBED_PRESETS[name]; if (!p) return;
+            $('embedFont').value = p.font;
+            $('embedFontSize').value = p.size; $('embedSizeVal').textContent = p.size;
+            $('embedFontColor').value = p.color;
+            $('embedBold').checked = p.bold;
+            $('embedPosition').value = p.position;
+            $('embedBgOpacity').value = p.bg; $('embedBgVal').textContent = p.bg;
+        }
+
+        function updateEmbedPreview() {
+            const preview = $('embedPreviewText');
+
+            if (embedMode === 'soft') {
+                preview.style.cssText = 'color:#fff;font-family:Arial;font-size:18px;padding:8px 16px;';
+                preview.textContent = 'Subtitles will be added as a selectable track (no re-encoding)';
+                $('embedPreviewBar').style.background = '#000';
+                $('embedPreviewBar').style.alignItems = 'center';
+                return;
+            }
+
+            const font = $('embedFont').value;
+            const size = $('embedFontSize').value;
+            const color = $('embedFontColor').value;
+            const bold = $('embedBold').checked;
+            const bgOpacity = $('embedBgOpacity').value / 100;
+            const position = $('embedPosition').value;
+
+            preview.style.fontFamily = font;
+            preview.style.fontSize = Math.min(size, 32) + 'px';
+            preview.style.color = color;
+            preview.style.fontWeight = bold ? 'bold' : 'normal';
+            preview.style.background = `rgba(0,0,0,${bgOpacity})`;
+            preview.style.padding = '4px 12px';
+            preview.style.borderRadius = '4px';
+            preview.textContent = 'Sample subtitle text preview';
+
+            const bar = $('embedPreviewBar');
+            bar.style.alignItems = position === 'top' ? 'flex-start' : position === 'center' ? 'center' : 'flex-end';
+        }
+
+        async function startUnifiedEmbed() {
+            if (!currentTaskId) { alert('No task selected.'); return; }
+
+            var btn = $('embedStartBtn');
+            var prog = $('embedProgress');
+            var result = $('embedResult');
+            var status = $('embedStatus');
+            btn.disabled = true;
+            prog.style.display = 'block';
+            result.style.display = 'none';
+            status.textContent = 'Embedding subtitles...';
+            status.className = 'embed-status';
+            $('embedProgressFill').style.width = '30%';
+            $('embedProgressFill').style.background = '';
+
+            var fd = new FormData();
+            fd.append('mode', embedMode);
+            fd.append('preset', $('embedPreset').value);
+
+            if (embedMode === 'hard') {
+                fd.append('font_name', $('embedFont').value);
+                fd.append('font_size', $('embedFontSize').value);
+                fd.append('font_color', $('embedFontColor').value);
+                fd.append('bold', $('embedBold').checked);
+                fd.append('position', $('embedPosition').value);
+                fd.append('background_opacity', $('embedBgOpacity').value / 100);
+            }
+
+            try {
+                var res = await fetch('/embed/' + currentTaskId + '/quick', { method: 'POST', body: fd });
+                if (!res.ok) {
+                    var err = await res.json().catch(function() { return {detail: 'Embed request failed'}; });
+                    throw new Error(err.detail || 'Embed failed');
+                }
+
+                $('embedProgressFill').style.width = '60%';
+                status.textContent = 'Processing...';
+
+                // Listen for embed_done / embed_error via SSE
+                var embedSSE = new EventSource('/events/' + currentTaskId);
+                var embedTimeout = setTimeout(function() {
+                    embedSSE.close();
+                    status.textContent = 'Embedding is taking longer than expected...';
+                }, 300000);
+
+                embedSSE.addEventListener('embed_done', function(e) {
+                    clearTimeout(embedTimeout);
+                    embedSSE.close();
+                    var d = JSON.parse(e.data);
+                    $('embedProgressFill').style.width = '100%';
+                    status.textContent = d.message || 'Embedding complete!';
+                    status.className = 'embed-status success';
+                    result.style.display = 'block';
+                    var modeLabel = embedMode === 'soft' ? 'Soft mux' : 'Hard burn';
+                    $('embedResultMsg').textContent = modeLabel + ' complete!';
+                    $('embedDownloadLink').href = d.download_url || '/embed/download/' + currentTaskId;
+                    btn.disabled = false;
+                });
+
+                embedSSE.addEventListener('embed_error', function(e) {
+                    clearTimeout(embedTimeout);
+                    embedSSE.close();
+                    var d = JSON.parse(e.data);
+                    $('embedProgressFill').style.width = '100%';
+                    $('embedProgressFill').style.background = '#e74c3c';
+                    status.textContent = d.message || 'Embedding failed';
+                    status.className = 'embed-status error';
+                    btn.disabled = false;
+                });
+            } catch (e) {
+                $('embedProgressFill').style.width = '100%';
+                $('embedProgressFill').style.background = '#e74c3c';
+                status.textContent = e.message || 'Embed failed';
+                status.className = 'embed-status error';
+                btn.disabled = false;
+            }
+        }
+
+        // Keep old names as aliases
+        function startEmbed() { startUnifiedEmbed(); }
+
+        // ── S10-6: Speaker Labels in Preview ──
+        const speakerColors = ['speaker-0','speaker-1','speaker-2','speaker-3','speaker-4'];
+        // Override addSegment to include speaker labels
+        function addSegmentWithSpeaker(seg, count) {
+            previewPanel.style.display = 'block';
+            previewCount.textContent = count + ' segment' + (count !== 1 ? 's' : '');
+            if (count <= lastSegmentCount) return;
+
+            const div = document.createElement('div');
+            div.className = 'preview-segment seg-new';
+            let speakerHtml = '';
+            if (seg.speaker) {
+                const idx = parseInt(seg.speaker.replace(/\D/g, '')) % speakerColors.length;
+                speakerHtml = `<span class="speaker-label ${speakerColors[idx]}">${seg.speaker}</span>`;
+            }
+            div.innerHTML = `<span class="seg-time">${seg.start_fmt} -> ${seg.end_fmt}</span>${speakerHtml}<span class="seg-text">${escapeHtml(seg.text)}</span>`;
+            previewBody.appendChild(div);
+            setTimeout(() => div.classList.remove('seg-new'), 1000);
+            lastSegmentCount = count;
+            previewBody.scrollTop = previewBody.scrollHeight;
+        }
+        // Replace the global addSegment
+        addSegment = addSegmentWithSpeaker;
+
+        // ── S30: System Health Indicator ──
+        let healthPanelOpen = false;
+        let healthData = null;
+
+        function toggleHealthPanel() {
+            healthPanelOpen = !healthPanelOpen;
+            $('healthPanel').className = 'health-panel' + (healthPanelOpen ? ' open' : '');
+            if (healthPanelOpen) renderHealthPanel();
+        }
+
+        document.addEventListener('click', function(e) {
+            if (healthPanelOpen
+                && !$('healthIndicator').contains(e.target)
+                && !$('healthPanel').contains(e.target)) {
+                healthPanelOpen = false;
+                $('healthPanel').className = 'health-panel';
+            }
+        });
+
+        function formatUptime(sec) {
+            if (sec < 60) return Math.round(sec) + 's';
+            if (sec < 3600) return Math.floor(sec / 60) + 'm ' + Math.round(sec % 60) + 's';
+            var h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
+            return h + 'h ' + m + 'm';
+        }
+
+        var healthSSE = null;
+        var healthLastEvent = 0;
+        var healthWatchdog = null;
+        var healthPollInterval = null;
+        var healthSSEFailed = false;
+
+        function applyHealthData(data) {
+            healthData = data;
+            healthLastEvent = Date.now();
+            var dot = $('healthDot');
+            var label = $('healthLabel');
+            var loadFill = $('healthLoadFill');
+
+            dot.className = 'health-dot ' + data.status;
+            if (data.status === 'critical') {
+                label.textContent = data.alert_count > 0
+                    ? data.alert_count + ' alert' + (data.alert_count !== 1 ? 's' : '')
+                    : 'Critical';
+                label.style.color = '#e74c3c';
+            } else if (data.status === 'warning') {
+                label.textContent = data.alert_count > 0
+                    ? data.alert_count + ' warning' + (data.alert_count !== 1 ? 's' : '')
+                    : 'Warning';
+                label.style.color = '#f39c12';
+            } else {
+                label.textContent = 'Healthy';
+                label.style.color = '#27ae60';
+            }
+
+            // Load bar: based on CPU usage or task load
+            var load = data.cpu_percent || 0;
+            if (data.active_tasks > 0 && data.max_tasks > 0) {
+                load = Math.max(load, (data.active_tasks / data.max_tasks) * 100);
+            }
+            loadFill.style.width = Math.min(100, Math.round(load)) + '%';
+            loadFill.style.background = load < 50 ? '#27ae60' : load < 80 ? '#f39c12' : '#e74c3c';
+
+            if (healthPanelOpen) renderHealthPanel();
+
+            // Critical state: lock down ALL user features
+            if (data.system_critical) {
+                enterCriticalLockdown(data.system_critical_reasons || []);
+            } else if (data.shutting_down) {
+                exitCriticalLockdown();
+                var banner = $('serviceBanner');
+                banner.textContent = 'Service is shutting down — no new uploads accepted.';
+                banner.className = 'service-banner warning';
+                banner.style.display = 'block';
+                $('dropZone').classList.add('disabled');
+            } else {
+                exitCriticalLockdown();
+                // Also hide "Service unreachable" banner (set by showHealthOffline, not by critical lockdown)
+                var banner = $('serviceBanner');
+                if (banner.style.display !== 'none') {
+                    banner.style.display = 'none';
+                    banner.className = 'service-banner hidden';
+                    $('dropZone').classList.remove('disabled');
+                }
+            }
+        }
+
+        var _criticalLockdownActive = false;
+
+        function enterCriticalLockdown(reasons) {
+            if (_criticalLockdownActive) {
+                // Update banner text with latest reasons
+                var banner = $('serviceBanner');
+                var reasonText = (reasons && reasons.length) ? reasons.join('; ') : 'Unknown';
+                banner.textContent = 'SYSTEM CRITICAL — All operations suspended. ' + reasonText;
+                return;
+            }
+            _criticalLockdownActive = true;
+
+            var reasonText = (reasons && reasons.length) ? reasons.join('; ') : 'Unknown';
+
+            // Show critical banner
+            var banner = $('serviceBanner');
+            banner.textContent = 'SYSTEM CRITICAL — All operations suspended. ' + reasonText;
+            banner.className = 'service-banner critical';
+            banner.style.display = 'block';
+
+            // Stop any running timers and close SSE/polling
+            stopStepTimer();
+            closeSSE();
+
+            // Disable drop zone
+            $('dropZone').classList.add('disabled');
+
+            // Disable ALL interactive elements
+            document.querySelectorAll('button, input, select, textarea, .ctrl-btn, .quick-embed-btn, a.download-link').forEach(function(el) {
+                // Skip health panel close button
+                if (el.classList.contains('health-panel-close') || el.id === 'healthToggleBtn') return;
+                el.dataset.preCriticalDisabled = el.disabled ? 'true' : 'false';
+                el.disabled = true;
+                el.style.pointerEvents = 'none';
+                el.style.opacity = '0.4';
+            });
+
+            // Hide controls (pause/cancel — they can't work during critical)
+            controls.style.display = 'none';
+        }
+
+        function exitCriticalLockdown() {
+            if (!_criticalLockdownActive) return;
+            _criticalLockdownActive = false;
+
+            // Hide banner
+            var banner = $('serviceBanner');
+            banner.style.display = 'none';
+            banner.className = 'service-banner hidden';
+
+            // Re-enable drop zone
+            $('dropZone').classList.remove('disabled');
+
+            // Re-enable interactive elements
+            document.querySelectorAll('button, input, select, textarea, .ctrl-btn, .quick-embed-btn, a.download-link').forEach(function(el) {
+                if (el.dataset.preCriticalDisabled === 'true') {
+                    // Was already disabled before lockdown — keep it disabled
+                    delete el.dataset.preCriticalDisabled;
+                    return;
+                }
+                el.disabled = false;
+                el.style.pointerEvents = '';
+                el.style.opacity = '';
+                delete el.dataset.preCriticalDisabled;
+            });
+        }
+
+        function showHealthOffline() {
+            $('healthDot').className = 'health-dot offline';
+            $('healthLabel').textContent = 'Offline';
+            $('healthLabel').style.color = '#666';
+            $('healthLoadFill').style.width = '0%';
+            // Disable uploads when service is unreachable
+            $('serviceBanner').textContent = 'Service unreachable — cannot connect to the server.';
+            $('serviceBanner').className = 'service-banner critical';
+            $('serviceBanner').style.display = 'block';
+            $('dropZone').classList.add('disabled');
+        }
+
+        // Polling fallback (used when SSE fails or as initial data source)
+        async function pollSystemHealth() {
+            try {
+                var res = await fetch('/api/status');
+                if (!res.ok) throw new Error('status ' + res.status);
+                var data = await res.json();
+                applyHealthData(data);
+            } catch (e) {
+                showHealthOffline();
+            }
+        }
+
+        function startHealthPolling() {
+            if (healthPollInterval) return;
+            pollSystemHealth();
+            healthPollInterval = setInterval(pollSystemHealth, 2000);
+        }
+
+        function stopHealthPolling() {
+            if (healthPollInterval) { clearInterval(healthPollInterval); healthPollInterval = null; }
+        }
+
+        function connectHealthSSE() {
+            if (healthSSE) { healthSSE.close(); }
+            try {
+                healthSSE = new EventSource('/health/stream');
+            } catch (e) {
+                healthSSEFailed = true;
+                startHealthPolling();
+                return;
+            }
+            healthSSE.onmessage = function(e) {
+                try {
+                    var data = JSON.parse(e.data);
+                    applyHealthData(data);
+                    // SSE working — stop polling if active
+                    if (healthPollInterval) stopHealthPolling();
+                    healthSSEFailed = false;
+                } catch (err) {}
+            };
+            healthSSE.onerror = function() {
+                healthSSE.close();
+                healthSSE = null;
+                healthSSEFailed = true;
+                // Fall back to polling instead of immediately showing offline
+                // Polling will show offline only if /api/status also fails
+                startHealthPolling();
+                setTimeout(connectHealthSSE, 5000);
+            };
+        }
+
+        // Watchdog: if no SSE event in 4s, switch to polling (don't show offline immediately)
+        healthWatchdog = setInterval(function() {
+            if (!healthSSEFailed && healthLastEvent > 0 && (Date.now() - healthLastEvent) > 4000) {
+                healthSSEFailed = true;
+                startHealthPolling();
+            }
+        }, 1000);
+
+        function renderHealthPanel() {
+            if (!healthData) { $('healthPanelBody').textContent = 'Loading...'; return; }
+            var d = healthData, html = '';
+            html += '<div class="health-row"><span class="health-row-label">Uptime</span><span class="health-row-value">' + formatUptime(d.uptime_sec) + '</span></div>';
+
+            // Active tasks with gauge
+            html += '<div class="health-row"><span class="health-row-label">Active Tasks</span><span class="health-row-value health-row-gauge">'
+                + d.active_tasks + ' / ' + (d.max_tasks || '?')
+                + '<span class="health-mini-bar"><span class="health-mini-fill" style="width:' + (d.max_tasks ? Math.round(d.active_tasks / d.max_tasks * 100) : 0) + '%;background:' + (d.active_tasks === 0 ? '#27ae60' : d.active_tasks >= (d.max_tasks || 3) ? '#e74c3c' : '#f39c12') + ';"></span></span>'
+                + '</span></div>';
+
+            // CPU gauge
+            if (d.cpu_percent != null) {
+                var cpuColor = d.cpu_percent < 50 ? '#27ae60' : d.cpu_percent < 80 ? '#f39c12' : '#e74c3c';
+                html += '<div class="health-row"><span class="health-row-label">CPU</span><span class="health-row-value health-row-gauge">'
+                    + Math.round(d.cpu_percent) + '%'
+                    + '<span class="health-mini-bar"><span class="health-mini-fill" style="width:' + Math.round(d.cpu_percent) + '%;background:' + cpuColor + ';"></span></span>'
+                    + '</span></div>';
+            }
+
+            // Memory gauge
+            if (d.memory_percent != null) {
+                var memColor = d.memory_percent < 60 ? '#27ae60' : d.memory_percent < 85 ? '#f39c12' : '#e74c3c';
+                html += '<div class="health-row"><span class="health-row-label">Memory</span><span class="health-row-value health-row-gauge">'
+                    + Math.round(d.memory_percent) + '%'
+                    + '<span class="health-mini-bar"><span class="health-mini-fill" style="width:' + Math.round(d.memory_percent) + '%;background:' + memColor + ';"></span></span>'
+                    + '</span></div>';
+            }
+
+            // Database with latency badge
+            var dbLatencyClass = 'good', dbLatencyText = 'Connected';
+            if (!d.db_ok) { dbLatencyClass = 'slow'; dbLatencyText = 'Down'; }
+            else if (d.db_latency_ms != null) {
+                dbLatencyText = d.db_latency_ms + 'ms';
+                dbLatencyClass = d.db_latency_ms < 50 ? 'good' : d.db_latency_ms < 200 ? 'medium' : 'slow';
+            }
+            html += '<div class="health-row"><span class="health-row-label">Database</span><span class="health-row-value"><span class="health-latency-badge ' + dbLatencyClass + '">' + dbLatencyText + '</span></span></div>';
+
+            // Disk
+            html += '<div class="health-row"><span class="health-row-label">Disk Free</span><span class="health-row-value ' + (d.disk_ok ? 'ok' : 'bad') + '">' + (d.disk_free_gb != null ? d.disk_free_gb + ' GB' : 'Unknown') + '</span></div>';
+
+            // FFmpeg
+            html += '<div class="health-row"><span class="health-row-label">FFmpeg</span><span class="health-row-value ' + (d.ffmpeg_ok ? 'ok' : 'bad') + '">' + (d.ffmpeg_ok ? 'Available' : 'Missing') + '</span></div>';
+
+            if (d.shutting_down) {
+                html += '<div class="health-row"><span class="health-row-label">Status</span><span class="health-row-value bad">Shutting Down</span></div>';
+            }
+
+            if (d.alerts && d.alerts.length > 0) {
+                html += '<div class="health-alerts"><div style="font-weight:600;margin-bottom:4px;color:#aaa;">Active Alerts</div>';
+                d.alerts.forEach(function(a) {
+                    html += '<div class="health-alert-item ' + a.severity + '">' + escapeHtml(a.message) + '</div>';
+                });
+                html += '</div>';
+            }
+            $('healthPanelBody').innerHTML = html;
+        }
+
+        // Start with immediate poll (instant first paint), then upgrade to SSE
+        pollSystemHealth();
+        connectHealthSSE();
+        // Keep polling as fallback until SSE confirms working
+        startHealthPolling();
+
+        // ── S21: User Activity Tracking ──
+        const _trackQueue = [];
+        let _trackTimer = null;
+
+        function track(event, target, meta) {
+            _trackQueue.push({
+                event: event,
+                target: target || '',
+                task_id: currentTaskId || '',
+                metadata: meta || null,
+                ts: Date.now()
+            });
+            // Batch send every 3 seconds or when queue reaches 20
+            if (_trackQueue.length >= 20) _flushTrack();
+            else if (!_trackTimer) _trackTimer = setTimeout(_flushTrack, 3000);
+        }
+
+        function _flushTrack() {
+            if (_trackTimer) { clearTimeout(_trackTimer); _trackTimer = null; }
+            if (!_trackQueue.length) return;
+            const batch = _trackQueue.splice(0, 100);
+            fetch('/track/batch', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({events: batch})
+            }).catch(() => {});
+        }
+
+        // Track button clicks on key elements
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('button, a.download-btn, .opt-btn, .embed-tab');
+            if (!btn) return;
+            const id = btn.id || btn.textContent.trim().substring(0, 30);
+            track('click', id);
+        });
+
+        // Track key flow events
+        const _origUploadFile = uploadFile;
+        uploadFile = function(file) {
+            track('flow', 'upload_start', {name: file.name, size: file.size});
+            return _origUploadFile(file);
+        };
+
+        const _origHandleDone = handleDone;
+        handleDone = function(data, taskId) {
+            track('flow', 'transcription_done', {segments: data.segments, language: data.language});
+            return _origHandleDone(data, taskId);
+        };
+
+        // Track downloads
+        document.querySelectorAll('.download-btn').forEach(btn => {
+            btn.addEventListener('click', () => track('flow', 'download_click', {format: btn.href?.split('format=')[1]}));
+        });
+
+        // Track embed
+        const _origStartEmbed = startEmbed;
+        startEmbed = async function() {
+            track('flow', 'embed_start', {mode: embedMode});
+            return _origStartEmbed();
+        };
+
+        // Track panel opens
+        const _origOpenEditor = openEditor;
+        openEditor = function() { track('view', 'editor_open'); return _origOpenEditor(); };
+        const _origOpenPreview = openVideoPreview;
+        openVideoPreview = function() { track('view', 'preview_open'); return _origOpenPreview(); };
+        const _origToggleEmbed = toggleEmbedPanel;
+        toggleEmbedPanel = function() { track('view', 'embed_panel_toggle'); return _origToggleEmbed(); };
+
+        // Track JS errors
+        window.addEventListener('error', function(e) {
+            track('error', 'js_error', {message: e.message, file: e.filename, line: e.lineno, col: e.colno});
+        });
+        window.addEventListener('unhandledrejection', function(e) {
+            track('error', 'promise_rejection', {reason: String(e.reason).substring(0, 200)});
+        });
+
+        // Flush on page unload
+        window.addEventListener('beforeunload', _flushTrack);
+
+        // Track page load
+        track('view', 'page_load', {referrer: document.referrer || null});
+    </script>
+</body>
+</html>

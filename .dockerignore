@@ -1,0 +1,14 @@
+__pycache__
+*.pyc
+.pytest_cache
+.git
+.github
+uploads/*
+outputs/*
+logs/*
+task_history.json
+*.egg-info
+.env
+.venv
+venv
+env
