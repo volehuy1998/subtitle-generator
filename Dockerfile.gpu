@@ -1,12 +1,17 @@
 # GPU-enabled Dockerfile using NVIDIA CUDA base
 FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04 AS base
 
-# Install Python, ffmpeg, and system deps
+# Install Python 3.12, ffmpeg, and system deps
+# Ubuntu 22.04 ships Python 3.10 — we add deadsnakes PPA for 3.12
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3.12 python3.12-venv python3-pip \
-    ffmpeg libsndfile1 \
+    software-properties-common \
+    && add-apt-repository ppa:deadsnakes/ppa -y \
+    && apt-get update && apt-get install -y --no-install-recommends \
+    python3.12 python3.12-venv python3.12-dev \
+    ffmpeg libsndfile1 curl \
     && rm -rf /var/lib/apt/lists/* \
-    && ln -sf /usr/bin/python3.12 /usr/bin/python
+    && ln -sf /usr/bin/python3.12 /usr/bin/python \
+    && curl -sS https://bootstrap.pypa.io/get-pip.py | python
 
 WORKDIR /app
 
@@ -30,7 +35,5 @@ EXPOSE 8000
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
 
-CMD ["python", "-m", "uvicorn", "app.main:app", \
-     "--host", "0.0.0.0", "--port", "8000", \
-     "--workers", "1", "--timeout-keep-alive", "75", \
-     "--access-log", "--log-level", "info"]
+# Run migrations then start uvicorn
+CMD ["sh", "-c", "python -m alembic upgrade head 2>/dev/null; exec python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1 --timeout-keep-alive 75 --access-log --log-level info"]
