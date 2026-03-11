@@ -1,7 +1,13 @@
 """Shared test fixtures and mock setup."""
 
 import sys
+from pathlib import Path
 from unittest.mock import MagicMock
+
+# Ensure required directories exist for tests
+_project_root = Path(__file__).parent.parent
+for _d in ("uploads", "outputs", "logs"):
+    (_project_root / _d).mkdir(exist_ok=True)
 
 # Mock heavy dependencies BEFORE any app imports
 _torch_mock = MagicMock()

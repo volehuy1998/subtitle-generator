@@ -61,8 +61,11 @@ def sanitize_filename(filename: str) -> str:
 
     Strips path separators, null bytes, and dangerous characters.
     """
-    # Remove path components
-    name = Path(filename).name
+    # Remove path components (handle both Unix / and Windows \ separators)
+    # Use ntpath + posixpath to strip paths regardless of host OS
+    import ntpath
+    import posixpath
+    name = posixpath.basename(ntpath.basename(filename))
     # Remove null bytes and control characters
     name = re.sub(r'[\x00-\x1f\x7f]', '', name)
     # Remove characters that could cause path traversal or shell issues
