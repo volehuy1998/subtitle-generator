@@ -11,7 +11,11 @@
             background: #0f0f0f; color: #e0e0e0;
             min-height: 100vh; display: flex; align-items: center; justify-content: center;
         }
-        .container { max-width: 700px; width: 100%; padding: 40px 24px; }
+        .page-layout {
+            display: flex; align-items: flex-start; justify-content: center;
+            gap: 16px; width: 100%; max-width: 1040px; padding: 0 12px;
+        }
+        .container { max-width: 700px; width: 100%; padding: 40px 24px; flex-shrink: 0; }
         h1 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; color: #fff; }
         .page-subtitle { color: #888; margin-bottom: 24px; font-size: 0.95rem; }
 
@@ -439,16 +443,12 @@
         .drop-zone.dragover .drop-zone-icon { transform: scale(1.1); transition: transform 0.2s; }
 
         /* S2-6: Task queue panel */
-        /* Task Queue — fixed side panel */
+        /* Task Queue — sidebar next to main content */
         .task-queue-panel {
-            display: none; position: fixed; right: 0; top: 50%; transform: translateY(-50%);
-            width: 280px; max-height: 70vh; background: #111; border: 1px solid #222;
-            border-radius: 12px 0 0 12px; border-right: none; z-index: 90;
-            box-shadow: -4px 0 24px rgba(0,0,0,0.4); overflow: hidden;
-            transition: transform 0.3s ease;
-        }
-        .task-queue-panel.collapsed {
-            transform: translateY(-50%) translateX(calc(100% - 36px));
+            display: none; width: 260px; flex-shrink: 0;
+            background: #111; border: 1px solid #222; border-radius: 10px;
+            overflow: hidden; position: sticky; top: 20px; align-self: flex-start;
+            margin-top: 40px;
         }
         .tq-header {
             display: flex; justify-content: space-between; align-items: center;
@@ -457,7 +457,7 @@
         }
         .tq-title { font-size: 0.8rem; color: #888; font-weight: 600; text-transform: uppercase; }
         .tq-toggle { font-size: 0.75rem; color: #555; transition: transform 0.3s; }
-        .tq-body { max-height: calc(70vh - 44px); overflow-y: auto; }
+        .tq-body { max-height: 60vh; overflow-y: auto; }
         .tq-item {
             display: flex; align-items: center; gap: 10px; padding: 8px 14px;
             border-bottom: 1px solid #1a1a1a; font-size: 0.8rem;
@@ -473,9 +473,6 @@
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
         .tq-item .tq-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #aaa; }
         .tq-item .tq-pct { font-variant-numeric: tabular-nums; color: #555; min-width: 35px; text-align: right; }
-        @media (max-width: 600px) {
-            .task-queue-panel { width: 220px; max-height: 50vh; }
-        }
 
         /* Speaker labels */
         .speaker-label {
@@ -513,6 +510,10 @@
         .adv-input:focus { border-color: #4f8ff7; outline: none; }
 
         /* S2-4: Mobile responsive */
+        @media (max-width: 1000px) {
+            .page-layout { flex-direction: column; align-items: center; }
+            .task-queue-panel { width: 100%; max-width: 700px; position: static; margin-top: 0; order: -1; }
+        }
         @media (max-width: 600px) {
             body { align-items: flex-start; }
             .container { padding: 20px 12px; }
@@ -565,6 +566,7 @@
         </div>
         <div class="health-panel-body" id="healthPanelBody">Loading...</div>
     </div>
+    <div class="page-layout">
     <div class="container">
         <h1>Subtitle Generator</h1>
         <p class="page-subtitle">Upload a video and get subtitles (SRT/VTT) powered by AI</p>
@@ -879,14 +881,15 @@
         </div>
     </div>
 
-    <!-- Task Queue — fixed side panel -->
+    <!-- Task Queue — sidebar -->
     <div class="task-queue-panel" id="taskQueuePanel">
         <div class="tq-header" onclick="toggleTaskQueue()">
             <span class="tq-title">Task Queue</span>
-            <span class="tq-toggle" id="tqToggle">&#9664;</span>
+            <span class="tq-toggle" id="tqToggle">&#9660;</span>
         </div>
         <div class="tq-body" id="tqBody"></div>
     </div>
+    </div><!-- /.page-layout -->
 
     <script>
         const $ = id => document.getElementById(id);
@@ -1963,14 +1966,8 @@
 
         function toggleTaskQueue() {
             tqOpen = !tqOpen;
-            var panel = $('taskQueuePanel');
-            if (tqOpen) {
-                panel.classList.remove('collapsed');
-                $('tqToggle').innerHTML = '&#9654;';
-            } else {
-                panel.classList.add('collapsed');
-                $('tqToggle').innerHTML = '&#9664;';
-            }
+            $('tqBody').style.display = tqOpen ? 'block' : 'none';
+            $('tqToggle').innerHTML = tqOpen ? '&#9650;' : '&#9660;';
             if (tqOpen) refreshTaskQueue();
         }
 
@@ -1983,9 +1980,7 @@
                     $('taskQueuePanel').style.display = 'none';
                     return;
                 }
-                var panel = $('taskQueuePanel');
-                panel.style.display = 'block';
-                if (!tqOpen) panel.classList.add('collapsed');
+                $('taskQueuePanel').style.display = 'block';
                 const body = $('tqBody');
                 body.innerHTML = '';
                 tasks.reverse().forEach(t => {

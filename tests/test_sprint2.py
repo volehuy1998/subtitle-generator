@@ -1,6 +1,5 @@
 """Tests for Sprint 2 features: subtitle editor, task queue, batch, responsive."""
 
-from io import BytesIO
 
 from app.main import app
 from app import state
@@ -111,7 +110,7 @@ class TestSrtParser:
         """Generate SRT, parse it, regenerate - text should match."""
         srt1 = segments_to_srt(SAMPLE_SEGMENTS)
         parsed = _parse_srt(srt1)
-        srt2 = segments_to_srt(parsed)
+        segments_to_srt(parsed)
         # Text content should be identical
         for orig, parsed_seg in zip(SAMPLE_SEGMENTS, parsed):
             assert orig["text"] == parsed_seg["text"]

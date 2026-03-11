@@ -8,7 +8,6 @@ S13-5: Task deduplication check
 S13-6: Integration tests
 """
 
-from pathlib import Path
 
 from app.main import app
 from app import state

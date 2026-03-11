@@ -6,8 +6,7 @@ import uuid
 from pathlib import Path
 from typing import Literal, Optional
 
-from fastapi import APIRouter, Form, UploadFile, HTTPException, Query
-from pydantic import BaseModel
+from fastapi import APIRouter, Form, UploadFile, HTTPException
 
 from app import state
 from app.config import UPLOAD_DIR, OUTPUT_DIR, MAX_FILE_SIZE, MIN_FILE_SIZE
@@ -16,9 +15,8 @@ from app.services.subtitle_embed import (
     soft_embed_subtitles, hard_burn_subtitles,
     SubtitleStyle, STYLE_PRESETS,
 )
-from app.services.sse import create_event_queue, emit_event
-from app.utils.formatting import format_bytes
-from app.utils.security import validate_file_extension, validate_magic_bytes, sanitize_filename
+from app.services.sse import emit_event
+from app.utils.security import validate_file_extension, validate_magic_bytes
 
 logger = logging.getLogger("subtitle-generator")
 router = APIRouter(tags=["Embedding"])

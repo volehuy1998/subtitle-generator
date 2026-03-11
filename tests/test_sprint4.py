@@ -14,15 +14,12 @@ import time
 import tempfile
 from io import BytesIO
 from pathlib import Path
-from unittest.mock import patch, MagicMock
 
 from app.main import app
 from app import state
-from app.config import OUTPUT_DIR
 from app.utils.subtitle_format import (
     break_line, calculate_cps, validate_timing,
     format_segments_with_linebreaks, words_to_segments,
-    DEFAULT_MAX_CHARS_PER_LINE, DEFAULT_MAX_CPS,
 )
 from app.utils.srt import segments_to_srt, segments_to_vtt, segments_to_json
 from app.services.cleanup import cleanup_old_files

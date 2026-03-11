@@ -1,7 +1,6 @@
 """WebSocket endpoint for real-time task updates (replaces SSE for supported clients)."""
 
 import asyncio
-import json
 import logging
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect

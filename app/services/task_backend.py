@@ -11,7 +11,6 @@ import logging
 import threading
 from abc import ABC, abstractmethod
 
-from app.config import TASK_HISTORY_FILE, MAX_TASK_HISTORY
 
 logger = logging.getLogger("subtitle-generator")
 

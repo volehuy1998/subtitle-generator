@@ -1,11 +1,10 @@
 # Set thread counts for CPU performance BEFORE any library imports
 import os
+from pathlib import Path
 
 CPU_COUNT = os.cpu_count() or 4
 os.environ.setdefault("OMP_NUM_THREADS", str(CPU_COUNT))
 os.environ.setdefault("MKL_NUM_THREADS", str(CPU_COUNT))
-
-from pathlib import Path
 
 # --- Paths ---
 BASE_DIR = Path(__file__).parent.parent  # project root

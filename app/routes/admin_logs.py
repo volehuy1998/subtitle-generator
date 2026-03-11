@@ -7,7 +7,6 @@ import json
 import logging
 import re
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, Query

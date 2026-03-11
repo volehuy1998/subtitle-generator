@@ -11,9 +11,7 @@ Tests cover:
   - Error/loading states
 """
 
-from pathlib import Path
 
-import pytest
 from app.main import app
 from fastapi.testclient import TestClient
 
@@ -273,10 +271,8 @@ class TestEmbedColorConversion:
 
     def test_hex_to_ass_conversion(self):
         """Route should convert #RRGGBB to &HBBGGRR."""
-        from app.routes.embed import embed_subtitles
         # The conversion logic is in the route handler
         # Just verify the route module loads
-        import app.routes.embed
         assert True
 
 

@@ -4,8 +4,6 @@ Provides Redis-compatible cache/session interface, worker management,
 connection pool configuration, and task queue abstractions.
 """
 
-import hashlib
-import json
 import logging
 import os
 import time

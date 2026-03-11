@@ -7,8 +7,6 @@ S15-4: Share link info
 S15-5: Integration tests
 """
 
-import tempfile
-from pathlib import Path
 
 from app.main import app
 from app import state

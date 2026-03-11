@@ -3,7 +3,6 @@
 import asyncio
 import logging
 import uuid
-from pathlib import Path
 from typing import Literal, Optional
 
 import torch
@@ -55,7 +54,7 @@ async def upload(
     ext = validate_file_extension(file.filename or "")
     if ext is None:
         logger.warning(f"UPLOAD Rejected: unsupported extension for '{file.filename}'")
-        raise HTTPException(400, f"Unsupported format. Allowed: .mp4, .mkv, .avi, .webm, .mov, .mp3, .wav, .flac")
+        raise HTTPException(400, "Unsupported format. Allowed: .mp4, .mkv, .avi, .webm, .mov, .mp3, .wav, .flac")
 
     # Device fallback
     if device == "cuda" and not torch.cuda.is_available():

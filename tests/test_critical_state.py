@@ -871,7 +871,6 @@ class TestForceAbortActiveTasks:
 
     def test_sets_cancel_requested_on_active_tasks(self):
         """All active tasks get cancel_requested=True."""
-        import threading
         state.tasks["t1"] = {"status": "transcribing", "percent": 50, "message": "Working"}
         state.tasks["t2"] = {"status": "extracting", "percent": 10, "message": "Extracting"}
         state.tasks["t3"] = {"status": "done", "percent": 100, "message": "Done"}

@@ -16,10 +16,9 @@ import logging
 import re
 import subprocess
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
-from app.config import OUTPUT_DIR
 from app.logging_setup import log_task_event
 from app.utils.media import FFMPEG_PROTOCOL_WHITELIST, FFMPEG_TIMEOUT
 
@@ -72,7 +71,7 @@ class SubtitleStyle:
             f"Shadow={self.shadow_offset}",
             f"Alignment={alignment}",
             f"MarginV={self.margin_v}",
-            f"BorderStyle=3" if self.background_opacity > 0 else "BorderStyle=1",
+            "BorderStyle=3" if self.background_opacity > 0 else "BorderStyle=1",
         ]
         return ",".join(parts)
 

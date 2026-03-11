@@ -5,7 +5,6 @@ and time-series data. In-memory counters in analytics.py remain the
 hot-path for reads; this module handles durable writes.
 """
 
-import asyncio
 import json
 import logging
 from datetime import datetime, timezone, timedelta

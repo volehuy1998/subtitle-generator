@@ -306,7 +306,6 @@ def run_benchmark(sample_file):
     for model in MODELS:
         for device in DEVICES:
             run_num += 1
-            combo_label = "%s/%s" % (model, device)
             print("-" * 70)
             print("[%d/%d] Running: model=%s  device=%s" % (run_num, total_runs, model, device))
             print("-" * 70)

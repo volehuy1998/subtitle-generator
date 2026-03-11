@@ -8,7 +8,6 @@ Falls back to JSONL file when database is unreachable.
 import json
 import logging
 import time
-from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 

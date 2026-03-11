@@ -13,7 +13,6 @@ Tests:
 import argparse
 import json
 import statistics
-import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib import request, error

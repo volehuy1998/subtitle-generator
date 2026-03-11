@@ -11,13 +11,12 @@ S8-8: Frontend advanced options (tested via endpoint param acceptance)
 S8-9: Integration tests
 """
 
-import time
 from pathlib import Path
 
 from app.main import app
 from app.services.analytics import (
     record_upload, record_completion, record_failure, record_cancellation,
-    get_summary, get_timeseries, save_analytics_snapshot, load_analytics_snapshot,
+    get_timeseries, save_analytics_snapshot, load_analytics_snapshot,
     _counters, _language_counts, _model_counts, _device_counts,
     _processing_times, _timeseries, _lock,
 )

@@ -14,7 +14,6 @@ import threading
 import time
 from collections import defaultdict, deque
 from datetime import datetime, timezone
-from pathlib import Path
 
 from app.config import LOG_DIR
 

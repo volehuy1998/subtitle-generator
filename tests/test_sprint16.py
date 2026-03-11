@@ -10,8 +10,6 @@ S16-7: Integration tests
 """
 
 import os
-import tempfile
-import time
 from pathlib import Path
 from unittest.mock import patch
 
@@ -94,7 +92,7 @@ class TestAuditLogging:
             from app.middleware import auth
             auth._api_keys = None
             try:
-                res = client.get("/upload", headers={"X-API-Key": "wrong-key"})
+                client.get("/upload", headers={"X-API-Key": "wrong-key"})
                 # Should get 403 or 405 (method not allowed if GET on POST-only route)
                 events = get_recent_audit_events(100)
                 auth_failures = [e for e in events if e["event"] == "auth_failure"]
@@ -140,7 +138,7 @@ class TestBodySizeLimit:
         assert res.status_code == 200
 
     def test_body_limit_middleware_exists(self):
-        from app.middleware.body_limit import BodyLimitMiddleware, API_BODY_LIMIT
+        from app.middleware.body_limit import API_BODY_LIMIT
         assert API_BODY_LIMIT == 1 * 1024 * 1024  # 1 MB
 
     def test_large_content_length_rejected(self):
@@ -272,7 +270,7 @@ class TestSecurityAuditEndpoint:
 
     def test_audit_endpoint_records_access(self):
         _cleanup_audit()
-        res = client.get("/security/audit")
+        client.get("/security/audit")
         events = get_recent_audit_events(10)
         access_events = [e for e in events if e["event"] == "audit_accessed"]
         assert len(access_events) >= 1

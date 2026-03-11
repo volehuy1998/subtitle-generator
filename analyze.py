@@ -131,7 +131,6 @@ def analyze_task(task_id: str):
     upload = by_event.get("upload", [{}])[0]
     summary = by_event.get("pipeline_summary", [{}])[0]
     tx_profile = by_event.get("transcription_profile", [{}])[0]
-    tx_complete = by_event.get("transcription_complete", [{}])[0]
     resource_mon = by_event.get("resource_monitor", [{}])[0]
 
     header(f"TASK ANALYSIS: {task_id[:8]}...")
@@ -192,18 +191,18 @@ def analyze_task(task_id: str):
         print(f"  Mel Frames:       {tx_profile.get('total_mel_frames', '?')}")
 
         if "seg_duration_avg" in tx_profile:
-            print(f"\n  Segment Duration:")
+            print("\n  Segment Duration:")
             print(f"    Average:        {tx_profile['seg_duration_avg']:.2f}s")
             print(f"    Min:            {tx_profile.get('seg_duration_min', '?')}s")
             print(f"    Max:            {tx_profile.get('seg_duration_max', '?')}s")
 
         if "seg_text_avg_chars" in tx_profile:
-            print(f"\n  Text Output:")
+            print("\n  Text Output:")
             print(f"    Avg chars/seg:  {tx_profile['seg_text_avg_chars']:.0f}")
             print(f"    Total chars:    {tx_profile.get('seg_text_total_chars', '?')}")
 
         if "speed_mean_x" in tx_profile:
-            print(f"\n  Throughput Stability:")
+            print("\n  Throughput Stability:")
             print(f"    Mean speed:     {tx_profile['speed_mean_x']}x")
             print(f"    Speed range:    {tx_profile.get('speed_min_x', '?')}x -- {tx_profile.get('speed_max_x', '?')}x")
             print(f"    Std deviation:  {tx_profile.get('speed_std_x', '?')}x")
@@ -216,14 +215,14 @@ def analyze_task(task_id: str):
         header("RESOURCE MONITORING")
         print(f"\n  Samples:          {resource_mon['sample_count']}")
         print(f"  Duration:         {fmt_time(resource_mon.get('duration_sec', 0))}")
-        print(f"\n  CPU:")
+        print("\n  CPU:")
         print(f"    Average:        {resource_mon.get('cpu_avg_percent', '?')}%")
         print(f"    Peak:           {resource_mon.get('cpu_peak_percent', '?')}%")
-        print(f"\n  RAM (process):")
+        print("\n  RAM (process):")
         print(f"    Average:        {resource_mon.get('ram_avg_mb', '?')}MB")
         print(f"    Peak:           {resource_mon.get('ram_peak_mb', '?')}MB")
         if resource_mon.get("gpu_peak_mb"):
-            print(f"\n  GPU VRAM:")
+            print("\n  GPU VRAM:")
             print(f"    Average:        {resource_mon.get('gpu_avg_mb', '?')}MB")
             print(f"    Peak:           {resource_mon.get('gpu_peak_mb', '?')}MB")
 
@@ -236,18 +235,18 @@ def analyze_task(task_id: str):
         print(f"\n  Biggest bottleneck: {bottleneck[0]} ({pct:.1f}% of total)")
 
         if bottleneck[0] == "model_load" and pct > 30:
-            print(f"  -> Model loading is dominant. For repeated use, the model")
-            print(f"    stays cached. First run is slower due to download/load.")
+            print("  -> Model loading is dominant. For repeated use, the model")
+            print("    stays cached. First run is slower due to download/load.")
         elif bottleneck[0] == "transcribe":
             audio_dur = summary.get("audio_duration_sec", 0)
             speed = audio_dur / bottleneck[1] if bottleneck[1] > 0 else 0
             print(f"  -> Transcription speed: {speed:.1f}x realtime")
             if upload.get("device", "").lower() == "cpu":
-                print(f"  -> Consider using GPU (CUDA) for faster transcription")
+                print("  -> Consider using GPU (CUDA) for faster transcription")
             if upload.get("model", "") in ("large", "medium"):
-                print(f"  -> Smaller model (tiny/base) is faster but less accurate")
+                print("  -> Smaller model (tiny/base) is faster but less accurate")
         elif bottleneck[0] == "extract_audio" and pct > 20:
-            print(f"  -> Audio extraction is slow -- large video or complex codec")
+            print("  -> Audio extraction is slow -- large video or complex codec")
 
         # Overhead percentage (non-transcription time)
         overhead = total_time - step_timings.get("transcribe", 0)
@@ -256,12 +255,6 @@ def analyze_task(task_id: str):
         print(f"  Pure transcription: {fmt_time(step_timings.get('transcribe', 0))} ({100-overhead_pct:.1f}%)")
 
     # ── Per-Segment Details ──
-    seg_events = sorted(
-        [e for e in events if e["event"].startswith("step_") is False
-         and "seg_duration" in str(e)],
-        key=lambda x: x.get("timestamp", "")
-    )
-
     # Load segment info from app.log SEG lines
     segments_from_log = load_segments_from_applog(task_id[:8])
     if segments_from_log:

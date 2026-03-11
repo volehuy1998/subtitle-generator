@@ -5,11 +5,9 @@ and error message sanitization.
 """
 
 import hashlib
-import os
 import re
 import unicodedata
 from pathlib import Path
-from typing import Optional
 
 from app.config import UPLOAD_DIR, OUTPUT_DIR, LOG_DIR
 

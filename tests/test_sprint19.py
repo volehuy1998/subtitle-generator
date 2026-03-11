@@ -12,10 +12,7 @@ Tests cover:
 
 import asyncio
 import json
-import time
-from datetime import datetime, timezone
 
-import pytest
 
 from app.main import app
 from fastapi.testclient import TestClient

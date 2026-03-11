@@ -3,15 +3,16 @@
 Handles user registration, login, JWT token management, and API key operations.
 """
 
+import base64
 import hashlib
 import hmac
 import json
 import logging
+import os
 import secrets
 import time
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-import base64
 
 from sqlalchemy import select, and_
 
@@ -21,7 +22,6 @@ from app.db.models import UserRecord, ApiKeyRecord
 logger = logging.getLogger("subtitle-generator")
 
 # JWT secret (generated at startup, configurable via env)
-import os
 JWT_SECRET = os.environ.get("JWT_SECRET", secrets.token_hex(32))
 JWT_ALGORITHM = "HS256"
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("JWT_ACCESS_EXPIRE_MINUTES", "60"))

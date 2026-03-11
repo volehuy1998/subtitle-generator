@@ -6,7 +6,6 @@ import subprocess
 import time
 from pathlib import Path
 
-from app.utils.formatting import format_bytes
 
 logger = logging.getLogger("subtitle-generator")
 

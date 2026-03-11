@@ -7,12 +7,9 @@ S7-4: Release v1.0 with changelog
 S7-5: Performance benchmarks
 """
 
-import json
-import tempfile
 from pathlib import Path
 
 from app.main import app
-from app.config import LOG_DIR
 from fastapi.testclient import TestClient
 
 client = TestClient(app)

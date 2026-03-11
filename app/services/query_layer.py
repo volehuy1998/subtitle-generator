@@ -7,11 +7,9 @@ retention enforcement, and bulk export.
 import asyncio
 import csv
 import io
-import json
 import logging
 import time
 from datetime import datetime, timedelta, timezone
-from typing import Optional
 
 from sqlalchemy import select, func, and_, or_, desc, asc, text
 

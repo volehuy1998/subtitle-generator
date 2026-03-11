@@ -7,7 +7,7 @@ import uuid
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 
-from app.logging_setup import set_request_id, get_request_id, log_task_event
+from app.logging_setup import set_request_id
 from app.services.analytics import record_request
 
 logger = logging.getLogger("subtitle-generator")

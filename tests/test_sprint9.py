@@ -15,8 +15,7 @@ from pathlib import Path
 
 from app.main import app
 from app.services.analytics import (
-    record_upload, record_completion, record_failure, record_cancellation,
-    get_summary, get_timeseries, _counters, _language_counts, _timeseries, _lock,
+    record_upload, record_completion, record_failure, get_summary, get_timeseries, _counters, _language_counts, _timeseries, _lock,
 )
 from fastapi.testclient import TestClient
 

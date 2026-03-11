@@ -5,7 +5,6 @@ and health dashboard endpoints.
 """
 
 import logging
-from typing import Optional
 
 from fastapi import APIRouter, Query
 

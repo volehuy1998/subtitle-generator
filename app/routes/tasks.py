@@ -1,15 +1,11 @@
 """Task queue, history, retry, and management routes."""
 
-import asyncio
-import hashlib
 import logging
 import uuid
-from typing import Optional
 
 from fastapi import APIRouter, Request, Query, HTTPException
 
 from app import state
-from app.config import OUTPUT_DIR
 
 logger = logging.getLogger("subtitle-generator")
 router = APIRouter(tags=["Tasks"])

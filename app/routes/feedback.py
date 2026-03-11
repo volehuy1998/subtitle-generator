@@ -4,7 +4,7 @@ import json
 import logging
 import time
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from pydantic import BaseModel, Field
 from sqlalchemy import select, func
 

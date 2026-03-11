@@ -13,7 +13,6 @@ Provides configurable log sinks:
 import json
 import logging
 import logging.handlers
-import os
 import re
 import sys
 import threading

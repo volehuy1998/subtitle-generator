@@ -22,7 +22,7 @@ logger = logging.getLogger("subtitle-generator")
 # Check if pyannote is available
 _pyannote_available = False
 try:
-    from pyannote.audio import Pipeline as PyannotePipeline
+    from pyannote.audio import Pipeline as PyannotePipeline  # noqa: F401
     _pyannote_available = True
 except ImportError:
     pass
@@ -168,8 +168,6 @@ def assign_speakers_to_segments(segments: list, speaker_turns: list) -> list:
     for seg in segments:
         seg_start = seg["start"]
         seg_end = seg["end"]
-        seg_mid = (seg_start + seg_end) / 2
-
         best_speaker = "UNKNOWN"
         best_overlap = 0
 

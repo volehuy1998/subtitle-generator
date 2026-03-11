@@ -8,8 +8,6 @@ Two translation modes:
 """
 
 import logging
-import time
-from pathlib import Path
 
 from app.logging_setup import log_task_event
 

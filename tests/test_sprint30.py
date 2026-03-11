@@ -6,11 +6,9 @@ Tests cover:
   - Phase 3: Quick embed (no re-upload) + video preservation
 """
 
-import json
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-import pytest
 from app.main import app
 from fastapi.testclient import TestClient
 
@@ -307,7 +305,6 @@ class TestVideoPreservation:
         """Verify that process_video sets is_video on the task."""
         from app import state
         from app.services.pipeline import process_video
-        import threading
 
         # We can't run the full pipeline without ffmpeg, but we can verify the flag is set
         task_id = "test-is-video-flag"
@@ -642,7 +639,7 @@ class TestHealthStatusAccuracy:
         _status_cache["expires"] = 0.0
 
         # First call populates cache
-        data1 = client.get("/api/status").json()
+        client.get("/api/status").json()
         assert _status_cache["data"] is not None
         # Cache should expire within 1 second
         import time

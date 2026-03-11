@@ -7,7 +7,7 @@ import traceback
 from pathlib import Path
 
 from app import state
-from app.config import OUTPUT_DIR, MAX_AUDIO_DURATION, UPLOAD_DIR
+from app.config import OUTPUT_DIR, MAX_AUDIO_DURATION
 from app.exceptions import CancelledError, CriticalAbortError
 from app.logging_setup import log_task_event
 from app.services.gpu import check_vram_for_model

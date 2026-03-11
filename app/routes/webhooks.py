@@ -1,6 +1,5 @@
 """Webhook callback management for task completion notifications."""
 
-import asyncio
 import ipaddress
 import logging
 import socket
@@ -8,7 +7,7 @@ from typing import Optional
 from urllib.parse import urlparse
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel
 
 from app import state
 

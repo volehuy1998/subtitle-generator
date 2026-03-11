@@ -44,7 +44,7 @@ async def task_events_sse(task_id: str):
                 if etype in ("embed_done", "embed_error"):
                     break
             except (asyncio.TimeoutError, Exception):
-                yield f"event: heartbeat\ndata: {{}}\n\n"
+                yield "event: heartbeat\ndata: {}\n\n"
                 task = state.tasks.get(task_id, {})
                 status = task.get("status")
                 # Only close if terminal AND no embed running

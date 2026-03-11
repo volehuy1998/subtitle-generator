@@ -10,15 +10,14 @@ S5-7: Load testing (script existence)
 """
 
 import os
-from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
 
 from app.main import app
 from app import state
 from app.middleware.auth import (
-    _get_api_keys, is_auth_enabled, validate_api_key,
-    ApiKeyMiddleware, PUBLIC_PATHS, _api_keys,
+    is_auth_enabled, validate_api_key,
+    PUBLIC_PATHS,
 )
 from fastapi.testclient import TestClient
 

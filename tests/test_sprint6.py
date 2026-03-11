@@ -7,9 +7,7 @@ S6-4: WebSocket real-time updates
 S6-5: User session management and task ownership
 """
 
-import json
 from io import BytesIO
-from pathlib import Path
 
 from app.main import app
 from app import state
@@ -17,7 +15,7 @@ from app.services.translation import (
     get_whisper_translate_options, translate_segments, is_translation_available,
 )
 from app.services.transcription import get_optimal_transcribe_options
-from app.middleware.session import SESSION_COOKIE, get_session_id
+from app.middleware.session import SESSION_COOKIE
 from fastapi.testclient import TestClient
 
 client = TestClient(app)

@@ -1,7 +1,5 @@
 """Subtitle formatting utilities: line-breaking, CPS validation, word-level rendering."""
 
-import re
-from typing import Optional
 
 
 # Default constraints

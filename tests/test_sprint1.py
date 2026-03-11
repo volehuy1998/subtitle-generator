@@ -1,10 +1,6 @@
 """Tests for Sprint 1 features: multi-language, VTT format, task persistence, error handling."""
 
-import json
-import tempfile
 from io import BytesIO
-from pathlib import Path
-from unittest.mock import patch
 
 from app.config import SUPPORTED_LANGUAGES
 from app.main import app
@@ -107,7 +103,7 @@ class TestVttFormat:
         # Each segment: number, timestamp, text, blank line
         # Plus header (WEBVTT) and blank line = 2 + 4*3 = 14 lines
         lines = result.split("\n")
-        segment_numbers = [l for l in lines if l.strip().isdigit()]
+        segment_numbers = [line for line in lines if line.strip().isdigit()]
         assert len(segment_numbers) == 3
 
     def test_vtt_uses_dot_separator(self):

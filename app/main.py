@@ -152,7 +152,6 @@ async def lifespan(app: FastAPI):
         pass
 
     # Close main DB
-    from app.db.engine import close_db
     await close_db()
 
     logger.info("SHUTDOWN Complete")

@@ -184,7 +184,6 @@ def _compute_tuning(caps: dict) -> dict:
     gpu = caps["gpu"]
 
     physical = cpu["physical_cores"]
-    logical = cpu["logical_cores"]
     ram_gb = mem["total_gb"]
 
     # OMP threads: use physical cores for transcription, leave some for system
@@ -273,7 +272,7 @@ def log_capabilities(caps: dict):
     logger.info(f"PyTorch:         {sw['pytorch']}")
     logger.info(f"faster-whisper:  {sw['faster_whisper']}")
     logger.info("-" * 70)
-    logger.info(f"TUNING:")
+    logger.info("TUNING:")
     logger.info(f"  OMP threads:   {tune['omp_threads']}")
     logger.info(f"  Max tasks:     {tune['max_concurrent_tasks']}")
     logger.info(f"  Device:        {tune['recommended_device']}")

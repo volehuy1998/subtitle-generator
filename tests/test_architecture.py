@@ -4,12 +4,9 @@ import json
 
 from app.main import app
 from app import state
-from app.config import OUTPUT_DIR
 from app.services.system_capability import detect_system_capabilities, _compute_tuning
 from app.services.subtitle_embed import SubtitleStyle, STYLE_PRESETS
 from app.logging_setup import set_request_id, get_request_id, JsonFormatter
-from app.routes.subtitles import _parse_srt
-from app.utils.srt import segments_to_srt
 from fastapi.testclient import TestClient
 
 import logging

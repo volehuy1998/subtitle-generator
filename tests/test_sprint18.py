@@ -14,11 +14,7 @@ S18-10: Tests
 
 import asyncio
 import json
-from datetime import datetime, timezone
-from pathlib import Path
-from unittest.mock import patch, MagicMock
 
-import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -453,7 +449,7 @@ class TestDBPersistence:
 
 class TestIntegration:
     def test_db_package_imports(self):
-        from app.db import Base, TaskRecord, SessionRecord, get_engine, get_session, init_db, close_db
+        from app.db import Base, TaskRecord, SessionRecord
         assert Base is not None
         assert TaskRecord is not None
         assert SessionRecord is not None
@@ -486,7 +482,6 @@ class TestIntegration:
         from app.db.task_backend_db import DatabaseTaskBackend
         from app.db.engine import init_db
         from app.db.models import TaskRecord
-        from sqlalchemy import select
 
         run_async(init_db())
         backend = DatabaseTaskBackend()

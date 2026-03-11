@@ -10,16 +10,9 @@ Tracks:
 - Aggregated statistics and summaries
 """
 
-import json
 import logging
-import os
-import platform
-import sys
 import time
 import threading
-from collections import defaultdict
-from datetime import datetime
-from pathlib import Path
 
 import psutil
 import torch
@@ -468,19 +461,19 @@ class PipelineSummary:
         logger.info(f"  Audio:      {self.audio_duration:.1f}s ({format_bytes_simple(self.audio_size)})")
         logger.info(f"  Model:      {self.model_size} on {self.device.upper()}")
         logger.info(f"  Total time: {total:.2f}s")
-        logger.info(f"  Breakdown:")
+        logger.info("  Breakdown:")
         for name, dur in self.step_timings.items():
             pct = dur / total * 100 if total > 0 else 0
             bar = "#" * int(pct / 2) + "." * (50 - int(pct / 2))
             logger.info(f"    {name:20s} {dur:8.3f}s ({pct:5.1f}%) [{bar}]")
         if self.transcription_summary:
             ts = self.transcription_summary
-            logger.info(f"  Transcription:")
+            logger.info("  Transcription:")
             logger.info(f"    Segments:     {ts.get('total_segments', '?')}")
             logger.info(f"    Speed:        {ts.get('overall_speed_x', '?')}x realtime")
             if "speed_mean_x" in ts:
                 logger.info(f"    Speed range:  {ts['speed_min_x']}x - {ts['speed_max_x']}x (avg={ts['speed_mean_x']}x, cv={ts['speed_cv']})")
-        logger.info(f"  Resources:")
+        logger.info("  Resources:")
         logger.info(f"    RAM:  {self.start_snap.get('proc_rss_mb', '?')}MB -> {end_snap.get('proc_rss_mb', '?')}MB")
         if "gpu_allocated_mb" in end_snap:
             logger.info(f"    VRAM: {self.start_snap.get('gpu_allocated_mb', '?')}MB -> {end_snap.get('gpu_allocated_mb', '?')}MB")

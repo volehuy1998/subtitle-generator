@@ -9,10 +9,6 @@ S17-6: SQLite analytics persistence
 S17-7: Integration tests
 """
 
-import os
-import tempfile
-from pathlib import Path
-from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
@@ -33,13 +29,11 @@ from app.services.worker_health import (
     cleanup_dead_workers,
 )
 from app.services.analytics_db import (
-    _get_conn,
     record_event,
     update_daily_stats,
     get_daily_stats,
     get_event_count,
     get_db_info,
-    close,
 )
 
 client = TestClient(app)
@@ -290,7 +284,7 @@ class TestScaleIntegration:
         assert InMemoryTaskBackend is not None
 
     def test_storage_importable(self):
-        from app.services.storage import StorageAdapter, LocalStorageAdapter
+        from app.services.storage import StorageAdapter
         assert StorageAdapter is not None
         assert LocalStorageAdapter is not None
 
