@@ -2270,15 +2270,16 @@
             $('editorSearch').value = '';
             editorPage = Math.floor((n - 1) / EDITOR_PAGE_SIZE);
             renderEditor();
-            // Highlight the target segment
+            // Highlight and scroll within the editor body only (never touch window scroll)
             setTimeout(function() {
-                var items = $('editorBody').querySelectorAll('.editor-segment');
-                var offset = editorPage * EDITOR_PAGE_SIZE;
-                var localIdx = (n - 1) - offset;
+                var body = $('editorBody');
+                var items = body.querySelectorAll('.editor-segment');
+                var localIdx = (n - 1) - (editorPage * EDITOR_PAGE_SIZE);
                 if (items[localIdx]) {
-                    items[localIdx].scrollIntoView({ block: 'center' });
-                    items[localIdx].style.outline = '2px solid var(--primary)';
-                    setTimeout(function() { items[localIdx].style.outline = ''; }, 1500);
+                    var el = items[localIdx];
+                    body.scrollTop = el.offsetTop - body.clientHeight / 2 + el.clientHeight / 2;
+                    el.style.outline = '2px solid var(--primary)';
+                    setTimeout(function() { el.style.outline = ''; }, 1500);
                 }
             }, 50);
         }
