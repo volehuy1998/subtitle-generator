@@ -131,27 +131,6 @@
         .upload-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         /* Advanced toggle */
-        .adv-toggle-row { margin-top: 12px; text-align: center; }
-        .adv-toggle-btn {
-            background: none; border: 1px solid var(--border); color: var(--text-3);
-            padding: 5px 14px; border-radius: 20px; font-size: 0.78rem; cursor: pointer;
-            font-family: inherit; transition: all 0.15s;
-        }
-        .adv-toggle-btn:hover { border-color: var(--border-2); color: var(--text-2); }
-        .advanced-panel {
-            display: none; margin-top: 12px; padding: 14px; border-radius: var(--radius-sm);
-            background: var(--surface-2); border: 1px solid var(--border);
-        }
-        .advanced-panel.show { display: block; }
-        .adv-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; font-size: 0.82rem; }
-        .adv-row:last-child { margin-bottom: 0; }
-        .adv-label { color: var(--text-2); min-width: 130px; font-size: 0.8rem; }
-        .adv-check { accent-color: var(--primary); width: 15px; height: 15px; cursor: pointer; }
-        .adv-input {
-            background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-xs);
-            padding: 5px 8px; color: var(--text); font-size: 0.82rem; flex: 1; font-family: inherit; outline: none;
-        }
-        .adv-input:focus { border-color: var(--primary); }
 
         /* ── Progress view ── */
         #progressView { display: none; }
@@ -621,38 +600,6 @@
                     <!-- Batch queue -->
                     <div class="batch-queue" id="batchQueue"></div>
 
-                    <!-- Advanced -->
-                    <div class="adv-toggle-row" id="advancedToggle">
-                        <button class="adv-toggle-btn" onclick="toggleAdvanced()">Advanced options &#9660;</button>
-                    </div>
-                    <div class="advanced-panel" id="advancedPanel">
-                        <div class="adv-row">
-                            <label class="adv-label"><input type="checkbox" class="adv-check" id="advWordTimestamps"> Word timestamps</label>
-                        </div>
-                        <div class="adv-row">
-                            <label class="adv-label"><input type="checkbox" class="adv-check" id="advDiarize"> Speaker diarization</label>
-                        </div>
-                        <div class="adv-row">
-                            <label class="adv-label"><input type="checkbox" class="adv-check" id="advTranslate"> Translate to English</label>
-                        </div>
-                        <div class="adv-row">
-                            <span class="adv-label">Vocabulary hints</span>
-                            <input type="text" class="adv-input" id="advVocabulary" placeholder="Domain-specific terms, word1, word2, ...">
-                        </div>
-                        <div class="adv-row">
-                            <span class="adv-label">Max chars/line</span>
-                            <input type="range" id="advMaxChars" min="20" max="80" value="42" style="flex:1;accent-color:var(--primary)">
-                            <span id="advMaxCharsValue" style="font-size:0.78rem;color:var(--text-3);min-width:28px">42</span>
-                        </div>
-                        <div class="adv-row">
-                            <span class="adv-label">Auto embed</span>
-                            <select class="adv-input" id="advAutoEmbed" style="flex:1">
-                                <option value="">Disabled</option>
-                                <option value="soft">Soft mux (fast)</option>
-                                <option value="hard">Hard burn</option>
-                            </select>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Standalone embed form -->
@@ -1181,13 +1128,6 @@
         });
         updateModelInfo(selectedModel);
 
-        // ── Advanced Options ──
-        function toggleAdvanced() {
-            $('advancedPanel').classList.toggle('show');
-        }
-        $('advMaxChars').addEventListener('input', function() {
-            $('advMaxCharsValue').textContent = this.value;
-        });
 
         // ── Form State Persistence ──
         function saveFormState() {
@@ -1196,12 +1136,6 @@
                 model: selectedModel,
                 format: selectedFormat,
                 language: languageSelect.value,
-                wordTimestamps: $('advWordTimestamps').checked,
-                diarize: $('advDiarize').checked,
-                translate: $('advTranslate').checked,
-                vocabulary: $('advVocabulary').value,
-                maxChars: $('advMaxChars').value,
-                autoEmbed: $('advAutoEmbed').value
             };
             sessionStorage.setItem('sg_formState', JSON.stringify(state));
         }
@@ -1239,13 +1173,6 @@
             if (state.language && languageSelect.querySelector('option[value="' + state.language + '"]')) {
                 languageSelect.value = state.language;
             }
-            // Restore advanced options
-            if (state.wordTimestamps !== undefined) $('advWordTimestamps').checked = state.wordTimestamps;
-            if (state.diarize !== undefined) $('advDiarize').checked = state.diarize;
-            if (state.translate !== undefined) $('advTranslate').checked = state.translate;
-            if (state.vocabulary !== undefined) $('advVocabulary').value = state.vocabulary;
-            if (state.maxChars !== undefined) { $('advMaxChars').value = state.maxChars; $('advMaxCharsValue').textContent = state.maxChars; }
-            if (state.autoEmbed !== undefined) $('advAutoEmbed').value = state.autoEmbed;
         }
         // Restore form state on page load (after languages loaded)
         languagesReady.then(function() { restoreFormState(); }).catch(function() { restoreFormState(); });
@@ -1373,15 +1300,6 @@
             fd.append('device', selectedDevice);
             fd.append('model_size', selectedModel);
             fd.append('language', languageSelect.value);
-            // Advanced options
-            if ($('advWordTimestamps').checked) fd.append('word_timestamps', 'true');
-            if ($('advDiarize').checked) fd.append('diarize', 'true');
-            if ($('advTranslate').checked) fd.append('translate_to_english', 'true');
-            const vocab = $('advVocabulary').value.trim();
-            if (vocab) fd.append('initial_prompt', vocab);
-            fd.append('max_line_chars', $('advMaxChars').value);
-            const autoEmbed = $('advAutoEmbed').value;
-            if (autoEmbed) fd.append('auto_embed', autoEmbed);
 
             // Switch input card to progress view
             $('transcribeForm').style.display = 'none';
