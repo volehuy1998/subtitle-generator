@@ -339,13 +339,6 @@
 
         /* ── Subtitle editor ── */
 
-        /* ── Video preview ── */
-        .video-preview-section { display: none; margin-top: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
-        .video-preview-header { padding: 10px 14px; background: var(--surface-2); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
-        .video-preview-title { font-size: 0.82rem; font-weight: 600; color: var(--text); }
-        .video-preview-body { position: relative; background: #000; }
-        video { width: 100%; max-height: 280px; display: block; }
-        track {}
 
 
         /* ── Task queue (bottom-left fixed panel) ── */
@@ -815,24 +808,6 @@
 
                 </div>
 
-                <!-- Video preview -->
-                <div class="video-preview-section" id="videoPreviewSection">
-                    <div class="video-preview-header">
-                        <span class="video-preview-title">Preview with Subtitles</span>
-                        <button class="new-btn" onclick="closeVideoPreview()" style="font-size:0.75rem;padding:4px 10px">Close</button>
-                    </div>
-                    <div class="video-preview-body">
-                        <video id="videoPlayer" controls crossorigin="anonymous">
-                            <track kind="subtitles" id="subtitleTrack" default>
-                        </video>
-                    </div>
-                    <div style="padding:8px 12px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;">
-                        <label class="new-btn" style="cursor:pointer;font-size:0.75rem;padding:4px 10px">
-                            Load Video
-                            <input type="file" id="videoFileInput" accept="video/*" style="display:none">
-                        </label>
-                    </div>
-                </div>
 
             </div><!-- /.card-body -->
         </div><!-- /.output-card -->
@@ -2595,10 +2570,6 @@
         };
 
         // Track panel opens
-        const _origOpenEditor = openEditor;
-        openEditor = function() { track('view', 'editor_open'); return _origOpenEditor(); };
-        const _origOpenPreview = openVideoPreview;
-        openVideoPreview = function() { track('view', 'preview_open'); return _origOpenPreview(); };
         const _origToggleEmbed = toggleEmbedPanel;
         toggleEmbedPanel = function() { track('view', 'embed_panel_toggle'); return _origToggleEmbed(); };
 
