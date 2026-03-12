@@ -19,11 +19,10 @@
             min-height: 100vh; display: flex; flex-direction: column; align-items: center;
         }
         .page-layout {
-            display: flex; align-items: flex-start; justify-content: center;
-            gap: 16px; width: 100%; max-width: 1040px; padding: 0 12px;
+            width: 100%; max-width: 700px; padding: 0 12px;
             flex: 1;
         }
-        .container { max-width: 700px; width: 100%; padding: 40px 24px; flex-shrink: 0; }
+        .container { width: 100%; padding: 40px 24px; }
         .brand-header { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
         .brand-logo { width: 44px; height: 44px; flex-shrink: 0; }
         .brand-wordmark { display: flex; flex-direction: column; }
@@ -511,10 +510,10 @@
         /* S2-6: Task queue panel */
         /* Task Queue — sidebar next to main content */
         .task-queue-panel {
-            display: block; width: 260px; flex-shrink: 0;
+            position: fixed; top: 20px; right: 20px; width: 260px;
             background: #111; border: 1px solid #222; border-radius: 10px;
-            overflow: hidden; position: sticky; top: 20px; align-self: flex-start;
-            margin-top: 40px;
+            overflow: hidden; z-index: 100;
+            display: flex; flex-direction: column; max-height: calc(100vh - 40px);
         }
         .tq-header {
             display: flex; justify-content: space-between; align-items: center;
@@ -523,7 +522,7 @@
         }
         .tq-title { font-size: 0.8rem; color: #888; font-weight: 600; text-transform: uppercase; }
         .tq-toggle { font-size: 0.75rem; color: #555; transition: transform 0.3s; }
-        .tq-body { max-height: 60vh; overflow-y: auto; }
+        .tq-body { flex: 1; overflow-y: auto; }
         .tq-item {
             display: flex; align-items: center; gap: 10px; padding: 8px 14px;
             border-bottom: 1px solid #1a1a1a; font-size: 0.8rem;
@@ -579,8 +578,8 @@
 
         /* S2-4: Mobile responsive */
         @media (max-width: 1000px) {
-            .page-layout { flex-direction: column; align-items: center; }
-            .task-queue-panel { width: 100%; max-width: 700px; position: static; margin-top: 0; order: -1; }
+            .task-queue-panel { position: static; width: 100%; max-width: 700px;
+                margin: 0 auto; max-height: none; }
         }
         @media (max-width: 600px) {
             body { align-items: flex-start; }
@@ -1129,9 +1128,12 @@
             <div class="cancelled-text">Task was cancelled.</div>
             <button class="new-btn" onclick="resetUI()">Try again</button>
         </div>
+
     </div>
 
-    <!-- Task Queue — sidebar -->
+    </div><!-- /.page-layout -->
+
+    <!-- Task Queue — fixed sidebar -->
     <div class="task-queue-panel" id="taskQueuePanel">
         <div class="tq-header" onclick="toggleTaskQueue()">
             <span class="tq-title">Task Queue</span>
@@ -1139,7 +1141,6 @@
         </div>
         <div class="tq-body" id="tqBody"></div>
     </div>
-    </div><!-- /.page-layout -->
 
     <footer class="site-footer">
         <div class="footer-brand">
@@ -1194,6 +1195,7 @@
         let stepStartedAt = null;
         let activeStepIndex = -1;
         let completedTimings = {}; // {upload: 2.3, extract: 5.1, ...}
+        let pausedElapsed = 0; // accumulated elapsed seconds across pause/resume cycles
 
         function formatStepDuration(sec) {
             if (sec < 10) return sec.toFixed(1) + 's';
@@ -1202,18 +1204,29 @@
             return m + 'm ' + s + 's';
         }
 
-        function startStepTimer(stepIdx) {
-            stopStepTimer();
+        function startStepTimer(stepIdx, resumeFromPaused) {
+            stopStepTimer(true); // silent stop (don't reset pausedElapsed)
+            if (!resumeFromPaused) pausedElapsed = 0;
             activeStepIndex = stepIdx;
             stepStartedAt = Date.now();
             stepTimerInterval = setInterval(function() {
-                var elapsed = (Date.now() - stepStartedAt) / 1000;
+                var elapsed = pausedElapsed + (Date.now() - stepStartedAt) / 1000;
                 if (stepTimeEls[stepIdx]) stepTimeEls[stepIdx].textContent = formatStepDuration(elapsed) + '...';
             }, 100);
         }
 
-        function stopStepTimer() {
-            if (stepTimerInterval) { clearInterval(stepTimerInterval); stepTimerInterval = null; }
+        function stopStepTimer(silent) {
+            if (stepTimerInterval) {
+                // Accumulate elapsed time so resume can continue from here
+                if (stepStartedAt) pausedElapsed += (Date.now() - stepStartedAt) / 1000;
+                clearInterval(stepTimerInterval);
+                stepTimerInterval = null;
+                // Freeze display with current value (no trailing "...")
+                if (activeStepIndex >= 0 && stepTimeEls[activeStepIndex]) {
+                    stepTimeEls[activeStepIndex].textContent = formatStepDuration(pausedElapsed);
+                }
+            }
+            if (!silent) pausedElapsed = 0;
             activeStepIndex = -1;
         }
 
@@ -1729,6 +1742,7 @@
                 statusText.className = 'status-text paused';
                 statusText.textContent = data.message || 'Paused';
                 isPaused = true;
+                stopStepTimer(true);
                 pauseBtn.textContent = 'Resume';
                 pauseBtn.className = 'ctrl-btn btn-resume';
             });
@@ -1736,6 +1750,7 @@
             eventSource.addEventListener('resumed', e => {
                 onSSEData();
                 isPaused = false;
+                startStepTimer(2, true);
                 pauseBtn.textContent = 'Pause';
                 pauseBtn.className = 'ctrl-btn btn-pause';
                 progressBar.className = 'progress-bar active';
@@ -1800,6 +1815,17 @@
                     pauseBtn.textContent = 'Pause'; pauseBtn.className = 'ctrl-btn btn-pause';
                     progressBar.className = 'progress-bar active';
                 }
+            } else if (status === 'paused') {
+                setStep(2, true);
+                progressLabel.textContent = 'Paused';
+                progressPercent.style.color = '#f39c12';
+                progressBar.className = 'progress-bar paused';
+                statusText.className = 'status-text paused';
+                statusText.textContent = data.message || 'Paused';
+                isPaused = true;
+                stopStepTimer(true);
+                controls.style.display = 'flex'; pauseBtn.style.display = 'inline-block';
+                pauseBtn.textContent = 'Resume'; pauseBtn.className = 'ctrl-btn btn-resume';
             } else if (status === 'writing') {
                 setStep(3); startStepTimer(3); progressLabel.textContent = 'Generating subtitles...'; controls.style.display = 'none';
             }
