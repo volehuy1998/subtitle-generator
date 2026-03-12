@@ -638,7 +638,7 @@ class TestHealthStatusAccuracy:
     # ── Case 11: Cache invalidation for real-time ──
 
     def test_cache_ttl_is_1_second(self):
-        """Verify status cache expires after 1 second for real-time updates."""
+        """Verify status cache expires after 3 seconds for real-time updates."""
         from app.routes.health import _status_cache
         _status_cache["data"] = None
         _status_cache["expires"] = 0.0
@@ -646,18 +646,18 @@ class TestHealthStatusAccuracy:
         # First call populates cache
         client.get("/api/status").json()
         assert _status_cache["data"] is not None
-        # Cache should expire within 1 second
+        # Cache should expire within 3 seconds
         import time
-        assert _status_cache["expires"] <= time.time() + 1.1
+        assert _status_cache["expires"] <= time.time() + 3.1
 
-    # ── Case 12: SSE interval is 1 second ──
+    # ── Case 12: SSE interval is 3 seconds ──
 
     def test_sse_interval_is_1_second(self):
-        """Verify SSE pushes every 1 second."""
+        """Verify SSE pushes every 3 seconds."""
         from app.routes.health import health_stream
         import inspect
         source = inspect.getsource(health_stream)
-        assert "asyncio.sleep(1)" in source
+        assert "asyncio.sleep(3)" in source
 
     # ── Case 13: Alerts data passed through correctly ──
 

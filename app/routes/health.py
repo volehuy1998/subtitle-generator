@@ -152,153 +152,162 @@ def _get_status_lock():
     return _status_lock
 
 
+def _blocking_system_stats() -> dict:
+    """Collect all blocking I/O stats in a thread pool worker."""
+    result = {}
+
+    # Disk space
+    try:
+        usage = shutil.disk_usage(str(OUTPUT_DIR))
+        if usage.total == 0:
+            usage = shutil.disk_usage("/")
+        result["disk_free_gb"] = round(usage.free / 1024**3, 1)
+        result["disk_ok"] = result["disk_free_gb"] > 1.0
+        try:
+            result["disk_percent"] = round(usage.used / usage.total * 100)
+        except Exception:
+            result["disk_percent"] = None
+    except Exception:
+        result["disk_free_gb"] = None
+        result["disk_ok"] = False
+        result["disk_percent"] = None
+
+    # ffmpeg
+    result["ffmpeg_ok"] = shutil.which("ffmpeg") is not None
+
+    # CPU/Memory
+    try:
+        import psutil
+        result["cpu_percent"] = psutil.cpu_percent(interval=0)
+        mem = psutil.virtual_memory()
+        result["memory_percent"] = mem.percent
+    except Exception:
+        result["cpu_percent"] = None
+        result["memory_percent"] = None
+
+    # Alerts (uses threading.Lock internally — safe in thread worker)
+    try:
+        from app.services.monitoring import check_alerts
+        alerts = check_alerts()
+        result["alerts"] = alerts
+        result["alert_count"] = len(alerts)
+        result["has_critical"] = any(a.get("severity") == "critical" for a in alerts)
+        result["has_warning"] = any(a.get("severity") == "warning" for a in alerts)
+    except Exception:
+        result["alerts"] = []
+        result["alert_count"] = 0
+        result["has_critical"] = False
+        result["has_warning"] = False
+
+    return result
+
+
 @router.get("/api/status", response_model=SystemStatusResponse)
 async def system_status():
     """Lightweight system status for the frontend health indicator.
 
     Aggregates service health, DB connectivity, alerts, active tasks,
-    and disk space into a single response. Real-time: cached for 1 second.
+    and disk space into a single response. Cached for 3 seconds.
     """
     now = time.time()
     if _status_cache["data"] and now < _status_cache["expires"]:
         return _status_cache["data"]
 
     # Serialize cache fills — only one coroutine recomputes at a time;
-    # others wait and then get the fresh cached value.
+    # all others wait and then return the freshly cached value.
     async with _get_status_lock():
         # Re-check after acquiring lock (another coroutine may have filled it)
         now = time.time()
         if _status_cache["data"] and now < _status_cache["expires"]:
             return _status_cache["data"]
 
-    uptime = round(now - _start_time, 1)
+        uptime = round(now - _start_time, 1)
 
-    # Active tasks
-    active_tasks = sum(
-        1 for t in state.tasks.values()
-        if t.get("status") not in ("done", "error", "cancelled")
-    )
+        # Active tasks (in-memory dict read — no I/O)
+        active_tasks = sum(
+            1 for t in state.tasks.values()
+            if t.get("status") not in ("done", "error", "cancelled")
+        )
 
-    # Disk space — measure OUTPUT_DIR filesystem; fall back to root if total=0
-    disk_percent = None
-    try:
-        usage = shutil.disk_usage(str(OUTPUT_DIR))
-        # Some container filesystems report total=0 for bind mounts; fall back to root
-        if usage.total == 0:
-            usage = shutil.disk_usage("/")
-        disk_free_gb = round(usage.free / 1024**3, 1)
-        disk_ok = disk_free_gb > 1.0
+        # Run all blocking syscalls off the event loop
+        stats = await asyncio.to_thread(_blocking_system_stats)
+
+        # DB connectivity (async — runs normally on event loop)
+        db_ok = True
+        db_latency_ms = None
         try:
-            disk_percent = round(usage.used / usage.total * 100)
+            from app.services.query_layer import check_db_health
+            db_result = await check_db_health()
+            db_ok = db_result.get("status") == "healthy"
+            db_latency_ms = db_result.get("latency_ms")
         except Exception:
-            disk_percent = None
-    except Exception:
-        disk_free_gb = None
-        disk_ok = False
+            db_ok = False
 
-    # Alerts
-    try:
-        from app.services.monitoring import check_alerts
-        alerts = check_alerts()
-        alert_count = len(alerts)
-        has_critical = any(a.get("severity") == "critical" for a in alerts)
-        has_warning = any(a.get("severity") == "warning" for a in alerts)
-    except Exception:
-        alerts = []
-        alert_count = 0
-        has_critical = False
-        has_warning = False
+        # GPU (CUDA calls are fast and non-blocking)
+        gpu_available = False
+        gpu_name = None
+        gpu_vram_total = None
+        gpu_vram_used = None
+        gpu_vram_free = None
+        try:
+            import torch
+            if torch.cuda.is_available():
+                gpu_available = True
+                props = torch.cuda.get_device_properties(0)
+                gpu_name = torch.cuda.get_device_name(0)
+                gpu_vram_total = round(props.total_memory / 1024**3, 1)
+                gpu_vram_used = round(torch.cuda.memory_allocated(0) / 1024**3, 2)
+                gpu_vram_free = round(gpu_vram_total - gpu_vram_used, 2)
+        except Exception:
+            pass
 
-    # DB connectivity
-    db_ok = True
-    db_latency_ms = None
-    try:
-        from app.services.query_layer import check_db_health
-        db_result = await check_db_health()
-        db_ok = db_result.get("status") == "healthy"
-        db_latency_ms = db_result.get("latency_ms")
-    except Exception:
-        db_ok = False
+        # Overall status
+        if stats["has_critical"] or not db_ok or not stats["disk_ok"]:
+            overall = "critical"
+        elif stats["has_warning"] or not stats["ffmpeg_ok"]:
+            overall = "warning"
+        else:
+            overall = "healthy"
 
-    # ffmpeg
-    ffmpeg_ok = shutil.which("ffmpeg") is not None
+        result = {
+            "status": overall,
+            "uptime_sec": uptime,
+            "active_tasks": active_tasks,
+            "max_tasks": MAX_CONCURRENT_TASKS,
+            "cpu_percent": stats["cpu_percent"],
+            "memory_percent": stats["memory_percent"],
+            "disk_free_gb": stats["disk_free_gb"],
+            "disk_percent": stats["disk_percent"],
+            "disk_ok": stats["disk_ok"],
+            "db_ok": db_ok,
+            "db_latency_ms": db_latency_ms,
+            "ffmpeg_ok": stats["ffmpeg_ok"],
+            "gpu_available": gpu_available,
+            "gpu_name": gpu_name,
+            "gpu_vram_total": gpu_vram_total,
+            "gpu_vram_used": gpu_vram_used,
+            "gpu_vram_free": gpu_vram_free,
+            "shutting_down": state.shutting_down,
+            "system_critical": state.system_critical,
+            "system_critical_reasons": state.system_critical_reasons,
+            "alerts": [
+                {"alert": a.get("alert", ""), "severity": a.get("severity", ""), "message": a.get("message", "")}
+                for a in stats["alerts"]
+            ],
+            "alert_count": stats["alert_count"],
+        }
 
-    # CPU/Memory
-    try:
-        import psutil
-        cpu_percent = psutil.cpu_percent(interval=0)
-        mem = psutil.virtual_memory()
-        memory_percent = mem.percent
-    except Exception:
-        cpu_percent = None
-        memory_percent = None
-
-    # GPU
-    gpu_available = False
-    gpu_name = None
-    gpu_vram_total = None
-    gpu_vram_used = None
-    gpu_vram_free = None
-    try:
-        import torch
-        if torch.cuda.is_available():
-            gpu_available = True
-            props = torch.cuda.get_device_properties(0)
-            gpu_name = torch.cuda.get_device_name(0)
-            gpu_vram_total = round(props.total_memory / 1024**3, 1)
-            gpu_vram_used = round(torch.cuda.memory_allocated(0) / 1024**3, 2)
-            gpu_vram_free = round(gpu_vram_total - gpu_vram_used, 2)
-    except Exception:
-        pass
-
-    # Overall status
-    if has_critical or not db_ok or not disk_ok:
-        overall = "critical"
-    elif has_warning or not ffmpeg_ok:
-        overall = "warning"
-    else:
-        overall = "healthy"
-
-    result = {
-        "status": overall,
-        "uptime_sec": uptime,
-        "active_tasks": active_tasks,
-        "max_tasks": MAX_CONCURRENT_TASKS,
-        "cpu_percent": cpu_percent,
-        "memory_percent": memory_percent,
-        "disk_free_gb": disk_free_gb,
-        "disk_percent": disk_percent,
-        "disk_ok": disk_ok,
-        "db_ok": db_ok,
-        "db_latency_ms": db_latency_ms,
-        "ffmpeg_ok": ffmpeg_ok,
-        "gpu_available": gpu_available,
-        "gpu_name": gpu_name,
-        "gpu_vram_total": gpu_vram_total,
-        "gpu_vram_used": gpu_vram_used,
-        "gpu_vram_free": gpu_vram_free,
-        "shutting_down": state.shutting_down,
-        "system_critical": state.system_critical,
-        "system_critical_reasons": state.system_critical_reasons,
-        "alerts": [
-            {"alert": a.get("alert", ""), "severity": a.get("severity", ""), "message": a.get("message", "")}
-            for a in alerts
-        ],
-        "alert_count": alert_count,
-    }
-
-    _status_cache["data"] = result
-    _status_cache["expires"] = now + 3
-    return result
+        _status_cache["data"] = result
+        _status_cache["expires"] = now + 3
+        return result
 
 
 @router.get("/health/stream")
 async def health_stream(request: Request):
     """Server-Sent Events stream for real-time system health updates.
 
-    Pushes health status every 1 second for maximum responsiveness.
-    The SSE connection itself serves as a connectivity signal —
-    if it drops, the client knows immediately.
+    Pushes health status every 3 seconds. The SSE connection itself
+    serves as a connectivity signal — if it drops, the client knows immediately.
     """
     async def event_generator():
         while True:
@@ -309,7 +318,7 @@ async def health_stream(request: Request):
                 yield f"data: {json.dumps(data)}\n\n"
             except Exception as e:
                 yield f"data: {json.dumps({'status': 'error', 'message': str(e)})}\n\n"
-            await asyncio.sleep(1)
+            await asyncio.sleep(3)
             if await request.is_disconnected():
                 break
 
