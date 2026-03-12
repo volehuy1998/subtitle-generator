@@ -314,23 +314,20 @@
         /* Style options */
         .embed-style-opts { display: none; }
         .embed-style-opts.show { display: block; }
-        .embed-section-label { font-size: 0.68rem; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
-        .embed-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+        .embed-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
         .embed-field label { font-size: 0.72rem; color: var(--text-2); font-weight: 500; display: block; margin-bottom: 4px; }
-        .embed-field select, .embed-field input[type="color"] {
-            width: 100%; padding: 5px 8px; border-radius: var(--radius-xs); border: 1.5px solid var(--border);
-            font-size: 0.78rem; background: var(--surface); color: var(--text); font-family: inherit; outline: none;
+        .embed-field input[type="color"] {
+            width: 100%; padding: 3px 4px; height: 32px; border-radius: var(--radius-xs); border: 1.5px solid var(--border);
+            background: var(--surface); cursor: pointer; outline: none;
         }
-        .embed-field select:focus { border-color: var(--primary); }
-        .embed-field input[type="range"] { width: 100%; accent-color: var(--primary); margin-top: 4px; }
-        .embed-field-full { grid-column: 1 / -1; }
+        .embed-field input[type="range"] { width: 100%; accent-color: var(--primary); margin-top: 6px; }
         /* Subtitle preview strip */
         .embed-preview-bar {
-            border-radius: var(--radius-xs); overflow: hidden; margin-bottom: 12px;
+            border-radius: var(--radius-xs); margin-bottom: 12px;
             display: flex; align-items: flex-end; justify-content: center;
-            padding: 10px 12px; background: #111827; min-height: 52px;
+            padding: 8px 12px; background: #111827; min-height: 44px;
         }
-        .embed-preview-text { font-size: 13px; text-align: center; line-height: 1.5; }
+        .embed-preview-text { text-align: center; line-height: 1.4; transition: color 0.1s, font-size 0.1s; }
         /* Action row */
         .embed-actions { display: flex; align-items: center; gap: 10px; }
         .embed-start-btn {
@@ -699,6 +696,16 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- Style (hard burn only) -->
+                        <div id="ceStyleOpts" style="display:none">
+                            <div class="embed-grid">
+                                <div class="embed-field"><label>Color</label><input type="color" id="ceFontColor" value="#ffffff" oninput="ceUpdatePreview()"></div>
+                                <div class="embed-field"><label>Size: <span id="ceSizeVal">24</span>px</label><input type="range" id="ceFontSize" min="12" max="56" value="24" oninput="$('ceSizeVal').textContent=this.value;ceUpdatePreview()"></div>
+                            </div>
+                            <div class="embed-preview-bar" id="cePreviewBar">
+                                <span class="embed-preview-text" id="cePreviewText" style="color:#fff;font-size:13px;">Sample subtitle text</span>
+                            </div>
+                        </div>
                         <!-- Submit -->
                         <button id="ceStartBtn" class="upload-btn" onclick="ceStart()" disabled style="opacity:0.5">Embed &amp; Download</button>
                         <!-- Progress -->
@@ -868,20 +875,12 @@
                             </div>
                             <!-- Style options (hard burn only) -->
                             <div id="embedStyleOpts" class="embed-style-opts">
-                                <div class="embed-section-label">Style</div>
-                                <div class="embed-grid" style="grid-template-columns:1fr; margin-bottom:8px;">
-                                    <div class="embed-field"><label>Preset</label><select id="embedPreset" onchange="applyPreset(this.value);updateEmbedPreview()"><option value="default">Default</option><option value="youtube_white">YouTube White</option><option value="youtube_yellow">YouTube Yellow</option><option value="cinema">Cinema</option><option value="large_bold">Large Bold</option><option value="top_position">Top Position</option></select></div>
-                                </div>
                                 <div class="embed-grid">
-                                    <div class="embed-field"><label>Font</label><select id="embedFont" onchange="updateEmbedPreview()"><option value="Arial">Arial</option><option value="Roboto">Roboto</option><option value="Open Sans">Open Sans</option><option value="Verdana">Verdana</option><option value="Tahoma">Tahoma</option><option value="Courier New">Courier New</option></select></div>
-                                    <div class="embed-field"><label>Position</label><select id="embedPosition" onchange="updateEmbedPreview()"><option value="bottom">Bottom</option><option value="center">Center</option><option value="top">Top</option></select></div>
-                                    <div class="embed-field"><label>Color</label><input type="color" id="embedFontColor" value="#ffffff" onchange="updateEmbedPreview()"></div>
+                                    <div class="embed-field"><label>Color</label><input type="color" id="embedFontColor" value="#ffffff" oninput="updateEmbedPreview()"></div>
                                     <div class="embed-field"><label>Size: <span id="embedSizeVal">24</span>px</label><input type="range" id="embedFontSize" min="12" max="56" value="24" oninput="$('embedSizeVal').textContent=this.value;updateEmbedPreview()"></div>
-                                    <div class="embed-field embed-field-full"><label>Background opacity: <span id="embedBgVal">75</span>%</label><input type="range" id="embedBgOpacity" min="0" max="100" value="75" oninput="$('embedBgVal').textContent=this.value;updateEmbedPreview()"></div>
                                 </div>
-                                <!-- Live preview strip -->
                                 <div class="embed-preview-bar" id="embedPreviewBar">
-                                    <span class="embed-preview-text" id="embedPreviewText" style="color:#fff;font-family:Arial;font-size:13px;">Subtitle preview</span>
+                                    <span class="embed-preview-text" id="embedPreviewText" style="color:#fff;font-size:13px;">Sample subtitle text</span>
                                 </div>
                             </div>
                             <!-- Action -->
@@ -2137,57 +2136,12 @@
             $('embedTabSoft').className = 'embed-mode-card' + (mode === 'soft' ? ' active' : '');
             $('embedTabHard').className = 'embed-mode-card' + (mode === 'hard' ? ' active' : '');
             $('embedStyleOpts').className = 'embed-style-opts' + (mode === 'hard' ? ' show' : '');
-            updateEmbedPreview();
-        }
-
-        const EMBED_PRESETS = {
-            'default':        { font:'Arial', size:24, color:'#ffffff', bold:false, position:'bottom', bg:50 },
-            'youtube_white':  { font:'Arial', size:24, color:'#ffffff', bold:false, position:'bottom', bg:75 },
-            'youtube_yellow': { font:'Arial', size:24, color:'#ffff00', bold:false, position:'bottom', bg:75 },
-            'cinema':         { font:'Arial', size:28, color:'#ffffff', bold:false, position:'bottom', bg:0 },
-            'large_bold':     { font:'Arial', size:36, color:'#ffffff', bold:true,  position:'bottom', bg:0 },
-            'top_position':   { font:'Arial', size:24, color:'#ffffff', bold:false, position:'top',    bg:50 },
-        };
-
-        function applyPreset(name) {
-            const p = EMBED_PRESETS[name]; if (!p) return;
-            $('embedFont').value = p.font;
-            $('embedFontSize').value = p.size; $('embedSizeVal').textContent = p.size;
-            $('embedFontColor').value = p.color;
-            $('embedBold').checked = p.bold;
-            $('embedPosition').value = p.position;
-            $('embedBgOpacity').value = p.bg; $('embedBgVal').textContent = p.bg;
         }
 
         function updateEmbedPreview() {
-            const preview = $('embedPreviewText');
-
-            if (embedMode === 'soft') {
-                preview.style.cssText = 'color:#fff;font-family:Arial;font-size:18px;padding:8px 16px;';
-                preview.textContent = 'Subtitles will be added as a selectable track (no re-encoding)';
-                $('embedPreviewBar').style.background = '#000';
-                $('embedPreviewBar').style.alignItems = 'center';
-                return;
-            }
-
-            const font = $('embedFont').value;
-            const size = $('embedFontSize').value;
-            const color = $('embedFontColor').value;
-            const bold = $('embedBold').checked;
-            const bgOpacity = $('embedBgOpacity').value / 100;
-            const position = $('embedPosition').value;
-
-            preview.style.fontFamily = font;
-            preview.style.fontSize = Math.min(size, 32) + 'px';
-            preview.style.color = color;
-            preview.style.fontWeight = bold ? 'bold' : 'normal';
-            preview.style.background = `rgba(0,0,0,${bgOpacity})`;
-            preview.style.padding = '4px 12px';
-            preview.style.borderRadius = '4px';
-            preview.textContent = 'Sample subtitle text preview';
-
-            const bar = $('embedPreviewBar');
-            bar.style.alignItems = position === 'top' ? 'flex-start' : position === 'center' ? 'center' : 'flex-end';
+            var preview = $('embedPreviewText');
+            preview.style.color = $('embedFontColor').value;
+            preview.style.fontSize = Math.min($('embedFontSize').value, 32) + 'px';
         }
 
         async function startUnifiedEmbed() {
@@ -2207,15 +2161,9 @@
 
             var fd = new FormData();
             fd.append('mode', embedMode);
-            fd.append('preset', $('embedPreset').value);
-
             if (embedMode === 'hard') {
-                fd.append('font_name', $('embedFont').value);
                 fd.append('font_size', $('embedFontSize').value);
                 fd.append('font_color', $('embedFontColor').value);
-                fd.append('bold', $('embedBold').checked);
-                fd.append('position', $('embedPosition').value);
-                fd.append('background_opacity', $('embedBgOpacity').value / 100);
             }
 
             try {
@@ -2312,6 +2260,12 @@
             ceCombineMode = mode;
             $('ceModeCardSoft').className = 'embed-mode-card' + (mode === 'soft' ? ' active' : '');
             $('ceModeCardHard').className = 'embed-mode-card' + (mode === 'hard' ? ' active' : '');
+            $('ceStyleOpts').style.display = mode === 'hard' ? 'block' : 'none';
+        }
+        function ceUpdatePreview() {
+            var preview = $('cePreviewText');
+            preview.style.color = $('ceFontColor').value;
+            preview.style.fontSize = Math.min($('ceFontSize').value, 32) + 'px';
         }
         function ceUpdateBtn() {
             var btn = $('ceStartBtn');
@@ -2332,7 +2286,10 @@
             fd.append('video', ceVideoFile);
             fd.append('subtitle', ceSubFile);
             fd.append('mode', ceCombineMode);
-            fd.append('preset', 'default');
+            if (ceCombineMode === 'hard') {
+                fd.append('font_size', $('ceFontSize').value);
+                fd.append('font_color', $('ceFontColor').value);
+            }
 
             try {
                 // Animate progress indeterminately during upload
