@@ -302,9 +302,9 @@ async def status_page(request: Request):
 
 _GITHUB_REPO = "volehuy1998/subtitle-generator"
 
-# Cache commit data (30s TTL — requires GITHUB_TOKEN to avoid rate limit exhaustion)
+# Cache commit data (300s TTL to stay within GitHub's 60 req/hr unauthenticated limit)
 _commits_cache: dict = {"data": None, "ts": 0}
-_COMMITS_CACHE_TTL = 30
+_COMMITS_CACHE_TTL = 300
 
 # Optional GitHub token for higher rate limits (5000/hr vs 60/hr)
 _GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN") or ""
@@ -343,10 +343,12 @@ async def status_commits():
 
         if isinstance(commits_data, Exception) or not commits_data:
             logger.error(f"GitHub commits fetch failed: {commits_data}")
-            # Cache the failure for 2 minutes to avoid hammering rate limit
-            _commits_cache["data"] = {"commits": []}
-            _commits_cache["ts"] = now - _COMMITS_CACHE_TTL + 120
-            return _commits_cache["data"]
+            # On failure, serve stale cache if available; otherwise empty
+            # Back off for 5 minutes before retrying to avoid hammering rate limit
+            _commits_cache["ts"] = now - _COMMITS_CACHE_TTL + 300
+            if _commits_cache["data"]:
+                return _commits_cache["data"]
+            return {"commits": []}
 
         # Build CI status map
         ci_map = {}
