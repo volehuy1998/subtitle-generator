@@ -12,6 +12,8 @@ S10-8: Integration tests
 
 from pathlib import Path
 
+import pytest
+
 from app.main import app
 from fastapi.testclient import TestClient
 
@@ -26,6 +28,7 @@ def _read_html():
 
 # ── S10-1: Advanced Upload Options in UI ──
 
+@pytest.mark.skip(reason="Advanced Options removed; frontend migrated to React")
 class TestUploadAdvancedOptions:
     def test_word_timestamps_checkbox(self):
         assert 'id="advWordTimestamps"' in _read_html()
@@ -46,6 +49,7 @@ class TestUploadAdvancedOptions:
 
 # ── S10-2: Custom Vocabulary ──
 
+@pytest.mark.skip(reason="Advanced Options removed; frontend migrated to React")
 class TestCustomVocabulary:
     def test_vocabulary_input_exists(self):
         assert 'id="advVocabulary"' in _read_html()
@@ -59,6 +63,7 @@ class TestCustomVocabulary:
 
 # ── S10-3: Max Chars Per Line ──
 
+@pytest.mark.skip(reason="Advanced Options removed; frontend migrated to React")
 class TestMaxCharsSlider:
     def test_slider_exists(self):
         assert 'id="advMaxChars"' in _read_html()
@@ -84,6 +89,7 @@ class TestJsonDownload:
     def test_json_button_hidden_by_default(self):
         assert 'display:none' in _read_html().split('downloadBtnJson')[1][:50]
 
+    @pytest.mark.skip(reason="Advanced Options removed; frontend migrated to React")
     def test_json_button_shown_for_word_timestamps(self):
         html = _read_html()
         assert "advWordTimestamps" in html
@@ -93,9 +99,11 @@ class TestJsonDownload:
 # ── S10-5: Subtitle Embedding UI ──
 
 class TestEmbedUI:
+    @pytest.mark.skip(reason="Advanced Options removed; frontend migrated to React")
     def test_embed_card_exists(self):
         assert 'id="embedCard"' in _read_html()
 
+    @pytest.mark.skip(reason="Advanced Options removed; frontend migrated to React")
     def test_embed_toggle_exists(self):
         assert "toggleEmbedCard" in _read_html()
 
@@ -105,12 +113,14 @@ class TestEmbedUI:
         assert "Soft Mux" in html
         assert "Hard Burn" in html
 
+    @pytest.mark.skip(reason="Advanced Options removed; frontend migrated to React")
     def test_embed_preset_selector(self):
         html = _read_html()
         assert 'id="embedPreset"' in html
         assert "youtube_white" in html
         assert "cinema" in html
 
+    @pytest.mark.skip(reason="Advanced Options removed; frontend migrated to React")
     def test_embed_start_button(self):
         assert "startUnifiedEmbed" in _read_html()
 
@@ -125,6 +135,7 @@ class TestEmbedUI:
 
 # ── S10-6: Speaker Labels ──
 
+@pytest.mark.skip(reason="Frontend migrated to React")
 class TestSpeakerLabels:
     def test_speaker_label_css(self):
         html = _read_html()
@@ -143,6 +154,7 @@ class TestSpeakerLabels:
 
 # ── S10-7: Upload Sends Advanced Params ──
 
+@pytest.mark.skip(reason="Advanced Options removed; frontend migrated to React")
 class TestUploadParamWiring:
     def test_upload_sends_word_timestamps(self):
         html = _read_html()

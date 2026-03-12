@@ -1,0 +1,119 @@
+import type { StepTimings } from '@/api/types'
+
+interface Props {
+  activeStep: number
+  stepTimings: StepTimings
+  isPaused: boolean
+}
+
+const STEPS = [
+  { label: 'Upload', key: 'upload' as keyof StepTimings },
+  { label: 'Extract', key: 'extract' as keyof StepTimings },
+  { label: 'Transcribe', key: 'transcribe' as keyof StepTimings },
+  { label: 'Done', key: 'finalize' as keyof StepTimings },
+]
+
+function formatTiming(sec: number | undefined): string {
+  if (sec === undefined || sec === null) return ''
+  if (sec < 60) return `${sec.toFixed(1)}s`
+  return `${Math.floor(sec / 60)}m ${(sec % 60).toFixed(0)}s`
+}
+
+export function PipelineSteps({ activeStep, stepTimings, isPaused }: Props) {
+  return (
+    <div className="flex items-start w-full">
+      {STEPS.map((step, index) => {
+        const isDone = activeStep > index
+        const isActive = activeStep === index
+        const isPending = activeStep < index
+        const timing = stepTimings[step.key]
+
+        const circleColor =
+          isDone ? 'var(--color-success)' :
+          isActive && isPaused ? 'var(--color-warning)' :
+          isActive ? 'var(--color-primary)' :
+          'transparent'
+
+        const circleBorder =
+          isDone ? 'var(--color-success)' :
+          isActive && isPaused ? 'var(--color-warning)' :
+          isActive ? 'var(--color-primary)' :
+          'var(--color-border-2)'
+
+        const textColor =
+          isDone ? 'var(--color-success)' :
+          isActive ? 'var(--color-primary)' :
+          'var(--color-text-3)'
+
+        const numberColor =
+          isDone || isActive ? 'white' : 'var(--color-text-3)'
+
+        return (
+          <div key={step.label} className="flex items-start flex-1">
+            {/* Step node */}
+            <div className="flex flex-col items-center gap-1.5 flex-1">
+              {/* Circle */}
+              <div
+                className="flex items-center justify-center w-7 h-7 rounded-full border-2 transition-all duration-300"
+                style={{
+                  background: circleColor,
+                  borderColor: circleBorder,
+                }}
+              >
+                {isDone ? (
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                    <path
+                      d="M2 6l3 3 5-5"
+                      stroke="white"
+                      strokeWidth="1.75"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                ) : (
+                  <span
+                    className="text-xs font-semibold"
+                    style={{ color: numberColor }}
+                  >
+                    {index + 1}
+                  </span>
+                )}
+              </div>
+
+              {/* Label */}
+              <span
+                className="text-xs font-medium transition-colors duration-200"
+                style={{ color: textColor }}
+              >
+                {step.label}
+              </span>
+
+              {/* Timing */}
+              <span
+                className="text-xs"
+                style={{
+                  color: 'var(--color-text-3)',
+                  minHeight: '16px',
+                  fontSize: '11px',
+                }}
+              >
+                {formatTiming(timing)}
+              </span>
+            </div>
+
+            {/* Connector line (not after last step) */}
+            {index < STEPS.length - 1 && (
+              <div
+                className="flex-1 h-0.5 mt-3.5 transition-all duration-500"
+                style={{
+                  background: isDone ? 'var(--color-success)' : 'var(--color-border)',
+                  maxWidth: '100%',
+                }}
+              />
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}

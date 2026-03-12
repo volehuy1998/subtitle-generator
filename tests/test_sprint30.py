@@ -9,6 +9,8 @@ Tests cover:
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
+import pytest
+
 from app.main import app
 from fastapi.testclient import TestClient
 
@@ -22,6 +24,7 @@ def _html():
 
 # ── Phase 1: Stage Timing Display ──
 
+@pytest.mark.skip(reason="Frontend migrated to React")
 class TestStageTimingUI:
     """Verify step timing elements and JS logic exist in the frontend."""
 
@@ -148,6 +151,7 @@ class TestEnrichedStatus:
         assert isinstance(data["active_tasks"], int)
 
 
+@pytest.mark.skip(reason="Frontend migrated to React")
 class TestHealthSSEFrontend:
     """Verify the frontend wires to health SSE."""
 
@@ -217,6 +221,7 @@ class TestHealthRateLimitExempt:
 
 # ── Phase 3: Quick Embed (No Re-Upload) ──
 
+@pytest.mark.skip(reason="Frontend migrated to React")
 class TestQuickEmbedUI:
     """Verify unified embed card elements in the frontend."""
 
@@ -777,6 +782,7 @@ class TestReadinessRequiresDB:
             assert data["checks"]["db"]["ok"] is True
 
 
+@pytest.mark.skip(reason="Frontend migrated to React")
 class TestServiceBannerUI:
     """Verify the service unavailable banner exists in the frontend."""
 

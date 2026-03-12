@@ -11,6 +11,8 @@ Tests cover:
 
 import asyncio
 
+import pytest
+
 from app.main import app
 from fastapi.testclient import TestClient
 
@@ -242,6 +244,7 @@ class TestSessionTimeline:
 
 # ── Frontend Tracker Tests ──
 
+@pytest.mark.skip(reason="Frontend migrated to React")
 class TestFrontendTracker:
     """Test frontend JS tracker exists in HTML."""
 

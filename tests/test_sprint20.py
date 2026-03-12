@@ -11,6 +11,7 @@ Tests cover:
   - Error/loading states
 """
 
+import pytest
 
 from app.main import app
 from fastapi.testclient import TestClient
@@ -25,6 +26,7 @@ def _html():
 
 # ── UI Element Existence ──
 
+@pytest.mark.skip(reason="Frontend migrated to React")
 class TestUIElements:
     """Verify all buttons and interactive elements exist."""
 
@@ -58,6 +60,7 @@ class TestUIElements:
 
 # ── Embed Panel Redesign ──
 
+@pytest.mark.skip(reason="Frontend migrated to React")
 class TestEmbedPanel:
     """Test the redesigned embed panel."""
 
@@ -122,6 +125,7 @@ class TestEmbedPanel:
 
 # ── Video Preview ──
 
+@pytest.mark.skip(reason="Frontend migrated to React")
 class TestVideoPreview:
     """Test video preview functionality."""
 
@@ -163,6 +167,7 @@ class TestCSPVideoSupport:
 
 # ── Auto-Embed Feature ──
 
+@pytest.mark.skip(reason="Frontend migrated to React")
 class TestAutoEmbed:
     """Test auto-embed upload parameter."""
 
@@ -203,6 +208,7 @@ class TestAutoEmbed:
 
 # ── Reset UI Completeness ──
 
+@pytest.mark.skip(reason="Frontend migrated to React")
 class TestResetUI:
     """Test that resetUI properly resets all state."""
 
@@ -229,6 +235,7 @@ class TestResetUI:
 
 # ── Mobile Responsive ──
 
+@pytest.mark.skip(reason="Frontend migrated to React")
 class TestMobileResponsive:
     """Test mobile responsive CSS exists."""
 
@@ -254,12 +261,15 @@ class TestMobileResponsive:
 class TestErrorStates:
     """Test error handling in UI."""
 
+    @pytest.mark.skip(reason="Frontend migrated to React")
     def test_show_error_function_exists(self):
         assert "function showError" in _html()
 
+    @pytest.mark.skip(reason="Frontend migrated to React")
     def test_cancelled_section_exists(self):
         assert 'id="cancelledSection"' in _html()
 
+    @pytest.mark.skip(reason="Frontend migrated to React")
     def test_warning_banner_exists(self):
         assert 'id="warningBanner"' in _html() or "warningBanner" in _html()
 
@@ -278,6 +288,7 @@ class TestEmbedColorConversion:
 
 # ── Editor ──
 
+@pytest.mark.skip(reason="Frontend migrated to React")
 class TestEditor:
     """Test subtitle editor elements."""
 
@@ -299,6 +310,7 @@ class TestEditor:
 
 # ── SSE Reconnection ──
 
+@pytest.mark.skip(reason="Frontend migrated to React")
 class TestSSEReconnection:
     """Test SSE reconnection logic."""
 

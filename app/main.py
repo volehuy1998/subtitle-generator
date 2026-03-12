@@ -295,6 +295,13 @@ def create_app() -> FastAPI:
     # Routes
     app.include_router(router)
 
+    # Serve React build assets (JS/CSS bundles)
+    from pathlib import Path
+    from fastapi.staticfiles import StaticFiles
+    _react_assets = Path(__file__).parent.parent / "frontend" / "dist" / "assets"
+    if _react_assets.exists():
+        app.mount("/assets", StaticFiles(directory=str(_react_assets)), name="react-assets")
+
     return app
 
 

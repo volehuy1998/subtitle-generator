@@ -1,4 +1,13 @@
 # GPU-enabled Dockerfile using NVIDIA CUDA base
+# Stage 1: Node — build React frontend
+FROM node:20-slim AS frontend-build
+
+WORKDIR /frontend
+COPY frontend/package*.json ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build
+
 FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04 AS base
 
 # Install Python 3.12, ffmpeg, and system deps
@@ -22,6 +31,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser
 
 COPY . .
+
+# Copy React build from frontend stage
+COPY --from=frontend-build /frontend/dist ./frontend/dist
+
 RUN mkdir -p uploads outputs logs && chown -R appuser:appuser /app
 
 USER appuser

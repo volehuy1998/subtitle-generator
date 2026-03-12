@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+@theme {
+  /* Spacing: 4px base grid */
+  --spacing: 0.25rem;
+
+  /* Typography */
+  --font-family-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Colors — semantic design tokens */
+  --color-bg:        #F9FAFB;
+  --color-surface:   #FFFFFF;
+  --color-surface-2: #F3F4F6;
+  --color-border:    #E5E7EB;
+  --color-border-2:  #D1D5DB;
+  --color-text:      #111827;
+  --color-text-2:    #6B7280;
+  --color-text-3:    #9CA3AF;
+
+  --color-primary:         #6366F1;
+  --color-primary-light:   #EEF2FF;
+  --color-primary-border:  #C7D2FE;
+
+  --color-success:         #10B981;
+  --color-success-light:   #ECFDF5;
+  --color-success-border:  #A7F3D0;
+
+  --color-warning:         #F59E0B;
+  --color-warning-light:   #FFFBEB;
+
+  --color-danger:          #EF4444;
+  --color-danger-light:    #FEF2F2;
+
+  /* Radius */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius:    10px;
+  --radius-lg: 12px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+}
+
+/* Base */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-family-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border-2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-3); }
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}

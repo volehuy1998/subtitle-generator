@@ -1,5 +1,6 @@
 """Tests for Sprint 2 features: subtitle editor, task queue, batch, responsive."""
 
+import pytest
 
 from app.main import app
 from app import state
@@ -162,11 +163,13 @@ class TestResponsiveTemplate:
         res = client.get("/")
         assert 'name="viewport"' in res.text
 
+    @pytest.mark.skip(reason="Frontend migrated to React")
     def test_template_contains_media_queries(self):
         res = client.get("/")
         assert "@media" in res.text
         assert "max-width: 600px" in res.text
 
+    @pytest.mark.skip(reason="Frontend migrated to React")
     def test_template_has_batch_support(self):
         res = client.get("/")
         assert "multiple" in res.text
@@ -175,6 +178,7 @@ class TestResponsiveTemplate:
 
 # ── S2-5: Drag-and-Drop ──
 
+@pytest.mark.skip(reason="Frontend migrated to React")
 class TestDragDropFeedback:
     def test_template_has_drag_counter(self):
         res = client.get("/")
@@ -187,6 +191,7 @@ class TestDragDropFeedback:
 
 # ── S2-1: Editor in template ──
 
+@pytest.mark.skip(reason="Frontend migrated to React")
 class TestEditorTemplate:
     def test_template_has_editor_section(self):
         res = client.get("/")
@@ -200,6 +205,7 @@ class TestEditorTemplate:
 
 # ── S2-2: Video preview in template ──
 
+@pytest.mark.skip(reason="Frontend migrated to React")
 class TestVideoPreviewTemplate:
     def test_template_has_video_player(self):
         res = client.get("/")

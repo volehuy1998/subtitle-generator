@@ -13,6 +13,8 @@ S8-9: Integration tests
 
 from pathlib import Path
 
+import pytest
+
 from app.main import app
 from app.services.analytics import (
     record_upload, record_completion, record_failure, record_cancellation,
@@ -276,6 +278,7 @@ class TestMetricsWiring:
 
 # ── S8-8: Frontend Advanced Options ──
 
+@pytest.mark.skip(reason="Advanced Options removed; frontend migrated to React")
 class TestFrontendAdvancedOptions:
     def test_frontend_has_word_timestamps_option(self):
         html = (PROJECT_ROOT / "templates" / "index.html").read_text()
