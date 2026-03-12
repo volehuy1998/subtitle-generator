@@ -38,6 +38,18 @@ export default function App() {
             isVideo: data.is_video ?? false,
             percent: 100,
           })
+          // Restore live segment preview from saved SRT
+          api.subtitles(savedTaskId)
+            .then((sub) => {
+              if (sub.segments?.length) {
+                store.setLiveSegments(sub.segments.map((s) => ({
+                  start: s.start,
+                  end: s.end,
+                  text: s.text,
+                })))
+              }
+            })
+            .catch(() => { /* SRT may not exist yet, ignore */ })
         } else if (
           data.status !== 'cancelled' &&
           data.status !== 'error'

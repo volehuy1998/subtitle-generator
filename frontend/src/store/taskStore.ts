@@ -49,6 +49,7 @@ interface TaskActions {
   setTaskId: (id: string) => void
   applyProgressData: (data: Partial<TaskState>) => void
   addSegment: (seg: SegmentEvent) => void
+  setLiveSegments: (segs: LiveSegment[]) => void
   setStep: (step: number) => void
   setComplete: (data: Partial<TaskState>) => void
   setCancelled: () => void
@@ -81,6 +82,8 @@ export const useTaskStore = create<TaskState & TaskActions>((set) => ({
   addSegment: (seg) => set((s) => ({
     liveSegments: [...s.liveSegments, seg],
   })),
+
+  setLiveSegments: (segs) => set({ liveSegments: segs }),
 
   setStep: (step) => set({ activeStep: step }),
 
