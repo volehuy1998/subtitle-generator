@@ -302,9 +302,9 @@ async def status_page(request: Request):
 
 _GITHUB_REPO = "volehuy1998/subtitle-generator"
 
-# Cache commit data (refresh every 10 minutes to stay within rate limits)
+# Cache commit data (30s TTL — requires GITHUB_TOKEN to avoid rate limit exhaustion)
 _commits_cache: dict = {"data": None, "ts": 0}
-_COMMITS_CACHE_TTL = 600
+_COMMITS_CACHE_TTL = 30
 
 # Optional GitHub token for higher rate limits (5000/hr vs 60/hr)
 _GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN") or ""
