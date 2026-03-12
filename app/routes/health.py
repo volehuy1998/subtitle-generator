@@ -162,15 +162,17 @@ async def system_status():
         if t.get("status") not in ("done", "error", "cancelled")
     )
 
-    # Disk space
+    # Disk space — measure OUTPUT_DIR filesystem; fall back to root if total=0
     disk_percent = None
     try:
         usage = shutil.disk_usage(str(OUTPUT_DIR))
+        # Some container filesystems report total=0 for bind mounts; fall back to root
+        if usage.total == 0:
+            usage = shutil.disk_usage("/")
         disk_free_gb = round(usage.free / 1024**3, 1)
         disk_ok = disk_free_gb > 1.0
         try:
-            total = int(usage.total)
-            disk_percent = round(usage.used / total * 100) if total > 0 else 0
+            disk_percent = round(usage.used / usage.total * 100)
         except Exception:
             disk_percent = None
     except Exception:

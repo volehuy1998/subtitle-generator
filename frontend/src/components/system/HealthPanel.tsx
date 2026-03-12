@@ -6,8 +6,9 @@ interface Props {
   onClose: () => void
 }
 
-function StatBar({ label, value }: { label: string; value: number | undefined }) {
-  const pct = Math.min(100, Math.round(value ?? 0))
+function StatBar({ label, value }: { label: string; value: number | null | undefined }) {
+  const known = value != null
+  const pct = known ? Math.min(100, Math.round(value)) : 0
   let barColor = 'var(--color-success)'
   if (pct > 85) barColor = 'var(--color-danger)'
   else if (pct > 65) barColor = 'var(--color-warning)'
@@ -16,7 +17,9 @@ function StatBar({ label, value }: { label: string; value: number | undefined })
     <div className="flex flex-col gap-1">
       <div className="flex justify-between">
         <span className="text-xs" style={{ color: 'var(--color-text-2)' }}>{label}</span>
-        <span className="text-xs font-medium" style={{ color: 'var(--color-text)' }}>{pct}%</span>
+        <span className="text-xs font-medium" style={{ color: known ? 'var(--color-text)' : 'var(--color-text-3)' }}>
+          {known ? `${pct}%` : '—'}
+        </span>
       </div>
       <div
         className="h-1 rounded-full overflow-hidden"
