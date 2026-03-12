@@ -338,28 +338,6 @@
         .embed-result a { display: inline-block; padding: 7px 18px; background: var(--success); border-radius: var(--radius-xs); color: #fff; text-decoration: none; font-size: 0.82rem; font-weight: 600; }
 
         /* ── Subtitle editor ── */
-        .editor-section { display: none; margin-top: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
-        .editor-header { padding: 10px 14px; background: var(--surface-2); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 6px; }
-        .editor-title { font-size: 0.82rem; font-weight: 600; color: var(--text); }
-        .editor-actions { display: flex; gap: 8px; }
-        .editor-btn {
-            padding: 5px 12px; border-radius: var(--radius-xs); border: 1.5px solid; font-size: 0.78rem;
-            font-weight: 500; cursor: pointer; font-family: inherit; transition: all 0.15s;
-        }
-        .editor-btn.cancel-edit { border-color: var(--border); color: var(--text-2); background: var(--surface); }
-        .editor-btn.cancel-edit:hover { border-color: var(--border-2); }
-        .editor-btn.save { border-color: var(--success-border); background: var(--success-light); color: #065F46; }
-        .editor-btn.save:hover { background: #d1fae5; }
-        .editor-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .editor-body { padding: 10px 12px; max-height: 420px; overflow-y: auto; }
-        .editor-segment { margin-bottom: 10px; }
-        .editor-seg-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; gap: 4px; }
-        .editor-time { font-family: monospace; font-size: 0.66rem; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
-        .editor-text-input {
-            display: block; width: 100%; padding: 6px 8px; border-radius: var(--radius-xs); border: 1.5px solid var(--border);
-            font-size: 0.82rem; background: var(--surface); color: var(--text); font-family: inherit; resize: vertical; outline: none;
-        }
-        .editor-text-input:focus { border-color: var(--primary); }
 
         /* ── Video preview ── */
         .video-preview-section { display: none; margin-top: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
@@ -502,36 +480,6 @@
         .gpu-badge { display: inline-block; font-size: 0.7rem; color: var(--success); background: var(--success-light); padding: 2px 8px; border-radius: 4px; margin-top: 6px; }
         .no-gpu-badge { display: inline-block; font-size: 0.7rem; color: var(--error); background: var(--error-light); padding: 2px 8px; border-radius: 4px; margin-top: 6px; }
 
-        /* ── Editor search / pagination ── */
-        .editor-search-row {
-            display: flex; gap: 6px; padding: 8px 12px;
-            border-bottom: 1px solid var(--border); background: var(--surface-2);
-        }
-        .editor-search-input {
-            flex: 1; padding: 5px 8px; border-radius: var(--radius-xs);
-            border: 1.5px solid var(--border); font-size: 0.78rem;
-            background: var(--surface); color: var(--text); font-family: inherit; outline: none;
-        }
-        .editor-search-input:focus { border-color: var(--primary); }
-        .editor-jump-input {
-            width: 58px; padding: 5px 6px; border-radius: var(--radius-xs);
-            border: 1.5px solid var(--border); font-size: 0.78rem;
-            background: var(--surface); color: var(--text); font-family: inherit; outline: none; text-align: center;
-        }
-        .editor-jump-input:focus { border-color: var(--primary); }
-        .editor-pagination {
-            display: flex; align-items: center; gap: 6px; padding: 8px 12px;
-            border-top: 1px solid var(--border); background: var(--surface-2);
-            flex-wrap: wrap;
-        }
-        .editor-pg-btn {
-            padding: 4px 10px; border-radius: var(--radius-xs);
-            border: 1.5px solid var(--border); background: var(--surface);
-            color: var(--text-2); font-size: 0.75rem; cursor: pointer; font-family: inherit; transition: all 0.15s;
-        }
-        .editor-pg-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
-        .editor-pg-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-        .editor-pg-info { font-size: 0.72rem; color: var(--text-3); flex: 1; text-align: center; }
 
         /* ── Model info panel ── */
         .model-info.show { display: block; }
@@ -865,27 +813,6 @@
                         </div>
                     </div>
 
-                    <!-- Action buttons -->
-                    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-                        <button class="new-btn" onclick="openEditor()">Edit Subtitles</button>
-                    </div>
-                </div>
-
-                <!-- Subtitle editor -->
-                <div class="editor-section" id="editorSection">
-                    <div class="editor-header">
-                        <span class="editor-title">Edit Subtitles <span id="editorCount" style="font-weight:400;color:var(--text-3);font-size:0.75rem"></span></span>
-                        <div class="editor-actions">
-                            <button class="editor-btn cancel-edit" onclick="closeEditor()">Close</button>
-                            <button class="editor-btn save" id="editorSaveBtn" onclick="saveEdits()">Save &amp; Regenerate</button>
-                        </div>
-                    </div>
-                    <div class="editor-search-row">
-                        <input type="search" class="editor-search-input" id="editorSearch" placeholder="Search text…" oninput="editorDoSearch(this.value)">
-                        <input type="number" class="editor-jump-input" id="editorJump" placeholder="#" min="1" title="Jump to segment" onchange="editorJumpTo(this.value)">
-                    </div>
-                    <div class="editor-body" id="editorBody"></div>
-                    <div class="editor-pagination" id="editorPagination"></div>
                 </div>
 
                 <!-- Video preview -->
@@ -1870,8 +1797,6 @@
             cancelledSection.style.display = 'none'; detailsGrid.style.display = 'none';
             controls.style.display = 'none'; previewPanel.style.display = 'none';
             speedIndicator.style.display = 'none'; warningBanner.style.display = 'none';
-            $('editorSection').style.display = 'none';
-            $('videoPreviewSection').style.display = 'none';
             // Reset embed card
             $('embedCard').style.display = 'none';
             $('embedResult').style.display = 'none';
@@ -1880,9 +1805,6 @@
             $('embedProgressFill').style.width = '0%';
             $('embedProgressFill').style.background = '';
             embedMode = 'soft'; setEmbedMode('soft');
-            // Reset video player
-            const vp = $('videoPlayer'); vp.pause(); vp.removeAttribute('src'); vp.load();
-            $('subtitleTrack').removeAttribute('src');
             // Reset state
             previewBody.innerHTML = ''; lastSegmentCount = 0;
             progressBar.style.width = '0%';
@@ -2052,219 +1974,6 @@
             });
         }
 
-        // ── S2-1: Subtitle Editor (paginated, handles 10k+ segments) ──
-        const EDITOR_PAGE_SIZE = 100;
-        let editorSegments = [];
-        let editorPage = 0;
-        let editorSearchQuery = '';
-        let editorFilteredIndices = []; // indices into editorSegments matching current search
-
-        async function openEditor() {
-            if (!currentTaskId) return;
-            var btn = $('editorSaveBtn');
-            btn.disabled = true; btn.textContent = 'Loading…';
-            try {
-                const res = await fetch(`/subtitles/${currentTaskId}`);
-                if (!res.ok) { alert('Failed to load subtitles.'); return; }
-                const data = await res.json();
-                editorSegments = data.segments;
-                editorPage = 0;
-                editorSearchQuery = '';
-                $('editorSearch').value = '';
-                $('editorJump').value = '';
-                $('editorCount').textContent = '(' + editorSegments.length.toLocaleString() + ' segments)';
-                renderEditor();
-                $('editorSection').style.display = 'block';
-            } catch (e) { alert('Failed to load subtitles: ' + e.message); }
-            finally { btn.disabled = false; btn.textContent = 'Save & Regenerate'; }
-        }
-
-        function editorBuildFilter() {
-            var q = editorSearchQuery.toLowerCase();
-            if (!q) {
-                editorFilteredIndices = editorSegments.map(function(_, i) { return i; });
-            } else {
-                editorFilteredIndices = [];
-                for (var i = 0; i < editorSegments.length; i++) {
-                    if (editorSegments[i].text.toLowerCase().indexOf(q) !== -1) {
-                        editorFilteredIndices.push(i);
-                    }
-                }
-            }
-        }
-
-        function renderEditor() {
-            editorBuildFilter();
-            var totalFiltered = editorFilteredIndices.length;
-            var totalPages = Math.max(1, Math.ceil(totalFiltered / EDITOR_PAGE_SIZE));
-            editorPage = Math.min(editorPage, totalPages - 1);
-
-            var startIdx = editorPage * EDITOR_PAGE_SIZE;
-            var pageSlice = editorFilteredIndices.slice(startIdx, startIdx + EDITOR_PAGE_SIZE);
-
-            var body = $('editorBody');
-            body.innerHTML = '';
-            var frag = document.createDocumentFragment();
-
-            pageSlice.forEach(function(segIdx) {
-                var seg = editorSegments[segIdx];
-                var div = document.createElement('div');
-                div.className = 'editor-segment';
-                div.innerHTML =
-                    '<div class="editor-seg-header">' +
-                        '<span class="editor-time">' + (segIdx + 1) + '. ' + formatTs(seg.start) + ' \u2192 ' + formatTs(seg.end) + '</span>' +
-                        '<button class="del-btn editor-btn cancel-edit" title="Delete" style="padding:2px 7px;flex-shrink:0">\xd7</button>' +
-                    '</div>' +
-                    '<textarea class="editor-text-input" rows="2"></textarea>';
-                var ta = div.querySelector('textarea');
-                ta.value = seg.text;
-                // Track changes directly into editorSegments — O(1) per keystroke, no DOM scan on save
-                ta.addEventListener('input', (function(idx) {
-                    return function() { editorSegments[idx].text = this.value; };
-                })(segIdx));
-                div.querySelector('.del-btn').addEventListener('click', (function(idx) {
-                    return function() { deleteSegment(idx); };
-                })(segIdx));
-                frag.appendChild(div);
-            });
-
-            body.appendChild(frag);
-
-            // Pagination controls
-            var pg = $('editorPagination');
-            if (totalPages <= 1 && !editorSearchQuery) {
-                pg.innerHTML = '';
-            } else {
-                var showing = totalFiltered === 0 ? '0' :
-                    (startIdx + 1) + '–' + Math.min(startIdx + EDITOR_PAGE_SIZE, totalFiltered);
-                var filterNote = editorSearchQuery
-                    ? ' of ' + totalFiltered.toLocaleString() + ' matches'
-                    : ' of ' + editorSegments.length.toLocaleString();
-                pg.innerHTML =
-                    '<button class="editor-pg-btn" id="pgPrev" onclick="editorChangePage(-1)" ' + (editorPage === 0 ? 'disabled' : '') + '>\u2190 Prev</button>' +
-                    '<span class="editor-pg-info">Showing ' + showing + filterNote + ' &middot; Page ' + (editorPage + 1) + ' / ' + totalPages + '</span>' +
-                    '<button class="editor-pg-btn" id="pgNext" onclick="editorChangePage(1)" ' + (editorPage >= totalPages - 1 ? 'disabled' : '') + '>Next \u2192</button>';
-            }
-        }
-
-        function editorChangePage(delta) {
-            editorPage += delta;
-            renderEditor();
-            $('editorBody').scrollTop = 0;
-        }
-
-        function editorDoSearch(q) {
-            editorSearchQuery = q;
-            editorPage = 0;
-            renderEditor();
-        }
-
-        function editorJumpTo(val) {
-            var n = parseInt(val);
-            if (isNaN(n) || n < 1 || n > editorSegments.length) return;
-            // Clear search, jump to the page containing segment n
-            editorSearchQuery = '';
-            $('editorSearch').value = '';
-            editorPage = Math.floor((n - 1) / EDITOR_PAGE_SIZE);
-            renderEditor();
-            // Highlight and scroll within the editor body only (never touch window scroll)
-            setTimeout(function() {
-                var body = $('editorBody');
-                var items = body.querySelectorAll('.editor-segment');
-                var localIdx = (n - 1) - (editorPage * EDITOR_PAGE_SIZE);
-                if (items[localIdx]) {
-                    var el = items[localIdx];
-                    body.scrollTop = el.offsetTop - body.clientHeight / 2 + el.clientHeight / 2;
-                    el.style.outline = '2px solid var(--primary)';
-                    setTimeout(function() { el.style.outline = ''; }, 1500);
-                }
-            }, 50);
-        }
-
-        function formatTs(seconds) {
-            const h = Math.floor(seconds / 3600);
-            const m = Math.floor((seconds % 3600) / 60);
-            const s = Math.floor(seconds % 60);
-            const ms = Math.round((seconds % 1) * 1000);
-            return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms).padStart(3,'0')}`;
-        }
-
-        function escapeAttr(s) {
-            return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        }
-
-        function deleteSegment(idx) {
-            editorSegments.splice(idx, 1);
-            // Clamp page if last page became empty
-            var totalPages = Math.max(1, Math.ceil(editorFilteredIndices.length / EDITOR_PAGE_SIZE));
-            if (editorPage >= totalPages) editorPage = totalPages - 1;
-            $('editorCount').textContent = '(' + editorSegments.length.toLocaleString() + ' segments)';
-            renderEditor();
-        }
-
-        function closeEditor() {
-            $('editorSection').style.display = 'none';
-        }
-
-        async function saveEdits() {
-            // editorSegments is already up-to-date via live input listeners — no DOM scan needed
-            var btn = $('editorSaveBtn');
-            btn.disabled = true; btn.textContent = 'Saving…';
-            try {
-                const res = await fetch(`/subtitles/${currentTaskId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ segments: editorSegments }),
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    alert(`Saved! ${data.segments} segments updated.`);
-                    closeEditor();
-                } else {
-                    const err = await res.json();
-                    alert('Save failed: ' + (err.detail || 'Unknown error'));
-                }
-            } catch (e) { alert('Save failed: ' + e.message); }
-            finally { btn.disabled = false; btn.textContent = 'Save & Regenerate'; }
-        }
-
-        // ── S2-2: Video Preview ──
-        function openVideoPreview() {
-            $('videoPreviewSection').style.display = 'block';
-            if (currentTaskId) {
-                $('subtitleTrack').src = `/download/${currentTaskId}?format=vtt`;
-            }
-        }
-
-        function closeVideoPreview() {
-            $('videoPreviewSection').style.display = 'none';
-            const vp = $('videoPlayer');
-            if (vp) { vp.pause(); }
-        }
-
-        function loadVideoFile(fileInput) {
-            if (!fileInput.files.length) return;
-            const file = fileInput.files[0];
-            const videoUrl = URL.createObjectURL(file);
-            const player = $('videoPlayer');
-            player.src = videoUrl;
-            // Recreate track element so browser picks it up after src change
-            const oldTrack = $('subtitleTrack');
-            if (oldTrack) oldTrack.remove();
-            const track = document.createElement('track');
-            track.id = 'subtitleTrack';
-            track.kind = 'subtitles';
-            track.srclang = 'en';
-            track.label = 'Subtitles';
-            track.default = true;
-            if (currentTaskId) track.src = `/download/${currentTaskId}?format=vtt`;
-            player.appendChild(track);
-            player.play().catch(() => {});
-        }
-
-        if ($('videoFileInput')) {
-            $('videoFileInput').addEventListener('change', function() { loadVideoFile(this); });
-        }
 
         // ── S2-6: Task Queue ──
         let tqOpen = false;
