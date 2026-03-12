@@ -39,6 +39,11 @@ async def status_page_html(request: Request):
     return templates.TemplateResponse("status.html", {"request": request})
 
 
+@router.get("/security", response_class=HTMLResponse)
+async def security_page(request: Request):
+    return templates.TemplateResponse("security.html", {"request": request})
+
+
 @router.get("/manifest.json")
 async def manifest():
     f = _REACT_DIST / "manifest.json"

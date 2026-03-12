@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SubForge — System Status</title>
-    <meta name="theme-color" content="#6366F1">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%236366F1'/%3E%3Crect x='8' y='38' width='48' height='6' rx='3' fill='white' opacity='.9'/%3E%3Crect x='14' y='48' width='36' height='5' rx='2.5' fill='white' opacity='.5'/%3E%3Cpath d='M22 12 L42 24 L22 36Z' fill='white' opacity='.85'/%3E%3C/svg%3E">
+    <meta name="theme-color" content="#863bff">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -14,7 +14,7 @@
         :root {
             --bg: #F1F5F9; --surface: #FFFFFF; --surface-2: #F8FAFC;
             --border: #E2E8F0; --border-2: #CBD5E1;
-            --primary: #6366F1; --primary-hover: #4F46E5; --primary-light: #EEF2FF;
+            --primary: #863bff; --primary-hover: #6d22e0; --primary-light: #f3eeff;
             --success: #10B981; --success-light: #ECFDF5; --success-border: #A7F3D0;
             --warning: #F59E0B; --warning-light: #FFFBEB;
             --error: #EF4444; --error-light: #FEF2F2;
@@ -320,16 +320,14 @@
 <header class="status-header">
     <div class="status-header-inner">
         <a class="status-logo" href="/">
-            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="64" height="64" rx="14" fill="#6366F1"/>
-                <rect x="8" y="38" width="48" height="6" rx="3" fill="white" opacity=".9"/>
-                <rect x="14" y="48" width="36" height="5" rx="2.5" fill="white" opacity=".5"/>
-                <path d="M22 12 L42 24 L22 36Z" fill="white" opacity=".85"/>
+            <svg width="28" height="28" viewBox="0 0 48 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M25.946 44.938c-.664.845-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.287c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.497 0-3.578-1.842-3.578H1.237c-.92 0-1.456-1.04-.92-1.788L10.013.474c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.579 1.842 3.579h11.377c.943 0 1.473 1.088.89 1.83L25.947 44.94z" fill="#863bff"/>
             </svg>
             Sub<span class="logo-accent">Forge</span>&nbsp;Status
         </a>
         <div class="header-links">
             <div class="refresh-indicator"><span class="refresh-dot"></span> Live</div>
+            <a href="/security">Security</a>
             <a href="/status/manage">Manage</a>
             <a href="/">Go to SubForge</a>
             <a href="https://github.com/volehuy1998/subtitle-generator" target="_blank">GitHub</a>
