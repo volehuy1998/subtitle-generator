@@ -1263,7 +1263,7 @@
                 }
             } catch (e) { console.error('Failed to load languages:', e); }
         }
-        loadLanguages();
+        var languagesReady = loadLanguages();
 
         // ── Format Selection ──
         document.querySelectorAll('#formatButtons .opt-btn').forEach(btn => {
@@ -1271,6 +1271,7 @@
                 document.querySelectorAll('#formatButtons .opt-btn').forEach(b => b.classList.remove('selected'));
                 this.classList.add('selected');
                 selectedFormat = this.dataset.value;
+                saveFormState();
             });
         });
 
@@ -1338,11 +1339,13 @@
             selectedDevice = 'cuda';
             this.classList.add('gpu-selected'); $('btnCpu').classList.remove('selected');
             updateModelWarnings();
+            saveFormState();
         });
         $('btnCpu').addEventListener('click', function() {
             selectedDevice = 'cpu';
             this.classList.add('selected'); $('btnCuda').classList.remove('gpu-selected');
             updateModelWarnings();
+            saveFormState();
         });
         const MODEL_INFO = {
             auto: null,
@@ -1415,6 +1418,7 @@
                 selectedModel = this.dataset.value;
                 updateModelWarnings();
                 updateModelInfo(this.dataset.value);
+                saveFormState();
             });
         });
         updateModelInfo(selectedModel);
@@ -1427,17 +1431,92 @@
             $('advMaxCharsValue').textContent = this.value;
         });
 
+        // ── Form State Persistence ──
+        function saveFormState() {
+            var state = {
+                device: selectedDevice,
+                model: selectedModel,
+                format: selectedFormat,
+                language: languageSelect.value,
+                wordTimestamps: $('advWordTimestamps').checked,
+                diarize: $('advDiarize').checked,
+                translate: $('advTranslate').checked,
+                vocabulary: $('advVocabulary').value,
+                maxChars: $('advMaxChars').value,
+                autoEmbed: $('advAutoEmbed').value
+            };
+            sessionStorage.setItem('sg_formState', JSON.stringify(state));
+        }
+
+        function restoreFormState() {
+            var raw = sessionStorage.getItem('sg_formState');
+            if (!raw) return;
+            try { var state = JSON.parse(raw); } catch(e) { return; }
+            // Restore device
+            if (state.device) {
+                selectedDevice = state.device;
+                if (state.device === 'cuda' && !$('btnCuda').disabled) {
+                    $('btnCuda').classList.add('gpu-selected'); $('btnCpu').classList.remove('selected');
+                } else {
+                    $('btnCpu').classList.add('selected'); $('btnCuda').classList.remove('gpu-selected');
+                    selectedDevice = 'cpu';
+                }
+            }
+            // Restore model
+            if (state.model) {
+                selectedModel = state.model;
+                document.querySelectorAll('#modelButtons .opt-btn').forEach(function(b) {
+                    b.classList.toggle('selected', b.dataset.value === state.model);
+                });
+                updateModelInfo(state.model);
+            }
+            // Restore format
+            if (state.format) {
+                selectedFormat = state.format;
+                document.querySelectorAll('#formatButtons .opt-btn').forEach(function(b) {
+                    b.classList.toggle('selected', b.dataset.value === state.format);
+                });
+            }
+            // Restore language
+            if (state.language && languageSelect.querySelector('option[value="' + state.language + '"]')) {
+                languageSelect.value = state.language;
+            }
+            // Restore advanced options
+            if (state.wordTimestamps !== undefined) $('advWordTimestamps').checked = state.wordTimestamps;
+            if (state.diarize !== undefined) $('advDiarize').checked = state.diarize;
+            if (state.translate !== undefined) $('advTranslate').checked = state.translate;
+            if (state.vocabulary !== undefined) $('advVocabulary').value = state.vocabulary;
+            if (state.maxChars !== undefined) { $('advMaxChars').value = state.maxChars; $('advMaxCharsValue').textContent = state.maxChars; }
+            if (state.autoEmbed !== undefined) $('advAutoEmbed').value = state.autoEmbed;
+        }
+        // Restore form state on page load (after languages loaded)
+        languagesReady.then(function() { restoreFormState(); }).catch(function() { restoreFormState(); });
+
         // ── Session Reconnection ──
         (function reconnectSession() {
             const savedTaskId = localStorage.getItem('sg_currentTaskId');
             if (!savedTaskId) return;
-            // Check if this task still exists and is in-progress
+            // Check if this task still exists
             fetch(`/progress/${savedTaskId}`).then(r => {
                 if (!r.ok) { localStorage.removeItem('sg_currentTaskId'); return Promise.reject('not found'); }
                 return r.json();
             }).then(data => {
                 if (!data || !data.status) { localStorage.removeItem('sg_currentTaskId'); return; }
-                if (data.status === 'done' || data.status === 'error' || data.status === 'cancelled') {
+
+                if (data.status === 'done') {
+                    // Task completed while user was away — restore results
+                    currentTaskId = savedTaskId;
+                    fileName.textContent = data.filename || 'Completed task';
+                    dropZone.style.display = 'none';
+                    optionsPanel.style.display = 'none';
+                    optionsPanel2.style.display = 'none';
+                    $('advancedToggle').style.display = 'none';
+                    $('advancedPanel').style.display = 'none';
+                    progressSection.style.display = 'block';
+                    handleDone(data, savedTaskId);
+                    return;
+                }
+                if (data.status === 'error' || data.status === 'cancelled') {
                     localStorage.removeItem('sg_currentTaskId');
                     return;
                 }
@@ -1537,6 +1616,7 @@
 
         // ── Upload ──
         function uploadFile(file) {
+            saveFormState();
             const fd = new FormData();
             fd.append('file', file);
             fd.append('device', selectedDevice);
@@ -1869,7 +1949,8 @@
         }
 
         function handleDone(data, taskId) {
-            localStorage.removeItem('sg_currentTaskId');
+            // Keep sg_currentTaskId so returning from Combine restores results
+            // It gets cleared on resetUI() (New Transcription)
             stopStepTimer();
             setStep(3);
             progressBar.style.width = '100%';
@@ -1878,6 +1959,9 @@
             progressLabel.textContent = 'Complete!';
             progressPercent.style.color = '#27ae60';
             controls.style.display = 'none';
+            // Collapse verbose progress details so download section is visible
+            detailsGrid.style.display = 'none';
+            speedIndicator.style.display = 'none';
             statusText.textContent = data.message || 'Done!';
             downloadBtnSrt.href = `/download/${taskId}?format=srt`;
             downloadBtnVtt.href = `/download/${taskId}?format=vtt`;
@@ -1896,6 +1980,8 @@
             if (data.total_time_sec) info += ` | ${data.total_time_sec.toFixed(1)}s total`;
             resultInfo.textContent = info;
             downloadSection.style.display = 'block';
+            // Scroll download section into view so user sees the buttons
+            setTimeout(function() { downloadSection.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
 
             // Show final step timings
             if (data.step_timings) {
@@ -2013,6 +2099,7 @@
         function resetUI() {
             closeSSE();
             localStorage.removeItem('sg_currentTaskId');
+            sessionStorage.removeItem('sg_formState');
             dropZone.style.display = 'block'; optionsPanel.style.display = 'flex'; optionsPanel2.style.display = 'flex';
             $('advancedToggle').style.display = ''; $('advancedPanel').className = 'advanced-panel';
             progressSection.style.display = 'none'; downloadSection.style.display = 'none';
@@ -2585,6 +2672,7 @@
         let combineEmbedMode = 'soft';
 
         function setAppMode(mode) {
+            if (appMode === 'transcribe' && mode !== 'transcribe') saveFormState();
             appMode = mode;
             $('modeTranscribe').className = 'mode-btn' + (mode === 'transcribe' ? ' active' : '');
             $('modeCombine').className = 'mode-btn' + (mode === 'combine' ? ' active' : '');
@@ -2593,14 +2681,26 @@
             var transcribeEls = [optionsPanel, optionsPanel2, $('advancedToggle'), dropZone, $('batchQueue'), $('progressSection'), $('downloadSection')];
 
             if (mode === 'transcribe') {
-                optionsPanel.style.display = 'flex';
-                optionsPanel2.style.display = 'flex';
-                $('advancedToggle').style.display = '';
-                dropZone.style.display = 'block';
-                $('batchQueue').style.display = '';
-                $('progressSection').style.display = '';
-                $('downloadSection').style.display = '';
                 $('combineSection').style.display = 'none';
+                // State-aware restore: don't show upload form if task is active/completed
+                if (currentTaskId) {
+                    // Task in progress or completed — keep progress/download visible
+                    optionsPanel.style.display = 'none';
+                    optionsPanel2.style.display = 'none';
+                    $('advancedToggle').style.display = 'none';
+                    dropZone.style.display = 'none';
+                    $('batchQueue').style.display = '';
+                    $('progressSection').style.display = 'block';
+                    // downloadSection visibility is managed by handleDone/handleProgressData
+                } else {
+                    optionsPanel.style.display = 'flex';
+                    optionsPanel2.style.display = 'flex';
+                    $('advancedToggle').style.display = '';
+                    dropZone.style.display = 'block';
+                    $('batchQueue').style.display = '';
+                    $('progressSection').style.display = 'none';
+                    $('downloadSection').style.display = 'none';
+                }
             } else {
                 optionsPanel.style.display = 'none';
                 optionsPanel2.style.display = 'none';
