@@ -1,15 +1,20 @@
-# Subtitle Generator
+# SubForge — AI Subtitle Generator
 
 AI-powered subtitle generation service. Upload audio/video, transcribe with faster-whisper (CTranslate2), download SRT/VTT/JSON. Real-time progress via SSE/WebSocket.
+
+**Live demo**: [https://openlabs.club](https://openlabs.club)
 
 ## Features
 
 - **99 languages** with automatic detection
-- **Word-level timestamps** for karaoke-style subtitles
+- **5 Whisper model sizes** (tiny → large) with GPU/CPU comparison table
+- **GPU acceleration** — auto-detects CUDA; header badge shows GPU name and VRAM
 - **Speaker diarization** (who said what, via pyannote)
-- **Subtitle embedding** — soft mux (MKV/MP4) or hard burn with custom styling
+- **Subtitle embedding** — soft mux (MKV/MP4) or hard-burn with custom styling
 - **Real-time progress** via SSE, WebSocket, or polling
 - **Analytics dashboard** with charts and data export
+- **Public status page** at `/status` with component health and incident tracking
+- **Security page** at `/security` with live OWASP assertion results
 - **Multiple output formats** — SRT, VTT, JSON
 - **API + Web UI** — Swagger docs at `/docs`
 
@@ -22,16 +27,12 @@ cp .env.example .env        # edit as needed
 # 2. Start (CPU mode)
 docker compose --profile cpu up --build -d
 
-# 3. Open
+# 3. Start (GPU mode — requires NVIDIA Container Toolkit)
+docker compose --profile gpu up --build -d
+
 # Web UI:  http://localhost:8000
 # API docs: http://localhost:8000/docs
-# Health:   http://localhost:8000/health
-```
-
-For GPU mode (requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)):
-
-```bash
-docker compose --profile gpu up --build -d
+# Status:   http://localhost:8000/status
 ```
 
 ## Local Development
@@ -39,15 +40,19 @@ docker compose --profile gpu up --build -d
 ### Prerequisites
 
 - **Python 3.12+**
+- **Node.js 20+** (for frontend dev)
 - **ffmpeg** on PATH ([install guide](https://ffmpeg.org/download.html))
 - **PostgreSQL 16+** (optional, SQLite used by default)
 
 ### Setup
 
 ```bash
-# Install dependencies
+# Install Python dependencies
 pip install -r requirements.txt
 pip install -r requirements-dev.txt   # for testing
+
+# Install and build frontend
+cd frontend && npm install && npm run build && cd ..
 
 # Create directories
 mkdir -p uploads outputs logs
@@ -55,16 +60,19 @@ mkdir -p uploads outputs logs
 # Copy environment config
 cp .env.example .env
 
-# Run database migrations (if using PostgreSQL)
-alembic upgrade head
-
-# Start the server (development mode — plain HTTP, no HSTS)
+# Start the server (development — plain HTTP, no HSTS)
 python main.py
 ```
 
-The server starts at `http://localhost:8000` (or `http://127.0.0.1:8000`).
+The server starts at `http://localhost:8000`.
 
-> **Note:** Development mode is the default (`ENVIRONMENT=dev`). HTTPS redirect and HSTS are disabled automatically. For production deployment, see [DEPLOY.md](DEPLOY.md).
+### Frontend Development (hot-reload)
+
+```bash
+cd frontend
+npm install
+npm run dev       # Vite dev server at http://localhost:5173 (proxies to :8000)
+```
 
 ### Using the Makefile
 
@@ -85,18 +93,20 @@ See [`.env.example`](.env.example) for the full list. Key variables:
 
 | Variable | Purpose | Default |
 |----------|---------|---------|
-| `DATABASE_URL` | Database connection string | SQLite (local file) |
+| `ENVIRONMENT` | `dev` (HTTP) or `prod` (HTTPS + HSTS) | `dev` |
+| `SSL_CERTFILE` | TLS certificate path (prod mode) | empty |
+| `SSL_KEYFILE` | TLS private key path (prod mode) | empty |
+| `DATABASE_URL` | Database connection string | SQLite |
 | `API_KEYS` | Comma-separated API keys (empty = no auth) | empty |
 | `HF_TOKEN` | Hugging Face token for model downloads | empty |
 | `PRELOAD_MODEL` | Preload whisper model at startup | empty |
 | `FILE_RETENTION_HOURS` | Auto-cleanup retention period | 24 |
 | `ENABLE_COMPRESSION` | GZip response compression | true |
-| `CORS_ORIGINS` | Allowed CORS origins | * |
 | `MAX_CONCURRENT_TASKS` | Max parallel transcriptions | auto-detected |
 
 ## API Documentation
 
-Interactive API docs available at:
+Interactive API docs:
 - **Swagger UI**: `http://localhost:8000/docs`
 - **ReDoc**: `http://localhost:8000/redoc`
 
@@ -110,30 +120,72 @@ Interactive API docs available at:
 | `WS` | `/ws` | WebSocket for real-time updates |
 | `GET` | `/download/{task_id}/{format}` | Download subtitles (srt/vtt/json) |
 | `GET` | `/health` | Health check |
+| `GET` | `/health/stream` | SSE stream of live system metrics |
+| `GET` | `/api/status/page` | Status page component data |
+| `GET` | `/api/security/assertions` | Live OWASP security assertion results |
 | `GET` | `/metrics` | Prometheus-compatible metrics |
 
 ### Authentication
 
-Set `API_KEYS=key1,key2` to enable. Pass via header `X-API-Key: your-key` or query `?api_key=your-key`.
+Set `API_KEYS=key1,key2` to enable. Pass via `X-API-Key: your-key` header or `?api_key=your-key` query param.
 
 ## Architecture
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed module layout.
-
 ```
-Upload → ffprobe (probe) → ffmpeg (extract audio)
+Upload → ffprobe (probe) → ffmpeg (extract WAV)
        → faster-whisper (transcribe) → optional pyannote (diarize)
        → format (line-breaking) → write SRT/VTT/JSON
 ```
 
-Each step emits SSE events for real-time UI updates. Tasks run in background threads with configurable concurrency limits.
+Each step emits SSE events for real-time UI updates. Tasks run in background threads with configurable concurrency limits. Models are cached in memory across requests.
 
-**Stack**: FastAPI + Uvicorn, faster-whisper (CTranslate2), PostgreSQL/SQLite, Jinja2 templates.
+### Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18 + TypeScript + Vite |
+| Backend | FastAPI + Uvicorn (single worker) |
+| Transcription | faster-whisper (CTranslate2), GPU via CUDA |
+| Diarization | pyannote.audio (optional) |
+| Database | PostgreSQL 16 (prod) / SQLite (dev) |
+| Task queue | In-memory semaphore / Celery + Redis (distributed) |
+| Media processing | ffmpeg, ffprobe |
+| Auth | API key middleware (optional) |
+
+### Module Layout
+
+```
+app/
+  routes/        # 14+ FastAPI routers (one per feature domain)
+  services/      # Business logic: pipeline, transcription, model_manager, analytics
+  middleware/    # Auth, security headers, brute-force, rate-limit, CORS, compression
+  utils/         # SRT/VTT generation, line-breaking, media probing, file validation
+  config.py      # All constants, paths, env vars, limits
+  state.py       # Global in-memory state: tasks, model cache, semaphore
+
+frontend/
+  src/
+    pages/       # App, Status, Security, About, Contact
+    components/  # TranscribeForm, EmbedTab, HealthPanel, AppHeader, ConnectionBanner
+    hooks/       # useHealthStream, useSSE, useTaskProgress
+    store/       # uiStore (Zustand)
+    api/         # types.ts, API client helpers
+```
+
+### Deployment Modes
+
+| Mode | Description |
+|------|-------------|
+| `--profile cpu` | Single-node, CPU-only |
+| `--profile gpu` | Single-node, NVIDIA GPU |
+| `--profile distributed` | API + Celery workers + Redis + nginx |
+
+See [DEPLOY.md](DEPLOY.md) for full production deployment instructions (TLS, firewall, auto-renew certs).
 
 ## Testing
 
 ```bash
-# Run all tests (694 tests)
+# Run all tests (~1155 passing)
 pytest tests/ -v --tb=short
 
 # Run a specific test file
@@ -144,38 +196,14 @@ pytest tests/test_api.py::test_health_endpoint -v
 
 # Lint
 ruff check . --select E,F,W --ignore E501
+
+# E2E tests (requires running server + Playwright)
+pytest tests/e2e/ -v
 ```
 
-## Deployment
+## Security
 
-The application supports two environment modes controlled by `ENVIRONMENT`:
-
-| Mode | HTTPS Redirect | HSTS | TLS | Default |
-|------|---------------|------|-----|---------|
-| `dev` | Off | Off | Not required | **Yes** |
-| `prod` | On | On | Required (`SSL_CERTFILE` + `SSL_KEYFILE`) | No |
-
-### Development Mode (default)
-
-```bash
-# Plain HTTP on port 8000 — no TLS certificates needed
-python main.py
-
-# Or with a custom port
-PORT=3000 python main.py
-```
-
-### Production Mode
-
-```bash
-# With TLS certificates (HTTPS on 443 + HTTP→HTTPS redirect on 80)
-ENVIRONMENT=prod \
-SSL_CERTFILE=/etc/letsencrypt/live/yourdomain.com/fullchain.pem \
-SSL_KEYFILE=/etc/letsencrypt/live/yourdomain.com/privkey.pem \
-python main.py
-```
-
-> For full deployment instructions (single-node, multi-node, Docker, GPU), see [DEPLOY.md](DEPLOY.md).
+The `/security` page shows live OWASP assertion results. Security commits automatically update `data/security_assertions.json` via a git post-commit hook. See [SECURITY.md](SECURITY.md) for the vulnerability disclosure policy.
 
 ## License
 
