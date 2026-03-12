@@ -163,15 +163,19 @@ async def system_status():
     )
 
     # Disk space
+    disk_percent = None
     try:
         usage = shutil.disk_usage(str(OUTPUT_DIR))
         disk_free_gb = round(usage.free / 1024**3, 1)
         disk_ok = disk_free_gb > 1.0
-        disk_percent = round(usage.used / usage.total * 100) if usage.total > 0 else 0
+        try:
+            total = int(usage.total)
+            disk_percent = round(usage.used / total * 100) if total > 0 else 0
+        except Exception:
+            disk_percent = None
     except Exception:
         disk_free_gb = None
         disk_ok = False
-        disk_percent = None
 
     # Alerts
     try:
