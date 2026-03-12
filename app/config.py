@@ -72,8 +72,8 @@ LOG_WEBHOOK_URL = os.environ.get("LOG_WEBHOOK_URL", "")  # e.g., http://logstash
 LOG_SYSLOG_HOST = os.environ.get("LOG_SYSLOG_HOST", "")  # e.g., syslog.example.com:514
 
 # --- Security infrastructure ---
-HSTS_ENABLED = os.environ.get("HSTS_ENABLED", "false").lower() == "true"
-HTTPS_REDIRECT = os.environ.get("HTTPS_REDIRECT", "false").lower() == "true"
+HSTS_ENABLED = os.environ.get("HSTS_ENABLED", "true").lower() == "true"
+HTTPS_REDIRECT = os.environ.get("HTTPS_REDIRECT", "true").lower() == "true"
 CSP_NONCE_ENABLED = os.environ.get("CSP_NONCE_ENABLED", "false").lower() == "true"
 CORS_DEFAULT_DENY = os.environ.get("CORS_DEFAULT_DENY", "false").lower() == "true"
 
