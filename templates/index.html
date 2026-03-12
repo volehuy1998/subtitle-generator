@@ -1401,8 +1401,7 @@
                 onSSEData();
                 const data = JSON.parse(e.data);
                 handleDone(data, taskId);
-                // Keep SSE open if auto-embed is pending
-                if (!$('advAutoEmbed').value) closeSSE();
+                closeSSE();
             });
 
             eventSource.addEventListener('embed_progress', e => {
@@ -1629,14 +1628,7 @@
             statusText.textContent = data.message || 'Done!';
             downloadBtnSrt.href = `/download/${taskId}?format=srt`;
             downloadBtnVtt.href = `/download/${taskId}?format=vtt`;
-            // Show JSON download if word timestamps or diarization was used
-            const jsonBtn = $('downloadBtnJson');
-            if ($('advWordTimestamps').checked || $('advDiarize').checked) {
-                jsonBtn.href = `/download/${taskId}?format=json`;
-                jsonBtn.style.display = '';
-            } else {
-                jsonBtn.style.display = 'none';
-            }
+            $('downloadBtnJson').style.display = 'none';
             taskIsComplete = true;
             // Show output panel results
             $('outputEmpty').style.display = 'none';
@@ -1672,12 +1664,6 @@
                 $('embedStartBtn').disabled = false;
             }
 
-            // If auto-embed is active, show embedding status
-            if ($('advAutoEmbed').value) {
-                statusText.textContent = 'Embedding subtitles into video...';
-                progressLabel.textContent = 'Embedding';
-                progressBar.classList.remove('success'); progressBar.classList.add('active');
-            }
         }
 
         // startQuickEmbed removed — unified into startUnifiedEmbed
@@ -1778,7 +1764,6 @@
             $('progressView').style.display = 'none';
             localStorage.removeItem('sg_currentTaskId');
             sessionStorage.removeItem('sg_formState');
-            $('advancedToggle').style.display = ''; $('advancedPanel').className = 'advanced-panel';
             cancelledSection.style.display = 'none'; detailsGrid.style.display = 'none';
             controls.style.display = 'none'; previewPanel.style.display = 'none';
             speedIndicator.style.display = 'none'; warningBanner.style.display = 'none';
