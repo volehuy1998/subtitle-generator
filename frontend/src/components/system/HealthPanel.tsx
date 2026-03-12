@@ -45,6 +45,8 @@ export function HealthPanel({ health, onClose }: Props) {
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+        // If the tap is on the toggle button, let its onClick handle it instead
+        if ((e.target as HTMLElement).closest?.('[data-health-toggle]')) return
         onClose()
       }
     }
@@ -52,32 +54,34 @@ export function HealthPanel({ health, onClose }: Props) {
     return () => document.removeEventListener('mousedown', handler)
   }, [onClose])
 
+  const isOk = health?.status === 'ok' || health?.status === 'healthy'
+  const isWarn = health?.status === 'degraded' || health?.status === 'warning'
+  const isCrit = health?.status === 'error' || health?.status === 'critical'
+
   const statusColor =
-    health?.status === 'ok' ? 'var(--color-success)' :
-    health?.status === 'degraded' ? 'var(--color-warning)' :
-    health?.status === 'error' ? 'var(--color-danger)' :
+    isOk ? 'var(--color-success)' :
+    isWarn ? 'var(--color-warning)' :
+    isCrit ? 'var(--color-danger)' :
     'var(--color-text-3)'
 
   const statusBg =
-    health?.status === 'ok' ? 'var(--color-success-light)' :
-    health?.status === 'degraded' ? 'var(--color-warning-light)' :
-    health?.status === 'error' ? 'var(--color-danger-light)' :
+    isOk ? 'var(--color-success-light)' :
+    isWarn ? 'var(--color-warning-light)' :
+    isCrit ? 'var(--color-danger-light)' :
     'var(--color-surface-2)'
 
   const statusLabel =
     health === null ? 'Connecting…' :
-    health.status === 'ok' ? 'All systems operational' :
-    health.status === 'degraded' ? 'Performance degraded' :
+    isOk ? 'All systems operational' :
+    isWarn ? 'Performance degraded' :
     'System error'
 
   return (
     <div
       ref={panelRef}
-      className="fixed z-50 flex flex-col gap-4 rounded-xl p-4"
+      className="fixed z-50 flex flex-col gap-4 rounded-xl p-4 left-2 right-2 sm:left-auto sm:right-4 sm:w-[280px]"
       style={{
         top: '60px',
-        right: '16px',
-        width: '280px',
         background: 'var(--color-surface)',
         boxShadow: 'var(--shadow-lg)',
         border: '1px solid var(--color-border)',
@@ -111,8 +115,62 @@ export function HealthPanel({ health, onClose }: Props) {
       {health && (
         <div className="flex flex-col gap-3">
           <StatBar label="CPU" value={health.cpu_percent} />
-          <StatBar label="RAM" value={health.ram_percent} />
+          <StatBar label="RAM" value={health.ram_percent ?? health.memory_percent} />
           <StatBar label="Disk" value={health.disk_percent} />
+        </div>
+      )}
+
+      {/* GPU status */}
+      {health && health.gpu_available && (
+        <div className="flex flex-col gap-2">
+          <div className="flex justify-between items-center">
+            <span className="text-xs" style={{ color: 'var(--color-text-2)' }}>GPU</span>
+            <span className="text-xs font-medium" style={{ color: 'var(--color-success)' }}>
+              {health.gpu_name ?? 'Available'}
+            </span>
+          </div>
+          {health.gpu_vram_total != null && health.gpu_vram_used != null && (
+            <div className="flex flex-col gap-1">
+              <div className="flex justify-between">
+                <span className="text-xs" style={{ color: 'var(--color-text-2)' }}>VRAM</span>
+                <span className="text-xs font-medium" style={{ color: 'var(--color-text)' }}>
+                  {health.gpu_vram_used.toFixed(1)} / {health.gpu_vram_total} GB
+                </span>
+              </div>
+              <div className="h-1 rounded-full overflow-hidden" style={{ background: 'var(--color-border)' }}>
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.min(100, Math.round((health.gpu_vram_used / health.gpu_vram_total) * 100))}%`,
+                    background: 'var(--color-primary)',
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* No GPU warning */}
+      {health && !health.gpu_available && (
+        <div
+          className="flex items-start gap-2 px-2.5 py-2.5 rounded-lg"
+          style={{
+            background: 'rgba(245,158,11,0.10)',
+            border: '1px solid rgba(245,158,11,0.35)',
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 12 12" fill="none" aria-hidden="true" className="mt-0.5 flex-shrink-0">
+            <path d="M6 1.5L11 10.5H1L6 1.5Z" stroke="#F59E0B" strokeWidth="1.2" strokeLinejoin="round" />
+            <path d="M6 5v2.5" stroke="#F59E0B" strokeWidth="1.2" strokeLinecap="round" />
+            <circle cx="6" cy="9" r="0.5" fill="#F59E0B" />
+          </svg>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs font-semibold" style={{ color: '#F59E0B' }}>No GPU detected</span>
+            <span className="text-xs" style={{ color: 'var(--color-text-2)' }}>
+              Transcription runs on CPU — significantly slower. For best performance, use a server with an NVIDIA GPU.
+            </span>
+          </div>
         </div>
       )}
 

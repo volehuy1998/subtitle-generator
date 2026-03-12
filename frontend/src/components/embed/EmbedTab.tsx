@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { api } from '@/api/client'
 import { ModeSelector } from './ModeSelector'
 import { StyleOptions } from './StyleOptions'
+import { useUIStore } from '@/store/uiStore'
 import type { EmbedMode } from '@/store/uiStore'
 
 type EmbedState = 'idle' | 'processing' | 'done' | 'error'
@@ -63,6 +64,7 @@ function FilePicker({
 }
 
 export function EmbedTab() {
+  const { dbOk } = useUIStore()
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [subtitleFile, setSubtitleFile] = useState<File | null>(null)
   const [mode, setMode] = useState<EmbedMode>('soft')
@@ -129,6 +131,26 @@ export function EmbedTab() {
     setDownloadUrl(null)
     setErrorMsg(null)
     setCombineTaskId(null)
+  }
+
+  if (!dbOk) {
+    return (
+      <div
+        className="flex flex-col items-center justify-center gap-3 rounded-xl p-10 text-center"
+        style={{ background: 'var(--color-danger-light)', border: '1px solid var(--color-danger)' }}
+      >
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <circle cx="16" cy="16" r="14" stroke="var(--color-danger)" strokeWidth="2" />
+          <path d="M16 9v8M16 21v2" stroke="var(--color-danger)" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+        <p className="text-sm font-semibold" style={{ color: 'var(--color-danger)' }}>
+          Database unavailable
+        </p>
+        <p className="text-xs" style={{ color: 'var(--color-text-2)' }}>
+          This feature is disabled until the database connection is restored.
+        </p>
+      </div>
+    )
   }
 
   return (

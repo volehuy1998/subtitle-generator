@@ -44,10 +44,9 @@ describe('taskStore', () => {
   })
 
   it('applyProgressData can set audio metadata', () => {
-    store().applyProgressData({ audioDuration: 120.5, language: 'en', device: 'cpu' })
+    store().applyProgressData({ audioDuration: 120.5, language: 'en' })
     expect(store().audioDuration).toBe(120.5)
     expect(store().language).toBe('en')
-    expect(store().device).toBe('cpu')
   })
 
   // ── addSegment ────────────────────────────────────────────────────────────

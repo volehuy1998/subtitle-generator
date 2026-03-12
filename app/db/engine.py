@@ -35,6 +35,8 @@ def get_engine():
             })
         _engine = create_async_engine(DATABASE_URL, **kwargs)
         logger.info(f"DB Engine created: {DATABASE_URL.split('://')[0]}")
+        from app.middleware.slow_query import register_slow_query_logging
+        register_slow_query_logging(_engine)
     return _engine
 
 

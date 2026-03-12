@@ -68,3 +68,13 @@ body {
   outline-offset: 2px;
   border-radius: var(--radius-xs);
 }
+
+/* Responsive model table: hide middle columns on narrow screens */
+@media (max-width: 639px) {
+  .model-grid { grid-template-columns: 1fr 60px !important; }
+  .model-col-speed, .model-col-pros { display: none !important; }
+}
+@media (min-width: 640px) and (max-width: 849px) {
+  .model-grid { grid-template-columns: 90px 1fr 60px !important; }
+  .model-col-pros { display: none !important; }
+}

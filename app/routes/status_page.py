@@ -415,7 +415,11 @@ async def resolve_incident_api(incident_id: int, request: Request):
     except Exception:
         body = {}
     message = (body.get("message") or "").strip()
-    ok = await resolve_incident(incident_id, message)
+    try:
+        ok = await resolve_incident(incident_id, message)
+    except Exception as e:
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=500, content={"detail": f"Database error: {e}"})
     if not ok:
         from fastapi.responses import JSONResponse
         return JSONResponse(status_code=404, content={"detail": "Incident not found"})

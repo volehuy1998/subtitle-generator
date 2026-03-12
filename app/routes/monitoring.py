@@ -15,6 +15,7 @@ from app.services.monitoring import (
     set_alert_threshold,
     get_performance_profile,
     get_health_dashboard,
+    get_alert_history,
 )
 
 logger = logging.getLogger("subtitle-generator")
@@ -55,6 +56,13 @@ async def update_threshold(name: str, value: float = Query(..., description="New
 async def performance_profile():
     """Get performance profiling data by processing stage."""
     return get_performance_profile()
+
+
+@router.get("/monitoring/alerts/history")
+async def alert_history():
+    """Alert history — last 200 triggered alerts with timestamps."""
+    history = get_alert_history()
+    return {"history": history, "count": len(history)}
 
 
 @router.get("/monitoring/dashboard")

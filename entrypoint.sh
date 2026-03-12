@@ -10,6 +10,11 @@ for dir in uploads outputs logs; do
     fi
 done
 
+# Ensure status.db is writable if it exists (may have been created by a different UID on the host)
+if [ -f "logs/status.db" ] && [ ! -w "logs/status.db" ]; then
+    chmod 664 logs/status.db 2>/dev/null || true
+fi
+
 # Fall back to stdout logging if logs dir is not writable
 if [ -d "logs" ] && [ ! -w "logs" ]; then
     echo "WARN: Falling back to stdout-only logging (logs/ not writable)"

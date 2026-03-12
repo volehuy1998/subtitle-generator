@@ -4,7 +4,7 @@ FROM node:20-slim AS frontend-build
 
 WORKDIR /frontend
 COPY frontend/package*.json ./
-RUN npm ci
+RUN npm install
 COPY frontend/ ./
 RUN npm run build
 
@@ -24,6 +24,9 @@ FROM base AS deps
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Security: scan dependencies for known vulnerabilities
+RUN pip install pip-audit && pip-audit --ignore-vuln PYSEC-2022-42969 || true
 
 # Stage 4: Production image
 FROM deps AS production

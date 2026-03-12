@@ -10,6 +10,7 @@ interface UIState {
   taskQueueOpen: boolean
   sseConnected: boolean
   reconnecting: boolean
+  dbOk: boolean
 }
 
 interface UIActions {
@@ -19,6 +20,7 @@ interface UIActions {
   setTaskQueueOpen: (open: boolean) => void
   setSseConnected: (connected: boolean) => void
   setReconnecting: (reconnecting: boolean) => void
+  setDbOk: (ok: boolean) => void
 }
 
 export const useUIStore = create<UIState & UIActions>((set) => ({
@@ -28,6 +30,7 @@ export const useUIStore = create<UIState & UIActions>((set) => ({
   taskQueueOpen: false,
   sseConnected: false,
   reconnecting: false,
+  dbOk: true,
 
   setAppMode: (mode) => set({ appMode: mode }),
   setEmbedMode: (mode) => set({ embedMode: mode }),
@@ -35,4 +38,5 @@ export const useUIStore = create<UIState & UIActions>((set) => ({
   setTaskQueueOpen: (open) => set({ taskQueueOpen: open }),
   setSseConnected: (connected) => set({ sseConnected: connected }),
   setReconnecting: (reconnecting) => set({ reconnecting }),
+  setDbOk: (ok) => set({ dbOk: ok }),
 }))

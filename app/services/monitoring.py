@@ -4,12 +4,14 @@ Provides business metrics, alerting rules, performance profiling,
 and health aggregation for operational visibility.
 """
 
+import json
 import logging
 import os
 import threading
 import time
 from collections import defaultdict, deque
 from datetime import datetime, timezone
+from urllib.request import Request, urlopen
 
 logger = logging.getLogger("subtitle-generator")
 
@@ -86,6 +88,35 @@ def get_business_metrics() -> dict:
         }
 
 
+# ── Alert History ──
+
+_alert_history: deque = deque(maxlen=200)
+_previous_alert_keys: set = set()
+_alert_history_lock = threading.Lock()
+
+
+def get_alert_history() -> list:
+    """Return the full alert history (last 200 entries)."""
+    with _alert_history_lock:
+        return list(_alert_history)
+
+
+def _notify_webhook(alert: dict):
+    """POST alert payload to WEBHOOK_ALERT_URL if configured."""
+    url = os.environ.get("WEBHOOK_ALERT_URL", "")
+    if not url:
+        return
+    try:
+        body = json.dumps({
+            "text": f"🚨 *SubForge Alert* [{alert.get('severity', '?').upper()}] {alert.get('alert', '')} — {alert.get('message', '')}",
+            "alert": alert,
+        }).encode()
+        req = Request(url, data=body, headers={"Content-Type": "application/json"}, method="POST")
+        urlopen(req, timeout=5)
+    except Exception:
+        pass  # Never block on webhook failure
+
+
 # ── Alerting Rules ──
 
 _alert_thresholds = {
@@ -152,6 +183,26 @@ def check_alerts() -> list[dict]:
             })
     except Exception:
         pass
+
+    # Record new alerts into history and fire webhooks
+    global _previous_alert_keys
+    current_keys = {a["alert"] for a in alerts}
+    new_keys = current_keys - _previous_alert_keys
+    _previous_alert_keys = current_keys
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    with _alert_history_lock:
+        for alert in alerts:
+            if alert["alert"] in new_keys:
+                entry = {
+                    "timestamp": now_iso,
+                    "alert": alert["alert"],
+                    "severity": alert.get("severity", "warning"),
+                    "message": alert.get("message", ""),
+                    "resolved": False,
+                }
+                _alert_history.append(entry)
+                _notify_webhook(entry)
 
     return alerts
 

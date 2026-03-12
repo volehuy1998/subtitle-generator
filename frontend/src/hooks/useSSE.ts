@@ -65,7 +65,8 @@ export function useSSE(taskId: string | null) {
 
     es.addEventListener('segment', (e) => {
       onData()
-      store.addSegment(JSON.parse((e as MessageEvent).data))
+      const data = JSON.parse((e as MessageEvent).data)
+      store.addSegment(data.segment ?? data)
     })
 
     es.addEventListener('warning', (e) => {

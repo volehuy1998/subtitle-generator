@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { api } from '@/api/client'
+import { useUIStore } from '@/store/uiStore'
 import type { SystemInfo } from '@/api/types'
 
 export interface UploadOptions {
@@ -15,6 +16,14 @@ interface Props {
 }
 
 const MODELS = ['tiny', 'base', 'small', 'medium', 'large'] as const
+
+const MODEL_INFO: Record<string, { speed: string; accuracy: string; vram: string; bestFor: string; pro: string; con: string }> = {
+  tiny:   { speed: '⚡⚡⚡⚡', accuracy: '★☆☆☆☆', vram: '0.5 GB', bestFor: 'Quick drafts',    pro: 'Fastest, minimal RAM',      con: 'Many errors, misses words' },
+  base:   { speed: '⚡⚡⚡',  accuracy: '★★☆☆☆', vram: '0.8 GB', bestFor: 'Short clips',      pro: 'Fast, CPU-friendly',        con: 'Struggles with accents'    },
+  small:  { speed: '⚡⚡',   accuracy: '★★★☆☆', vram: '1.5 GB', bestFor: 'General use',       pro: 'Good balance of speed/quality', con: 'Moderate GPU VRAM needed' },
+  medium: { speed: '⚡',     accuracy: '★★★★☆', vram: '3.0 GB', bestFor: 'Long recordings',   pro: 'High accuracy, multilingual',   con: 'Slow on CPU'              },
+  large:  { speed: '·',      accuracy: '★★★★★', vram: '5.5 GB', bestFor: 'Final output',      pro: 'Best accuracy, all languages',  con: 'Needs GPU; very slow on CPU' },
+}
 
 const FORMAT_OPTIONS = [
   { value: 'srt', label: 'SRT' },
@@ -31,6 +40,7 @@ function Skeleton({ className }: { className?: string }) {
 }
 
 export function TranscribeForm({ onUpload }: Props) {
+  const { dbOk } = useUIStore()
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null)
   const [languages, setLanguages] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
@@ -45,7 +55,7 @@ export function TranscribeForm({ onUpload }: Props) {
       .then(([info, langs]) => {
         setSystemInfo(info)
         setLanguages(langs.languages)
-        setDevice(info.recommended_device)
+        setDevice(info.cuda_available ? 'cuda' : 'cpu')
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -64,10 +74,33 @@ export function TranscribeForm({ onUpload }: Props) {
     maxSize: 500 * 1024 * 1024,
   })
 
-  const modelFitsGpu = (m: string) =>
-    systemInfo?.models[m]?.fits_gpu ?? null
+  const modelFitsGpu = (m: string) => {
+    const rec = systemInfo?.model_recommendations?.[m]
+    return rec === 'ok' || rec === 'tight' ? true : rec === 'too_large' ? false : null
+  }
 
   const chipBase = 'px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer select-none'
+
+  if (!dbOk) {
+    return (
+      <div
+        className="flex flex-col items-center justify-center gap-3 rounded-xl p-10 text-center"
+        style={{ background: 'var(--color-danger-light)', border: '1px solid var(--color-danger)' }}
+      >
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <circle cx="16" cy="16" r="14" stroke="var(--color-danger)" strokeWidth="2" />
+          <path d="M16 9v8M16 21v2" stroke="var(--color-danger)" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+        <p className="text-sm font-semibold" style={{ color: 'var(--color-danger)' }}>
+          Database unavailable
+        </p>
+        <p className="text-xs" style={{ color: 'var(--color-text-2)' }}>
+          Uploads are disabled until the database connection is restored.
+          No new transcription tasks can be started.
+        </p>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -86,7 +119,7 @@ export function TranscribeForm({ onUpload }: Props) {
           </div>
         ) : (
           <div className="flex gap-2">
-            {systemInfo?.gpu_available && (
+            {systemInfo?.cuda_available && (
               <button
                 type="button"
                 onClick={() => setDevice('cuda')}
@@ -141,36 +174,103 @@ export function TranscribeForm({ onUpload }: Props) {
           MODEL
         </label>
         {loading ? (
-          <div className="flex gap-2 flex-wrap">
-            {MODELS.map(m => <Skeleton key={m} className="h-7 w-14" />)}
-          </div>
+          <Skeleton className="h-48 w-full" />
         ) : (
-          <div className="flex gap-2 flex-wrap">
-            {MODELS.map((m) => {
+          <div
+            className="rounded-xl overflow-hidden"
+            style={{ border: '1px solid var(--color-border)' }}
+          >
+            {/* Table header */}
+            <div
+              className="model-grid grid text-xs font-semibold"
+              style={{
+                gridTemplateColumns: '90px 1fr 1fr 72px',
+                padding: '6px 10px',
+                background: 'var(--color-surface-2)',
+                color: 'var(--color-text-3)',
+                letterSpacing: '0.06em',
+                borderBottom: '1px solid var(--color-border)',
+              }}
+            >
+              <span>MODEL</span>
+              <span className="model-col-speed">SPEED / ACCURACY</span>
+              <span className="model-col-pros">PROS &amp; CONS</span>
+              <span style={{ textAlign: 'right' }}>VRAM</span>
+            </div>
+
+            {MODELS.map((m, idx) => {
+              const info = MODEL_INFO[m]
               const fits = modelFitsGpu(m)
               const isActive = model === m
+              const gpuFit =
+                systemInfo?.cuda_available
+                  ? fits === true
+                    ? { label: 'Fits', color: 'var(--color-success)' }
+                    : fits === false
+                      ? { label: '✕', color: 'var(--color-danger)' }
+                      : null
+                  : null
+
               return (
                 <button
                   key={m}
                   type="button"
                   onClick={() => setModel(m)}
-                  className={chipBase}
+                  className="model-grid w-full text-left grid transition-colors"
                   style={{
+                    gridTemplateColumns: '90px 1fr 1fr 72px',
+                    padding: '8px 10px',
+                    gap: '0',
                     background: isActive ? 'var(--color-primary-light)' : 'var(--color-surface)',
-                    borderColor: isActive ? 'var(--color-primary)' : 'var(--color-border)',
-                    color: isActive ? 'var(--color-primary)' : 'var(--color-text)',
+                    borderBottom: idx < MODELS.length - 1 ? '1px solid var(--color-border)' : 'none',
+                    borderLeft: `3px solid ${isActive ? 'var(--color-primary)' : 'transparent'}`,
+                    cursor: 'pointer',
                   }}
                 >
-                  <span className="flex items-center gap-1.5">
-                    {fits === true && (
-                      <span
-                        className="inline-block w-1.5 h-1.5 rounded-full"
-                        style={{ background: 'var(--color-success)' }}
-                        title="Fits GPU"
-                      />
+                  {/* Name + GPU fit */}
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className="text-xs font-semibold"
+                      style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-text)' }}
+                    >
+                      {m.charAt(0).toUpperCase() + m.slice(1)}
+                    </span>
+                    {gpuFit && (
+                      <span className="text-xs" style={{ color: gpuFit.color, fontSize: '10px' }}>
+                        {gpuFit.label}
+                      </span>
                     )}
-                    {m.charAt(0).toUpperCase() + m.slice(1)}
-                  </span>
+                  </div>
+
+                  {/* Speed + accuracy */}
+                  <div className="model-col-speed flex flex-col gap-0.5">
+                    <span className="text-xs" style={{ color: 'var(--color-text-2)', fontSize: '10px', letterSpacing: '0' }}>
+                      {info.speed}
+                    </span>
+                    <span className="text-xs" style={{ color: '#F59E0B', fontSize: '10px' }}>
+                      {info.accuracy}
+                    </span>
+                  </div>
+
+                  {/* Pros & cons */}
+                  <div className="model-col-pros flex flex-col gap-0.5 pr-1">
+                    <span className="text-xs" style={{ color: 'var(--color-success)', fontSize: '10px', lineHeight: '1.3' }}>
+                      + {info.pro}
+                    </span>
+                    <span className="text-xs" style={{ color: 'var(--color-danger)', fontSize: '10px', lineHeight: '1.3' }}>
+                      − {info.con}
+                    </span>
+                  </div>
+
+                  {/* VRAM */}
+                  <div className="flex flex-col items-end gap-0.5">
+                    <span className="text-xs font-medium" style={{ color: 'var(--color-text-2)', fontSize: '10px' }}>
+                      {info.vram}
+                    </span>
+                    <span className="text-xs" style={{ color: 'var(--color-text-3)', fontSize: '10px' }}>
+                      {info.bestFor}
+                    </span>
+                  </div>
                 </button>
               )
             })}
@@ -240,7 +340,7 @@ export function TranscribeForm({ onUpload }: Props) {
       {/* Drop zone */}
       <div
         {...getRootProps()}
-        className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-8 cursor-pointer transition-all"
+        className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-6 sm:p-8 cursor-pointer transition-all"
         style={{
           borderColor: isDragActive ? 'var(--color-primary)' : 'var(--color-border)',
           background: isDragActive ? 'var(--color-primary-light)' : 'var(--color-surface-2)',

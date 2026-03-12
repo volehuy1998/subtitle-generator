@@ -1,23 +1,13 @@
 // ── API types (hand-crafted from OpenAPI spec) ──
 
 export interface SystemInfo {
-  gpu_available: boolean
+  cuda_available: boolean
   gpu_name: string | null
-  gpu_memory_gb: number | null
-  recommended_device: 'cuda' | 'cpu'
-  models: Record<string, ModelInfo>
-  diarization_available: boolean
-  ffmpeg_available: boolean
-}
-
-export interface ModelInfo {
-  name: string
-  parameters: string
-  vram_required_gb: number | null
-  speed: string
-  accuracy: string
-  recommended_for: string
-  fits_gpu: boolean | null
+  gpu_vram: number | null
+  gpu_vram_free: number | null
+  model_recommendations: Record<string, 'ok' | 'tight' | 'too_large'>
+  auto_model: string
+  diarization?: { available: boolean }
 }
 
 export interface LanguagesResponse {
@@ -93,14 +83,21 @@ export interface TasksResponse {
 }
 
 export interface HealthStatus {
-  status: 'ok' | 'degraded' | 'error'
+  status: 'ok' | 'healthy' | 'degraded' | 'error' | 'critical' | 'warning'
   uptime_sec: number
   cpu_percent?: number
   ram_percent?: number
+  memory_percent?: number
   disk_percent?: number
+  disk_free_gb?: number
   db_ok?: boolean
   alerts?: string[]
   load?: number
+  gpu_available?: boolean
+  gpu_name?: string | null
+  gpu_vram_total?: number | null
+  gpu_vram_used?: number | null
+  gpu_vram_free?: number | null
 }
 
 export interface EmbedResult {

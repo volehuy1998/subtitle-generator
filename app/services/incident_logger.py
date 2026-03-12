@@ -84,7 +84,7 @@ async def update_incident(
             return True
     except Exception as e:
         logger.error(f"STATUS Failed to update incident: {e}")
-        return False
+        raise
 
 
 async def resolve_incident(incident_id: int, message: str = "") -> bool:

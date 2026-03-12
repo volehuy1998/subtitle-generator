@@ -6,8 +6,6 @@ from pathlib import Path
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
-
 from app.config import TEMPLATE_DIR
 
 router = APIRouter()
@@ -20,7 +18,11 @@ _USE_REACT = _REACT_INDEX.exists() and os.environ.get("FRONTEND", "react") == "r
 
 
 def _react_index() -> FileResponse:
-    return FileResponse(str(_REACT_INDEX), media_type="text/html")
+    return FileResponse(
+        str(_REACT_INDEX),
+        media_type="text/html",
+        headers={"Cache-Control": "no-store"},
+    )
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -35,3 +37,27 @@ async def status_page_html(request: Request):
     if _USE_REACT:
         return _react_index()
     return templates.TemplateResponse("status.html", {"request": request})
+
+
+@router.get("/manifest.json")
+async def manifest():
+    f = _REACT_DIST / "manifest.json"
+    if f.exists():
+        return FileResponse(str(f), media_type="application/manifest+json")
+    return FileResponse(str(Path(__file__).parent.parent.parent / "frontend" / "public" / "manifest.json"), media_type="application/manifest+json")
+
+
+@router.get("/logo.svg")
+async def logo_svg():
+    f = _REACT_DIST / "logo.svg"
+    if f.exists():
+        return FileResponse(str(f), media_type="image/svg+xml")
+    return FileResponse(str(Path(__file__).parent.parent.parent / "frontend" / "public" / "logo.svg"), media_type="image/svg+xml")
+
+
+@router.get("/favicon.svg")
+async def favicon_svg():
+    f = _REACT_DIST / "favicon.svg"
+    if f.exists():
+        return FileResponse(str(f), media_type="image/svg+xml")
+    return FileResponse(str(Path(__file__).parent.parent.parent / "frontend" / "public" / "favicon.svg"), media_type="image/svg+xml")

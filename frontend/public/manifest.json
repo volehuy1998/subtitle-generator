@@ -1,0 +1,19 @@
+{
+  "name": "SubForge — AI Subtitle Generator",
+  "short_name": "SubForge",
+  "description": "AI-powered subtitle generation from audio and video files",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0F172A",
+  "theme_color": "#863bff",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "lang": "en"
+}

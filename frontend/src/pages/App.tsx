@@ -107,9 +107,9 @@ export default function App() {
       )}
 
       {/* Main layout */}
-      <main className="max-w-5xl mx-auto px-4 py-8 flex gap-6 items-start">
+      <main className="max-w-5xl mx-auto px-4 py-6 lg:py-8 flex flex-col lg:flex-row gap-5 lg:gap-6 items-start">
         {/* Left column: input */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 w-full">
           <div
             className="rounded-xl overflow-hidden"
             style={{
@@ -156,7 +156,7 @@ export default function App() {
             </div>
 
             {/* Tab content */}
-            <div className="p-5">
+            <div className="p-4 md:p-5">
               {appMode === 'transcribe' ? (
                 isProcessing && activeTaskId ? (
                   <ProgressView taskId={activeTaskId} />
@@ -172,10 +172,10 @@ export default function App() {
           </div>
         </div>
 
-        {/* Right column: output panel (sticky) */}
+        {/* Right column: output panel — full width on mobile, sticky sidebar on desktop */}
         <div
-          className="flex-shrink-0"
-          style={{ width: '300px', position: 'sticky', top: '68px' }}
+          className="w-full lg:flex-shrink-0 lg:w-[300px] lg:sticky"
+          style={{ top: '68px' }}
         >
           <OutputPanel />
         </div>

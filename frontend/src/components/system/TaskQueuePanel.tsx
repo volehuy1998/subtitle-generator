@@ -38,11 +38,8 @@ export function TaskQueuePanel() {
 
   return (
     <div
-      className="fixed z-40 rounded-xl overflow-hidden"
+      className="fixed z-40 rounded-xl overflow-hidden bottom-3 right-3 w-52 sm:bottom-5 sm:left-5 sm:right-auto sm:w-60"
       style={{
-        bottom: '20px',
-        left: '20px',
-        width: '240px',
         background: 'var(--color-surface)',
         border: '1px solid var(--color-border)',
         boxShadow: 'var(--shadow-lg)',

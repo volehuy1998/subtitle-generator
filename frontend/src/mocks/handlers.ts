@@ -96,8 +96,6 @@ export const handlers = [
       task_id: MOCK_TASK_ID,
       model_size: 'small',
       language: 'auto',
-      word_timestamps: false,
-      diarize: false,
     })
   }),
 
