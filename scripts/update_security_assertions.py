@@ -139,8 +139,6 @@ def _run_rate_limit_tests() -> tuple[int, int]:
          "--tb=no", "-q"],
         capture_output=True, text=True, cwd=ROOT,
     )
-    passed = result.stdout.count(" PASSED") + result.stdout.count("passed")
-    total_line = [l for l in result.stdout.splitlines() if "passed" in l or "failed" in l]
     # Simple: count PASSED/FAILED markers
     passed = result.stdout.count(" PASSED")
     failed = result.stdout.count(" FAILED")

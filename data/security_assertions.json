@@ -1,6 +1,12 @@
 {
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
+  "last_security_commit": {
+    "sha": "f61243b",
+    "sha_full": "f61243bbc2bb56ef64001ea6f1e56df7de71733e",
+    "datetime": "2026-03-13T05:13:05+07:00",
+    "message": "Fix CI lint failures: remove unused imports and variables"
+  },
   "assertions": [
     {
       "id": "file_upload",

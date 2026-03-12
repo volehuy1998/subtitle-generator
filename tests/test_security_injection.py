@@ -16,7 +16,6 @@ Fixture files (tests/fixtures/*.mp4) are pre-built malicious payloads.
 Run  tests/fixtures/generate_fixtures.py  to regenerate them.
 """
 
-import io
 import struct
 from pathlib import Path
 
