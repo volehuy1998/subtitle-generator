@@ -7,6 +7,7 @@ from typing import Literal, Optional
 
 import torch
 from fastapi import APIRouter, Form, Request, UploadFile, HTTPException
+from app.schemas import UploadResponse
 
 from app import state
 from app.config import (
@@ -21,7 +22,7 @@ from app.utils.formatting import format_bytes
 from app.utils.security import validate_file_extension, validate_magic_bytes, sanitize_filename
 from app.services.analytics import record_upload
 from app.services.audit import log_audit_event
-from app.services.quarantine import quarantine_file
+from app.services.quarantine import quarantine_file, scan_with_clamav
 from app.routes.metrics import inc
 
 logger = logging.getLogger("subtitle-generator")
@@ -29,7 +30,7 @@ logger = logging.getLogger("subtitle-generator")
 router = APIRouter(tags=["Upload"])
 
 
-@router.post("/upload")
+@router.post("/upload", response_model=UploadResponse)
 async def upload(
     request: Request,
     file: UploadFile,
@@ -121,6 +122,17 @@ async def upload(
         quarantine_file(video_path, reason="magic_bytes_mismatch", ip=client_ip)
         logger.warning(f"UPLOAD [{task_id[:8]}] Rejected: magic bytes don't match a media file")
         raise HTTPException(400, "File content does not match a recognized media format.")
+
+    # ClamAV virus scan (optional — graceful if ClamAV is not installed/running)
+    client_ip = request.client.host if request.client else "unknown"
+    av_result = scan_with_clamav(str(video_path))
+    if not av_result["clean"]:
+        log_audit_event("virus_detected", ip=client_ip, filename=safe_filename,
+                        size=size, threat=av_result.get("threat"))
+        quarantine_file(video_path, reason="virus_detected", ip=client_ip,
+                        threat=av_result.get("threat"))
+        logger.warning(f"UPLOAD [{task_id[:8]}] Rejected: ClamAV detected threat '{av_result.get('threat')}'")
+        raise HTTPException(400, "File rejected: virus or malware detected.")
 
     upload_time = time.time() - t0
     logger.info(f"UPLOAD [{task_id[:8]}] Saved: {format_bytes(size)} in {upload_time:.1f}s -> {video_path.name}")

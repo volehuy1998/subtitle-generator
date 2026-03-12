@@ -9,6 +9,7 @@ import json
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
+from app.schemas import TaskProgressResponse
 
 from app import state
 from app.config import REDIS_URL
@@ -98,7 +99,7 @@ async def task_events_sse(task_id: str):
     )
 
 
-@router.get("/progress/{task_id}")
+@router.get("/progress/{task_id}", response_model=TaskProgressResponse)
 async def progress(task_id: str):
     """Polling fallback for progress."""
     task_data = _get_task_data(task_id)

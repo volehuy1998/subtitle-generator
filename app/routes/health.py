@@ -12,6 +12,7 @@ from starlette.responses import StreamingResponse
 
 from app import state
 from app.config import OUTPUT_DIR, UPLOAD_DIR, MAX_CONCURRENT_TASKS
+from app.schemas import HealthResponse, SystemStatusResponse
 
 logger = logging.getLogger("subtitle-generator")
 
@@ -20,7 +21,7 @@ router = APIRouter(tags=["System"])
 _start_time = time.time()
 
 
-@router.get("/health")
+@router.get("/health", response_model=HealthResponse)
 async def health():
     """Liveness probe - is the service running?
 
@@ -142,7 +143,7 @@ async def scale_info():
 _status_cache: dict = {"data": None, "expires": 0.0}
 
 
-@router.get("/api/status")
+@router.get("/api/status", response_model=SystemStatusResponse)
 async def system_status():
     """Lightweight system status for the frontend health indicator.
 
@@ -207,6 +208,24 @@ async def system_status():
         cpu_percent = None
         memory_percent = None
 
+    # GPU
+    gpu_available = False
+    gpu_name = None
+    gpu_vram_total = None
+    gpu_vram_used = None
+    gpu_vram_free = None
+    try:
+        import torch
+        if torch.cuda.is_available():
+            gpu_available = True
+            props = torch.cuda.get_device_properties(0)
+            gpu_name = torch.cuda.get_device_name(0)
+            gpu_vram_total = round(props.total_memory / 1024**3, 1)
+            gpu_vram_used = round(torch.cuda.memory_allocated(0) / 1024**3, 2)
+            gpu_vram_free = round(gpu_vram_total - gpu_vram_used, 2)
+    except Exception:
+        pass
+
     # Overall status
     if has_critical or not db_ok or not disk_ok:
         overall = "critical"
@@ -227,6 +246,11 @@ async def system_status():
         "db_ok": db_ok,
         "db_latency_ms": db_latency_ms,
         "ffmpeg_ok": ffmpeg_ok,
+        "gpu_available": gpu_available,
+        "gpu_name": gpu_name,
+        "gpu_vram_total": gpu_vram_total,
+        "gpu_vram_used": gpu_vram_used,
+        "gpu_vram_free": gpu_vram_free,
         "shutting_down": state.shutting_down,
         "system_critical": state.system_critical,
         "system_critical_reasons": state.system_critical_reasons,

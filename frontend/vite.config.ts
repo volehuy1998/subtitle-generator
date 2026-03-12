@@ -3,6 +3,41 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 
+// Backend route prefixes that must be forwarded to FastAPI.
+// HTML page routes handled by the React SPA (/, /status, /dashboard, /analytics)
+// are intentionally excluded so Vite keeps serving index.html for them.
+const BE_PATHS = [
+  'api',          // /api/status, /api/capabilities, /api/status/page, …
+  'upload',
+  'events',
+  'progress',
+  'download',
+  'cancel', 'pause', 'resume',
+  'tasks',
+  'system-info',
+  'languages',
+  'health', 'ready',
+  'embed',
+  'combine',
+  'subtitles',
+  'track',
+  'metrics',
+  'monitoring',
+  'security',
+  'auth',
+  'scale',
+  'export',
+  'query',
+  'logs',
+  'feedback',
+  'webhooks',
+]
+
+const BE_PROXY = {
+  target: 'http://localhost:8000',
+  changeOrigin: true,
+}
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
@@ -11,22 +46,11 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/upload':       { target: 'http://localhost:8000', changeOrigin: true },
-      '/events':       { target: 'http://localhost:8000', changeOrigin: true },
-      '/progress':     { target: 'http://localhost:8000', changeOrigin: true },
-      '/download':     { target: 'http://localhost:8000', changeOrigin: true },
-      '/cancel':       { target: 'http://localhost:8000', changeOrigin: true },
-      '/pause':        { target: 'http://localhost:8000', changeOrigin: true },
-      '/resume':       { target: 'http://localhost:8000', changeOrigin: true },
-      '/tasks':        { target: 'http://localhost:8000', changeOrigin: true },
-      '/system-info':  { target: 'http://localhost:8000', changeOrigin: true },
-      '/languages':    { target: 'http://localhost:8000', changeOrigin: true },
-      '/health':       { target: 'http://localhost:8000', changeOrigin: true },
-      '/embed':        { target: 'http://localhost:8000', changeOrigin: true },
-      '/combine':      { target: 'http://localhost:8000', changeOrigin: true },
-      '/subtitles':    { target: 'http://localhost:8000', changeOrigin: true },
-      '/api':          { target: 'http://localhost:8000', changeOrigin: true },
-      '/track':        { target: 'http://localhost:8000', changeOrigin: true },
+      // WebSocket needs a separate entry with ws:true
+      '/ws': { target: 'ws://localhost:8000', ws: true, changeOrigin: true },
+      // Single regex covers every known backend path prefix.
+      // Add new prefixes to BE_PATHS above — no other change needed.
+      [`^/(${BE_PATHS.join('|')})(/.*)?$`]: BE_PROXY,
     },
   },
   build: {
