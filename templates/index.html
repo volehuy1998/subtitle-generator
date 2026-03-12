@@ -278,14 +278,15 @@
         .embed-card-desc { font-size: 0.72rem; color: var(--text-3); margin-top: 1px; }
         .embed-card-body { padding: 14px; }
         /* Mode selector — two clean radio-style cards */
-        .embed-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+        .embed-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; align-items: stretch; }
         .embed-mode-card {
             padding: 10px 12px; border-radius: var(--radius-xs); border: 1.5px solid var(--border);
-            cursor: pointer; background: var(--surface); transition: all 0.15s; user-select: none;
+            cursor: pointer; background: var(--surface); transition: border-color 0.15s, background 0.15s;
+            user-select: none; display: flex; flex-direction: column; gap: 3px;
         }
         .embed-mode-card.active { border-color: var(--primary); background: var(--primary-light); }
         .embed-mode-card:hover:not(.active) { border-color: var(--border-2); }
-        .embed-mode-name { font-size: 0.78rem; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 5px; margin-bottom: 2px; }
+        .embed-mode-name { font-size: 0.78rem; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 5px; white-space: nowrap; }
         .embed-mode-card.active .embed-mode-name { color: var(--primary); }
         .embed-mode-dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--border); flex-shrink: 0; transition: all 0.15s; }
         .embed-mode-card.active .embed-mode-dot { background: var(--primary); border-color: var(--primary); }
@@ -635,11 +636,11 @@
                             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
                                 <div class="embed-mode-card active" id="ceModeCardSoft" onclick="ceSetMode('soft')">
                                     <div class="embed-mode-name"><span class="embed-mode-dot"></span> Soft Mux</div>
-                                    <div class="embed-mode-desc">Subtitle track attached as a layer — fast, lossless, toggleable</div>
+                                    <div class="embed-mode-desc">Fast · selectable track</div>
                                 </div>
                                 <div class="embed-mode-card" id="ceModeCardHard" onclick="ceSetMode('hard')">
                                     <div class="embed-mode-name"><span class="embed-mode-dot"></span> Hard Burn</div>
-                                    <div class="embed-mode-desc">Subtitles rendered onto frames — works on all players</div>
+                                    <div class="embed-mode-desc">Permanent · all players</div>
                                 </div>
                             </div>
                         </div>
@@ -813,11 +814,11 @@
                             <div class="embed-modes">
                                 <div class="embed-mode-card active" id="embedTabSoft" onclick="setEmbedMode('soft')">
                                     <div class="embed-mode-name"><span class="embed-mode-dot"></span> Soft Mux</div>
-                                    <div class="embed-mode-desc">Subtitle track embedded as a selectable layer — fast, lossless, toggleable</div>
+                                    <div class="embed-mode-desc">Fast · selectable track</div>
                                 </div>
                                 <div class="embed-mode-card" id="embedTabHard" onclick="setEmbedMode('hard')">
                                     <div class="embed-mode-name"><span class="embed-mode-dot"></span> Hard Burn</div>
-                                    <div class="embed-mode-desc">Subtitles rendered permanently onto video frames — works on all players</div>
+                                    <div class="embed-mode-desc">Permanent · all players</div>
                                 </div>
                             </div>
                             <!-- Style options (hard burn only) -->
