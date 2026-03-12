@@ -7,12 +7,13 @@ import logging
 from pathlib import Path
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 
 from app import state
 from app.config import OUTPUT_DIR, STORAGE_BACKEND
 from app.logging_setup import log_task_event
+from app.utils.access import check_task_access
 
 logger = logging.getLogger("subtitle-generator")
 router = APIRouter(tags=["Download"])
@@ -33,10 +34,11 @@ def _get_task_data(task_id: str) -> dict | None:
 
 
 @router.get("/download/{task_id}")
-async def download(task_id: str, format: Literal["srt", "vtt", "json"] = Query("srt")):
+async def download(task_id: str, request: Request, format: Literal["srt", "vtt", "json"] = Query("srt")):
     task_data = _get_task_data(task_id)
     if task_data is None:
         raise HTTPException(404, "Task not found")
+    check_task_access(task_data, request)
     if task_data.get("status") != "done":
         raise HTTPException(400, "Subtitles not ready yet")
 

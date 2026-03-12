@@ -12,6 +12,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from app.utils.access import get_client_ip
+
 logger = logging.getLogger("subtitle-generator")
 _lock = threading.Lock()
 
@@ -68,7 +70,7 @@ class BruteForceMiddleware(BaseHTTPMiddleware):
     """Block requests from IPs with too many failed auth attempts."""
 
     async def dispatch(self, request: Request, call_next):
-        client_ip = request.client.host if request.client else "unknown"
+        client_ip = get_client_ip(request)
         if is_ip_blocked(client_ip):
             return JSONResponse(
                 status_code=429,

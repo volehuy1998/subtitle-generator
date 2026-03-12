@@ -7,12 +7,13 @@ In multi-server mode: subscribes to Redis Pub/Sub.
 import asyncio
 import json
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from app.schemas import TaskProgressResponse
 
 from app import state
 from app.config import REDIS_URL
+from app.utils.access import check_task_access
 
 router = APIRouter(tags=["Progress"])
 
@@ -37,7 +38,7 @@ def _filter_task(data: dict) -> dict:
 
 
 @router.get("/events/{task_id}")
-async def task_events_sse(task_id: str):
+async def task_events_sse(task_id: str, request: Request):
     """Server-Sent Events endpoint for real-time task updates."""
     from app.services.sse import subscribe, unsubscribe
 
@@ -45,6 +46,8 @@ async def task_events_sse(task_id: str):
     task_data = _get_task_data(task_id)
     if not has_subs and task_data is None:
         raise HTTPException(404, "Task not found")
+    if task_data:
+        check_task_access(task_data, request)
 
     async def event_generator():
         # Send initial state
@@ -100,9 +103,10 @@ async def task_events_sse(task_id: str):
 
 
 @router.get("/progress/{task_id}", response_model=TaskProgressResponse)
-async def progress(task_id: str):
+async def progress(task_id: str, request: Request):
     """Polling fallback for progress."""
     task_data = _get_task_data(task_id)
     if task_data is None:
         raise HTTPException(404, "Task not found")
+    check_task_access(task_data, request)
     return _filter_task(task_data)

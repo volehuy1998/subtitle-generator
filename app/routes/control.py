@@ -3,20 +3,22 @@
 import ctypes
 import logging
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 
 from app import state
 from app.logging_setup import log_task_event
+from app.utils.access import check_task_access
 
 logger = logging.getLogger("subtitle-generator")
 router = APIRouter(tags=["Progress"])
 
 
 @router.post("/cancel/{task_id}")
-async def cancel(task_id: str):
+async def cancel(task_id: str, request: Request):
     if task_id not in state.tasks:
         raise HTTPException(404, "Task not found")
     task = state.tasks[task_id]
+    check_task_access(task, request)
     if task["status"] in ("done", "error", "cancelled"):
         raise HTTPException(400, "Task already finished")
     if task.get("cancel_requested"):
@@ -55,10 +57,11 @@ async def cancel(task_id: str):
 
 
 @router.post("/pause/{task_id}")
-async def pause(task_id: str):
+async def pause(task_id: str, request: Request):
     if task_id not in state.tasks:
         raise HTTPException(404, "Task not found")
     task = state.tasks[task_id]
+    check_task_access(task, request)
     if task["status"] not in ("transcribing",):
         # Already paused or not in a pausable state
         if task["status"] == "paused":
@@ -75,9 +78,10 @@ async def pause(task_id: str):
 
 
 @router.post("/resume/{task_id}")
-async def resume(task_id: str):
+async def resume(task_id: str, request: Request):
     if task_id not in state.tasks:
         raise HTTPException(404, "Task not found")
+    check_task_access(state.tasks[task_id], request)
     logger.info(f"RESUME [{task_id[:8]}] Resumed")
     log_task_event(task_id, "resumed")
     pause_event = state.tasks[task_id].get("pause_event")

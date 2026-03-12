@@ -18,6 +18,7 @@ from starlette.responses import JSONResponse
 
 from app.services.audit import log_audit_event
 from app.middleware.brute_force import record_auth_failure
+from app.utils.access import get_client_ip
 
 logger = logging.getLogger("subtitle-generator")
 
@@ -96,7 +97,7 @@ class ApiKeyMiddleware(BaseHTTPMiddleware):
         # Check for API key in header or query parameter
         api_key = request.headers.get("X-API-Key") or request.query_params.get("api_key")
 
-        client_ip = request.client.host if request.client else "unknown"
+        client_ip = get_client_ip(request)
 
         if not api_key:
             log_audit_event("auth_failure", ip=client_ip, path=path, reason="missing_key")

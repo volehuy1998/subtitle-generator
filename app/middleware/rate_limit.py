@@ -18,6 +18,7 @@ from app.services.rate_limiter import (
     DEFAULT_WINDOW_SEC,
     UPLOAD_RATE_LIMIT,
 )
+from app.utils.access import get_client_ip
 
 logger = logging.getLogger("subtitle-generator")
 
@@ -31,7 +32,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     """Enforce per-IP sliding window rate limits."""
 
     async def dispatch(self, request: Request, call_next):
-        client_ip = request.client.host if request.client else "unknown"
+        client_ip = get_client_ip(request)
         path = request.url.path.rstrip("/") or "/"
 
         # Check IP allowlist/blocklist
