@@ -158,21 +158,21 @@ export function OutputPanel() {
             {/* Divider */}
             <div style={{ height: '1px', background: 'var(--color-border)' }} />
 
-            {/* Timing breakdown */}
-            <TimingBreakdown timings={stepTimings} />
-
-            {/* Embed panel (video only) */}
+            {/* Embed panel (video only) — shown before timing so it's prominent */}
             {isVideo && (
               <div
                 className="rounded-lg p-4"
                 style={{
-                  background: 'var(--color-surface-2)',
-                  border: '1px solid var(--color-border)',
+                  background: 'var(--color-primary-light)',
+                  border: '1px solid var(--color-primary-border, #d8b4fe)',
                 }}
               >
                 <EmbedPanel taskId={taskId} />
               </div>
             )}
+
+            {/* Timing breakdown */}
+            <TimingBreakdown timings={stepTimings} />
           </>
         )}
       </div>
