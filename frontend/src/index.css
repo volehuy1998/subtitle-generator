@@ -59,8 +59,9 @@ body {
 /* Scrollbar */
 ::-webkit-scrollbar       { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-border-2); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--color-border-2); border-radius: 9999px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-text-3); }
+* { scrollbar-width: thin; scrollbar-color: var(--color-border-2) transparent; }
 
 /* Focus ring */
 :focus-visible {
