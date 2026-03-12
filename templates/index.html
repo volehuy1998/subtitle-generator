@@ -52,12 +52,26 @@
         .opt-btn.too-large .opt-detail { color: #e74c3c; }
         .gpu-badge { display: inline-block; font-size: 0.7rem; color: #27ae60; background: #27ae6018; padding: 2px 8px; border-radius: 4px; margin-top: 6px; }
         .no-gpu-badge { display: inline-block; font-size: 0.7rem; color: #e74c3c; background: #e74c3c18; padding: 2px 8px; border-radius: 4px; margin-top: 6px; }
-        .model-info { margin-top: 10px; padding: 10px 12px; border-radius: 6px; background: #161616; border: 1px solid #222; font-size: 0.78rem; line-height: 1.5; color: #999; display: none; }
-        .model-info.show { display: block; }
-        .model-info strong { color: #ccc; }
-        .model-info .mi-good { color: #27ae60; }
-        .model-info .mi-warn { color: #f39c12; }
-        .model-info .mi-bad { color: #e74c3c; }
+        .model-info { margin-top: 10px; border-radius: 8px; background: #111; border: 1px solid #222; font-size: 0.78rem; line-height: 1.5; color: #999; display: none; overflow: hidden; }
+        .model-info.show { display: block; animation: miFadeIn .2s ease; }
+        @keyframes miFadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+        .mi-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #161616; border-bottom: 1px solid #1e1e1e; }
+        .mi-title { font-size: 0.85rem; font-weight: 600; color: #e0e0e0; }
+        .mi-badges { display: flex; gap: 6px; }
+        .mi-badge { font-size: 0.65rem; font-weight: 600; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .mi-badge-speed { color: #4f8ff7; background: #4f8ff714; border: 1px solid #4f8ff730; }
+        .mi-badge-vram { color: #a78bfa; background: #a78bfa14; border: 1px solid #a78bfa30; }
+        .mi-badge-acc { color: #27ae60; background: #27ae6014; border: 1px solid #27ae6030; }
+        .mi-body { padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; }
+        .mi-row { display: flex; align-items: flex-start; gap: 8px; }
+        .mi-icon { flex-shrink: 0; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border-radius: 4px; font-size: 0.7rem; margin-top: 1px; }
+        .mi-icon-best { background: #27ae6018; color: #27ae60; }
+        .mi-icon-warn { background: #f39c1218; color: #f39c12; }
+        .mi-icon-tip { background: #4f8ff718; color: #4f8ff7; }
+        .mi-row-text { color: #aaa; }
+        .mi-row-text b { color: #ccc; font-weight: 500; }
+        .mi-meter { height: 3px; border-radius: 2px; background: #222; margin-top: 2px; }
+        .mi-meter-fill { height: 100%; border-radius: 2px; transition: width .3s ease; }
 
         /* Drop zone */
         .drop-zone {
@@ -1321,44 +1335,34 @@
         const MODEL_INFO = {
             auto: null,
             tiny: {
-                speed: '~32x realtime',
-                accuracy: 'Basic',
-                vram: '0.5 GB',
-                best: 'Quick drafts, short clips with clear audio',
-                warn: 'Struggles with accents, background noise, and non-English languages. May hallucinate words.',
-                example: 'A 10-minute video processes in about 20 seconds, but expect some wrong words in noisy sections.'
+                speed: '32x', accuracy: 'Basic', accPct: 20, speedPct: 100, vram: '0.5 GB',
+                best: 'Quick drafts and previews with clear, single-speaker audio',
+                warn: 'Struggles with accents, background noise, and non-English. May hallucinate or repeat words.',
+                tip: '10-min video in ~20s. Use this for fast previews, then re-run with a larger model for final output.'
             },
             base: {
-                speed: '~16x realtime',
-                accuracy: 'Decent',
-                vram: '0.8 GB',
-                best: 'Clear English speech, podcasts, interviews in quiet environments',
-                warn: 'Still weak on heavy accents, technical jargon, or mixed-language content.',
-                example: 'Good enough for English YouTube videos with clear narration. A 10-min video takes about 40 seconds.'
+                speed: '16x', accuracy: 'Decent', accPct: 40, speedPct: 80, vram: '0.8 GB',
+                best: 'Clear English speech &mdash; podcasts, interviews, narration in quiet settings',
+                warn: 'Weak on heavy accents, technical jargon, or mixed-language content.',
+                tip: '10-min video in ~40s. A solid choice for English YouTube videos with clean audio.'
             },
             small: {
-                speed: '~6x realtime',
-                accuracy: 'Good',
-                vram: '1.5 GB',
-                best: 'Most languages and general-purpose use. Best balance of speed and quality.',
-                warn: 'Slower on CPU-only servers. May still miss specialized vocabulary.',
-                example: 'Handles accented English, European languages, and moderate background noise well. A 10-min video takes ~2 minutes on CPU.'
+                speed: '6x', accuracy: 'Good', accPct: 65, speedPct: 50, vram: '1.5 GB',
+                best: 'General-purpose &mdash; most languages, moderate noise, accented speech',
+                warn: 'Noticeably slower on CPU-only servers. May still miss specialized vocabulary.',
+                tip: '10-min video in ~2 min (CPU). Best overall balance of speed and quality.'
             },
             medium: {
-                speed: '~2x realtime',
-                accuracy: 'Strong',
-                vram: '3 GB',
+                speed: '2x', accuracy: 'Strong', accPct: 85, speedPct: 25, vram: '3 GB',
                 best: 'Non-English content, noisy recordings, technical or medical vocabulary',
-                warn: 'Significantly slower, especially on CPU. GPU strongly recommended. Uses more server memory.',
-                example: 'Near-perfect for conference talks, lectures, and foreign language films. A 10-min video takes ~5 minutes on CPU, ~1 minute with GPU.'
+                warn: 'Significantly slower, especially on CPU. GPU strongly recommended.',
+                tip: '10-min video in ~5 min (CPU) / ~1 min (GPU). Great for lectures and foreign-language films.'
             },
             large: {
-                speed: '~1x realtime',
-                accuracy: 'Best available',
-                vram: '5.5 GB',
-                best: 'Maximum accuracy for any language, rare dialects, overlapping speakers, heavy noise',
-                warn: 'Very slow on CPU (real-time or slower). Requires a GPU with 6+ GB VRAM for practical use. High memory consumption.',
-                example: 'Best choice for professional subtitling where every word matters. A 10-min video takes ~10 minutes on CPU, ~2 minutes with GPU.'
+                speed: '1x', accuracy: 'Best', accPct: 100, speedPct: 10, vram: '5.5 GB',
+                best: 'Maximum accuracy &mdash; rare dialects, overlapping speakers, heavy noise',
+                warn: 'Very slow on CPU (real-time or slower). Requires GPU with 6+ GB VRAM.',
+                tip: '10-min video in ~10 min (CPU) / ~2 min (GPU). Use for professional subtitling where every word matters.'
             }
         };
 
@@ -1366,12 +1370,29 @@
             var el = $('modelInfo');
             var info = MODEL_INFO[model];
             if (!info) { el.className = 'model-info'; return; }
+            var name = model.charAt(0).toUpperCase() + model.slice(1);
+            var accColor = info.accPct >= 65 ? '#27ae60' : info.accPct >= 40 ? '#f39c12' : '#e74c3c';
+            var spdColor = info.speedPct >= 50 ? '#4f8ff7' : info.speedPct >= 25 ? '#f39c12' : '#e74c3c';
             el.innerHTML =
-                '<strong>' + model.charAt(0).toUpperCase() + model.slice(1) + '</strong> &mdash; ' +
-                info.accuracy + ' accuracy, ' + info.speed + ', needs ' + info.vram + ' VRAM<br>' +
-                '<span class="mi-good">Best for:</span> ' + info.best + '<br>' +
-                '<span class="mi-warn">Note:</span> ' + info.warn + '<br>' +
-                '<span style="color:#4f8ff7">Example:</span> ' + info.example;
+                '<div class="mi-header">' +
+                    '<span class="mi-title">' + name + '</span>' +
+                    '<span class="mi-badges">' +
+                        '<span class="mi-badge mi-badge-acc">' + info.accuracy + '</span>' +
+                        '<span class="mi-badge mi-badge-speed">' + info.speed + '</span>' +
+                        '<span class="mi-badge mi-badge-vram">' + info.vram + '</span>' +
+                    '</span>' +
+                '</div>' +
+                '<div class="mi-body">' +
+                    '<div style="display:flex;gap:12px;margin-bottom:2px;">' +
+                        '<div style="flex:1"><div style="font-size:0.65rem;color:#666;margin-bottom:3px;">ACCURACY</div>' +
+                            '<div class="mi-meter"><div class="mi-meter-fill" style="width:' + info.accPct + '%;background:' + accColor + '"></div></div></div>' +
+                        '<div style="flex:1"><div style="font-size:0.65rem;color:#666;margin-bottom:3px;">SPEED</div>' +
+                            '<div class="mi-meter"><div class="mi-meter-fill" style="width:' + info.speedPct + '%;background:' + spdColor + '"></div></div></div>' +
+                    '</div>' +
+                    '<div class="mi-row"><span class="mi-icon mi-icon-best">&#10003;</span><span class="mi-row-text">' + info.best + '</span></div>' +
+                    '<div class="mi-row"><span class="mi-icon mi-icon-warn">!</span><span class="mi-row-text">' + info.warn + '</span></div>' +
+                    '<div class="mi-row"><span class="mi-icon mi-icon-tip">&#9733;</span><span class="mi-row-text">' + info.tip + '</span></div>' +
+                '</div>';
             el.className = 'model-info show';
         }
 
