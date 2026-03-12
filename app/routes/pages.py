@@ -41,7 +41,13 @@ async def status_page_html(request: Request):
 
 @router.get("/security", response_class=HTMLResponse)
 async def security_page(request: Request):
-    return templates.TemplateResponse("security.html", {"request": request, "active_page": "security"})
+    from app.routes.security import load_security_assertions
+    assertions_data = load_security_assertions()
+    return templates.TemplateResponse("security.html", {
+        "request": request,
+        "active_page": "security",
+        "assertions": assertions_data,
+    })
 
 
 @router.get("/about", response_class=HTMLResponse)

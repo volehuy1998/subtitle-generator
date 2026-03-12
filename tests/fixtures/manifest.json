@@ -1,0 +1,17 @@
+{
+  "description": "Security test fixture files for SubForge injection testing",
+  "safe": true,
+  "note": "All files are harmless test vectors. Do not add real malware.",
+  "fixtures": [
+    {"file": "valid_minimal.mp4",        "attack": "none",            "expect": "accepted or pipeline error"},
+    {"file": "polyglot_mp4_html.mp4",    "attack": "xss_reflection",  "expect": "no <script> in response"},
+    {"file": "wrong_ext_html.mp4",       "attack": "magic_mismatch",  "expect": "rejected 400/415"},
+    {"file": "eicar_mp4.mp4",            "attack": "av_test_string",  "expect": "EICAR not reflected"},
+    {"file": "null_bytes.mp4",           "attack": "null_byte",       "expect": "no 500 crash"},
+    {"file": "oversized_stub.mp4",       "attack": "oversize",        "expect": "rejected 413"},
+    {"file": "path_traversal.mp4",       "attack": "path_traversal",  "expect": "filename sanitized, no 500"},
+    {"file": "shell_injection.mp4",      "attack": "shell_injection", "expect": "no 500, no command exec"},
+    {"file": "sql_injection.mp4",        "attack": "sql_injection",   "expect": "no 500, no DB error"},
+    {"file": "xss_filename.mp4",         "attack": "xss_filename",    "expect": "payload not reflected raw"}
+  ]
+}

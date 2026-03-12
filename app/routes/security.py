@@ -1,6 +1,8 @@
 """Security audit routes."""
 
+import json
 import logging
+from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Query, Request
 
@@ -10,6 +12,17 @@ from app.middleware.brute_force import get_brute_force_stats
 
 logger = logging.getLogger("subtitle-generator")
 router = APIRouter(tags=["System"])
+
+_ASSERTIONS_FILE = Path(__file__).parent.parent.parent / "data" / "security_assertions.json"
+
+
+def load_security_assertions() -> dict:
+    """Load security assertion data from JSON store."""
+    try:
+        with open(_ASSERTIONS_FILE) as f:
+            return json.load(f)
+    except Exception:
+        return {"last_updated": None, "last_run_commit": None, "assertions": []}
 
 
 def _require_admin(request: Request):
@@ -41,3 +54,24 @@ async def security_audit(
         "stats": stats,
         "brute_force": brute_force,
     }
+
+
+@router.get("/api/security/assertions")
+async def get_security_assertions():
+    """Return current security assertion statuses (public)."""
+    return load_security_assertions()
+
+
+@router.post("/api/security/assertions")
+async def update_security_assertions(request: Request, payload: dict):
+    """Update security assertion statuses (admin only).
+
+    Accepts the same JSON shape as security_assertions.json.
+    Typically called by the update_security_assertions.py script via CI.
+    """
+    _require_admin(request)
+    import json as _json
+    _ASSERTIONS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with open(_ASSERTIONS_FILE, "w") as f:
+        _json.dump(payload, f, indent=2)
+    return {"ok": True, "message": "Assertions updated"}

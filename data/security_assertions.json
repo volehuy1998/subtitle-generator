@@ -1,0 +1,86 @@
+{
+  "last_updated": "2026-03-12T21:28:45.891962+00:00",
+  "last_run_commit": "8d085c9",
+  "assertions": [
+    {
+      "id": "file_upload",
+      "owasp_label": "File Upload",
+      "status": "secure",
+      "tests_passed": 7,
+      "tests_total": 7,
+      "note": "Run security tests to update"
+    },
+    {
+      "id": "injection",
+      "owasp_label": "Injection",
+      "status": "secure",
+      "tests_passed": 4,
+      "tests_total": 4,
+      "note": ""
+    },
+    {
+      "id": "broken_auth",
+      "owasp_label": "Broken Auth",
+      "status": "secure",
+      "tests_passed": 4,
+      "tests_total": 4,
+      "note": ""
+    },
+    {
+      "id": "path_traversal",
+      "owasp_label": "Path Traversal",
+      "status": "secure",
+      "tests_passed": 5,
+      "tests_total": 5,
+      "note": ""
+    },
+    {
+      "id": "sec_headers",
+      "owasp_label": "Sec. Headers",
+      "status": "secure",
+      "tests_passed": 6,
+      "tests_total": 6,
+      "note": ""
+    },
+    {
+      "id": "rate_limiting",
+      "owasp_label": "Rate Limiting",
+      "status": "untested",
+      "tests_passed": 0,
+      "tests_total": 0,
+      "note": ""
+    },
+    {
+      "id": "idor",
+      "owasp_label": "IDOR",
+      "status": "secure",
+      "tests_passed": 3,
+      "tests_total": 3,
+      "note": ""
+    },
+    {
+      "id": "secrets",
+      "owasp_label": "Secrets",
+      "status": "untested",
+      "tests_passed": 0,
+      "tests_total": 0,
+      "note": ""
+    },
+    {
+      "id": "csp",
+      "owasp_label": "CSP",
+      "status": "untested",
+      "tests_passed": 0,
+      "tests_total": 0,
+      "note": "Content-Security-Policy uses unsafe-inline"
+    },
+    {
+      "id": "dep_pinning",
+      "owasp_label": "Dep. Pinning",
+      "status": "untested",
+      "tests_passed": 0,
+      "tests_total": 0,
+      "note": ""
+    }
+  ]
+}

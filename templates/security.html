@@ -6,83 +6,151 @@
 {% block extra_css %}
         /* Hero */
         .hero {
-            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%);
+            background: linear-gradient(135deg, #0f0c29 0%, #1e1b4b 45%, #312e81 100%);
             border-radius: var(--radius);
-            padding: 36px 36px;
-            margin-bottom: 28px;
+            padding: 44px 40px;
+            margin-bottom: 32px;
             color: #fff;
             display: flex;
-            align-items: center;
-            gap: 20px;
+            align-items: flex-start;
+            gap: 22px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 60% 60% at 80% 50%, rgba(134,59,255,0.18) 0%, transparent 70%);
+            pointer-events: none;
         }
         .hero-icon {
-            width: 52px; height: 52px;
-            background: rgba(255,255,255,0.12);
-            border-radius: 13px;
+            width: 48px; height: 48px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .hero-body { flex: 1; min-width: 0; }
+        .hero-body h1 { font-size: 1.45rem; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 6px; }
+        .hero-body p  { font-size: 0.875rem; color: rgba(255,255,255,0.65); line-height: 1.6; max-width: 480px; }
+        .hero-badge {
+            margin-left: auto; flex-shrink: 0;
+            background: rgba(16,185,129,0.15);
+            border: 1px solid rgba(16,185,129,0.35);
+            color: #6ee7b7;
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: #34d399; }
+
+        /* Defense grid */
+        .defense-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
+        .defense-item { background: var(--surface); padding: 20px 22px; display: flex; gap: 14px; align-items: flex-start; transition: background 0.12s; }
+        .defense-item:hover { background: var(--surface-2); }
+        .defense-icon {
+            width: 38px; height: 38px;
+            border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
             flex-shrink: 0;
         }
-        .hero-content h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 5px; }
-        .hero-content p  { font-size: 0.88rem; color: rgba(255,255,255,0.72); }
-        .hero-badge {
-            margin-left: auto; flex-shrink: 0;
-            background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.4);
-            color: #6ee7b7; border-radius: 20px; padding: 5px 13px;
-            font-size: 0.76rem; font-weight: 600; white-space: nowrap;
-        }
-        /* Section */
-        .section { margin-bottom: 26px; }
-        .section-title {
-            font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em;
-            text-transform: uppercase; color: var(--text-3); margin-bottom: 10px; padding-left: 2px;
-        }
-        .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
-        /* Defense grid */
-        .defense-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
-        .defense-item { background: var(--surface); padding: 18px 20px; display: flex; gap: 13px; align-items: flex-start; }
-        .defense-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .di-green { background: var(--success-light); } .di-blue { background: #EFF6FF; }
-        .di-purple { background: var(--primary-light); } .di-amber { background: var(--warning-light); }
-        .defense-item h3 { font-size: 0.81rem; font-weight: 600; margin-bottom: 3px; }
-        .defense-item p  { font-size: 0.77rem; color: var(--text-2); line-height: 1.5; }
+        .di-green  { background: var(--success-light); }
+        .di-blue   { background: #EFF6FF; }
+        .di-purple { background: var(--primary-light); }
+        .di-amber  { background: var(--warning-light); }
+        .defense-item h3 { font-size: 0.82rem; font-weight: 600; margin-bottom: 4px; color: var(--text); }
+        .defense-item p  { font-size: 0.76rem; color: var(--text-2); line-height: 1.55; }
+
         /* Header table */
         .header-table { width: 100%; border-collapse: collapse; }
         .header-table tr { border-bottom: 1px solid var(--border); }
         .header-table tr:last-child { border-bottom: none; }
-        .header-table td { padding: 10px 18px; font-size: 0.79rem; vertical-align: top; }
-        .header-table td:first-child { font-family: 'Courier New', monospace; font-size: 0.73rem; color: var(--primary); white-space: nowrap; width: 1%; }
+        .header-table td { padding: 11px 20px; font-size: 0.79rem; vertical-align: middle; }
+        .header-table td:first-child { width: 34%; padding-right: 16px; }
+        .htag {
+            display: inline-block;
+            font-family: 'Courier New', monospace;
+            font-size: 0.72rem;
+            color: var(--primary);
+            background: var(--primary-light);
+            padding: 2px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
         .header-table td:last-child { color: var(--text-2); }
         .header-table tr:nth-child(even) td { background: var(--surface-2); }
+
         /* Rating grid */
         .rating-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--border); }
-        .rating-item { background: var(--surface); padding: 14px; text-align: center; }
-        .rating-label { font-size: 0.7rem; color: var(--text-3); margin-bottom: 5px; font-weight: 500; }
-        .rating-badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; }
-        .rb-secure { background: var(--success-light); color: #065F46; }
-        .rb-low    { background: #EFF6FF; color: #1E40AF; }
+        .rating-item { background: var(--surface); padding: 16px 12px; text-align: center; }
+        .rating-label { font-size: 0.7rem; font-weight: 500; color: var(--text-2); margin-bottom: 7px; }
+        .rating-meta { font-size: 0.62rem; color: var(--text-3); margin-top: 5px; }
+        .rating-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.69rem; font-weight: 700; }
+        .rb-secure   { background: var(--success-light); color: #065F46; border: 1px solid var(--success-border); }
+        .rb-low      { background: #EFF6FF; color: #1E40AF; border: 1px solid #BFDBFE; }
+        .rb-at-risk  { background: var(--error-light); color: #991B1B; border: 1px solid #FECACA; }
+        .rb-untested { background: var(--surface-2); color: var(--text-3); border: 1px solid var(--border-2); }
+        /* Assertion meta bar */
+        .assertion-meta {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 20px; border-top: 1px solid var(--border);
+            background: var(--surface-2); font-size: 0.72rem; color: var(--text-3);
+        }
+        .assertion-meta strong { color: var(--text-2); }
+
         /* Timeline */
-        .timeline { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
-        .timeline-item { display: flex; align-items: flex-start; gap: 12px; }
-        .timeline-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
-        .td-green { background: var(--success); } .td-amber { background: var(--warning); } .td-red { background: var(--error); }
-        .timeline-item h4 { font-size: 0.81rem; font-weight: 600; margin-bottom: 2px; }
-        .timeline-item p  { font-size: 0.77rem; color: var(--text-2); }
+        .timeline { padding: 20px 24px; display: flex; flex-direction: column; gap: 0; }
+        .timeline-item { display: flex; gap: 16px; align-items: flex-start; padding: 14px 0; border-bottom: 1px solid var(--border); }
+        .timeline-item:last-child { border-bottom: none; }
+        .tl-icon-wrap { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+        .tl-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+        .tl-green  { background: var(--success-light); }
+        .tl-amber  { background: var(--warning-light); }
+        .tl-red    { background: var(--error-light); }
+        .timeline-item h4 { font-size: 0.82rem; font-weight: 600; margin-bottom: 3px; color: var(--text); }
+        .timeline-item p  { font-size: 0.77rem; color: var(--text-2); line-height: 1.55; }
+
         /* Disclosure */
         .disclosure {
-            background: linear-gradient(135deg, var(--primary-light), #fff);
-            border: 1px solid #d8b4fe; border-radius: var(--radius);
-            padding: 26px 28px; display: flex; gap: 18px; align-items: flex-start;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
         }
-        .disclosure-icon { width: 42px; height: 42px; background: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .disclosure h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 5px; }
-        .disclosure p  { font-size: 0.8rem; color: var(--text-2); margin-bottom: 10px; }
-        .disclosure-steps { display: flex; flex-direction: column; gap: 6px; }
-        .disclosure-step { display: flex; align-items: center; gap: 8px; font-size: 0.79rem; color: var(--text-2); }
-        .step-num { width: 19px; height: 19px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 0.67rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .disclosure-head {
+            background: linear-gradient(135deg, var(--primary-light), #fff);
+            border-bottom: 1px solid var(--primary-mid);
+            padding: 24px 28px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        .disclosure-icon {
+            width: 42px; height: 42px;
+            background: var(--primary);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .disclosure-head h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 3px; }
+        .disclosure-head p  { font-size: 0.8rem; color: var(--text-2); }
+        .disclosure-body { padding: 20px 28px; display: flex; flex-direction: column; gap: 10px; }
+        .disclosure-step { display: flex; align-items: flex-start; gap: 12px; font-size: 0.8rem; color: var(--text-2); line-height: 1.55; }
+        .step-num { width: 22px; height: 22px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 0.65rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+
+        code { background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; font-family: 'Courier New', monospace; font-size: 0.85em; color: var(--primary); }
+
         @media (max-width: 640px) {
             .defense-grid { grid-template-columns: 1fr; }
             .rating-grid  { grid-template-columns: 1fr 1fr; }
-            .hero         { flex-direction: column; }
+            .hero         { flex-direction: column; padding: 32px 24px; }
             .hero-badge   { margin-left: 0; }
         }
 {% endblock %}
@@ -91,28 +159,31 @@
     <!-- Hero -->
     <div class="hero">
         <div class="hero-icon">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" stroke="white" stroke-width="1.8" stroke-linejoin="round" fill="rgba(255,255,255,0.15)"/>
-                <path d="M9 12l2 2 4-4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" stroke="white" stroke-width="1.7" stroke-linejoin="round" fill="rgba(255,255,255,0.12)"/>
+                <path d="M9 12l2 2 4-4" stroke="white" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         </div>
-        <div class="hero-content">
-            <h1>Security at SubForge</h1>
-            <p>How we protect your uploads, prevent attacks, and keep the service safe for all users.</p>
+        <div class="hero-body">
+            <h1>Security</h1>
+            <p>How SubForge protects your uploads, prevents attacks, and keeps the service safe for all users.</p>
         </div>
-        <div class="hero-badge">Risk Level: Low</div>
+        <div class="hero-badge">
+            <span class="hero-badge-dot"></span>
+            Risk Level: Low
+        </div>
     </div>
 
     <!-- Defenses -->
     <div class="section">
-        <div class="section-title">Attack Prevention</div>
+        <div class="section-label">Attack Prevention</div>
         <div class="card">
             <div class="defense-grid">
                 <div class="defense-item">
                     <div class="defense-icon di-green">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" stroke="#10B981" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 13l2 2 4-4" stroke="#10B981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </div>
-                    <div><h3>File Upload Security</h3><p>Every upload is validated by file extension, magic bytes (MIME type), size limits (2 GB max), and filename sanitization. Mismatched types are rejected. ClamAV scanning available.</p></div>
+                    <div><h3>File Upload Security</h3><p>Every upload is validated by extension, magic bytes (MIME), size limits (2 GB), and filename sanitization. Mismatched types are rejected. ClamAV scanning available.</p></div>
                 </div>
                 <div class="defense-item">
                     <div class="defense-icon di-blue">
@@ -136,7 +207,7 @@
                     <div class="defense-icon di-amber">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="#F59E0B" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 22V12h6v10" stroke="#F59E0B" stroke-width="1.8" stroke-linejoin="round"/></svg>
                     </div>
-                    <div><h3>Path Traversal Blocked</h3><p>Upload filenames are replaced with random UUIDs. Download paths are resolved and verified to be within the output directory. No user-controlled path segments.</p></div>
+                    <div><h3>Path Traversal Blocked</h3><p>Upload filenames are replaced with random UUIDs. Download paths are verified to be within the output directory. No user-controlled path segments.</p></div>
                 </div>
                 <div class="defense-item">
                     <div class="defense-icon di-blue">
@@ -162,67 +233,131 @@
 
     <!-- Security headers -->
     <div class="section">
-        <div class="section-title">HTTP Security Headers</div>
+        <div class="section-label">HTTP Security Headers</div>
         <div class="card">
             <table class="header-table">
-                <tr><td>X-Content-Type-Options</td><td>nosniff — prevents MIME type sniffing attacks</td></tr>
-                <tr><td>X-Frame-Options</td><td>DENY — blocks clickjacking via iframes</td></tr>
-                <tr><td>X-XSS-Protection</td><td>1; mode=block</td></tr>
-                <tr><td>Referrer-Policy</td><td>strict-origin-when-cross-origin</td></tr>
-                <tr><td>Permissions-Policy</td><td>camera=(), microphone=(), geolocation=()</td></tr>
-                <tr><td>Content-Security-Policy</td><td>default-src 'self'; connect-src 'self'; media-src 'self' blob:</td></tr>
-                <tr><td>Strict-Transport-Security</td><td>max-age=63072000; includeSubDomains; preload (production)</td></tr>
+                <tr><td><span class="htag">X-Content-Type-Options</span></td><td>nosniff — prevents MIME type sniffing attacks</td></tr>
+                <tr><td><span class="htag">X-Frame-Options</span></td><td>DENY — blocks clickjacking via iframes</td></tr>
+                <tr><td><span class="htag">X-XSS-Protection</span></td><td>1; mode=block</td></tr>
+                <tr><td><span class="htag">Referrer-Policy</span></td><td>strict-origin-when-cross-origin</td></tr>
+                <tr><td><span class="htag">Permissions-Policy</span></td><td>camera=(), microphone=(), geolocation=()</td></tr>
+                <tr><td><span class="htag">Content-Security-Policy</span></td><td>default-src 'self'; connect-src 'self'; media-src 'self' blob:</td></tr>
+                <tr><td><span class="htag">Strict-Transport-Security</span></td><td>max-age=63072000; includeSubDomains; preload (production only)</td></tr>
             </table>
         </div>
     </div>
 
     <!-- OWASP -->
     <div class="section">
-        <div class="section-title">OWASP Top 10 Coverage</div>
+        <div class="section-label">OWASP Top 10 Coverage</div>
         <div class="card">
             <div class="rating-grid">
-                <div class="rating-item"><div class="rating-label">Injection</div><span class="rating-badge rb-secure">Secure</span></div>
-                <div class="rating-item"><div class="rating-label">Broken Auth</div><span class="rating-badge rb-secure">Secure</span></div>
-                <div class="rating-item"><div class="rating-label">File Upload</div><span class="rating-badge rb-secure">Secure</span></div>
-                <div class="rating-item"><div class="rating-label">Path Traversal</div><span class="rating-badge rb-secure">Secure</span></div>
-                <div class="rating-item"><div class="rating-label">Sec. Headers</div><span class="rating-badge rb-secure">Secure</span></div>
-                <div class="rating-item"><div class="rating-label">Rate Limiting</div><span class="rating-badge rb-secure">Secure</span></div>
-                <div class="rating-item"><div class="rating-label">IDOR</div><span class="rating-badge rb-secure">Secure</span></div>
-                <div class="rating-item"><div class="rating-label">Secrets</div><span class="rating-badge rb-secure">Secure</span></div>
-                <div class="rating-item"><div class="rating-label">CSP</div><span class="rating-badge rb-low">Low Risk</span></div>
-                <div class="rating-item"><div class="rating-label">Dep. Pinning</div><span class="rating-badge rb-low">Low Risk</span></div>
+                {% if assertions and assertions.assertions %}
+                    {% for a in assertions.assertions %}
+                        {% set status = a.status %}
+                        {% if status == 'secure' %}
+                            {% set badge_class = 'rb-secure' %}
+                            {% set badge_label = 'Secure' %}
+                        {% elif status == 'low_risk' %}
+                            {% set badge_class = 'rb-low' %}
+                            {% set badge_label = 'Low Risk' %}
+                        {% elif status == 'at_risk' %}
+                            {% set badge_class = 'rb-at-risk' %}
+                            {% set badge_label = 'At Risk' %}
+                        {% else %}
+                            {% set badge_class = 'rb-untested' %}
+                            {% set badge_label = 'Untested' %}
+                        {% endif %}
+                        <div class="rating-item">
+                            <div class="rating-label">{{ a.owasp_label }}</div>
+                            <span class="rating-badge {{ badge_class }}">{{ badge_label }}</span>
+                            {% if a.tests_total > 0 %}
+                                <div class="rating-meta">{{ a.tests_passed }}/{{ a.tests_total }} tests</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="rating-item"><div class="rating-label">Injection</div><span class="rating-badge rb-untested">Untested</span></div>
+                    <div class="rating-item"><div class="rating-label">Broken Auth</div><span class="rating-badge rb-untested">Untested</span></div>
+                    <div class="rating-item"><div class="rating-label">File Upload</div><span class="rating-badge rb-untested">Untested</span></div>
+                    <div class="rating-item"><div class="rating-label">Path Traversal</div><span class="rating-badge rb-untested">Untested</span></div>
+                    <div class="rating-item"><div class="rating-label">Sec. Headers</div><span class="rating-badge rb-untested">Untested</span></div>
+                    <div class="rating-item"><div class="rating-label">Rate Limiting</div><span class="rating-badge rb-untested">Untested</span></div>
+                    <div class="rating-item"><div class="rating-label">IDOR</div><span class="rating-badge rb-untested">Untested</span></div>
+                    <div class="rating-item"><div class="rating-label">Secrets</div><span class="rating-badge rb-untested">Untested</span></div>
+                    <div class="rating-item"><div class="rating-label">CSP</div><span class="rating-badge rb-untested">Untested</span></div>
+                    <div class="rating-item"><div class="rating-label">Dep. Pinning</div><span class="rating-badge rb-untested">Untested</span></div>
+                {% endif %}
             </div>
+            {% if assertions and assertions.last_updated %}
+            <div class="assertion-meta">
+                <span>Last verified: <strong>{{ assertions.last_updated[:10] }}</strong></span>
+                {% if assertions.last_run_commit %}
+                <span>Commit: <strong>{{ assertions.last_run_commit }}</strong></span>
+                {% endif %}
+            </div>
+            {% endif %}
         </div>
     </div>
 
     <!-- Data retention -->
     <div class="section">
-        <div class="section-title">Data Handling &amp; Retention</div>
+        <div class="section-label">Data Handling &amp; Retention</div>
         <div class="card">
             <div class="timeline">
-                <div class="timeline-item"><div class="timeline-dot td-green"></div><div><h4>Uploaded files are temporary</h4><p>Files are deleted automatically within 24 hours. They are never used for training or shared with third parties.</p></div></div>
-                <div class="timeline-item"><div class="timeline-dot td-green"></div><div><h4>No account required</h4><p>No personal information is collected. Sessions are anonymous, identified only by a random cookie.</p></div></div>
-                <div class="timeline-item"><div class="timeline-dot td-amber"></div><div><h4>Access logs retained for security</h4><p>Request logs (IP, endpoint, timestamp) are kept for abuse detection. Logs do not contain file contents or transcript text.</p></div></div>
-                <div class="timeline-item"><div class="timeline-dot td-red"></div><div><h4>No third-party data sharing</h4><p>Transcription runs entirely on-server using open-source models (faster-whisper / CTranslate2). Nothing leaves the server.</p></div></div>
+                <div class="timeline-item">
+                    <div class="tl-icon-wrap">
+                        <div class="tl-icon tl-green">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                    </div>
+                    <div><h4>Uploaded files are temporary</h4><p>Files are deleted automatically within 24 hours. They are never used for training or shared with third parties.</p></div>
+                </div>
+                <div class="timeline-item">
+                    <div class="tl-icon-wrap">
+                        <div class="tl-icon tl-green">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#10B981" stroke-width="1.8"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#10B981" stroke-width="1.8" stroke-linecap="round"/></svg>
+                        </div>
+                    </div>
+                    <div><h4>No account required</h4><p>No personal information is collected. Sessions are anonymous, identified only by a random cookie.</p></div>
+                </div>
+                <div class="timeline-item">
+                    <div class="tl-icon-wrap">
+                        <div class="tl-icon tl-amber">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 8v4M12 16h.01" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="#F59E0B" stroke-width="1.8"/></svg>
+                        </div>
+                    </div>
+                    <div><h4>Access logs retained for security</h4><p>Request logs (IP, endpoint, timestamp) are kept for abuse detection. Logs do not contain file contents or transcript text.</p></div>
+                </div>
+                <div class="timeline-item">
+                    <div class="tl-icon-wrap">
+                        <div class="tl-icon tl-green">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#10B981" stroke-width="1.8" stroke-linejoin="round"/></svg>
+                        </div>
+                    </div>
+                    <div><h4>No third-party data sharing</h4><p>Transcription runs entirely on-server using open-source models (faster-whisper / CTranslate2). Nothing leaves the server.</p></div>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Responsible disclosure -->
     <div class="section">
-        <div class="section-title">Responsible Disclosure</div>
+        <div class="section-label">Responsible Disclosure</div>
         <div class="disclosure">
-            <div class="disclosure-icon">
-                <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/></svg>
-            </div>
-            <div>
-                <h3>Found a vulnerability? Let us know.</h3>
-                <p>We aim to respond within 48 hours. Please do not disclose issues publicly before we've had a chance to fix them.</p>
-                <div class="disclosure-steps">
-                    <div class="disclosure-step"><div class="step-num">1</div><span>Open a <a href="https://github.com/volehuy1998/subtitle-generator/issues/new?labels=security&title=[Security]+" target="_blank">GitHub issue</a> with the <strong>security</strong> label, or use GitHub Security Advisories for private reports.</span></div>
-                    <div class="disclosure-step"><div class="step-num">2</div><span>Include: affected endpoint, reproduction steps, and potential impact.</span></div>
-                    <div class="disclosure-step"><div class="step-num">3</div><span>We will acknowledge within 48 hours and credit you in the release notes if you wish.</span></div>
+            <div class="disclosure-head">
+                <div class="disclosure-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/></svg>
                 </div>
+                <div>
+                    <h3>Found a vulnerability? Let us know.</h3>
+                    <p>We aim to respond within 48 hours. Please do not disclose publicly before we've had a chance to fix it.</p>
+                </div>
+            </div>
+            <div class="disclosure-body">
+                <div class="disclosure-step"><div class="step-num">1</div><span>Open a <a href="https://github.com/volehuy1998/subtitle-generator/issues/new?labels=security&title=[Security]+" target="_blank">GitHub issue</a> with the <strong>security</strong> label, or use GitHub Security Advisories for private reports.</span></div>
+                <div class="disclosure-step"><div class="step-num">2</div><span>Include: affected endpoint, reproduction steps, and potential impact.</span></div>
+                <div class="disclosure-step"><div class="step-num">3</div><span>We will acknowledge within 48 hours and credit you in the release notes if you wish.</span></div>
             </div>
         </div>
     </div>

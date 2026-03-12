@@ -12,17 +12,26 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        /* Refined scrollbar — thin, subtle, consistent across pages */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+        * { scrollbar-width: thin; scrollbar-color: #CBD5E1 transparent; }
+
         :root {
             --bg: #F1F5F9; --surface: #FFFFFF; --surface-2: #F8FAFC;
             --border: #E2E8F0; --border-2: #CBD5E1;
-            --primary: #863bff; --primary-hover: #6d22e0; --primary-light: #f3eeff;
+            --primary: #863bff; --primary-hover: #7326f0; --primary-light: #f3eeff; --primary-mid: #ddd6fe;
             --success: #10B981; --success-light: #ECFDF5; --success-border: #A7F3D0;
             --warning: #F59E0B; --warning-light: #FFFBEB;
             --error: #EF4444; --error-light: #FEF2F2;
-            --text: #1E293B; --text-2: #64748B; --text-3: #94A3B8;
-            --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
-            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-            --radius: 14px; --radius-sm: 8px; --radius-xs: 5px;
+            --text: #0F172A; --text-2: #475569; --text-3: #94A3B8;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+            --shadow: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+            --radius: 16px; --radius-sm: 10px; --radius-xs: 6px;
         }
         html, body { min-height: 100%; }
         body {
@@ -31,80 +40,108 @@
             color: var(--text);
             font-size: 14px;
             line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
         }
         a { color: var(--primary); text-decoration: none; }
         a:hover { text-decoration: underline; }
 
-        /* ── Shared header — fixed, always visible regardless of scroll ── */
+        /* ── Header ── */
         .site-header {
-            background: var(--surface);
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border);
             padding: 0 24px;
-            height: 52px;
+            height: 54px;
             display: flex;
             align-items: center;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             z-index: 100;
-            box-shadow: var(--shadow);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.04);
         }
-        /* Push content below the fixed header */
-        body { padding-top: 52px; }
+        body { padding-top: 54px; }
         .site-header-inner {
             max-width: 1100px;
             margin: 0 auto;
             width: 100%;
             display: flex;
             align-items: center;
-            gap: 0;
         }
         .site-logo {
             display: flex;
             align-items: center;
-            gap: 9px;
+            gap: 8px;
             text-decoration: none;
-            font-size: 0.95rem;
+            font-size: 0.93rem;
             font-weight: 700;
             color: var(--text);
-            letter-spacing: -0.3px;
+            letter-spacing: -0.4px;
             flex-shrink: 0;
-            margin-right: 24px;
+            margin-right: 28px;
         }
-        .site-logo:hover { text-decoration: none; }
-        .site-logo svg { width: 22px; height: 22px; }
+        .site-logo:hover { text-decoration: none; opacity: 0.85; }
+        .site-logo svg { width: 20px; height: 20px; }
         .site-nav {
             display: flex;
             align-items: center;
-            gap: 2px;
+            gap: 1px;
             flex: 1;
         }
         .site-nav a {
             font-size: 0.8rem;
             font-weight: 500;
             color: var(--text-2);
-            padding: 5px 10px;
+            padding: 5px 11px;
             border-radius: var(--radius-xs);
-            transition: color 0.13s, background 0.13s;
+            transition: color 0.12s, background 0.12s;
+            letter-spacing: -0.1px;
         }
-        .site-nav a:hover { color: var(--text); background: var(--bg); text-decoration: none; }
-        .site-nav a.active { color: var(--primary); background: var(--primary-light); }
+        .site-nav a:hover { color: var(--text); background: rgba(0,0,0,0.04); text-decoration: none; }
+        .site-nav a.active { color: var(--primary); background: var(--primary-light); font-weight: 600; }
 
         /* ── Page container ── */
-        .page-container { max-width: 860px; margin: 0 auto; padding: 36px 24px 72px; }
+        .page-container { max-width: 860px; margin: 0 auto; padding: 40px 24px 80px; }
+
+        /* ── Shared components ── */
+        .section { margin-bottom: 28px; }
+        .section-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.67rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-3);
+            margin-bottom: 12px;
+            padding-left: 1px;
+        }
+        .section-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
 
         /* ── Footer ── */
         .site-footer {
             border-top: 1px solid var(--border);
-            margin-top: 56px;
-            padding: 20px 24px;
+            margin-top: 64px;
+            padding: 22px 24px;
             text-align: center;
-            font-size: 0.75rem;
+            font-size: 0.73rem;
             color: var(--text-3);
         }
         .site-footer a { color: var(--text-3); }
-        .site-footer a:hover { color: var(--primary); }
+        .site-footer a:hover { color: var(--primary); text-decoration: none; }
 
         {% block extra_css %}{% endblock %}
     </style>
