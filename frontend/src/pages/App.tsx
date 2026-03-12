@@ -189,7 +189,7 @@ export default function App() {
         className="text-center py-6 text-xs"
         style={{ color: 'var(--color-text-3)' }}
       >
-        ↑ SubForge · Built with Python · FastAPI · faster-whisper · FFmpeg · Open Source
+        ↑ SubForge · Python 3.12 · FastAPI · faster-whisper (CTranslate2) · pyannote.audio · FFmpeg · React 19 · TypeScript · Tailwind CSS · Open Source
       </footer>
     </div>
   )

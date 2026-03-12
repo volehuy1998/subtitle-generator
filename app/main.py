@@ -213,7 +213,11 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="Subtitle Generator",
         description=(
-            "AI-powered subtitle generation service using faster-whisper (CTranslate2).\n\n"
+            "AI-powered subtitle generation service.\n\n"
+            "## Stack\n"
+            "**Backend:** Python 3.12 · FastAPI · Uvicorn · SQLAlchemy (async) · Alembic · SQLite · Redis (optional)\n\n"
+            "**AI / Media:** faster-whisper (CTranslate2) · pyannote.audio · PyTorch · FFmpeg\n\n"
+            "**Frontend:** React 19 · TypeScript · Vite 6 · Tailwind CSS v4 · Zustand · Radix UI\n\n"
             "## Features\n"
             "- **99 languages** with auto-detection\n"
             "- **Word-level timestamps** for karaoke-style subtitles\n"

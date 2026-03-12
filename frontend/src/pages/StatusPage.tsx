@@ -528,7 +528,7 @@ export default function StatusPage() {
 
       {/* Footer */}
       <footer style={{ textAlign: 'center', padding: '24px', fontSize: '0.75rem', color: '#94A3B8' }}>
-        SubForge · Built with Python · FastAPI · faster-whisper · FFmpeg
+        SubForge · Python 3.12 · FastAPI · faster-whisper (CTranslate2) · pyannote.audio · FFmpeg · React 19 · TypeScript · Tailwind CSS · Open Source
       </footer>
     </div>
   )
