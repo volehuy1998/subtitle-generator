@@ -260,7 +260,8 @@
         .ci-badge.in_progress { background: var(--primary-light); color: #3730A3; border-color: #C7D2FE; }
         .commit-subject { font-weight: 600; color: var(--text); font-size: 0.88rem; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .commit-meta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        .commit-sha { font-size: 0.68rem; font-family: 'SF Mono', 'Fira Code', monospace; color: var(--primary); background: var(--primary-light); padding: 2px 7px; border-radius: var(--radius-xs); }
+        .commit-sha { font-size: 0.68rem; font-family: 'SF Mono', 'Fira Code', monospace; color: var(--primary); background: var(--primary-light); padding: 2px 7px; border-radius: var(--radius-xs); text-decoration: none; }
+        .commit-sha:hover { text-decoration: underline; }
         .commit-date { font-size: 0.68rem; color: var(--text-3); }
         .commit-files-count { font-size: 0.66rem; color: var(--text-3); background: var(--surface-2); padding: 2px 7px; border-radius: var(--radius-xs); border: 1px solid var(--border); }
         .commit-expand-icon { flex-shrink: 0; color: var(--text-3); font-size: 0.63rem; transition: transform 0.2s; }
@@ -609,7 +610,7 @@
                     '<span class="commit-subject">' + escapeHtml(c.subject) + '</span>' +
                     '<span class="commit-meta">' +
                         '<span class="commit-files-count">' + c.files_count + ' file' + (c.files_count !== 1 ? 's' : '') + '</span>' +
-                        '<span class="commit-sha">' + c.sha_short + '</span>' +
+                        '<a class="commit-sha" href="https://github.com/volehuy1998/subtitle-generator/commit/' + c.sha + '" target="_blank" onclick="event.stopPropagation()">' + c.sha_short + '</a>' +
                         '<span class="commit-date">' + dateStr + '</span>' +
                     '</span>' +
                     '<span class="commit-expand-icon">&#9654;</span>' +
