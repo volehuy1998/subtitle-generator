@@ -71,7 +71,8 @@ export function useSSE(taskId: string | null) {
 
     es.addEventListener('done', (e) => {
       onData()
-      store.setComplete(JSON.parse((e as MessageEvent).data))
+      const raw = JSON.parse((e as MessageEvent).data)
+      store.setComplete({ ...raw, isVideo: raw.is_video ?? raw.isVideo ?? false })
       localStorage.setItem('sg_currentTaskId', taskId)
       close()
     })
@@ -120,7 +121,7 @@ export function useSSE(taskId: string | null) {
       es.close()
       // Check if task finished before reconnecting
       api.progress(taskId).then((data) => {
-        if (data.status === 'done') { store.setComplete(data); close(); return }
+        if (data.status === 'done') { store.setComplete({ ...data, isVideo: data.is_video ?? false }); close(); return }
         if (data.status === 'cancelled') { store.setCancelled(); close(); return }
         if (data.status === 'error') { store.setError(data.error ?? 'Task failed'); close(); return }
         retryTimer.current = setTimeout(() => {
