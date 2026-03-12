@@ -1,4 +1,4 @@
-import { useHealthStream } from '@/hooks/useHealthStream'
+
 import { useUIStore } from '@/store/uiStore'
 import type { HealthStatus } from '@/api/types'
 
@@ -50,8 +50,8 @@ function LoadBar({ load }: { load: number | undefined }) {
 }
 
 export function AppHeader() {
-  const health = useHealthStream()
-  const { healthPanelOpen, setHealthPanelOpen } = useUIStore()
+  const { healthPanelOpen, setHealthPanelOpen, health } = useUIStore()
+
 
   const isOk = health?.status === 'ok' || health?.status === 'healthy'
   const isWarn = health?.status === 'degraded' || health?.status === 'warning'

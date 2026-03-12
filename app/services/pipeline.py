@@ -163,7 +163,9 @@ def process_video(task_id: str, video_path: Path, model_size: str, device: str,
 
     logger.info(f"TASK [{task_id[:8]}] Pipeline started: file={task.get('filename')} model={model_size} device={device}")
     log_task_event(task_id, "pipeline_start", filename=task.get("filename"), model=model_size, device=device)
+    task["current_step"] = 0
     emit_event(task_id, "pipeline_start", {"status": "queued", "model": model_size, "device": device.upper()})
+    emit_event(task_id, "step_change", {"step": 0, "status": "uploading", "percent": 0, "message": "Analysing file..."})
 
     # VRAM warning
     if device == "cuda":
@@ -211,11 +213,13 @@ def process_video(task_id: str, video_path: Path, model_size: str, device: str,
 
         # Step 2: Extract audio
         task["status"] = "extracting"
+        task["current_step"] = 1
         task["percent"] = 5
         task["message"] = f"Extracting audio ({duration_str}, {format_bytes(file_size)})..."
         task["step_timing"] = {"upload": round(step_probe.elapsed, 2)}
+        log_task_event(task_id, "step_start", step=1, name="extract", status="extracting")
         emit_event(task_id, "step_change", {
-            "status": "extracting", "percent": 5, "message": task["message"],
+            "step": 1, "status": "extracting", "percent": 5, "message": task["message"],
             "step_timing": task["step_timing"],
             "step_started_at": _time.time(),
         })
@@ -239,13 +243,16 @@ def process_video(task_id: str, video_path: Path, model_size: str, device: str,
         task["percent"] = 15
         task["message"] = f"Audio extracted ({format_bytes(audio_size)}). Loading model..."
 
-        # Step 3: Load model
+        # Step 3: Load model → Transcribe
         task["status"] = "transcribing"
+        task["current_step"] = 2
         compute_type = get_compute_type(device, model_size)
         task["message"] = f"Loading {model_size} model on {device.upper()} ({compute_type})..."
         task["step_timing"] = {"upload": round(step_probe.elapsed, 2), "extract": round(step_extract.elapsed, 2)}
+        log_task_event(task_id, "step_start", step=2, name="transcribe", status="transcribing",
+                       model=model_size, device=device)
         emit_event(task_id, "step_change", {
-            "status": "transcribing", "percent": 15, "message": task["message"],
+            "step": 2, "status": "transcribing", "percent": 15, "message": task["message"],
             "step_timing": task["step_timing"],
             "step_started_at": _time.time(),
             "model_size": model_size,
@@ -323,8 +330,9 @@ def process_video(task_id: str, video_path: Path, model_size: str, device: str,
             raise CancelledError("Task cancelled by user")
         _check_critical(task_id)
 
-        # Step 5: Generate SRT
+        # Step 5: Generate SRT (finalize)
         task["status"] = "writing"
+        task["current_step"] = 3
         task["percent"] = 95
         task["message"] = "Generating subtitle file..."
         task["step_timing"] = {
@@ -332,8 +340,10 @@ def process_video(task_id: str, video_path: Path, model_size: str, device: str,
             "extract": round(step_extract.elapsed, 2),
             "transcribe": round(step_transcribe.elapsed, 2),
         }
+        log_task_event(task_id, "step_start", step=3, name="finalize", status="writing",
+                       segments=num_segments, language=language)
         emit_event(task_id, "step_change", {
-            "status": "writing", "percent": 95, "message": "Generating subtitle file...",
+            "step": 3, "status": "writing", "percent": 95, "message": "Generating subtitle file...",
             "step_timing": task["step_timing"],
             "step_started_at": _time.time(),
         })

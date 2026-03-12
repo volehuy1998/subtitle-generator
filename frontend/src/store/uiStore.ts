@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import type { HealthStatus } from '@/api/types'
 
 export type AppMode = 'transcribe' | 'embed'
 export type EmbedMode = 'soft' | 'hard'
@@ -8,9 +9,12 @@ interface UIState {
   embedMode: EmbedMode
   healthPanelOpen: boolean
   taskQueueOpen: boolean
+  /** True once the /health/stream SSE connection has received at least one message. */
   sseConnected: boolean
   reconnecting: boolean
   dbOk: boolean
+  /** Latest health snapshot from /health/stream, shared across all consumers. */
+  health: HealthStatus | null
 }
 
 interface UIActions {
@@ -21,6 +25,7 @@ interface UIActions {
   setSseConnected: (connected: boolean) => void
   setReconnecting: (reconnecting: boolean) => void
   setDbOk: (ok: boolean) => void
+  setHealth: (health: HealthStatus | null) => void
 }
 
 export const useUIStore = create<UIState & UIActions>((set) => ({
@@ -31,6 +36,7 @@ export const useUIStore = create<UIState & UIActions>((set) => ({
   sseConnected: false,
   reconnecting: false,
   dbOk: true,
+  health: null,
 
   setAppMode: (mode) => set({ appMode: mode }),
   setEmbedMode: (mode) => set({ embedMode: mode }),
@@ -39,4 +45,5 @@ export const useUIStore = create<UIState & UIActions>((set) => ({
   setSseConnected: (connected) => set({ sseConnected: connected }),
   setReconnecting: (reconnecting) => set({ reconnecting }),
   setDbOk: (ok) => set({ dbOk: ok }),
+  setHealth: (health) => set({ health }),
 }))

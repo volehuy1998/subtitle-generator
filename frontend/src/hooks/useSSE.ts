@@ -1,6 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { useTaskStore } from '@/store/taskStore'
-import { useUIStore } from '@/store/uiStore'
 import { api } from '@/api/client'
 
 const MIN_RETRY = 1000
@@ -15,7 +14,6 @@ export function useSSE(taskId: string | null) {
   const closed = useRef(false)
 
   const store = useTaskStore()
-  const { setSseConnected, setReconnecting } = useUIStore()
 
   const close = useCallback(() => {
     closed.current = true
@@ -23,9 +21,7 @@ export function useSSE(taskId: string | null) {
     if (watchdog.current) clearInterval(watchdog.current)
     esRef.current?.close()
     esRef.current = null
-    setSseConnected(false)
-    setReconnecting(false)
-  }, [setSseConnected, setReconnecting])
+  }, [])
 
   const connect = useCallback(() => {
     if (!taskId || closed.current) return
@@ -38,8 +34,6 @@ export function useSSE(taskId: string | null) {
     const onData = () => {
       lastEventTime.current = Date.now()
       retryDelay.current = MIN_RETRY
-      setSseConnected(true)
-      setReconnecting(false)
     }
 
     es.addEventListener('state', (e) => {
@@ -123,8 +117,6 @@ export function useSSE(taskId: string | null) {
 
     es.onerror = () => {
       if (closed.current) return
-      setSseConnected(false)
-      setReconnecting(true)
       es.close()
       // Check if task finished before reconnecting
       api.progress(taskId).then((data) => {
@@ -152,7 +144,7 @@ export function useSSE(taskId: string | null) {
         es.onerror?.(new Event('error'))
       }
     }, 5000)
-  }, [taskId, close, store, setSseConnected, setReconnecting])
+  }, [taskId, close, store])
 
   useEffect(() => {
     if (!taskId) return

@@ -116,7 +116,14 @@ export function HealthPanel({ health, onClose }: Props) {
         <div className="flex flex-col gap-3">
           <StatBar label="CPU" value={health.cpu_percent} />
           <StatBar label="RAM" value={health.ram_percent ?? health.memory_percent} />
-          <StatBar label="Disk" value={health.disk_percent} />
+          <div className="flex flex-col gap-0.5">
+            <StatBar label="Disk" value={health.disk_percent} />
+            {health.disk_free_gb != null && (
+              <span className="text-right text-xs" style={{ color: health.disk_ok ? 'var(--color-text-3)' : 'var(--color-danger)', fontSize: '11px' }}>
+                {health.disk_free_gb} GB free{!health.disk_ok ? ' — low' : ''}
+              </span>
+            )}
+          </div>
         </div>
       )}
 

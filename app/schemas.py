@@ -63,6 +63,7 @@ class TaskProgressResponse(BaseModel):
     step_timings: Optional[StepTimings] = None
     is_video: Optional[bool] = None
     error: Optional[str] = None
+    current_step: Optional[int] = None
     download_url: Optional[str] = None
     embed_download_url: Optional[str] = None
 
@@ -90,6 +91,7 @@ class SystemStatusResponse(BaseModel):
     cpu_percent: Optional[float] = None
     memory_percent: Optional[float] = None
     disk_free_gb: Optional[float] = None
+    disk_percent: Optional[float] = None
     disk_ok: bool
     db_ok: bool
     db_latency_ms: Optional[float] = None
