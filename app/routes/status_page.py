@@ -537,38 +537,62 @@ async def status_commits():
         return {"commits": [], "error": str(e)}
 
 
+_page_cache: dict = {"data": None, "expires": 0.0}
+_page_lock = None
+
+
+def _get_page_lock():
+    global _page_lock
+    if _page_lock is None:
+        import asyncio
+        _page_lock = asyncio.Lock()
+    return _page_lock
+
+
 @router.get("/api/status/page")
 async def status_page_data():
-    """JSON API for status page data — components, uptime, incidents."""
-    uptime_sec = round(time.time() - _start_time, 1)
+    """JSON API for status page data — components, uptime, incidents. Cached 30s."""
+    now = time.time()
+    if _page_cache["data"] and now < _page_cache["expires"]:
+        return _page_cache["data"]
 
-    # Check all components
-    components = []
-    overall = "operational"
-    for comp in COMPONENTS:
-        status_info = await _check_component_status(comp["id"])
-        components.append({**comp, **status_info})
-        if status_info["status"] == "outage":
-            overall = "outage"
-        elif status_info["status"] == "degraded" and overall == "operational":
-            overall = "degraded"
+    async with _get_page_lock():
+        now = time.time()
+        if _page_cache["data"] and now < _page_cache["expires"]:
+            return _page_cache["data"]
 
-    # Get uptime history
-    uptime = await _get_uptime_history(90)
+        uptime_sec = round(now - _start_time, 1)
 
-    # Get incidents
-    incidents = await _get_incidents(14)
+        # Check all components
+        components = []
+        overall = "operational"
+        for comp in COMPONENTS:
+            status_info = await _check_component_status(comp["id"])
+            components.append({**comp, **status_info})
+            if status_info["status"] == "outage":
+                overall = "outage"
+            elif status_info["status"] == "degraded" and overall == "operational":
+                overall = "degraded"
 
-    # Get task stats
-    task_stats = await _get_task_stats()
+        # Get uptime history
+        uptime = await _get_uptime_history(90)
 
-    return {
-        "overall": overall,
-        "uptime_sec": uptime_sec,
-        "sla_target": 99.9,
-        "components": components,
-        "uptime_history": uptime,
-        "incidents": incidents,
-        "task_stats": task_stats,
-        "updated_at": datetime.now(timezone.utc).isoformat(),
-    }
+        # Get incidents
+        incidents = await _get_incidents(14)
+
+        # Get task stats
+        task_stats = await _get_task_stats()
+
+        result = {
+            "overall": overall,
+            "uptime_sec": uptime_sec,
+            "sla_target": 99.9,
+            "components": components,
+            "uptime_history": uptime,
+            "incidents": incidents,
+            "task_stats": task_stats,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+        _page_cache["data"] = result
+        _page_cache["expires"] = now + 30
+        return result
