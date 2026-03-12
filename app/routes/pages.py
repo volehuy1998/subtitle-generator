@@ -41,7 +41,17 @@ async def status_page_html(request: Request):
 
 @router.get("/security", response_class=HTMLResponse)
 async def security_page(request: Request):
-    return templates.TemplateResponse("security.html", {"request": request})
+    return templates.TemplateResponse("security.html", {"request": request, "active_page": "security"})
+
+
+@router.get("/about", response_class=HTMLResponse)
+async def about_page(request: Request):
+    return templates.TemplateResponse("about.html", {"request": request, "active_page": "about"})
+
+
+@router.get("/contact", response_class=HTMLResponse)
+async def contact_page(request: Request):
+    return templates.TemplateResponse("contact.html", {"request": request, "active_page": "contact"})
 
 
 @router.get("/manifest.json")

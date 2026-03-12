@@ -97,6 +97,8 @@ export function AppHeader() {
         {[
           { href: '/status', label: 'Status' },
           { href: '/security', label: 'Security' },
+          { href: '/about', label: 'About' },
+          { href: '/contact', label: 'Contact' },
         ].map(({ href, label }) => (
           <a
             key={href}

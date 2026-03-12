@@ -1,327 +1,97 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SubForge — Security</title>
-    <meta name="theme-color" content="#863bff">
-    <meta name="description" content="SubForge security practices, attack prevention measures, and vulnerability disclosure policy.">
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        :root {
-            --bg: #F1F5F9; --surface: #FFFFFF; --surface-2: #F8FAFC;
-            --border: #E2E8F0; --border-2: #CBD5E1;
-            --primary: #863bff; --primary-hover: #6d22e0; --primary-light: #f3eeff;
-            --success: #10B981; --success-light: #ECFDF5; --success-border: #A7F3D0;
-            --warning: #F59E0B; --warning-light: #FFFBEB;
-            --error: #EF4444; --error-light: #FEF2F2;
-            --text: #1E293B; --text-2: #64748B; --text-3: #94A3B8;
-            --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
-            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-            --radius: 14px; --radius-sm: 8px; --radius-xs: 5px;
-        }
-        html, body { min-height: 100%; }
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            font-size: 14px;
-            line-height: 1.6;
-        }
-        a { color: var(--primary); text-decoration: none; }
-        a:hover { text-decoration: underline; }
+{% extends "_base.html" %}
 
-        /* Header */
-        .header {
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
-            padding: 0 24px;
-            height: 58px;
-            display: flex;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            box-shadow: var(--shadow);
-        }
-        .header-inner {
-            max-width: 860px;
-            margin: 0 auto;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
-            font-size: 1.05rem;
-            font-weight: 700;
-            color: var(--text);
-            letter-spacing: -0.3px;
-        }
-        .logo svg { width: 28px; height: 28px; }
-        .header-links { display: flex; gap: 8px; align-items: center; }
-        .header-links a {
-            font-size: 0.82rem;
-            color: var(--text-2);
-            padding: 5px 12px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-xs);
-            transition: all 0.15s;
-        }
-        .header-links a:hover { color: var(--text); border-color: var(--border-2); text-decoration: none; }
+{% block title %}SubForge — Security{% endblock %}
+{% block meta %}<meta name="description" content="SubForge security practices, attack prevention, and vulnerability disclosure policy.">{% endblock %}
 
-        /* Layout */
-        .container { max-width: 860px; margin: 0 auto; padding: 36px 24px 64px; }
-
+{% block extra_css %}
         /* Hero */
         .hero {
             background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%);
             border-radius: var(--radius);
-            padding: 40px 40px;
-            margin-bottom: 32px;
+            padding: 36px 36px;
+            margin-bottom: 28px;
             color: #fff;
             display: flex;
             align-items: center;
-            gap: 24px;
+            gap: 20px;
         }
         .hero-icon {
-            width: 56px;
-            height: 56px;
+            width: 52px; height: 52px;
             background: rgba(255,255,255,0.12);
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            border-radius: 13px;
+            display: flex; align-items: center; justify-content: center;
             flex-shrink: 0;
         }
-        .hero-content h1 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            letter-spacing: -0.3px;
-            margin-bottom: 6px;
-        }
-        .hero-content p {
-            font-size: 0.9rem;
-            color: rgba(255,255,255,0.75);
-            max-width: 560px;
-        }
+        .hero-content h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 5px; }
+        .hero-content p  { font-size: 0.88rem; color: rgba(255,255,255,0.72); }
         .hero-badge {
-            margin-left: auto;
-            flex-shrink: 0;
-            background: rgba(16,185,129,0.2);
-            border: 1px solid rgba(16,185,129,0.4);
-            color: #6ee7b7;
-            border-radius: 20px;
-            padding: 6px 14px;
-            font-size: 0.78rem;
-            font-weight: 600;
-            white-space: nowrap;
+            margin-left: auto; flex-shrink: 0;
+            background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.4);
+            color: #6ee7b7; border-radius: 20px; padding: 5px 13px;
+            font-size: 0.76rem; font-weight: 600; white-space: nowrap;
         }
-
         /* Section */
-        .section { margin-bottom: 28px; }
+        .section { margin-bottom: 26px; }
         .section-title {
-            font-size: 0.7rem;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: var(--text-3);
-            margin-bottom: 12px;
-            padding-left: 2px;
+            font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em;
+            text-transform: uppercase; color: var(--text-3); margin-bottom: 10px; padding-left: 2px;
         }
-
-        /* Card */
-        .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            overflow: hidden;
-            box-shadow: var(--shadow);
-        }
-
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
         /* Defense grid */
-        .defense-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1px;
-            background: var(--border);
-        }
-        .defense-item {
-            background: var(--surface);
-            padding: 20px 22px;
-            display: flex;
-            gap: 14px;
-            align-items: flex-start;
-        }
-        .defense-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 9px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            font-size: 16px;
-        }
-        .di-green { background: var(--success-light); }
-        .di-blue  { background: #EFF6FF; }
-        .di-purple{ background: var(--primary-light); }
-        .di-amber { background: var(--warning-light); }
-        .defense-item h3 {
-            font-size: 0.83rem;
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 3px;
-        }
-        .defense-item p {
-            font-size: 0.78rem;
-            color: var(--text-2);
-            line-height: 1.5;
-        }
-
+        .defense-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
+        .defense-item { background: var(--surface); padding: 18px 20px; display: flex; gap: 13px; align-items: flex-start; }
+        .defense-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .di-green { background: var(--success-light); } .di-blue { background: #EFF6FF; }
+        .di-purple { background: var(--primary-light); } .di-amber { background: var(--warning-light); }
+        .defense-item h3 { font-size: 0.81rem; font-weight: 600; margin-bottom: 3px; }
+        .defense-item p  { font-size: 0.77rem; color: var(--text-2); line-height: 1.5; }
         /* Header table */
         .header-table { width: 100%; border-collapse: collapse; }
         .header-table tr { border-bottom: 1px solid var(--border); }
         .header-table tr:last-child { border-bottom: none; }
-        .header-table td {
-            padding: 11px 18px;
-            font-size: 0.8rem;
-            vertical-align: top;
-        }
-        .header-table td:first-child {
-            font-family: 'Courier New', monospace;
-            font-size: 0.75rem;
-            color: var(--primary);
-            white-space: nowrap;
-            width: 1%;
-        }
-        .header-table td:last-child {
-            color: var(--text-2);
-        }
+        .header-table td { padding: 10px 18px; font-size: 0.79rem; vertical-align: top; }
+        .header-table td:first-child { font-family: 'Courier New', monospace; font-size: 0.73rem; color: var(--primary); white-space: nowrap; width: 1%; }
+        .header-table td:last-child { color: var(--text-2); }
         .header-table tr:nth-child(even) td { background: var(--surface-2); }
-
-        /* Rating row */
-        .rating-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 1px;
-            background: var(--border);
-        }
-        .rating-item {
-            background: var(--surface);
-            padding: 16px;
-            text-align: center;
-        }
-        .rating-label {
-            font-size: 0.72rem;
-            color: var(--text-3);
-            margin-bottom: 6px;
-            font-weight: 500;
-        }
-        .rating-badge {
-            display: inline-block;
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-size: 0.72rem;
-            font-weight: 700;
-        }
-        .rb-secure  { background: var(--success-light); color: #065F46; }
-        .rb-low     { background: #EFF6FF; color: #1E40AF; }
-
-        /* Retention timeline */
-        .timeline { padding: 20px 22px; display: flex; flex-direction: column; gap: 14px; }
-        .timeline-item { display: flex; align-items: flex-start; gap: 14px; }
-        .timeline-dot {
-            width: 8px; height: 8px; border-radius: 50%;
-            margin-top: 5px; flex-shrink: 0;
-        }
-        .td-green  { background: var(--success); }
-        .td-amber  { background: var(--warning); }
-        .td-red    { background: var(--error); }
-        .timeline-item h4 { font-size: 0.82rem; font-weight: 600; margin-bottom: 2px; }
-        .timeline-item p  { font-size: 0.78rem; color: var(--text-2); }
-
-        /* Disclosure box */
+        /* Rating grid */
+        .rating-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--border); }
+        .rating-item { background: var(--surface); padding: 14px; text-align: center; }
+        .rating-label { font-size: 0.7rem; color: var(--text-3); margin-bottom: 5px; font-weight: 500; }
+        .rating-badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; }
+        .rb-secure { background: var(--success-light); color: #065F46; }
+        .rb-low    { background: #EFF6FF; color: #1E40AF; }
+        /* Timeline */
+        .timeline { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+        .timeline-item { display: flex; align-items: flex-start; gap: 12px; }
+        .timeline-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+        .td-green { background: var(--success); } .td-amber { background: var(--warning); } .td-red { background: var(--error); }
+        .timeline-item h4 { font-size: 0.81rem; font-weight: 600; margin-bottom: 2px; }
+        .timeline-item p  { font-size: 0.77rem; color: var(--text-2); }
+        /* Disclosure */
         .disclosure {
             background: linear-gradient(135deg, var(--primary-light), #fff);
-            border: 1px solid #d8b4fe;
-            border-radius: var(--radius);
-            padding: 28px 30px;
-            display: flex;
-            gap: 20px;
-            align-items: flex-start;
+            border: 1px solid #d8b4fe; border-radius: var(--radius);
+            padding: 26px 28px; display: flex; gap: 18px; align-items: flex-start;
         }
-        .disclosure-icon {
-            width: 44px; height: 44px;
-            background: var(--primary);
-            border-radius: 11px;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-        }
-        .disclosure h3 { font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
-        .disclosure p { font-size: 0.82rem; color: var(--text-2); margin-bottom: 12px; }
+        .disclosure-icon { width: 42px; height: 42px; background: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .disclosure h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 5px; }
+        .disclosure p  { font-size: 0.8rem; color: var(--text-2); margin-bottom: 10px; }
         .disclosure-steps { display: flex; flex-direction: column; gap: 6px; }
-        .disclosure-step {
-            display: flex; align-items: center; gap: 8px;
-            font-size: 0.8rem; color: var(--text-2);
-        }
-        .step-num {
-            width: 20px; height: 20px; border-radius: 50%;
-            background: var(--primary); color: #fff;
-            font-size: 0.68rem; font-weight: 700;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-        }
-
-        /* Footer */
-        .footer {
-            border-top: 1px solid var(--border);
-            margin-top: 48px;
-            padding-top: 20px;
-            text-align: center;
-            font-size: 0.75rem;
-            color: var(--text-3);
-        }
-
+        .disclosure-step { display: flex; align-items: center; gap: 8px; font-size: 0.79rem; color: var(--text-2); }
+        .step-num { width: 19px; height: 19px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 0.67rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         @media (max-width: 640px) {
-            .defense-grid  { grid-template-columns: 1fr; }
-            .rating-grid   { grid-template-columns: 1fr 1fr; }
-            .hero { flex-direction: column; }
-            .hero-badge { margin-left: 0; }
+            .defense-grid { grid-template-columns: 1fr; }
+            .rating-grid  { grid-template-columns: 1fr 1fr; }
+            .hero         { flex-direction: column; }
+            .hero-badge   { margin-left: 0; }
         }
-    </style>
-</head>
-<body>
+{% endblock %}
 
-<header class="header">
-    <div class="header-inner">
-        <a href="/" class="logo">
-            <svg viewBox="0 0 48 46" fill="none">
-                <path d="M25.946 44.938c-.664.845-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.287c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.497 0-3.578-1.842-3.578H1.237c-.92 0-1.456-1.04-.92-1.788L10.013.474c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.579 1.842 3.579h11.377c.943 0 1.473 1.088.89 1.83L25.947 44.94z" fill="#863bff"/>
-            </svg>
-            SubForge
-        </a>
-        <div class="header-links">
-            <a href="/">App</a>
-            <a href="/status">Status</a>
-        </div>
-    </div>
-</header>
-
-<div class="container">
-
+{% block content %}
     <!-- Hero -->
     <div class="hero">
         <div class="hero-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
                 <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" stroke="white" stroke-width="1.8" stroke-linejoin="round" fill="rgba(255,255,255,0.15)"/>
                 <path d="M9 12l2 2 4-4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
@@ -338,109 +108,54 @@
         <div class="section-title">Attack Prevention</div>
         <div class="card">
             <div class="defense-grid">
-
                 <div class="defense-item">
                     <div class="defense-icon di-green">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" stroke="#10B981" stroke-width="1.8" stroke-linejoin="round"/>
-                            <path d="M9 13l2 2 4-4" stroke="#10B981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" stroke="#10B981" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 13l2 2 4-4" stroke="#10B981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </div>
-                    <div>
-                        <h3>File Upload Security</h3>
-                        <p>Every upload is validated by file extension, magic bytes (MIME type), size limits (2 GB max), and filename sanitization. Mismatched types are rejected. ClamAV scanning available for virus detection.</p>
-                    </div>
+                    <div><h3>File Upload Security</h3><p>Every upload is validated by file extension, magic bytes (MIME type), size limits (2 GB max), and filename sanitization. Mismatched types are rejected. ClamAV scanning available.</p></div>
                 </div>
-
                 <div class="defense-item">
                     <div class="defense-icon di-blue">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="12" r="10" stroke="#2563EB" stroke-width="1.8"/>
-                            <path d="M12 8v4l3 3" stroke="#2563EB" stroke-width="1.8" stroke-linecap="round"/>
-                        </svg>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#2563EB" stroke-width="1.8"/><path d="M12 8v4l3 3" stroke="#2563EB" stroke-width="1.8" stroke-linecap="round"/></svg>
                     </div>
-                    <div>
-                        <h3>Rate Limiting</h3>
-                        <p>Upload endpoints are limited to 5 requests/minute per IP. API endpoints allow 60 requests/minute. Brute-force protection blocks IPs after 10 failed auth attempts for 10 minutes.</p>
-                    </div>
+                    <div><h3>Rate Limiting</h3><p>Uploads: 5 req/min per IP. API: 60 req/min. Brute-force protection blocks IPs after 10 failed auth attempts for 10 minutes.</p></div>
                 </div>
-
                 <div class="defense-item">
                     <div class="defense-icon di-purple">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                            <rect x="3" y="11" width="18" height="11" rx="2" stroke="#863bff" stroke-width="1.8"/>
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#863bff" stroke-width="1.8" stroke-linecap="round"/>
-                        </svg>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="3" y="11" width="18" height="11" rx="2" stroke="#863bff" stroke-width="1.8"/><path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#863bff" stroke-width="1.8" stroke-linecap="round"/></svg>
                     </div>
-                    <div>
-                        <h3>No Shell Injection</h3>
-                        <p>All ffmpeg and ffprobe commands use list-based argument passing (no <code>shell=True</code>). User-supplied values for font names, colors, and positions are strictly validated before use.</p>
-                    </div>
+                    <div><h3>No Shell Injection</h3><p>All ffmpeg/ffprobe commands use list-based argument passing (no <code>shell=True</code>). Font names, colors, and positions are strictly validated.</p></div>
                 </div>
-
                 <div class="defense-item">
                     <div class="defense-icon di-green">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                            <path d="M4 7h16M4 12h16M4 17h10" stroke="#10B981" stroke-width="1.8" stroke-linecap="round"/>
-                        </svg>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h10" stroke="#10B981" stroke-width="1.8" stroke-linecap="round"/></svg>
                     </div>
-                    <div>
-                        <h3>No SQL Injection</h3>
-                        <p>All database access uses SQLAlchemy ORM with parameterized queries. The two raw SQL statements present use named bindings (<code>:param</code>). No string concatenation in queries.</p>
-                    </div>
+                    <div><h3>No SQL Injection</h3><p>All database access uses SQLAlchemy ORM with parameterized queries. Raw SQL uses named bindings (<code>:param</code>). No string concatenation in queries.</p></div>
                 </div>
-
                 <div class="defense-item">
                     <div class="defense-icon di-amber">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="#F59E0B" stroke-width="1.8" stroke-linejoin="round"/>
-                            <path d="M9 22V12h6v10" stroke="#F59E0B" stroke-width="1.8" stroke-linejoin="round"/>
-                        </svg>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="#F59E0B" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 22V12h6v10" stroke="#F59E0B" stroke-width="1.8" stroke-linejoin="round"/></svg>
                     </div>
-                    <div>
-                        <h3>Path Traversal Blocked</h3>
-                        <p>Upload filenames are replaced with random UUIDs. Download paths are resolved and verified to be within the output directory before serving. No user-controlled path segments reach the filesystem.</p>
-                    </div>
+                    <div><h3>Path Traversal Blocked</h3><p>Upload filenames are replaced with random UUIDs. Download paths are resolved and verified to be within the output directory. No user-controlled path segments.</p></div>
                 </div>
-
                 <div class="defense-item">
                     <div class="defense-icon di-blue">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="8" r="4" stroke="#2563EB" stroke-width="1.8"/>
-                            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#2563EB" stroke-width="1.8" stroke-linecap="round"/>
-                        </svg>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#2563EB" stroke-width="1.8"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#2563EB" stroke-width="1.8" stroke-linecap="round"/></svg>
                     </div>
-                    <div>
-                        <h3>Task Ownership (IDOR Prevention)</h3>
-                        <p>Each task is bound to the session that created it via a secure <code>httponly</code> cookie. Cross-session access to tasks returns HTTP 403. Skipped when API key auth is in use.</p>
-                    </div>
+                    <div><h3>Task Ownership (IDOR Prevention)</h3><p>Each task is bound to the session that created it via a secure <code>httponly</code> cookie. Cross-session access returns HTTP 403.</p></div>
                 </div>
-
                 <div class="defense-item">
                     <div class="defense-icon di-green">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#10B981" stroke-width="1.8" stroke-linejoin="round"/>
-                        </svg>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#10B981" stroke-width="1.8" stroke-linejoin="round"/></svg>
                     </div>
-                    <div>
-                        <h3>Authentication</h3>
-                        <p>Optional API key authentication enforces all non-public endpoints when <code>API_KEYS</code> is configured. JWT tokens with HS256 signing are used for session auth. Timing-safe key comparison.</p>
-                    </div>
+                    <div><h3>Authentication</h3><p>Optional API key auth enforces all non-public endpoints when configured. JWT tokens with HS256 signing. Timing-safe key comparison.</p></div>
                 </div>
-
                 <div class="defense-item">
                     <div class="defense-icon di-purple">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                            <rect x="2" y="3" width="20" height="14" rx="2" stroke="#863bff" stroke-width="1.8"/>
-                            <path d="M8 21h8M12 17v4" stroke="#863bff" stroke-width="1.8" stroke-linecap="round"/>
-                        </svg>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="14" rx="2" stroke="#863bff" stroke-width="1.8"/><path d="M8 21h8M12 17v4" stroke="#863bff" stroke-width="1.8" stroke-linecap="round"/></svg>
                     </div>
-                    <div>
-                        <h3>Secrets Management</h3>
-                        <p>No secrets are hardcoded. All credentials (<code>API_KEYS</code>, <code>JWT_SECRET</code>, <code>DATABASE_URL</code>, S3 keys) are loaded exclusively from environment variables at runtime.</p>
-                    </div>
+                    <div><h3>Secrets Management</h3><p>No hardcoded secrets. All credentials (<code>API_KEYS</code>, <code>JWT_SECRET</code>, <code>DATABASE_URL</code>, S3 keys) loaded exclusively from environment variables.</p></div>
                 </div>
-
             </div>
         </div>
     </div>
@@ -452,60 +167,30 @@
             <table class="header-table">
                 <tr><td>X-Content-Type-Options</td><td>nosniff — prevents MIME type sniffing attacks</td></tr>
                 <tr><td>X-Frame-Options</td><td>DENY — blocks clickjacking via iframes</td></tr>
-                <tr><td>X-XSS-Protection</td><td>1; mode=block — legacy XSS filter (browsers)</td></tr>
+                <tr><td>X-XSS-Protection</td><td>1; mode=block</td></tr>
                 <tr><td>Referrer-Policy</td><td>strict-origin-when-cross-origin</td></tr>
-                <tr><td>Permissions-Policy</td><td>camera=(), microphone=(), geolocation=() — no sensitive APIs</td></tr>
+                <tr><td>Permissions-Policy</td><td>camera=(), microphone=(), geolocation=()</td></tr>
                 <tr><td>Content-Security-Policy</td><td>default-src 'self'; connect-src 'self'; media-src 'self' blob:</td></tr>
-                <tr><td>Strict-Transport-Security</td><td>max-age=63072000; includeSubDomains; preload (production only)</td></tr>
+                <tr><td>Strict-Transport-Security</td><td>max-age=63072000; includeSubDomains; preload (production)</td></tr>
             </table>
         </div>
     </div>
 
-    <!-- OWASP coverage -->
+    <!-- OWASP -->
     <div class="section">
         <div class="section-title">OWASP Top 10 Coverage</div>
         <div class="card">
             <div class="rating-grid">
-                <div class="rating-item">
-                    <div class="rating-label">Injection</div>
-                    <span class="rating-badge rb-secure">Secure</span>
-                </div>
-                <div class="rating-item">
-                    <div class="rating-label">Broken Auth</div>
-                    <span class="rating-badge rb-secure">Secure</span>
-                </div>
-                <div class="rating-item">
-                    <div class="rating-label">File Upload</div>
-                    <span class="rating-badge rb-secure">Secure</span>
-                </div>
-                <div class="rating-item">
-                    <div class="rating-label">Path Traversal</div>
-                    <span class="rating-badge rb-secure">Secure</span>
-                </div>
-                <div class="rating-item">
-                    <div class="rating-label">Security Headers</div>
-                    <span class="rating-badge rb-secure">Secure</span>
-                </div>
-                <div class="rating-item">
-                    <div class="rating-label">Rate Limiting</div>
-                    <span class="rating-badge rb-secure">Secure</span>
-                </div>
-                <div class="rating-item">
-                    <div class="rating-label">IDOR</div>
-                    <span class="rating-badge rb-secure">Secure</span>
-                </div>
-                <div class="rating-item">
-                    <div class="rating-label">Secrets Mgmt</div>
-                    <span class="rating-badge rb-secure">Secure</span>
-                </div>
-                <div class="rating-item">
-                    <div class="rating-label">CSP</div>
-                    <span class="rating-badge rb-low">Low Risk</span>
-                </div>
-                <div class="rating-item">
-                    <div class="rating-label">Dep. Pinning</div>
-                    <span class="rating-badge rb-low">Low Risk</span>
-                </div>
+                <div class="rating-item"><div class="rating-label">Injection</div><span class="rating-badge rb-secure">Secure</span></div>
+                <div class="rating-item"><div class="rating-label">Broken Auth</div><span class="rating-badge rb-secure">Secure</span></div>
+                <div class="rating-item"><div class="rating-label">File Upload</div><span class="rating-badge rb-secure">Secure</span></div>
+                <div class="rating-item"><div class="rating-label">Path Traversal</div><span class="rating-badge rb-secure">Secure</span></div>
+                <div class="rating-item"><div class="rating-label">Sec. Headers</div><span class="rating-badge rb-secure">Secure</span></div>
+                <div class="rating-item"><div class="rating-label">Rate Limiting</div><span class="rating-badge rb-secure">Secure</span></div>
+                <div class="rating-item"><div class="rating-label">IDOR</div><span class="rating-badge rb-secure">Secure</span></div>
+                <div class="rating-item"><div class="rating-label">Secrets</div><span class="rating-badge rb-secure">Secure</span></div>
+                <div class="rating-item"><div class="rating-label">CSP</div><span class="rating-badge rb-low">Low Risk</span></div>
+                <div class="rating-item"><div class="rating-label">Dep. Pinning</div><span class="rating-badge rb-low">Low Risk</span></div>
             </div>
         </div>
     </div>
@@ -515,34 +200,10 @@
         <div class="section-title">Data Handling &amp; Retention</div>
         <div class="card">
             <div class="timeline">
-                <div class="timeline-item">
-                    <div class="timeline-dot td-green"></div>
-                    <div>
-                        <h4>Uploaded files are temporary</h4>
-                        <p>Audio and video files uploaded for transcription are stored only for the duration of processing. They are deleted automatically within 24 hours (configurable via <code>FILE_RETENTION_HOURS</code>).</p>
-                    </div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-dot td-green"></div>
-                    <div>
-                        <h4>No account required</h4>
-                        <p>SubForge does not require registration. No personal information (name, email, phone) is collected. Sessions are anonymous and identified only by a random cookie.</p>
-                    </div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-dot td-amber"></div>
-                    <div>
-                        <h4>Access logs retained for security</h4>
-                        <p>Request logs (IP address, endpoint, timestamp) are kept for security monitoring and abuse detection. Logs do not contain file contents or transcript text.</p>
-                    </div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-dot td-red"></div>
-                    <div>
-                        <h4>No third-party data sharing</h4>
-                        <p>Uploaded media and generated subtitles are never shared with third parties. Transcription runs entirely on-server using open-source models (faster-whisper / CTranslate2).</p>
-                    </div>
-                </div>
+                <div class="timeline-item"><div class="timeline-dot td-green"></div><div><h4>Uploaded files are temporary</h4><p>Files are deleted automatically within 24 hours. They are never used for training or shared with third parties.</p></div></div>
+                <div class="timeline-item"><div class="timeline-dot td-green"></div><div><h4>No account required</h4><p>No personal information is collected. Sessions are anonymous, identified only by a random cookie.</p></div></div>
+                <div class="timeline-item"><div class="timeline-dot td-amber"></div><div><h4>Access logs retained for security</h4><p>Request logs (IP, endpoint, timestamp) are kept for abuse detection. Logs do not contain file contents or transcript text.</p></div></div>
+                <div class="timeline-item"><div class="timeline-dot td-red"></div><div><h4>No third-party data sharing</h4><p>Transcription runs entirely on-server using open-source models (faster-whisper / CTranslate2). Nothing leaves the server.</p></div></div>
             </div>
         </div>
     </div>
@@ -552,36 +213,17 @@
         <div class="section-title">Responsible Disclosure</div>
         <div class="disclosure">
             <div class="disclosure-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
-                </svg>
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/></svg>
             </div>
             <div>
                 <h3>Found a vulnerability? Let us know.</h3>
-                <p>We take security reports seriously and aim to respond within 48 hours. Please do not publicly disclose issues before we have had a chance to address them.</p>
+                <p>We aim to respond within 48 hours. Please do not disclose issues publicly before we've had a chance to fix them.</p>
                 <div class="disclosure-steps">
-                    <div class="disclosure-step">
-                        <div class="step-num">1</div>
-                        <span>Open a <a href="https://github.com/volehuy1998/subtitle-generator/issues/new?labels=security&title=[Security]+" target="_blank">GitHub issue</a> marked with the <strong>security</strong> label, or use a private report via GitHub Security Advisories.</span>
-                    </div>
-                    <div class="disclosure-step">
-                        <div class="step-num">2</div>
-                        <span>Include: affected endpoint, reproduction steps, and potential impact. No need to provide a full exploit.</span>
-                    </div>
-                    <div class="disclosure-step">
-                        <div class="step-num">3</div>
-                        <span>We will acknowledge within 48 hours, assess severity, and ship a fix. You will be credited in the release notes if you wish.</span>
-                    </div>
+                    <div class="disclosure-step"><div class="step-num">1</div><span>Open a <a href="https://github.com/volehuy1998/subtitle-generator/issues/new?labels=security&title=[Security]+" target="_blank">GitHub issue</a> with the <strong>security</strong> label, or use GitHub Security Advisories for private reports.</span></div>
+                    <div class="disclosure-step"><div class="step-num">2</div><span>Include: affected endpoint, reproduction steps, and potential impact.</span></div>
+                    <div class="disclosure-step"><div class="step-num">3</div><span>We will acknowledge within 48 hours and credit you in the release notes if you wish.</span></div>
                 </div>
             </div>
         </div>
     </div>
-
-    <div class="footer">
-        Last reviewed March 2026 &mdash; SubForge runs on open-source software.
-        <a href="https://github.com/volehuy1998/subtitle-generator" target="_blank">View source on GitHub</a>
-    </div>
-
-</div>
-</body>
-</html>
+{% endblock %}
