@@ -696,16 +696,15 @@
             <div class="option-group">
                 <div class="option-label">Model Quality</div>
                 <div class="option-buttons" id="modelButtons">
-                    <button class="opt-btn selected" data-value="auto">Auto<span class="opt-detail">Best fit</span></button>
-                    <button class="opt-btn" data-value="tiny">Tiny<span class="opt-detail">~75MB</span></button>
+                    <button class="opt-btn selected" data-value="tiny">Tiny<span class="opt-detail">~75MB</span></button>
                     <button class="opt-btn" data-value="base">Base<span class="opt-detail">~140MB</span></button>
                     <button class="opt-btn" data-value="small">Small<span class="opt-detail">~460MB</span></button>
                     <button class="opt-btn" data-value="medium">Med<span class="opt-detail">~1.5GB</span></button>
                     <button class="opt-btn" data-value="large">Large<span class="opt-detail">~3GB</span></button>
                 </div>
-                <div class="model-info" id="modelInfo"></div>
             </div>
         </div>
+        <div class="model-info" id="modelInfo"></div>
         <div class="options-panel" id="optionsPanel2">
             <div class="option-group">
                 <div class="option-label">Language</div>
@@ -1185,7 +1184,7 @@
         const stepTimeEls = [$('stepTime1'), $('stepTime2'), $('stepTime3'), $('stepTime4')];
         let eventSource = null, pollInterval = null, currentTaskId = null, isPaused = false;
         let sseRetryTimeout = null, sseRetryDelay = 1000, sseLastEventTime = 0;
-        let selectedDevice = 'cuda', selectedModel = 'auto', selectedFormat = 'srt';
+        let selectedDevice = 'cuda', selectedModel = 'tiny', selectedFormat = 'srt';
         let lastSegmentCount = 0;
         let modelRecommendations = {};
         let autoModelName = 'medium';
@@ -1405,6 +1404,7 @@
                 updateModelInfo(this.dataset.value);
             });
         });
+        updateModelInfo(selectedModel);
 
         // ── Advanced Options ──
         function toggleAdvanced() {
@@ -2357,6 +2357,42 @@
         setInterval(refreshTaskQueue, 2000);
         // Initial load
         refreshTaskQueue();
+
+        // ── Capabilities check (FFmpeg) ──
+        (async function checkCapabilities() {
+            try {
+                var res = await fetch('/api/capabilities');
+                var caps = await res.json();
+                if (!caps.ffmpeg) {
+                    // Disable Combine tab
+                    var combineBtn = $('modeCombine');
+                    combineBtn.style.opacity = '0.35';
+                    combineBtn.style.cursor = 'not-allowed';
+                    combineBtn.onclick = function(e) { e.preventDefault(); };
+                    combineBtn.title = 'FFmpeg is not installed — Combine is unavailable';
+                    combineBtn.innerHTML = 'Combine<small>Requires FFmpeg</small>';
+
+                    // Update drop zone hint to show only audio formats
+                    var hint = document.querySelector('.drop-zone-hint');
+                    if (hint) hint.textContent = 'MP3, WAV, FLAC \u2022 Max 2 GB \u2022 Video files require FFmpeg';
+
+                    // Update drop zone main text
+                    var dzText = document.querySelector('.drop-zone-text');
+                    if (dzText) dzText.textContent = 'Drop your audio file(s) here or click to browse';
+
+                    // Hide embed card if it exists
+                    var embedCard = $('embedCard');
+                    if (embedCard) embedCard.style.display = 'none';
+
+                    // Store globally for other checks
+                    window._ffmpegAvailable = false;
+                } else {
+                    window._ffmpegAvailable = true;
+                }
+            } catch(e) {
+                window._ffmpegAvailable = true; // assume available on error
+            }
+        })();
 
         // ── S10-5: Subtitle Embedding ──
         let embedMode = 'soft';

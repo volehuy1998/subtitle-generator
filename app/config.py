@@ -1,5 +1,6 @@
 # Set thread counts for CPU performance BEFORE any library imports
 import os
+import shutil
 from pathlib import Path
 
 CPU_COUNT = os.cpu_count() or 4
@@ -12,6 +13,14 @@ UPLOAD_DIR = BASE_DIR / "uploads"
 OUTPUT_DIR = BASE_DIR / "outputs"
 LOG_DIR = BASE_DIR / "logs"
 TEMPLATE_DIR = BASE_DIR / "templates"
+
+# --- External dependencies ---
+FFMPEG_AVAILABLE = shutil.which("ffmpeg") is not None
+FFPROBE_AVAILABLE = shutil.which("ffprobe") is not None
+
+# Extensions that require FFmpeg for audio extraction (video formats)
+VIDEO_EXTENSIONS = {".mp4", ".mkv", ".avi", ".webm", ".mov"}
+AUDIO_ONLY_EXTENSIONS = {".mp3", ".wav", ".flac"}
 
 # --- File validation ---
 ALLOWED_EXTENSIONS = {".mp4", ".mkv", ".avi", ".webm", ".mov", ".mp3", ".wav", ".flac"}

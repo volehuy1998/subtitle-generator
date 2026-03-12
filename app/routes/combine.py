@@ -103,6 +103,10 @@ async def combine_video_subtitle(
     Upload both files, choose soft mux or hard burn mode.
     No transcription needed - bring your own subtitles.
     """
+    from app.config import FFMPEG_AVAILABLE
+    if not FFMPEG_AVAILABLE:
+        raise HTTPException(503, "FFmpeg is not installed. The combine feature is unavailable.")
+
     # Validate video file extension
     video_ext = validate_file_extension(video.filename or "")
     if video_ext is None or video_ext not in VIDEO_EXTENSIONS:

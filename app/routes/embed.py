@@ -54,6 +54,10 @@ async def embed_subtitles(
     Supports soft (mux) and hard (burn) modes.
     For hard mode, customize styling via preset or individual params.
     """
+    from app.config import FFMPEG_AVAILABLE
+    if not FFMPEG_AVAILABLE:
+        raise HTTPException(503, "FFmpeg is not installed. Subtitle embedding is unavailable.")
+
     # Note: critical state checks handled by CriticalStateMiddleware
     if task_id not in state.tasks:
         raise HTTPException(404, "Task not found")
@@ -173,6 +177,10 @@ async def quick_embed(
     After transcription of a video file, the original is preserved for deferred embed.
     This endpoint uses that preserved video, so the user doesn't need to re-upload.
     """
+    from app.config import FFMPEG_AVAILABLE
+    if not FFMPEG_AVAILABLE:
+        raise HTTPException(503, "FFmpeg is not installed. Subtitle embedding is unavailable.")
+
     # Note: critical state checks handled by CriticalStateMiddleware
     if task_id not in state.tasks:
         raise HTTPException(404, "Task not found")

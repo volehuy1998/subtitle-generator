@@ -95,6 +95,26 @@ async def ready(response: Response):
     }
 
 
+@router.get("/api/capabilities")
+async def capabilities():
+    """Report which features are available based on system dependencies."""
+    from app.config import FFMPEG_AVAILABLE, FFPROBE_AVAILABLE, VIDEO_EXTENSIONS, AUDIO_ONLY_EXTENSIONS
+    return {
+        "ffmpeg": FFMPEG_AVAILABLE,
+        "ffprobe": FFPROBE_AVAILABLE,
+        "features": {
+            "transcribe_audio": True,
+            "transcribe_video": FFMPEG_AVAILABLE,
+            "combine": FFMPEG_AVAILABLE,
+            "embed_soft": FFMPEG_AVAILABLE,
+            "embed_hard": FFMPEG_AVAILABLE,
+            "media_probe": FFPROBE_AVAILABLE,
+        },
+        "accepted_extensions": list(VIDEO_EXTENSIONS | AUDIO_ONLY_EXTENSIONS) if FFMPEG_AVAILABLE
+                               else list(AUDIO_ONLY_EXTENSIONS),
+    }
+
+
 @router.get("/scale/info")
 async def scale_info():
     """Get scaling and infrastructure info for horizontal scaling.

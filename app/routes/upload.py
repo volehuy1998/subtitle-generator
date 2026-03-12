@@ -56,6 +56,15 @@ async def upload(
         logger.warning(f"UPLOAD Rejected: unsupported extension for '{file.filename}'")
         raise HTTPException(400, "Unsupported format. Allowed: .mp4, .mkv, .avi, .webm, .mov, .mp3, .wav, .flac")
 
+    # Reject video files when FFmpeg is not available
+    from app.config import FFMPEG_AVAILABLE, VIDEO_EXTENSIONS
+    if ext in VIDEO_EXTENSIONS and not FFMPEG_AVAILABLE:
+        raise HTTPException(
+            503,
+            "FFmpeg is not installed. Video files require FFmpeg for audio extraction. "
+            "Please upload an audio file (.mp3, .wav, .flac) instead.",
+        )
+
     # Device fallback
     if device == "cuda" and not torch.cuda.is_available():
         logger.warning("UPLOAD Device 'cuda' not available, falling back to CPU")
