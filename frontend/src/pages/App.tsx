@@ -9,14 +9,12 @@ import { OutputPanel } from '@/components/output/OutputPanel'
 import { EmbedTab } from '@/components/embed/EmbedTab'
 import { useTaskStore } from '@/store/taskStore'
 import { useUIStore } from '@/store/uiStore'
-import { useHealthStream } from '@/hooks/useHealthStream'
 import { api } from '@/api/client'
 
 type AppTab = 'transcribe' | 'embed'
 
 export default function App() {
-  const health = useHealthStream()
-  const { healthPanelOpen, setHealthPanelOpen, appMode, setAppMode } = useUIStore()
+  const { healthPanelOpen, setHealthPanelOpen, appMode, setAppMode, health } = useUIStore()
   const store = useTaskStore()
 
   // Session restore: if a task was in progress, try to reconnect

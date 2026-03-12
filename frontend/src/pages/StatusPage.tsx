@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { AppHeader } from '@/components/layout/AppHeader'
 import { HealthPanel } from '@/components/system/HealthPanel'
-import { useHealthStream } from '@/hooks/useHealthStream'
 import { useUIStore } from '@/store/uiStore'
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -421,8 +420,7 @@ export default function StatusPage() {
   const [statusData, setStatusData] = useState<StatusPage | null>(null)
   const [commitsData, setCommitsData] = useState<CommitsData | null>(null)
   const [expandedCommits, setExpandedCommits] = useState<Set<number>>(new Set())
-  const health = useHealthStream()
-  const { healthPanelOpen, setHealthPanelOpen } = useUIStore()
+  const { healthPanelOpen, setHealthPanelOpen, health } = useUIStore()
 
   const loadStatus = useCallback(async () => {
     try {
