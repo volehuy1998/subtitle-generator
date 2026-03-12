@@ -1,941 +1,299 @@
-# Deployment Guide — Ubuntu Server 24.04
+# Deployment Guide
 
-Deploy the subtitle generator in development, single-node, or multi-node mode.
-
-## Table of Contents
-
-- [Environment Modes](#environment-modes)
-- [System Requirements](#system-requirements)
-- [Development Mode](#development-mode)
-- [Common Setup (All Nodes)](#common-setup-all-nodes)
-- [Mode A: Single-Node Deployment](#mode-a-single-node-deployment)
-- [Mode B: Multi-Node Deployment](#mode-b-multi-node-deployment)
-- [Mode C: Docker Deployment](#mode-c-docker-deployment)
-- [GPU Deployment](#gpu-deployment)
-- [Environment Variables Reference](#environment-variables-reference)
-- [Useful Commands](#useful-commands)
-- [Troubleshooting](#troubleshooting)
+SubForge ships with a single script that handles everything:
+packages, TLS certificates, virtual environments or Docker, systemd, and health verification.
+One command is all you need.
 
 ---
 
-## Environment Modes
+## Quick start
 
-The application behavior is controlled by the `ENVIRONMENT` variable:
+```bash
+# 1. Download the script (run as root on the target server)
+curl -fsSL https://raw.githubusercontent.com/volehuy1998/subtitle-generator/main/scripts/deploy.sh \
+  -o deploy.sh
 
-| Mode | HTTPS Redirect | HSTS | TLS Handling | Use Case |
-|------|---------------|------|-------------|----------|
-| **`dev`** (default) | Off | Off | Not required — plain HTTP | Local development, testing |
-| **`prod`** | On | On | TLS via `SSL_CERTFILE`/`SSL_KEYFILE` or reverse proxy | Production servers |
+# 2a. Development mode — HTTP only, no certificate needed
+sudo bash deploy.sh --mode dev
 
-Setting `ENVIRONMENT=prod` automatically enables `HTTPS_REDIRECT` and `HSTS_ENABLED`. You can still override them individually via env vars if needed.
+# 2b. Production mode — HTTPS via Let's Encrypt (bare-metal)
+sudo bash deploy.sh --domain example.com --email admin@example.com
+
+# 2c. Production mode — HTTPS via Let's Encrypt + Docker
+sudo bash deploy.sh --domain example.com --email admin@example.com --docker
+```
+
+When the script finishes it prints the live URLs and useful management commands.
 
 ---
 
-## System Requirements
+## Requirements
 
-### Required System Packages
+| Requirement | Notes |
+|---|---|
+| Ubuntu Server 24.04 LTS | Other Debian-based distros may work but are untested |
+| Root / sudo access | The script must run as root |
+| Public IP + DNS (prod) | Your domain must point to this server before running |
+| Ports 80 and 443 open (prod) | 80 is used briefly for the ACME challenge, then for HTTP→HTTPS redirect |
+| Port 8000 open (dev) | Only needed for local / private access |
 
-| Package | Role | What breaks without it |
-|---------|------|------------------------|
-| **ffmpeg** | Audio extraction (video to WAV), media probing (duration/codec detection), subtitle embedding (soft mux and hard burn), video+subtitle combining | Transcription pipeline fails at audio extraction. Embed/combine features fail. Health indicator shows **yellow warning**. |
-| **libsndfile1** | Audio I/O library used by faster-whisper for reading WAV/FLAC audio data | Whisper model loading or audio decoding fails with missing shared library errors |
-| **python3**, **python3-pip**, **python3-venv** | Python runtime, package manager, virtual environment support | Application cannot start |
-| **git** | Clone the repository, manage updates | Cannot fetch or update the codebase |
-| **curl** | Health check verification, TLS debugging, Docker healthchecks | Cannot verify deployment or run Docker health probes |
-| **certbot** | Obtain and renew Let's Encrypt TLS certificates | HTTPS will not work (single-node mode) |
-
-### Optional (GPU Acceleration)
-
-| Package | Role |
-|---------|------|
-| **nvidia-driver-550+** | NVIDIA GPU kernel driver |
-| **cuda-toolkit-12.x** | CUDA runtime for GPU-accelerated transcription |
-| **nvidia-container-toolkit** | Required for GPU passthrough in Docker |
-
-### Minimum Hardware
-
-| Resource | Minimum | Recommended |
-|----------|---------|-------------|
-| RAM | 4 GB (tiny model, CPU) | 16+ GB (medium model) |
-| CPU | 2 cores | 8+ cores |
-| Disk | 10 GB free | 50+ GB (for uploads/outputs) |
-| GPU (optional) | NVIDIA with 2+ GB VRAM | NVIDIA with 6+ GB VRAM (large model) |
+The script installs everything else (Python 3, ffmpeg, git, certbot, Docker, etc.).
 
 ---
 
-## Development Mode
+## Modes
 
-For local development on Windows, macOS, or Linux. No TLS certificates, no HSTS, plain HTTP.
+### Development mode (`--mode dev`)
 
-### Prerequisites
-
-- Python 3.12+
-- ffmpeg on PATH
-- (Optional) PostgreSQL 16+ — SQLite used by default
-
-### Quick Start
+- Runs on **HTTP port 8000** — no certificate required.
+- Suitable for local testing, air-gapped servers, or evaluating SubForge before going public.
+- Use `--mode dev` explicitly, **or** simply omit `--domain` and the script switches automatically.
 
 ```bash
-# Clone and install
-git clone https://github.com/volehuy1998/subtitle-generator.git
-cd subtitle-generator
-pip install -r requirements.txt
-mkdir -p uploads outputs logs
-
-# Start (development mode is the default)
-python main.py
+sudo bash deploy.sh --mode dev
+# → App at http://SERVER_IP:8000
 ```
 
-The server starts at **http://localhost:8000** (or http://127.0.0.1:8000).
+### Production mode (default when `--domain` is provided)
 
-### With PostgreSQL (optional)
+- Runs on **HTTPS port 443** with an automatic HTTP → HTTPS redirect on port 80.
+- Requires a public domain that resolves to the server's IP address.
 
 ```bash
-# Start PostgreSQL via Docker
-docker compose up postgres -d
-
-# Run with PostgreSQL
-DATABASE_URL=postgresql+asyncpg://subtitle:subtitle@localhost:5432/subtitle_generator python main.py
+sudo bash deploy.sh --domain example.com --email admin@example.com
+# → App at https://example.com
 ```
-
-### Custom Port
-
-```bash
-PORT=3000 python main.py
-```
-
-### Troubleshooting: Browser Redirects to HTTPS
-
-If your browser previously visited the app in production mode, it may have cached an HSTS policy that forces HTTPS. Fixes:
-
-1. **Use `http://127.0.0.1:8000`** instead of `localhost` (Chrome auto-upgrades `localhost` to HTTPS)
-2. **Chrome**: go to `chrome://net-internals/#hsts` → "Delete domain security policies" → enter `localhost` → Delete
-3. **Try an incognito/private window** (starts with a clean HSTS cache)
 
 ---
 
-## Common Setup (All Nodes)
+## TLS certificates
 
-These steps apply to every production server, regardless of deployment mode.
+### Option A — Let's Encrypt (recommended)
 
-### Step 1: System Update & Dependencies
+Provide `--domain` and `--email`.  The script:
+
+1. Installs certbot.
+2. Temporarily stops port 80 if needed.
+3. Runs `certbot certonly --standalone`.
+4. Writes a renewal hook so the service reloads automatically after each renewal.
+
+Renewal runs unattended via the `certbot.timer` systemd timer.  To test it:
 
 ```bash
-sudo apt-get update && sudo apt-get upgrade -y
-sudo apt-get install -y python3 python3-pip python3-venv ffmpeg libsndfile1 git curl curl
+sudo certbot renew --dry-run
 ```
 
-### Step 2: Clone the Repository
+### Option B — Bring your own certificate
+
+If you already have a certificate (from your CA, an internal PKI, a wildcard cert, etc.),
+pass the paths directly and Let's Encrypt is skipped entirely:
 
 ```bash
-cd /opt
-sudo git clone https://github.com/volehuy1998/subtitle-generator.git subtitle-generator
-sudo chown -R $USER:$USER /opt/subtitle-generator
+sudo bash deploy.sh \
+  --domain example.com \
+  --cert /etc/ssl/certs/fullchain.pem \
+  --key  /etc/ssl/private/privkey.pem
+```
+
+The files are referenced in-place; the script does not copy or move them.
+
+---
+
+## Deployment engines
+
+### Bare-metal (default)
+
+The script creates a Python virtualenv at `<install-dir>/.venv`, installs all
+dependencies from `requirements.txt`, and registers a **systemd** service called
+`subforge`.
+
+```bash
+sudo journalctl -u subforge -f      # live logs
+sudo systemctl restart subforge     # restart
+sudo systemctl status subforge      # status
+```
+
+### Docker Compose (`--docker`)
+
+The script installs Docker Engine, builds the image, and starts the containers using
+`docker compose --profile cpu` (or `--profile gpu`).
+
+```bash
 cd /opt/subtitle-generator
+docker compose logs -f              # live logs
+docker compose restart              # restart
+docker compose --profile cpu up -d  # start CPU profile
+docker compose --profile gpu up -d  # start GPU profile
 ```
 
-### Step 3: Python Virtual Environment
+A `.env` file is written to the install directory on first run.
+Re-running the script regenerates it with any new options you pass.
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
+---
+
+## GPU support (`--gpu`)
+
+Adds GPU acceleration via faster-whisper / CTranslate2.
+
+| Runtime | What gets installed |
+|---|---|
+| Bare-metal | `nvidia-driver-550` + `nvidia-cuda-toolkit` via apt |
+| Docker | NVIDIA Container Toolkit + docker runtime configuration |
+
+After a fresh driver install on bare-metal, **a reboot is required** to load the kernel
+module.  The script warns you if this applies.
+
+---
+
+## All options
+
 ```
+--mode dev|prod     HTTP only (dev) or HTTPS (prod). Default: prod when --domain is set.
+--domain DOMAIN     Public domain name (e.g. example.com). Required for prod.
+--email  EMAIL      Email for Let's Encrypt expiry notices. Required with Let's Encrypt.
 
-### Step 4: Create Required Directories
+--docker            Use Docker Compose instead of bare-metal systemd.
+--gpu               Install NVIDIA driver / CUDA support.
 
-```bash
-mkdir -p uploads outputs logs
-```
+--api-key KEY       Require this key for all API requests (X-API-Key header).
+                    Default: open access (no key required).
+--preload MODEL     Warm-start a Whisper model at launch.
+                    Values: tiny | base | small | medium | large
 
-### Step 5: Open Firewall Ports (if ufw is enabled)
+--cert FILE         Path to TLS certificate (fullchain.pem). Skips Let's Encrypt.
+--key  FILE         Path to TLS private key  (privkey.pem).  Must pair with --cert.
 
-```bash
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
+--install-dir DIR   Where to clone the repository. Default: /opt/subtitle-generator
+--branch  BRANCH    Git branch to deploy. Default: main
+--repo    URL       Override the Git repository URL.
+
+--help              Print usage and exit.
 ```
 
 ---
 
-## Mode A: Single-Node Deployment
-
-Everything runs on one server: web app, transcription, and storage. This is the default mode — no Redis, S3, or Celery needed.
-
-### A1. Obtain TLS Certificate
+## Examples
 
 ```bash
-sudo apt-get install -y certbot
-sudo certbot certonly --standalone --non-interactive --agree-tos \
-  --email admin@openlabs.club -d openlabs.club
-```
+# Dev, default install directory
+sudo bash deploy.sh --mode dev
 
-### A2. Create systemd Service
+# Prod, Let's Encrypt, bare-metal, protect API, preload model
+sudo bash deploy.sh \
+  --domain example.com \
+  --email  admin@example.com \
+  --api-key "change-me-secret" \
+  --preload small
 
-```bash
-sudo tee /etc/systemd/system/subtitle-generator.service > /dev/null <<'EOF'
-[Unit]
-Description=Subtitle Generator (Standalone)
-After=network.target
+# Prod, Let's Encrypt, Docker, GPU
+sudo bash deploy.sh \
+  --domain example.com \
+  --email  admin@example.com \
+  --docker --gpu
 
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/opt/subtitle-generator
-ExecStart=/opt/subtitle-generator/.venv/bin/python main.py
-Restart=on-failure
-RestartSec=5
-Environment=PYTHONUNBUFFERED=1
-Environment=ENVIRONMENT=prod
-Environment=SSL_CERTFILE=/etc/letsencrypt/live/openlabs.club/fullchain.pem
-Environment=SSL_KEYFILE=/etc/letsencrypt/live/openlabs.club/privkey.pem
+# Prod, bring-your-own certificate, Docker
+sudo bash deploy.sh \
+  --domain example.com \
+  --cert /etc/ssl/certs/fullchain.pem \
+  --key  /etc/ssl/private/privkey.pem \
+  --docker
 
-[Install]
-WantedBy=multi-user.target
-EOF
-```
-
-### A3. Start & Verify
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable --now subtitle-generator
-
-# Verify
-curl -s https://openlabs.club/health
-curl -s -o /dev/null -w "%{http_code}" http://openlabs.club/  # Should return 301
-```
-
-### Quick Deploy Script (Single-Node)
-
-```bash
-#!/bin/bash
-set -e
-
-DOMAIN="openlabs.club"
-EMAIL="admin@openlabs.club"
-REPO_URL="https://github.com/volehuy1998/subtitle-generator.git"
-
-sudo apt-get update && sudo apt-get upgrade -y
-sudo apt-get install -y python3 python3-pip python3-venv ffmpeg libsndfile1 git curl curl certbot
-
-cd /opt
-sudo git clone "$REPO_URL" subtitle-generator
-sudo chown -R $USER:$USER /opt/subtitle-generator
-cd /opt/subtitle-generator
-
-python3 -m venv .venv
-source .venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
-
-mkdir -p uploads outputs logs
-
-sudo certbot certonly --standalone --non-interactive --agree-tos \
-  --email "$EMAIL" -d "$DOMAIN"
-
-sudo tee /etc/systemd/system/subtitle-generator.service > /dev/null <<UNIT
-[Unit]
-Description=Subtitle Generator (Standalone)
-After=network.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/opt/subtitle-generator
-ExecStart=/opt/subtitle-generator/.venv/bin/python main.py
-Restart=on-failure
-RestartSec=5
-Environment=PYTHONUNBUFFERED=1
-Environment=ENVIRONMENT=prod
-Environment=SSL_CERTFILE=/etc/letsencrypt/live/$DOMAIN/fullchain.pem
-Environment=SSL_KEYFILE=/etc/letsencrypt/live/$DOMAIN/privkey.pem
-
-[Install]
-WantedBy=multi-user.target
-UNIT
-
-sudo systemctl daemon-reload
-sudo systemctl enable --now subtitle-generator
-echo "Deployed! Verify: curl -s https://$DOMAIN/health"
+# Update an existing installation (re-run with the same arguments)
+sudo bash deploy.sh --domain example.com --email admin@example.com
 ```
 
 ---
 
-## Mode B: Multi-Node Deployment
+## Updating
 
-Split the service across multiple servers for horizontal scaling:
-
-```
-                 ┌───────────┐
-                 │   NGINX   │  ← TLS termination + load balancing
-                 │ (1 server)│
-                 └─────┬─────┘
-                       │
-          ┌────────────┼────────────┐
-          │                         │
-   ┌──────▼──────┐          ┌──────▼──────┐
-   │ Web Server 1│   ...    │ Web Server N│  ← FastAPI (ROLE=web)
-   └──────┬──────┘          └──────┬──────┘
-          │                         │
-   ┌──────▼─────────────────────────▼──────┐
-   │           Redis + PostgreSQL           │  ← Shared state
-   │           MinIO / S3                   │  ← Shared storage
-   └──────┬─────────────────────────┬──────┘
-          │                         │
-   ┌──────▼──────┐          ┌──────▼──────┐
-   │  Worker 1   │   ...    │  Worker N   │  ← Celery (ROLE=worker)
-   └─────────────┘          └─────────────┘
-```
-
-**Server roles:**
-
-| Role | What it does | Env var |
-|------|-------------|---------|
-| **Infrastructure** | Redis, PostgreSQL, MinIO | N/A (services) |
-| **Web server** | Accepts uploads, serves UI, SSE/WebSocket | `ROLE=web` |
-| **Worker** | Runs Celery, loads Whisper models, transcribes | `ROLE=worker` |
-| **Load balancer** | NGINX with TLS termination | N/A (NGINX config) |
-
-### B1. Infrastructure Server
-
-Install Redis, PostgreSQL, and MinIO on one dedicated server (or use managed services).
+Re-run the script with the same arguments you used to install.
+It pulls the latest code (`git reset --hard origin/BRANCH`), reinstalls pip packages,
+and restarts the service.  Your `.env` file and `uploads/` / `outputs/` directories are
+preserved.
 
 ```bash
-# Redis
-sudo apt-get install -y redis-server
-sudo systemctl enable --now redis-server
-
-# PostgreSQL
-sudo apt-get install -y postgresql postgresql-contrib
-sudo -u postgres createuser --superuser subtitle_user
-sudo -u postgres createdb subtitle_generator -O subtitle_user
-sudo -u postgres psql -c "ALTER USER subtitle_user PASSWORD 'your_secure_password';"
-
-# MinIO (S3-compatible storage)
-wget https://dl.min.io/server/minio/release/linux-amd64/minio
-chmod +x minio
-sudo mv minio /usr/local/bin/
-
-sudo mkdir -p /data/minio
-sudo tee /etc/systemd/system/minio.service > /dev/null <<'EOF'
-[Unit]
-Description=MinIO Object Storage
-After=network.target
-
-[Service]
-Type=simple
-User=root
-Environment=MINIO_ROOT_USER=minioadmin
-Environment=MINIO_ROOT_PASSWORD=minioadmin123
-ExecStart=/usr/local/bin/minio server /data/minio --console-address ":9001"
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-sudo systemctl daemon-reload
-sudo systemctl enable --now minio
-```
-
-> **Note:** Replace passwords with secure values. For production, use managed services (AWS RDS, ElastiCache, S3).
-
-Make note of your infrastructure server's IP (e.g., `10.0.1.10`). All other servers connect to it.
-
-### B2. Web Server(s)
-
-Run [Common Setup](#common-setup-all-nodes) first, then:
-
-```bash
-sudo tee /etc/systemd/system/subtitle-generator.service > /dev/null <<'EOF'
-[Unit]
-Description=Subtitle Generator (Web)
-After=network.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/opt/subtitle-generator
-ExecStart=/opt/subtitle-generator/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
-Restart=on-failure
-RestartSec=5
-Environment=PYTHONUNBUFFERED=1
-Environment=ROLE=web
-Environment=REDIS_URL=redis://10.0.1.10:6379/0
-Environment=CELERY_BROKER_URL=redis://10.0.1.10:6379/0
-Environment=DATABASE_URL=postgresql+asyncpg://subtitle_user:your_secure_password@10.0.1.10:5432/subtitle_generator
-Environment=STORAGE_BACKEND=s3
-Environment=S3_ENDPOINT_URL=http://10.0.1.10:9000
-Environment=S3_BUCKET_NAME=subtitle-generator
-Environment=S3_ACCESS_KEY=minioadmin
-Environment=S3_SECRET_KEY=minioadmin123
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-sudo systemctl daemon-reload
-sudo systemctl enable --now subtitle-generator
-```
-
-> Web servers listen on port 8000 (plain HTTP). TLS is handled by the NGINX load balancer.
-
-### B3. Worker Server(s)
-
-Run [Common Setup](#common-setup-all-nodes) first, then:
-
-```bash
-sudo tee /etc/systemd/system/subtitle-worker.service > /dev/null <<'EOF'
-[Unit]
-Description=Subtitle Generator (Celery Worker)
-After=network.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/opt/subtitle-generator
-ExecStart=/opt/subtitle-generator/.venv/bin/celery -A app.celery_app worker --concurrency=1 --loglevel=info
-Restart=on-failure
-RestartSec=5
-Environment=PYTHONUNBUFFERED=1
-Environment=ROLE=worker
-Environment=REDIS_URL=redis://10.0.1.10:6379/0
-Environment=CELERY_BROKER_URL=redis://10.0.1.10:6379/0
-Environment=DATABASE_URL=postgresql+asyncpg://subtitle_user:your_secure_password@10.0.1.10:5432/subtitle_generator
-Environment=STORAGE_BACKEND=s3
-Environment=S3_ENDPOINT_URL=http://10.0.1.10:9000
-Environment=S3_BUCKET_NAME=subtitle-generator
-Environment=S3_ACCESS_KEY=minioadmin
-Environment=S3_SECRET_KEY=minioadmin123
-Environment=PRELOAD_MODEL=medium
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-sudo systemctl daemon-reload
-sudo systemctl enable --now subtitle-worker
-```
-
-> **Concurrency=1** because faster-whisper is not multi-worker safe. For GPU workers, deploy one worker per GPU. For CPU workers, you can increase `--concurrency` to match `MAX_CONCURRENT_TASKS`.
-
-### B4. NGINX Load Balancer
-
-Install on a dedicated server (or the infrastructure server):
-
-```bash
-sudo apt-get install -y nginx certbot python3-certbot-nginx
-
-# Obtain TLS certificate
-sudo certbot certonly --standalone --non-interactive --agree-tos \
-  --email admin@openlabs.club -d openlabs.club
-```
-
-Create the NGINX config:
-
-```bash
-sudo tee /etc/nginx/sites-available/subtitle-generator > /dev/null <<'EOF'
-upstream web_servers {
-    # Add all web server IPs here
-    server 10.0.1.20:8000;
-    server 10.0.1.21:8000;
-    # server 10.0.1.22:8000;  # add more as needed
-}
-
-server {
-    listen 80;
-    server_name openlabs.club;
-    return 301 https://$host$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    server_name openlabs.club;
-
-    ssl_certificate /etc/letsencrypt/live/openlabs.club/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/openlabs.club/privkey.pem;
-
-    # SSL settings
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
-    ssl_prefer_server_ciphers on;
-    ssl_session_cache shared:SSL:10m;
-
-    # Upload size limit (match MAX_FILE_SIZE = 2GB)
-    client_max_body_size 2g;
-
-    # Proxy timeouts (transcription can take a long time)
-    proxy_read_timeout 3600s;
-    proxy_send_timeout 3600s;
-    proxy_connect_timeout 30s;
-
-    location / {
-        proxy_pass http://web_servers;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    # SSE — disable buffering
-    location /events/ {
-        proxy_pass http://web_servers;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_buffering off;
-        proxy_cache off;
-        proxy_read_timeout 3600s;
-    }
-
-    # WebSocket
-    location /ws/ {
-        proxy_pass http://web_servers;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_read_timeout 3600s;
-    }
-}
-EOF
-
-sudo ln -sf /etc/nginx/sites-available/subtitle-generator /etc/nginx/sites-enabled/
-sudo rm -f /etc/nginx/sites-enabled/default
-sudo nginx -t && sudo systemctl reload nginx
-```
-
-### B5. Verify Multi-Node Deployment
-
-```bash
-# From any machine:
-curl -s https://openlabs.club/health
-
-# Check worker status:
-curl -s https://openlabs.club/api/system/info | python3 -m json.tool
-
-# Monitor Celery workers (from any worker node):
-cd /opt/subtitle-generator && source .venv/bin/activate
-celery -A app.celery_app inspect active
-celery -A app.celery_app inspect stats
-```
-
-### Quick Deploy Scripts (Multi-Node)
-
-#### Infrastructure Node
-
-```bash
-#!/bin/bash
-set -e
-sudo apt-get update && sudo apt-get upgrade -y
-sudo apt-get install -y redis-server postgresql postgresql-contrib wget
-
-# Redis
-sudo systemctl enable --now redis-server
-# Allow remote connections
-sudo sed -i 's/^bind 127.0.0.1/bind 0.0.0.0/' /etc/redis/redis.conf
-sudo systemctl restart redis-server
-
-# PostgreSQL
-sudo -u postgres createuser --superuser subtitle_user 2>/dev/null || true
-sudo -u postgres createdb subtitle_generator -O subtitle_user 2>/dev/null || true
-sudo -u postgres psql -c "ALTER USER subtitle_user PASSWORD 'your_secure_password';"
-# Allow remote connections
-echo "host all all 0.0.0.0/0 md5" | sudo tee -a /etc/postgresql/*/main/pg_hba.conf
-sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/" /etc/postgresql/*/main/postgresql.conf
-sudo systemctl restart postgresql
-
-# MinIO
-wget -q https://dl.min.io/server/minio/release/linux-amd64/minio
-chmod +x minio && sudo mv minio /usr/local/bin/
-sudo mkdir -p /data/minio
-sudo MINIO_ROOT_USER=minioadmin MINIO_ROOT_PASSWORD=minioadmin123 \
-  /usr/local/bin/minio server /data/minio --console-address ":9001" &
-
-echo "Infrastructure ready! Redis=6379, PostgreSQL=5432, MinIO=9000"
-```
-
-#### Web Node
-
-```bash
-#!/bin/bash
-set -e
-INFRA_IP="${1:?Usage: $0 <infrastructure-ip>}"
-REPO_URL="https://github.com/volehuy1998/subtitle-generator.git"
-
-sudo apt-get update && sudo apt-get upgrade -y
-sudo apt-get install -y python3 python3-pip python3-venv ffmpeg libsndfile1 git curl
-
-cd /opt
-sudo git clone "$REPO_URL" subtitle-generator 2>/dev/null || true
-sudo chown -R $USER:$USER /opt/subtitle-generator
-cd /opt/subtitle-generator
-
-python3 -m venv .venv
-source .venv/bin/activate
-pip install --upgrade pip && pip install -r requirements.txt
-mkdir -p uploads outputs logs
-
-sudo tee /etc/systemd/system/subtitle-generator.service > /dev/null <<UNIT
-[Unit]
-Description=Subtitle Generator (Web)
-After=network.target
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/opt/subtitle-generator
-ExecStart=/opt/subtitle-generator/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
-Restart=on-failure
-RestartSec=5
-Environment=PYTHONUNBUFFERED=1
-Environment=ROLE=web
-Environment=REDIS_URL=redis://${INFRA_IP}:6379/0
-Environment=CELERY_BROKER_URL=redis://${INFRA_IP}:6379/0
-Environment=DATABASE_URL=postgresql+asyncpg://subtitle_user:your_secure_password@${INFRA_IP}:5432/subtitle_generator
-Environment=STORAGE_BACKEND=s3
-Environment=S3_ENDPOINT_URL=http://${INFRA_IP}:9000
-Environment=S3_BUCKET_NAME=subtitle-generator
-Environment=S3_ACCESS_KEY=minioadmin
-Environment=S3_SECRET_KEY=minioadmin123
-[Install]
-WantedBy=multi-user.target
-UNIT
-
-sudo systemctl daemon-reload
-sudo systemctl enable --now subtitle-generator
-echo "Web server ready on port 8000"
-```
-
-#### Worker Node
-
-```bash
-#!/bin/bash
-set -e
-INFRA_IP="${1:?Usage: $0 <infrastructure-ip>}"
-REPO_URL="https://github.com/volehuy1998/subtitle-generator.git"
-
-sudo apt-get update && sudo apt-get upgrade -y
-sudo apt-get install -y python3 python3-pip python3-venv ffmpeg libsndfile1 git curl
-
-cd /opt
-sudo git clone "$REPO_URL" subtitle-generator 2>/dev/null || true
-sudo chown -R $USER:$USER /opt/subtitle-generator
-cd /opt/subtitle-generator
-
-python3 -m venv .venv
-source .venv/bin/activate
-pip install --upgrade pip && pip install -r requirements.txt
-mkdir -p uploads outputs logs
-
-sudo tee /etc/systemd/system/subtitle-worker.service > /dev/null <<UNIT
-[Unit]
-Description=Subtitle Generator (Celery Worker)
-After=network.target
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/opt/subtitle-generator
-ExecStart=/opt/subtitle-generator/.venv/bin/celery -A app.celery_app worker --concurrency=1 --loglevel=info
-Restart=on-failure
-RestartSec=5
-Environment=PYTHONUNBUFFERED=1
-Environment=ROLE=worker
-Environment=REDIS_URL=redis://${INFRA_IP}:6379/0
-Environment=CELERY_BROKER_URL=redis://${INFRA_IP}:6379/0
-Environment=DATABASE_URL=postgresql+asyncpg://subtitle_user:your_secure_password@${INFRA_IP}:5432/subtitle_generator
-Environment=STORAGE_BACKEND=s3
-Environment=S3_ENDPOINT_URL=http://${INFRA_IP}:9000
-Environment=S3_BUCKET_NAME=subtitle-generator
-Environment=S3_ACCESS_KEY=minioadmin
-Environment=S3_SECRET_KEY=minioadmin123
-Environment=PRELOAD_MODEL=medium
-[Install]
-WantedBy=multi-user.target
-UNIT
-
-sudo systemctl daemon-reload
-sudo systemctl enable --now subtitle-worker
-echo "Worker ready! Celery consuming from redis://${INFRA_IP}:6379/0"
+sudo bash /opt/subtitle-generator/scripts/deploy.sh \
+  --domain example.com --email admin@example.com
 ```
 
 ---
 
-## Mode C: Docker Deployment
+## After deployment
 
-The simplest deployment option. Both CPU and GPU Dockerfiles are included.
-
-### CPU Mode
-
-```bash
-docker compose --profile cpu up --build -d
-```
-
-This starts the app on port 8000 with a PostgreSQL database. The Dockerfile installs ffmpeg and libsndfile1 automatically.
-
-### GPU Mode
-
-Requires the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html):
-
-```bash
-# Install NVIDIA Container Toolkit (Ubuntu)
-curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
-curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
-  sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
-  sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
-sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
-sudo nvidia-ctk runtime configure --runtime=docker
-sudo systemctl restart docker
-
-# Start with GPU
-docker compose --profile gpu up --build -d
-```
-
-### Verify Docker Deployment
-
-```bash
-curl -s http://localhost:8000/health | python3 -m json.tool
-```
-
-The health response should show `"status": "healthy"` with `"ffmpeg_ok": true`.
+| URL | Purpose |
+|---|---|
+| `https://example.com` | Main application |
+| `https://example.com/status` | Public status page |
+| `https://example.com/status/manage` | Incident management (requires API key if set) |
+| `https://example.com/docs` | Interactive API documentation (Swagger UI) |
+| `https://example.com/api/status` | JSON health & metrics |
 
 ---
-
-## GPU Deployment
-
-For bare-metal GPU deployments (non-Docker), install NVIDIA drivers and CUDA before the common setup:
-
-```bash
-# Install NVIDIA driver (Ubuntu 24.04)
-sudo apt-get install -y nvidia-driver-550
-
-# Reboot to load the driver
-sudo reboot
-
-# Verify GPU is detected
-nvidia-smi
-
-# Install CUDA toolkit (needed by PyTorch)
-sudo apt-get install -y nvidia-cuda-toolkit
-```
-
-Then proceed with the [Common Setup](#common-setup-all-nodes). The application auto-detects CUDA at startup and selects GPU mode. The startup log will show:
-
-```
-GPU:             NVIDIA GeForce RTX 4090 | 24.0GB total, 23.5GB free
-TUNING:
-  Device:        cuda
-```
-
-If GPU is not detected, the application falls back to CPU mode automatically.
-
----
-
-## Environment Variables Reference
-
-### Application
-
-| Variable | Purpose | Default |
-|----------|---------|---------|
-| `ENVIRONMENT` | Environment mode: `dev` or `prod` | `dev` |
-| `ROLE` | Server role: `standalone`, `web`, or `worker` | `standalone` |
-| `PORT` | HTTP listen port (dev mode) | `8000` |
-| `SSL_CERTFILE` | Path to TLS certificate (prod mode) | empty |
-| `SSL_KEYFILE` | Path to TLS private key (prod mode) | empty |
-| `HTTPS_REDIRECT` | Force HTTP→HTTPS redirect | `true` in prod, `false` in dev |
-| `HSTS_ENABLED` | Send HSTS header | `true` in prod, `false` in dev |
-| `API_KEYS` | Comma-separated API keys (auth disabled if empty) | empty |
-| `HF_TOKEN` | Hugging Face token for model downloads | empty |
-| `PRELOAD_MODEL` | Preload whisper model at startup (tiny/base/small/medium/large) | empty |
-| `FILE_RETENTION_HOURS` | Auto-cleanup retention period | `24` |
-| `ENABLE_COMPRESSION` | GZip response compression | `true` |
-
-### Infrastructure (Multi-Node Only)
-
-| Variable | Purpose | Default |
-|----------|---------|---------|
-| `REDIS_URL` | Redis connection URL | empty (disabled) |
-| `CELERY_BROKER_URL` | Celery broker URL (defaults to REDIS_URL) | empty |
-| `DATABASE_URL` | PostgreSQL connection URL | SQLite (local) |
-| `STORAGE_BACKEND` | `local` or `s3` | `local` |
-| `S3_ENDPOINT_URL` | S3/MinIO endpoint | empty (AWS S3) |
-| `S3_BUCKET_NAME` | S3 bucket name | `subtitle-generator` |
-| `S3_ACCESS_KEY` | S3 access key | empty |
-| `S3_SECRET_KEY` | S3 secret key | empty |
-| `S3_REGION` | S3 region | `us-east-1` |
-
----
-
-## Useful Commands
-
-```bash
-# View logs (systemd)
-sudo journalctl -u subtitle-generator -f
-sudo journalctl -u subtitle-worker -f
-
-# Restart services
-sudo systemctl restart subtitle-generator
-sudo systemctl restart subtitle-worker
-
-# Check certificate expiry
-sudo certbot certificates
-
-# Manually renew certificate
-sudo certbot renew
-
-# Celery worker inspection (from worker node)
-cd /opt/subtitle-generator && source .venv/bin/activate
-celery -A app.celery_app inspect active     # active tasks
-celery -A app.celery_app inspect stats      # worker stats
-celery -A app.celery_app inspect reserved   # queued tasks
-
-# Redis monitoring
-redis-cli -h 10.0.1.10 monitor   # live command stream
-redis-cli -h 10.0.1.10 info      # server stats
-```
-
-## Scaling Guide
-
-| To handle more... | Do this |
-|-------------------|---------|
-| Concurrent users | Add more **web servers** behind NGINX |
-| Transcription throughput | Add more **worker servers** |
-| Storage capacity | Use AWS S3 or add MinIO nodes |
-| Database load | Use managed PostgreSQL (RDS) with read replicas |
-| Redis reliability | Deploy Redis Sentinel or Redis Cluster |
 
 ## Troubleshooting
 
-### Yellow Warning Indicator in Dashboard
+### Service not responding after install
 
-**Symptom**: The health status shows a yellow warning light instead of green "Healthy".
+**Bare-metal** — check systemd logs:
 
-**Cause**: The health endpoint checks for ffmpeg availability using `shutil.which("ffmpeg")`. If ffmpeg is not installed or not on the system PATH, it returns `"status": "warning"` with `"ffmpeg_ok": false`.
-
-**Fix**:
 ```bash
-# Install ffmpeg
-sudo apt-get update && sudo apt-get install -y ffmpeg
-
-# Verify
-ffmpeg -version
+sudo journalctl -u subforge -n 50 --no-pager
 ```
 
-No restart is needed — the next health check will detect ffmpeg automatically.
+**Docker** — check container logs:
 
-### Transcription Fails at Audio Extraction
-
-**Symptom**: Upload completes but task fails with an error about audio extraction or ffmpeg.
-
-**Cause**: ffmpeg is not installed. The pipeline uses ffmpeg to convert uploaded video/audio to WAV format before passing to Whisper.
-
-**Fix**: Install ffmpeg as shown above.
-
-### Model Loading Fails with Shared Library Error
-
-**Symptom**: Error mentioning `libsndfile.so` or similar shared library not found.
-
-**Fix**:
 ```bash
-sudo apt-get install -y libsndfile1
+docker compose -f /opt/subtitle-generator/docker-compose.yml logs --tail=50
 ```
 
-### TLS Certificate Issues
+### Let's Encrypt certificate fails
 
-**Symptom**: HTTPS not working, browser shows certificate warnings, or server won't start with TLS enabled.
+- Ensure your domain's A record points to this server's public IP.
+- Ensure port 80 is reachable from the internet (not firewalled at the cloud provider level).
+- Run `sudo certbot renew --dry-run` to debug renewal separately.
 
-**Checks**:
+### Port already in use
+
+If something else is already listening on port 80 or 443, stop it before running the
+script, or use `--cert` / `--key` with a BYO cert (which does not require port 80).
+
+### GPU: model not using CUDA after install
+
+Run `nvidia-smi` to confirm the driver loaded.  If the command is not found, reboot:
+
 ```bash
-# Check if certificates exist
-sudo ls -la /etc/letsencrypt/live/YOUR_DOMAIN/
-
-# Check certificate expiry
-sudo certbot certificates
-
-# Renew if expired
-sudo certbot renew
-
-# Test without TLS (development mode — no certs needed)
-python3 main.py
-```
-
-If certificates don't exist yet, obtain them:
-```bash
-sudo certbot certonly --standalone -d YOUR_DOMAIN --non-interactive --agree-tos -m your@email.com
-```
-
-### Browser Forces HTTPS on localhost
-
-**Symptom**: Typing `localhost:8000` in Chrome redirects to `https://localhost` and fails.
-
-**Cause**: Chrome auto-upgrades `localhost` to HTTPS, or a previous HSTS header was cached.
-
-**Fix**:
-- Use **`http://127.0.0.1:8000`** instead of `localhost`
-- Or clear HSTS: `chrome://net-internals/#hsts` → Delete `localhost`
-- Or use an incognito window
-
-### GPU Not Detected
-
-**Symptom**: App starts but uses CPU even though a GPU is installed.
-
-**Checks**:
-```bash
-# Verify NVIDIA driver
-nvidia-smi
-
-# Check CUDA availability in Python
-source /opt/subtitle-generator/.venv/bin/activate
-python3 -c "import torch; print(torch.cuda.is_available())"
-```
-
-If `nvidia-smi` fails, install the driver:
-```bash
-sudo apt-get install -y nvidia-driver-550
 sudo reboot
 ```
 
-If `torch.cuda.is_available()` returns False, reinstall PyTorch with CUDA:
-```bash
-pip install torch --index-url https://download.pytorch.org/whl/cu121
-```
+### Docker: permission denied on cert files
 
-### Docker Container Crashes on Startup
-
-**Symptom**: Container exits immediately or restarts in a loop.
-
-**Checks**:
-```bash
-# View logs
-docker compose logs subtitle-generator
-
-# Common causes:
-# 1. uploads/ or outputs/ directories not writable
-mkdir -p uploads outputs logs
-chmod 777 uploads outputs logs
-
-# 2. Port already in use
-sudo lsof -i :8000
-```
-
-### Verifying a Healthy Deployment
-
-Run these checks after deployment to confirm everything is working:
+Docker mounts the Let's Encrypt directory read-only.  Ensure the cert directory exists
+and is readable before starting the containers:
 
 ```bash
-# 1. Health endpoint (should return "status": "healthy")
-curl -s http://localhost:8000/health | python3 -m json.tool
-
-# 2. FFmpeg available
-ffmpeg -version | head -1
-
-# 3. Uploads directory writable
-ls -la uploads/
-
-# 4. No warning indicators
-curl -s http://localhost:8000/health | grep -o '"status":"[^"]*"'
+ls -la /etc/letsencrypt/live/example.com/
 ```
+
+---
+
+## Manual installation (without the script)
+
+If you prefer full control:
+
+```bash
+git clone https://github.com/volehuy1998/subtitle-generator /opt/subtitle-generator
+cd /opt/subtitle-generator
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+
+# Dev:
+ENVIRONMENT=dev .venv/bin/python main.py
+
+# Prod (with certificates already in place):
+ENVIRONMENT=prod \
+SSL_CERTFILE=/path/to/fullchain.pem \
+SSL_KEYFILE=/path/to/privkey.pem \
+.venv/bin/python main.py
+```
+
+See `CLAUDE.md` for the full environment variable reference and architecture details.

@@ -31,8 +31,8 @@ services:
       - ./uploads:/app/uploads
       - ./outputs:/app/outputs
       - ./logs:/app/logs
-      - /etc/letsencrypt/live/openlabs.club/fullchain.pem:/certs/fullchain.pem:ro
-      - /etc/letsencrypt/live/openlabs.club/privkey.pem:/certs/privkey.pem:ro
+      - /etc/letsencrypt/live/${DOMAIN}/fullchain.pem:/certs/fullchain.pem:ro
+      - /etc/letsencrypt/live/${DOMAIN}/privkey.pem:/certs/privkey.pem:ro
     environment:
       - ENVIRONMENT=prod
       - DATABASE_URL=postgresql+asyncpg://subtitle:subtitle@postgres:5432/subtitle_generator
@@ -40,6 +40,8 @@ services:
       - HF_TOKEN=${HF_TOKEN:-}
       - FILE_RETENTION_HOURS=${FILE_RETENTION_HOURS:-24}
       - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - CORS_ORIGINS=https://${DOMAIN}
+      - WEBHOOK_ALERT_URL=${WEBHOOK_ALERT_URL:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -59,8 +61,8 @@ services:
       - ./uploads:/app/uploads
       - ./outputs:/app/outputs
       - ./logs:/app/logs
-      - /etc/letsencrypt/live/openlabs.club/fullchain.pem:/certs/fullchain.pem:ro
-      - /etc/letsencrypt/live/openlabs.club/privkey.pem:/certs/privkey.pem:ro
+      - /etc/letsencrypt/live/${DOMAIN}/fullchain.pem:/certs/fullchain.pem:ro
+      - /etc/letsencrypt/live/${DOMAIN}/privkey.pem:/certs/privkey.pem:ro
     environment:
       - ENVIRONMENT=prod
       - DATABASE_URL=postgresql+asyncpg://subtitle:subtitle@postgres:5432/subtitle_generator
@@ -68,6 +70,8 @@ services:
       - HF_TOKEN=${HF_TOKEN:-}
       - FILE_RETENTION_HOURS=${FILE_RETENTION_HOURS:-24}
       - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - CORS_ORIGINS=https://${DOMAIN}
+      - WEBHOOK_ALERT_URL=${WEBHOOK_ALERT_URL:-}
     depends_on:
       postgres:
         condition: service_healthy
