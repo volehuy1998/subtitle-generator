@@ -141,6 +141,15 @@ async def scale_info():
 # ── System Status (lightweight aggregate for frontend health indicator) ──
 
 _status_cache: dict = {"data": None, "expires": 0.0}
+_status_lock = None  # asyncio.Lock, created lazily (can't create at import time)
+
+
+def _get_status_lock():
+    global _status_lock
+    import asyncio
+    if _status_lock is None:
+        _status_lock = asyncio.Lock()
+    return _status_lock
 
 
 @router.get("/api/status", response_model=SystemStatusResponse)
@@ -153,6 +162,14 @@ async def system_status():
     now = time.time()
     if _status_cache["data"] and now < _status_cache["expires"]:
         return _status_cache["data"]
+
+    # Serialize cache fills — only one coroutine recomputes at a time;
+    # others wait and then get the fresh cached value.
+    async with _get_status_lock():
+        # Re-check after acquiring lock (another coroutine may have filled it)
+        now = time.time()
+        if _status_cache["data"] and now < _status_cache["expires"]:
+            return _status_cache["data"]
 
     uptime = round(now - _start_time, 1)
 
@@ -271,7 +288,7 @@ async def system_status():
     }
 
     _status_cache["data"] = result
-    _status_cache["expires"] = now + 1
+    _status_cache["expires"] = now + 3
     return result
 
 
@@ -293,6 +310,8 @@ async def health_stream(request: Request):
             except Exception as e:
                 yield f"data: {json.dumps({'status': 'error', 'message': str(e)})}\n\n"
             await asyncio.sleep(1)
+            if await request.is_disconnected():
+                break
 
     return StreamingResponse(
         event_generator(),
