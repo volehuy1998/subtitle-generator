@@ -92,6 +92,25 @@ export function AppHeader() {
         </span>
       </div>
 
+      {/* Nav links */}
+      <nav className="hidden sm:flex items-center gap-1 mr-3">
+        {[
+          { href: '/status', label: 'Status' },
+          { href: '/security', label: 'Security' },
+        ].map(({ href, label }) => (
+          <a
+            key={href}
+            href={href}
+            className="px-2.5 py-1 rounded text-xs font-medium transition-colors"
+            style={{ color: 'var(--color-text-2)', textDecoration: 'none' }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-text)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-text-2)')}
+          >
+            {label}
+          </a>
+        ))}
+      </nav>
+
       {/* GPU/CPU badge */}
       {health !== null && (
         <div
