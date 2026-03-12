@@ -340,7 +340,7 @@
 
         /* ── Subtitle editor ── */
         .editor-section { display: none; margin-top: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
-        .editor-header { padding: 10px 14px; background: var(--surface-2); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .editor-header { padding: 10px 14px; background: var(--surface-2); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 6px; }
         .editor-title { font-size: 0.82rem; font-weight: 600; color: var(--text); }
         .editor-actions { display: flex; gap: 8px; }
         .editor-btn {
@@ -351,9 +351,10 @@
         .editor-btn.cancel-edit:hover { border-color: var(--border-2); }
         .editor-btn.save { border-color: var(--success-border); background: var(--success-light); color: #065F46; }
         .editor-btn.save:hover { background: #d1fae5; }
-        .editor-body { padding: 12px; }
+        .editor-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .editor-body { padding: 12px; max-height: 420px; overflow-y: auto; }
         .editor-segment { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; }
-        .editor-time { font-family: monospace; font-size: 0.72rem; color: var(--primary); white-space: nowrap; padding-top: 7px; }
+        .editor-time { font-family: monospace; font-size: 0.7rem; color: var(--primary); white-space: nowrap; padding-top: 7px; min-width: 0; }
         .editor-text-input {
             flex: 1; padding: 6px 8px; border-radius: var(--radius-xs); border: 1.5px solid var(--border);
             font-size: 0.82rem; background: var(--surface); color: var(--text); font-family: inherit; resize: vertical; outline: none;
@@ -540,6 +541,37 @@
         /* Legacy compat */
         .gpu-badge { display: inline-block; font-size: 0.7rem; color: var(--success); background: var(--success-light); padding: 2px 8px; border-radius: 4px; margin-top: 6px; }
         .no-gpu-badge { display: inline-block; font-size: 0.7rem; color: var(--error); background: var(--error-light); padding: 2px 8px; border-radius: 4px; margin-top: 6px; }
+
+        /* ── Editor search / pagination ── */
+        .editor-search-row {
+            display: flex; gap: 6px; padding: 8px 12px;
+            border-bottom: 1px solid var(--border); background: var(--surface-2);
+        }
+        .editor-search-input {
+            flex: 1; padding: 5px 8px; border-radius: var(--radius-xs);
+            border: 1.5px solid var(--border); font-size: 0.78rem;
+            background: var(--surface); color: var(--text); font-family: inherit; outline: none;
+        }
+        .editor-search-input:focus { border-color: var(--primary); }
+        .editor-jump-input {
+            width: 58px; padding: 5px 6px; border-radius: var(--radius-xs);
+            border: 1.5px solid var(--border); font-size: 0.78rem;
+            background: var(--surface); color: var(--text); font-family: inherit; outline: none; text-align: center;
+        }
+        .editor-jump-input:focus { border-color: var(--primary); }
+        .editor-pagination {
+            display: flex; align-items: center; gap: 6px; padding: 8px 12px;
+            border-top: 1px solid var(--border); background: var(--surface-2);
+            flex-wrap: wrap;
+        }
+        .editor-pg-btn {
+            padding: 4px 10px; border-radius: var(--radius-xs);
+            border: 1.5px solid var(--border); background: var(--surface);
+            color: var(--text-2); font-size: 0.75rem; cursor: pointer; font-family: inherit; transition: all 0.15s;
+        }
+        .editor-pg-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+        .editor-pg-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .editor-pg-info { font-size: 0.72rem; color: var(--text-3); flex: 1; text-align: center; }
 
         /* ── Model info panel ── */
         .model-info.show { display: block; }
@@ -939,13 +971,18 @@
                 <!-- Subtitle editor -->
                 <div class="editor-section" id="editorSection">
                     <div class="editor-header">
-                        <span class="editor-title">Edit Subtitles</span>
+                        <span class="editor-title">Edit Subtitles <span id="editorCount" style="font-weight:400;color:var(--text-3);font-size:0.75rem"></span></span>
                         <div class="editor-actions">
                             <button class="editor-btn cancel-edit" onclick="closeEditor()">Close</button>
-                            <button class="editor-btn save" onclick="saveEdits()">Save &amp; Regenerate</button>
+                            <button class="editor-btn save" id="editorSaveBtn" onclick="saveEdits()">Save &amp; Regenerate</button>
                         </div>
                     </div>
+                    <div class="editor-search-row">
+                        <input type="search" class="editor-search-input" id="editorSearch" placeholder="Search text…" oninput="editorDoSearch(this.value)">
+                        <input type="number" class="editor-jump-input" id="editorJump" placeholder="#" min="1" title="Jump to segment" onchange="editorJumpTo(this.value)">
+                    </div>
                     <div class="editor-body" id="editorBody"></div>
+                    <div class="editor-pagination" id="editorPagination"></div>
                 </div>
 
                 <!-- Video preview -->
@@ -2117,36 +2154,130 @@
             });
         }
 
-        // ── S2-1: Subtitle Editor ──
+        // ── S2-1: Subtitle Editor (paginated, handles 10k+ segments) ──
+        const EDITOR_PAGE_SIZE = 100;
         let editorSegments = [];
+        let editorPage = 0;
+        let editorSearchQuery = '';
+        let editorFilteredIndices = []; // indices into editorSegments matching current search
 
         async function openEditor() {
             if (!currentTaskId) return;
+            var btn = $('editorSaveBtn');
+            btn.disabled = true; btn.textContent = 'Loading…';
             try {
                 const res = await fetch(`/subtitles/${currentTaskId}`);
                 if (!res.ok) { alert('Failed to load subtitles.'); return; }
                 const data = await res.json();
                 editorSegments = data.segments;
+                editorPage = 0;
+                editorSearchQuery = '';
+                $('editorSearch').value = '';
+                $('editorJump').value = '';
+                $('editorCount').textContent = '(' + editorSegments.length.toLocaleString() + ' segments)';
                 renderEditor();
                 $('editorSection').style.display = 'block';
             } catch (e) { alert('Failed to load subtitles: ' + e.message); }
+            finally { btn.disabled = false; btn.textContent = 'Save & Regenerate'; }
+        }
+
+        function editorBuildFilter() {
+            var q = editorSearchQuery.toLowerCase();
+            if (!q) {
+                editorFilteredIndices = editorSegments.map(function(_, i) { return i; });
+            } else {
+                editorFilteredIndices = [];
+                for (var i = 0; i < editorSegments.length; i++) {
+                    if (editorSegments[i].text.toLowerCase().indexOf(q) !== -1) {
+                        editorFilteredIndices.push(i);
+                    }
+                }
+            }
         }
 
         function renderEditor() {
-            const body = $('editorBody');
+            editorBuildFilter();
+            var totalFiltered = editorFilteredIndices.length;
+            var totalPages = Math.max(1, Math.ceil(totalFiltered / EDITOR_PAGE_SIZE));
+            editorPage = Math.min(editorPage, totalPages - 1);
+
+            var startIdx = editorPage * EDITOR_PAGE_SIZE;
+            var pageSlice = editorFilteredIndices.slice(startIdx, startIdx + EDITOR_PAGE_SIZE);
+
+            var body = $('editorBody');
             body.innerHTML = '';
-            editorSegments.forEach((seg, i) => {
-                const div = document.createElement('div');
+            var frag = document.createDocumentFragment();
+
+            pageSlice.forEach(function(segIdx) {
+                var seg = editorSegments[segIdx];
+                var div = document.createElement('div');
                 div.className = 'editor-segment';
-                div.innerHTML = `
-                    <span class="editor-time">${i + 1}. ${formatTs(seg.start)} → ${formatTs(seg.end)}</span>
-                    <input type="hidden" class="ts-input" value="${formatTs(seg.start)}" data-idx="${i}" data-field="start">
-                    <input type="hidden" class="ts-input" value="${formatTs(seg.end)}" data-idx="${i}" data-field="end">
-                    <textarea class="editor-text-input text-input" data-idx="${i}" data-field="text" rows="2">${escapeAttr(seg.text)}</textarea>
-                    <button class="del-btn editor-btn cancel-edit" onclick="deleteSegment(${i})" title="Delete" style="padding:4px 8px;align-self:flex-start;">×</button>
-                `;
-                body.appendChild(div);
+                div.innerHTML =
+                    '<span class="editor-time">' + (segIdx + 1) + '. ' + formatTs(seg.start) + ' \u2192 ' + formatTs(seg.end) + '</span>' +
+                    '<textarea class="editor-text-input" rows="2"></textarea>' +
+                    '<button class="del-btn editor-btn cancel-edit" title="Delete" style="padding:4px 8px;align-self:flex-start;">\xd7</button>';
+                var ta = div.querySelector('textarea');
+                ta.value = seg.text;
+                // Track changes directly into editorSegments — O(1) per keystroke, no DOM scan on save
+                ta.addEventListener('input', (function(idx) {
+                    return function() { editorSegments[idx].text = this.value; };
+                })(segIdx));
+                div.querySelector('.del-btn').addEventListener('click', (function(idx) {
+                    return function() { deleteSegment(idx); };
+                })(segIdx));
+                frag.appendChild(div);
             });
+
+            body.appendChild(frag);
+
+            // Pagination controls
+            var pg = $('editorPagination');
+            if (totalPages <= 1 && !editorSearchQuery) {
+                pg.innerHTML = '';
+            } else {
+                var showing = totalFiltered === 0 ? '0' :
+                    (startIdx + 1) + '–' + Math.min(startIdx + EDITOR_PAGE_SIZE, totalFiltered);
+                var filterNote = editorSearchQuery
+                    ? ' of ' + totalFiltered.toLocaleString() + ' matches'
+                    : ' of ' + editorSegments.length.toLocaleString();
+                pg.innerHTML =
+                    '<button class="editor-pg-btn" id="pgPrev" onclick="editorChangePage(-1)" ' + (editorPage === 0 ? 'disabled' : '') + '>\u2190 Prev</button>' +
+                    '<span class="editor-pg-info">Showing ' + showing + filterNote + ' &middot; Page ' + (editorPage + 1) + ' / ' + totalPages + '</span>' +
+                    '<button class="editor-pg-btn" id="pgNext" onclick="editorChangePage(1)" ' + (editorPage >= totalPages - 1 ? 'disabled' : '') + '>Next \u2192</button>';
+            }
+        }
+
+        function editorChangePage(delta) {
+            editorPage += delta;
+            renderEditor();
+            $('editorBody').scrollTop = 0;
+        }
+
+        function editorDoSearch(q) {
+            editorSearchQuery = q;
+            editorPage = 0;
+            renderEditor();
+        }
+
+        function editorJumpTo(val) {
+            var n = parseInt(val);
+            if (isNaN(n) || n < 1 || n > editorSegments.length) return;
+            // Clear search, jump to the page containing segment n
+            editorSearchQuery = '';
+            $('editorSearch').value = '';
+            editorPage = Math.floor((n - 1) / EDITOR_PAGE_SIZE);
+            renderEditor();
+            // Highlight the target segment
+            setTimeout(function() {
+                var items = $('editorBody').querySelectorAll('.editor-segment');
+                var offset = editorPage * EDITOR_PAGE_SIZE;
+                var localIdx = (n - 1) - offset;
+                if (items[localIdx]) {
+                    items[localIdx].scrollIntoView({ block: 'center' });
+                    items[localIdx].style.outline = '2px solid var(--primary)';
+                    setTimeout(function() { items[localIdx].style.outline = ''; }, 1500);
+                }
+            }, 50);
         }
 
         function formatTs(seconds) {
@@ -2157,18 +2288,16 @@
             return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms).padStart(3,'0')}`;
         }
 
-        function parseTs(ts) {
-            const parts = ts.replace(',', '.').split(':');
-            if (parts.length !== 3) return 0;
-            return parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseFloat(parts[2]);
-        }
-
         function escapeAttr(s) {
             return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         }
 
         function deleteSegment(idx) {
             editorSegments.splice(idx, 1);
+            // Clamp page if last page became empty
+            var totalPages = Math.max(1, Math.ceil(editorFilteredIndices.length / EDITOR_PAGE_SIZE));
+            if (editorPage >= totalPages) editorPage = totalPages - 1;
+            $('editorCount').textContent = '(' + editorSegments.length.toLocaleString() + ' segments)';
             renderEditor();
         }
 
@@ -2177,16 +2306,9 @@
         }
 
         async function saveEdits() {
-            // Read values from inputs
-            const inputs = $('editorBody').querySelectorAll('input, textarea');
-            inputs.forEach(inp => {
-                const idx = parseInt(inp.dataset.idx);
-                const field = inp.dataset.field;
-                if (field === 'text') editorSegments[idx].text = inp.value;
-                else if (field === 'start') editorSegments[idx].start = parseTs(inp.value);
-                else if (field === 'end') editorSegments[idx].end = parseTs(inp.value);
-            });
-
+            // editorSegments is already up-to-date via live input listeners — no DOM scan needed
+            var btn = $('editorSaveBtn');
+            btn.disabled = true; btn.textContent = 'Saving…';
             try {
                 const res = await fetch(`/subtitles/${currentTaskId}`, {
                     method: 'PUT',
@@ -2202,6 +2324,7 @@
                     alert('Save failed: ' + (err.detail || 'Unknown error'));
                 }
             } catch (e) { alert('Save failed: ' + e.message); }
+            finally { btn.disabled = false; btn.textContent = 'Save & Regenerate'; }
         }
 
         // ── S2-2: Video Preview ──
