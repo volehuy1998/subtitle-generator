@@ -161,12 +161,30 @@ async def upload(
     if auto_embed and auto_embed not in ("soft", "hard"):
         auto_embed = ""
 
-    asyncio.create_task(asyncio.to_thread(
-        process_video, task_id, video_path, model_size, device, language,
-        word_timestamps=word_timestamps, initial_prompt=initial_prompt,
-        diarize=diarize, num_speakers=num_speakers, max_line_chars=max_line_chars,
-        translate_to_english=translate_to_english, auto_embed=auto_embed,
-    ))
+    # Dispatch: Celery (multi-server) or local thread (standalone)
+    from app.config import ROLE, STORAGE_BACKEND
+    if ROLE == "web":
+        # Multi-server: upload to S3 if configured, then dispatch via Celery
+        if STORAGE_BACKEND == "s3":
+            from app.services.storage import get_storage
+            storage = get_storage()
+            storage.save_upload_from_path(video_path.name, video_path)
+
+        from app.tasks import transcribe_task
+        transcribe_task.delay(
+            task_id, video_path.name, model_size, device, language,
+            word_timestamps=word_timestamps, initial_prompt=initial_prompt,
+            diarize=diarize, num_speakers=num_speakers, max_line_chars=max_line_chars,
+            translate_to_english=translate_to_english, auto_embed=auto_embed,
+        )
+    else:
+        # Standalone: process locally in background thread
+        asyncio.create_task(asyncio.to_thread(
+            process_video, task_id, video_path, model_size, device, language,
+            word_timestamps=word_timestamps, initial_prompt=initial_prompt,
+            diarize=diarize, num_speakers=num_speakers, max_line_chars=max_line_chars,
+            translate_to_english=translate_to_english, auto_embed=auto_embed,
+        ))
 
     return {"task_id": task_id, "model_size": model_size, "language": language,
             "word_timestamps": word_timestamps, "diarize": diarize}

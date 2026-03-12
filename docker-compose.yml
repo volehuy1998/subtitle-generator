@@ -25,11 +25,14 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "443:8000"
+      - "80:8080"
     volumes:
       - ./uploads:/app/uploads
       - ./outputs:/app/outputs
       - ./logs:/app/logs
+      - /etc/letsencrypt/archive/openlabs.club/fullchain1.pem:/certs/fullchain.pem:ro
+      - /etc/letsencrypt/archive/openlabs.club/privkey1.pem:/certs/privkey.pem:ro
     environment:
       - DATABASE_URL=postgresql+asyncpg://subtitle:subtitle@postgres:5432/subtitle_generator
       - API_KEYS=${API_KEYS:-}

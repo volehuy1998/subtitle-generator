@@ -98,6 +98,9 @@ def process_video(task_id: str, video_path: Path, model_size: str, device: str,
 
     pause_event = threading.Event()
     pause_event.set()
+    # Ensure task exists in local state (may come from Redis on worker nodes)
+    if task_id not in state.tasks:
+        state.tasks[task_id] = {"status": "queued", "percent": 0, "message": "Starting..."}
     task = state.tasks[task_id]
     task["pause_event"] = pause_event
     task["cancel_requested"] = False
@@ -316,6 +319,20 @@ def process_video(task_id: str, video_path: Path, model_size: str, device: str,
             srt_size = get_file_size(srt_path)
             pipeline.srt_size = srt_size
         pipeline.record_step("write_srt", step_srt.elapsed)
+
+        # Upload outputs to S3 if configured
+        from app.config import STORAGE_BACKEND
+        if STORAGE_BACKEND == "s3":
+            try:
+                from app.services.storage import get_storage
+                storage = get_storage()
+                for out_ext in ("srt", "vtt", "json"):
+                    out_file = OUTPUT_DIR / f"{task_id}.{out_ext}"
+                    if out_file.exists():
+                        storage.save_output_from_path(out_file.name, out_file)
+                logger.info(f"TASK [{task_id[:8]}] Outputs uploaded to S3")
+            except Exception as e:
+                logger.error(f"TASK [{task_id[:8]}] S3 upload failed: {e}")
 
         # Step 6: Done
         monitor.stop()

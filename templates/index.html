@@ -3,20 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Subtitle Generator</title>
+    <title>SubForge — AI Subtitle Generator</title>
+    <meta name="description" content="Generate accurate subtitles from audio and video files using AI. Export as SRT, VTT, or JSON. Supports speaker diarization, translation, and subtitle embedding.">
+    <meta name="theme-color" content="#0f0f0f">
+    <meta property="og:title" content="SubForge — AI Subtitle Generator">
+    <meta property="og:description" content="Upload audio or video and get accurate AI-powered subtitles in seconds. SRT, VTT, JSON export with speaker diarization support.">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%234f8ff7'/%3E%3Cstop offset='100%25' stop-color='%236c5ce7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='%23161616'/%3E%3Crect x='8' y='38' width='48' height='6' rx='3' fill='url(%23g)' opacity='.9'/%3E%3Crect x='14' y='48' width='36' height='5' rx='2.5' fill='url(%23g)' opacity='.5'/%3E%3Cpath d='M22 12 L42 24 L22 36Z' fill='url(%23g)' opacity='.85'/%3E%3C/svg%3E">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #0f0f0f; color: #e0e0e0;
-            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            min-height: 100vh; display: flex; flex-direction: column; align-items: center;
         }
         .page-layout {
             display: flex; align-items: flex-start; justify-content: center;
             gap: 16px; width: 100%; max-width: 1040px; padding: 0 12px;
+            flex: 1;
         }
         .container { max-width: 700px; width: 100%; padding: 40px 24px; flex-shrink: 0; }
-        h1 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; color: #fff; }
+        .brand-header { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
+        .brand-logo { width: 44px; height: 44px; flex-shrink: 0; }
+        .brand-wordmark { display: flex; flex-direction: column; }
+        h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0; color: #fff; letter-spacing: -0.5px; }
+        h1 .brand-accent { background: linear-gradient(135deg, #4f8ff7, #6c5ce7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         .page-subtitle { color: #888; margin-bottom: 24px; font-size: 0.95rem; }
 
         /* Options */
@@ -343,6 +355,40 @@
         .cancelled-section { display: none; margin-top: 24px; text-align: center; }
         .cancelled-text { color: #e74c3c; margin-bottom: 16px; }
 
+        /* Combine mode */
+        .mode-toggle { display: flex; gap: 0; margin-bottom: 20px; background: #0a0a0a; border-radius: 8px; padding: 3px; }
+        .mode-btn {
+            flex: 1; padding: 10px; text-align: center; border-radius: 6px; font-size: 0.85rem;
+            font-weight: 500; cursor: pointer; color: #888; border: none; background: none; transition: all 0.2s;
+        }
+        .mode-btn.active { background: #1a1a2e; color: #4f8ff7; }
+        .mode-btn:hover:not(.active) { color: #ccc; }
+        .mode-btn small { display: block; font-size: 0.7rem; color: #555; margin-top: 2px; font-weight: 400; }
+        .mode-btn.active small { color: #4f8ff788; }
+        .combine-section { display: none; }
+        .combine-dropzones { display: flex; gap: 12px; margin-bottom: 16px; }
+        .combine-drop {
+            flex: 1; border: 2px dashed #333; border-radius: 10px; padding: 28px 16px;
+            text-align: center; cursor: pointer; transition: all 0.2s; background: #161616;
+        }
+        .combine-drop:hover, .combine-drop.dragover { border-color: #4f8ff7; background: #1a1a2e; }
+        .combine-drop.has-file { border-color: #27ae60; background: #0a2e0a; }
+        .combine-drop-icon { font-size: 32px; margin-bottom: 8px; }
+        .combine-drop-label { font-size: 0.85rem; color: #aaa; margin-bottom: 4px; }
+        .combine-drop-hint { font-size: 0.72rem; color: #555; }
+        .combine-drop-file { font-size: 0.8rem; color: #27ae60; margin-top: 8px; word-break: break-all; }
+        .combine-drop input[type="file"] { display: none; }
+        .combine-options { margin-bottom: 16px; }
+        .combine-progress-section { display: none; margin-top: 20px; }
+        .combine-result { display: none; margin-top: 16px; text-align: center; }
+        .combine-result a {
+            display: inline-block; padding: 12px 28px;
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: #fff; text-decoration: none; border-radius: 8px;
+            font-size: 0.95rem; font-weight: 600; transition: opacity 0.2s;
+        }
+        .combine-result a:hover { opacity: 0.85; }
+
         /* S2-1: Subtitle editor */
         .editor-section { display: none; margin-top: 20px; }
         .editor-header {
@@ -445,7 +491,7 @@
         /* S2-6: Task queue panel */
         /* Task Queue — sidebar next to main content */
         .task-queue-panel {
-            display: none; width: 260px; flex-shrink: 0;
+            display: block; width: 260px; flex-shrink: 0;
             background: #111; border: 1px solid #222; border-radius: 10px;
             overflow: hidden; position: sticky; top: 20px; align-self: flex-start;
             margin-top: 40px;
@@ -518,6 +564,8 @@
             body { align-items: flex-start; }
             .container { padding: 20px 12px; }
             h1 { font-size: 1.5rem; }
+            .brand-logo { width: 34px; height: 34px; }
+            .brand-header { gap: 10px; }
             .options-panel { flex-direction: column; }
             .option-buttons { flex-wrap: wrap; }
             .opt-btn { min-width: 0; font-size: 0.7rem; padding: 6px 2px; }
@@ -548,6 +596,19 @@
             .option-group { padding: 8px 10px; }
             .download-section > div { flex-direction: column; align-items: center; }
         }
+
+        /* Footer */
+        .site-footer {
+            width: 100%; max-width: 700px; margin: 40px auto 0; padding: 20px 24px;
+            border-top: 1px solid #222; text-align: center;
+        }
+        .footer-brand { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .footer-brand svg { width: 20px; height: 20px; }
+        .footer-brand span { font-size: 0.8rem; font-weight: 600; color: #555; letter-spacing: -0.3px; }
+        .footer-tagline { font-size: 0.7rem; color: #444; margin-bottom: 10px; }
+        .footer-github { font-size: 0.75rem; color: #555; }
+        .footer-github a { color: #4f8ff7; text-decoration: none; }
+        .footer-github a:hover { text-decoration: underline; color: #6c9ff7; }
     </style>
 </head>
 <body>
@@ -568,11 +629,37 @@
     </div>
     <div class="page-layout">
     <div class="container">
-        <h1>Subtitle Generator</h1>
-        <p class="page-subtitle">Upload a video and get subtitles (SRT/VTT) powered by AI</p>
+        <div class="brand-header">
+            <svg class="brand-logo" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="brandGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#4f8ff7"/>
+                        <stop offset="100%" stop-color="#6c5ce7"/>
+                    </linearGradient>
+                </defs>
+                <rect width="64" height="64" rx="14" fill="#161616"/>
+                <rect x="8" y="38" width="48" height="6" rx="3" fill="url(#brandGrad)" opacity=".9"/>
+                <rect x="14" y="48" width="36" height="5" rx="2.5" fill="url(#brandGrad)" opacity=".5"/>
+                <path d="M22 12 L42 24 L22 36Z" fill="url(#brandGrad)" opacity=".85"/>
+            </svg>
+            <div class="brand-wordmark">
+                <h1>Sub<span class="brand-accent">Forge</span></h1>
+            </div>
+        </div>
+        <p class="page-subtitle">Automatic subtitle generation built with FastAPI, faster-whisper, and FFmpeg</p>
 
         <!-- Warning banner -->
         <div class="warning-banner" id="warningBanner"></div>
+
+        <!-- Mode toggle -->
+        <div class="mode-toggle" id="modeToggle">
+            <button class="mode-btn active" id="modeTranscribe" onclick="setAppMode('transcribe')">
+                Transcribe<small>AI-powered subtitles</small>
+            </button>
+            <button class="mode-btn" id="modeCombine" onclick="setAppMode('combine')">
+                Combine<small>Video + Subtitle file</small>
+            </button>
+        </div>
 
         <!-- Options -->
         <div class="options-panel" id="optionsPanel">
@@ -662,6 +749,147 @@
 
         <!-- S2-3: Batch queue -->
         <div class="batch-queue" id="batchQueue"></div>
+
+        <!-- Combine section -->
+        <div class="combine-section" id="combineSection">
+            <div class="combine-dropzones">
+                <div class="combine-drop" id="combineVideoDrop">
+                    <div class="combine-drop-icon">&#127916;</div>
+                    <div class="combine-drop-label">Video File</div>
+                    <div class="combine-drop-hint">MP4, MKV, AVI, WebM, MOV</div>
+                    <div class="combine-drop-file" id="combineVideoName"></div>
+                    <input type="file" id="combineVideoInput" accept=".mp4,.mkv,.avi,.webm,.mov">
+                </div>
+                <div class="combine-drop" id="combineSubDrop">
+                    <div class="combine-drop-icon">&#128196;</div>
+                    <div class="combine-drop-label">Subtitle File</div>
+                    <div class="combine-drop-hint">SRT or VTT</div>
+                    <div class="combine-drop-file" id="combineSubName"></div>
+                    <input type="file" id="combineSubInput" accept=".srt,.vtt">
+                </div>
+            </div>
+
+            <div class="combine-options">
+                <!-- Mode tabs -->
+                <div class="embed-tabs">
+                    <button class="embed-tab active" onclick="setCombineEmbedMode('soft')" id="combineTabSoft">
+                        Soft Mux<small>Fast &middot; Selectable track</small>
+                    </button>
+                    <button class="embed-tab" onclick="setCombineEmbedMode('hard')" id="combineTabHard">
+                        Hard Burn<small>Permanent &middot; Styled on video</small>
+                    </button>
+                </div>
+
+                <!-- Preset row -->
+                <div class="embed-grid" style="grid-template-columns:1fr;">
+                    <div class="embed-field">
+                        <label>Style Preset</label>
+                        <select id="combinePreset" onchange="applyCombinePreset(this.value);updateCombinePreview()">
+                            <option value="default">Default</option>
+                            <option value="youtube_white">YouTube White</option>
+                            <option value="youtube_yellow">YouTube Yellow</option>
+                            <option value="cinema">Cinema</option>
+                            <option value="large_bold">Large Bold</option>
+                            <option value="top_position">Top Position</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Custom style options (hard burn only) -->
+                <div id="combineStyleOpts" class="embed-style-opts">
+                    <div class="embed-style-grid">
+                        <div class="embed-field">
+                            <label>Font</label>
+                            <select id="combineFont" onchange="updateCombinePreview()">
+                                <option value="Arial">Arial</option>
+                                <option value="Roboto">Roboto</option>
+                                <option value="Open Sans">Open Sans</option>
+                                <option value="Verdana">Verdana</option>
+                                <option value="Tahoma">Tahoma</option>
+                                <option value="Courier New">Courier New</option>
+                            </select>
+                        </div>
+                        <div class="embed-field">
+                            <label>Size: <span id="combineSizeVal">24</span>px</label>
+                            <input type="range" id="combineFontSize" min="12" max="56" value="24" onchange="$('combineSizeVal').textContent=this.value;updateCombinePreview()">
+                        </div>
+                        <div class="embed-field">
+                            <label>Color</label>
+                            <input type="color" id="combineFontColor" value="#ffffff" onchange="updateCombinePreview()">
+                        </div>
+                        <div class="embed-field">
+                            <label>Position</label>
+                            <select id="combinePosition" onchange="updateCombinePreview()">
+                                <option value="bottom">Bottom</option>
+                                <option value="center">Center</option>
+                                <option value="top">Top</option>
+                            </select>
+                        </div>
+                        <div class="embed-field">
+                            <label>Background: <span id="combineBgVal">75</span>%</label>
+                            <input type="range" id="combineBgOpacity" min="0" max="100" value="75" onchange="$('combineBgVal').textContent=this.value;updateCombinePreview()">
+                        </div>
+                        <div class="embed-field">
+                            <label style="padding-top:16px;">
+                                <input type="checkbox" id="combineBold" onchange="updateCombinePreview()"> Bold
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live preview -->
+                <div class="embed-preview-bar" id="combinePreviewBar">
+                    <span class="embed-preview-text" id="combinePreviewText" style="color:#fff;font-family:Arial;font-size:24px;">
+                        Sample subtitle text preview
+                    </span>
+                </div>
+            </div>
+
+            <!-- Language for soft mux metadata (only relevant for soft mux) -->
+            <div class="embed-grid" id="combineLangGroup" style="grid-template-columns:1fr;margin-bottom:16px;">
+                <div class="embed-field">
+                    <label>Subtitle Language <small style="color:#666;">(track metadata for soft mux)</small></label>
+                    <select id="combineLanguage">
+                        <option value="eng">English</option>
+                        <option value="spa">Spanish</option>
+                        <option value="fra">French</option>
+                        <option value="deu">German</option>
+                        <option value="por">Portuguese</option>
+                        <option value="ita">Italian</option>
+                        <option value="jpn">Japanese</option>
+                        <option value="kor">Korean</option>
+                        <option value="zho">Chinese</option>
+                        <option value="rus">Russian</option>
+                        <option value="ara">Arabic</option>
+                        <option value="hin">Hindi</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Combine button -->
+            <div class="embed-actions">
+                <button class="embed-start-btn" id="combineStartBtn" onclick="startCombine()" disabled>
+                    Combine Now
+                </button>
+            </div>
+
+            <!-- Combine progress -->
+            <div class="combine-progress-section" id="combineProgressSection">
+                <div class="embed-progress" style="display:block;">
+                    <div class="embed-progress-bar"><div class="embed-progress-fill" id="combineProgressFill"></div></div>
+                    <div class="embed-status" id="combineStatus">Uploading...</div>
+                </div>
+            </div>
+
+            <!-- Combine result -->
+            <div class="combine-result" id="combineResult">
+                <div style="margin-bottom:10px;color:#27ae60;font-weight:600;" id="combineResultMsg">Combined successfully!</div>
+                <a id="combineDownloadLink" href="#">Download Combined Video</a>
+                <div style="margin-top:12px;">
+                    <button class="new-btn" onclick="resetCombine()">Combine Another</button>
+                </div>
+            </div>
+        </div>
 
         <!-- Progress -->
         <div class="progress-section" id="progressSection">
@@ -890,6 +1118,24 @@
         <div class="tq-body" id="tqBody"></div>
     </div>
     </div><!-- /.page-layout -->
+
+    <footer class="site-footer">
+        <div class="footer-brand">
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs><linearGradient id="fGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#4f8ff7"/><stop offset="100%" stop-color="#6c5ce7"/></linearGradient></defs>
+                <rect width="64" height="64" rx="14" fill="#161616"/>
+                <rect x="8" y="38" width="48" height="6" rx="3" fill="url(#fGrad)" opacity=".9"/>
+                <rect x="14" y="48" width="36" height="5" rx="2.5" fill="url(#fGrad)" opacity=".5"/>
+                <path d="M22 12 L42 24 L22 36Z" fill="url(#fGrad)" opacity=".85"/>
+            </svg>
+            <span>SubForge</span>
+        </div>
+        <div class="footer-tagline">Built with Python &bull; FastAPI &bull; faster-whisper (CTranslate2) &bull; FFmpeg &bull; PostgreSQL &bull; Open Source</div>
+        <div class="footer-github">
+            Contributions welcome &mdash; star, fork, or open a PR on
+            <a href="https://github.com/volehuy1998/subtitle-generator" target="_blank" rel="noopener">GitHub</a>
+        </div>
+    </footer>
 
     <script>
         const $ = id => document.getElementById(id);
@@ -1687,6 +1933,10 @@
             // Reset embed card body state
             $('embedCardBody').classList.remove('collapsed');
             $('embedCardToggle').innerHTML = '&#9660;';
+            // Reset combine section
+            resetCombine();
+            setAppMode('transcribe');
+            $('modeToggle').style.display = 'flex';
             refreshTaskQueue();
         }
 
@@ -1962,7 +2212,7 @@
         }
 
         // ── S2-6: Task Queue ──
-        let tqOpen = false;
+        let tqOpen = true;
 
         function toggleTaskQueue() {
             tqOpen = !tqOpen;
@@ -1976,12 +2226,11 @@
                 const res = await fetch('/tasks');
                 const data = await res.json();
                 const tasks = data.tasks || [];
+                const body = $('tqBody');
                 if (tasks.length === 0) {
-                    $('taskQueuePanel').style.display = 'none';
+                    body.innerHTML = '<div class="tq-item" style="justify-content:center;color:#555;font-style:italic;">No tasks yet</div>';
                     return;
                 }
-                $('taskQueuePanel').style.display = 'block';
-                const body = $('tqBody');
                 body.innerHTML = '';
                 tasks.reverse().forEach(t => {
                     const pct = t.status === 'done' ? '100%' : t.percent + '%';
@@ -1994,10 +2243,10 @@
             } catch (e) { /* ignore */ }
         }
 
-        // Refresh task queue periodically when visible
-        setInterval(() => { if (tqOpen) refreshTaskQueue(); }, 5000);
+        // Refresh task queue periodically
+        setInterval(refreshTaskQueue, 2000);
         // Initial load
-        setTimeout(refreshTaskQueue, 1000);
+        refreshTaskQueue();
 
         // ── S10-5: Subtitle Embedding ──
         let embedMode = 'soft';
@@ -2156,6 +2405,248 @@
 
         // Keep old names as aliases
         function startEmbed() { startUnifiedEmbed(); }
+
+        // ── Combine Mode ──
+        let appMode = 'transcribe';
+        let combineVideoFile = null;
+        let combineSubFile = null;
+        let combineEmbedMode = 'soft';
+
+        function setAppMode(mode) {
+            appMode = mode;
+            $('modeTranscribe').className = 'mode-btn' + (mode === 'transcribe' ? ' active' : '');
+            $('modeCombine').className = 'mode-btn' + (mode === 'combine' ? ' active' : '');
+
+            // Transcribe-only elements
+            var transcribeEls = [optionsPanel, optionsPanel2, $('advancedToggle'), dropZone, $('batchQueue'), $('progressSection'), $('downloadSection')];
+
+            if (mode === 'transcribe') {
+                optionsPanel.style.display = 'flex';
+                optionsPanel2.style.display = 'flex';
+                $('advancedToggle').style.display = '';
+                dropZone.style.display = 'block';
+                $('batchQueue').style.display = '';
+                $('progressSection').style.display = '';
+                $('downloadSection').style.display = '';
+                $('combineSection').style.display = 'none';
+            } else {
+                optionsPanel.style.display = 'none';
+                optionsPanel2.style.display = 'none';
+                $('advancedToggle').style.display = 'none';
+                $('advancedPanel').classList.remove('show');
+                dropZone.style.display = 'none';
+                $('batchQueue').style.display = 'none';
+                $('progressSection').style.display = 'none';
+                $('downloadSection').style.display = 'none';
+                $('combineSection').style.display = 'block';
+            }
+        }
+
+        function setCombineEmbedMode(mode) {
+            combineEmbedMode = mode;
+            $('combineTabSoft').className = 'embed-tab' + (mode === 'soft' ? ' active' : '');
+            $('combineTabHard').className = 'embed-tab' + (mode === 'hard' ? ' active' : '');
+            $('combineStyleOpts').className = 'embed-style-opts' + (mode === 'hard' ? ' show' : '');
+            $('combineLangGroup').style.display = (mode === 'soft') ? '' : 'none';
+            updateCombinePreview();
+        }
+
+        function applyCombinePreset(name) {
+            const p = EMBED_PRESETS[name]; if (!p) return;
+            $('combineFont').value = p.font;
+            $('combineFontSize').value = p.size; $('combineSizeVal').textContent = p.size;
+            $('combineFontColor').value = p.color;
+            $('combineBold').checked = p.bold;
+            $('combinePosition').value = p.position;
+            $('combineBgOpacity').value = p.bg; $('combineBgVal').textContent = p.bg;
+        }
+
+        function updateCombinePreview() {
+            const preview = $('combinePreviewText');
+            if (combineEmbedMode === 'soft') {
+                preview.style.cssText = 'color:#fff;font-family:Arial;font-size:18px;padding:8px 16px;';
+                preview.textContent = 'Subtitles will be added as a selectable track (no re-encoding)';
+                $('combinePreviewBar').style.background = '#000';
+                $('combinePreviewBar').style.alignItems = 'center';
+                return;
+            }
+            const font = $('combineFont').value;
+            const size = $('combineFontSize').value;
+            const color = $('combineFontColor').value;
+            const bold = $('combineBold').checked;
+            const bgOpacity = $('combineBgOpacity').value / 100;
+            const position = $('combinePosition').value;
+            preview.style.fontFamily = font;
+            preview.style.fontSize = Math.min(size, 32) + 'px';
+            preview.style.color = color;
+            preview.style.fontWeight = bold ? 'bold' : 'normal';
+            preview.style.background = `rgba(0,0,0,${bgOpacity})`;
+            preview.style.padding = '4px 12px';
+            preview.style.borderRadius = '4px';
+            preview.textContent = 'Sample subtitle text preview';
+            const bar = $('combinePreviewBar');
+            bar.style.alignItems = position === 'top' ? 'flex-start' : position === 'center' ? 'center' : 'flex-end';
+        }
+
+        function updateCombineButton() {
+            $('combineStartBtn').disabled = !(combineVideoFile && combineSubFile);
+        }
+
+        // Video drop zone
+        const combineVideoDrop = $('combineVideoDrop');
+        const combineVideoInput = $('combineVideoInput');
+        combineVideoDrop.addEventListener('click', () => combineVideoInput.click());
+        combineVideoDrop.addEventListener('dragover', e => { e.preventDefault(); combineVideoDrop.classList.add('dragover'); });
+        combineVideoDrop.addEventListener('dragleave', () => combineVideoDrop.classList.remove('dragover'));
+        combineVideoDrop.addEventListener('drop', e => {
+            e.preventDefault(); combineVideoDrop.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) setCombineVideo(e.dataTransfer.files[0]);
+        });
+        combineVideoInput.addEventListener('change', () => {
+            if (combineVideoInput.files.length > 0) setCombineVideo(combineVideoInput.files[0]);
+        });
+
+        function setCombineVideo(file) {
+            const ext = '.' + file.name.split('.').pop().toLowerCase();
+            if (!['.mp4','.mkv','.avi','.webm','.mov'].includes(ext)) {
+                alert('Unsupported video format. Use MP4, MKV, AVI, WebM, or MOV.'); return;
+            }
+            if (file.size > 2147483648) { alert('Video file too large (max 2 GB).'); return; }
+            combineVideoFile = file;
+            $('combineVideoName').textContent = file.name + ' (' + formatBytes(file.size) + ')';
+            combineVideoDrop.classList.add('has-file');
+            updateCombineButton();
+        }
+
+        // Subtitle drop zone
+        const combineSubDrop = $('combineSubDrop');
+        const combineSubInput = $('combineSubInput');
+        combineSubDrop.addEventListener('click', () => combineSubInput.click());
+        combineSubDrop.addEventListener('dragover', e => { e.preventDefault(); combineSubDrop.classList.add('dragover'); });
+        combineSubDrop.addEventListener('dragleave', () => combineSubDrop.classList.remove('dragover'));
+        combineSubDrop.addEventListener('drop', e => {
+            e.preventDefault(); combineSubDrop.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) setCombineSub(e.dataTransfer.files[0]);
+        });
+        combineSubInput.addEventListener('change', () => {
+            if (combineSubInput.files.length > 0) setCombineSub(combineSubInput.files[0]);
+        });
+
+        function setCombineSub(file) {
+            const ext = '.' + file.name.split('.').pop().toLowerCase();
+            if (!['.srt','.vtt'].includes(ext)) {
+                alert('Unsupported subtitle format. Use SRT or VTT.'); return;
+            }
+            if (file.size > 10485760) { alert('Subtitle file too large (max 10 MB).'); return; }
+            combineSubFile = file;
+            $('combineSubName').textContent = file.name + ' (' + formatBytes(file.size) + ')';
+            combineSubDrop.classList.add('has-file');
+            updateCombineButton();
+        }
+
+        async function startCombine() {
+            if (!combineVideoFile || !combineSubFile) return;
+
+            const btn = $('combineStartBtn');
+            const prog = $('combineProgressSection');
+            const result = $('combineResult');
+            btn.disabled = true;
+            prog.style.display = 'block';
+            result.style.display = 'none';
+            $('combineProgressFill').style.width = '20%';
+            $('combineProgressFill').style.background = '';
+            $('combineStatus').textContent = 'Uploading files...';
+            $('combineStatus').className = 'embed-status';
+
+            const fd = new FormData();
+            fd.append('video', combineVideoFile);
+            fd.append('subtitle', combineSubFile);
+            fd.append('mode', combineEmbedMode);
+            fd.append('preset', $('combinePreset').value);
+            fd.append('language', $('combineLanguage').value);
+
+            if (combineEmbedMode === 'hard') {
+                fd.append('font_name', $('combineFont').value);
+                fd.append('font_size', $('combineFontSize').value);
+                fd.append('font_color', $('combineFontColor').value);
+                fd.append('bold', $('combineBold').checked);
+                fd.append('position', $('combinePosition').value);
+                fd.append('background_opacity', $('combineBgOpacity').value / 100);
+            }
+
+            try {
+                const res = await fetch('/combine', { method: 'POST', body: fd });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({ detail: 'Combine request failed' }));
+                    throw new Error(err.detail || 'Combine failed');
+                }
+
+                const data = await res.json();
+                $('combineProgressFill').style.width = '50%';
+                $('combineStatus').textContent = 'Combining video and subtitles...';
+
+                // Listen for combine_done / combine_error via SSE
+                const combineSSE = new EventSource('/events/' + data.task_id);
+                const combineTimeout = setTimeout(() => {
+                    combineSSE.close();
+                    $('combineStatus').textContent = 'Combining is taking longer than expected...';
+                }, 600000);
+
+                combineSSE.addEventListener('combine_progress', e => {
+                    const d = JSON.parse(e.data);
+                    $('combineProgressFill').style.width = (d.percent || 50) + '%';
+                    $('combineStatus').textContent = d.message || 'Combining...';
+                });
+
+                combineSSE.addEventListener('combine_done', e => {
+                    clearTimeout(combineTimeout);
+                    combineSSE.close();
+                    const d = JSON.parse(e.data);
+                    $('combineProgressFill').style.width = '100%';
+                    $('combineStatus').textContent = d.message || 'Combine complete!';
+                    $('combineStatus').className = 'embed-status success';
+                    result.style.display = 'block';
+                    const modeLabel = combineEmbedMode === 'soft' ? 'Soft mux' : 'Hard burn';
+                    $('combineResultMsg').textContent = modeLabel + ' complete!';
+                    $('combineDownloadLink').href = d.download_url || '/combine/download/' + data.task_id;
+                    btn.disabled = false;
+                });
+
+                combineSSE.addEventListener('combine_error', e => {
+                    clearTimeout(combineTimeout);
+                    combineSSE.close();
+                    const d = JSON.parse(e.data);
+                    $('combineProgressFill').style.width = '100%';
+                    $('combineProgressFill').style.background = '#e74c3c';
+                    $('combineStatus').textContent = d.message || 'Combine failed';
+                    $('combineStatus').className = 'embed-status error';
+                    btn.disabled = false;
+                });
+            } catch (e) {
+                $('combineProgressFill').style.width = '100%';
+                $('combineProgressFill').style.background = '#e74c3c';
+                $('combineStatus').textContent = e.message || 'Combine failed';
+                $('combineStatus').className = 'embed-status error';
+                btn.disabled = false;
+            }
+        }
+
+        function resetCombine() {
+            combineVideoFile = null;
+            combineSubFile = null;
+            $('combineVideoName').textContent = '';
+            $('combineSubName').textContent = '';
+            combineVideoDrop.classList.remove('has-file');
+            combineSubDrop.classList.remove('has-file');
+            $('combineStartBtn').disabled = true;
+            $('combineProgressSection').style.display = 'none';
+            $('combineResult').style.display = 'none';
+            $('combineProgressFill').style.width = '0%';
+            $('combineProgressFill').style.background = '';
+            $('combineStatus').textContent = '';
+            combineVideoInput.value = '';
+            combineSubInput.value = '';
+        }
 
         // ── S10-6: Speaker Labels in Preview ──
         const speakerColors = ['speaker-0','speaker-1','speaker-2','speaker-3','speaker-4'];

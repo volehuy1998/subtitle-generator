@@ -19,7 +19,7 @@ logger = logging.getLogger("subtitle-generator")
 API_BODY_LIMIT = 1 * 1024 * 1024
 
 # Routes that accept large file uploads get the full MAX_FILE_SIZE limit
-_UPLOAD_PATHS = {"/upload"}
+_UPLOAD_PATHS = {"/upload", "/combine"}
 _UPLOAD_PREFIXES = ("/embed/",)  # /embed/{task_id} accepts video uploads
 
 

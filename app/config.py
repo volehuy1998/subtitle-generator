@@ -19,6 +19,10 @@ MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024  # 2 GB
 MIN_FILE_SIZE = 1024  # 1 KB minimum (reject empty/trivial files)
 MAX_AUDIO_DURATION = 4 * 3600  # 4 hours max
 
+# --- Subtitle file validation ---
+ALLOWED_SUBTITLE_EXTENSIONS = {".srt", ".vtt"}
+MAX_SUBTITLE_SIZE = 10 * 1024 * 1024  # 10 MB
+
 # Allowed MIME types mapped from extensions
 ALLOWED_MIME_PREFIXES = {"video/", "audio/", "application/octet-stream"}
 
@@ -70,6 +74,22 @@ LOG_JSON_ONLY = os.environ.get("LOG_JSON_ONLY", "false").lower() == "true"
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
 LOG_WEBHOOK_URL = os.environ.get("LOG_WEBHOOK_URL", "")  # e.g., http://logstash:5000
 LOG_SYSLOG_HOST = os.environ.get("LOG_SYSLOG_HOST", "")  # e.g., syslog.example.com:514
+
+# --- Multi-server role ---
+# "standalone" = single server (default), "web" = API only, "worker" = Celery worker only
+ROLE = os.environ.get("ROLE", "standalone")
+
+# --- Redis (shared state + Pub/Sub + Celery broker) ---
+REDIS_URL = os.environ.get("REDIS_URL", "")
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "") or REDIS_URL
+
+# --- S3 / MinIO (shared file storage) ---
+STORAGE_BACKEND = os.environ.get("STORAGE_BACKEND", "local")  # "local" or "s3"
+S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL", "")
+S3_BUCKET_NAME = os.environ.get("S3_BUCKET_NAME", "subtitle-generator")
+S3_ACCESS_KEY = os.environ.get("S3_ACCESS_KEY", "")
+S3_SECRET_KEY = os.environ.get("S3_SECRET_KEY", "")
+S3_REGION = os.environ.get("S3_REGION", "us-east-1")
 
 # --- Security infrastructure ---
 HSTS_ENABLED = os.environ.get("HSTS_ENABLED", "true").lower() == "true"

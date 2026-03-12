@@ -86,9 +86,21 @@ _backend: TaskBackend | None = None
 
 
 def get_task_backend() -> TaskBackend:
-    """Get the configured task backend."""
+    """Get the configured task backend.
+
+    Priority: Redis (if REDIS_URL set and ROLE != standalone) > Database > In-memory.
+    """
     global _backend
     if _backend is None:
+        from app.config import REDIS_URL, ROLE
+        if REDIS_URL and ROLE != "standalone":
+            try:
+                from app.services.task_backend_redis import RedisTaskBackend
+                _backend = RedisTaskBackend()
+                return _backend
+            except Exception as e:
+                logger.warning(f"BACKEND Redis backend unavailable ({e}), trying database")
+
         try:
             from app.db.task_backend_db import DatabaseTaskBackend
             _backend = DatabaseTaskBackend()

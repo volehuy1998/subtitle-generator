@@ -51,9 +51,9 @@ class TaskRecord(Base):
                         index=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc),
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc),
                         nullable=False)
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc),
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc),
                         onupdate=lambda: datetime.now(timezone.utc),
                         nullable=False)
 
@@ -102,6 +102,14 @@ class TaskRecord(Base):
         segments = data.get("segments")
         if isinstance(segments, (list, dict)):
             segments = json.dumps(segments, default=str)
+        # Duration may be a formatted string like "2m 16s" — convert to float seconds
+        raw_dur = data.get("duration")
+        if isinstance(raw_dur, str):
+            try:
+                raw_dur = float(raw_dur)
+            except ValueError:
+                raw_dur = None  # can't store formatted strings in Float column
+
         return cls(
             id=task_id,
             status=data.get("status", "queued"),
@@ -115,7 +123,7 @@ class TaskRecord(Base):
             file_size=data.get("file_size"),
             file_size_fmt=data.get("file_size_fmt"),
             audio_size_fmt=data.get("audio_size_fmt"),
-            duration=data.get("duration"),
+            duration=raw_dur,
             segments=segments,
             word_timestamps=int(data.get("word_timestamps", False)),
             diarize=int(data.get("diarize", False)),
@@ -129,9 +137,9 @@ class SessionRecord(Base):
     __tablename__ = "sessions"
 
     id = Column(String(36), primary_key=True)  # UUID from cookie
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc),
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc),
                         nullable=False)
-    last_seen = Column(DateTime, default=lambda: datetime.now(timezone.utc),
+    last_seen = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc),
                        nullable=False)
     ip = Column(String(45), nullable=True)  # IPv4 or IPv6
     user_agent = Column(String(512), nullable=True)
@@ -149,7 +157,7 @@ class AnalyticsEvent(Base):
     __tablename__ = "analytics_events"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    timestamp = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     event_type = Column(String(50), nullable=False)
     data = Column(Text, nullable=True)  # JSON
 
@@ -178,7 +186,7 @@ class AnalyticsTimeseries(Base):
     __tablename__ = "analytics_timeseries"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    timestamp = Column(DateTime, nullable=False, unique=True)
+    timestamp = Column(DateTime(timezone=True), nullable=False, unique=True)
     uploads = Column(Integer, default=0)
     completed = Column(Integer, default=0)
     failed = Column(Integer, default=0)
@@ -196,7 +204,7 @@ class AuditLog(Base):
     __tablename__ = "audit_log"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    timestamp = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     event_type = Column(String(50), nullable=False)
     ip = Column(String(45), nullable=True)
     path = Column(String(512), nullable=True)
@@ -216,7 +224,7 @@ class Feedback(Base):
     task_id = Column(String(36), nullable=True)
     rating = Column(Integer, nullable=False)
     comment = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
     __table_args__ = (
         Index("ix_feedback_task", "task_id"),
@@ -233,7 +241,7 @@ class UserRecord(Base):
     password_hash = Column(String(256), nullable=False)
     role = Column(String(20), nullable=False, default="user")  # admin, user
     is_active = Column(Integer, default=1)  # boolean as int
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
     # Relationships
     api_keys = relationship("ApiKeyRecord", back_populates="owner")
@@ -251,9 +259,9 @@ class ApiKeyRecord(Base):
     key_hash = Column(String(64), unique=True, nullable=False)  # SHA-256
     label = Column(String(100), nullable=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
-    last_used = Column(DateTime, nullable=True)
-    expires_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    last_used = Column(DateTime(timezone=True), nullable=True)
+    expires_at = Column(DateTime(timezone=True), nullable=True)
     is_active = Column(Integer, default=1)  # boolean as int
 
     # Relationships
@@ -270,7 +278,7 @@ class UIEvent(Base):
     __tablename__ = "ui_events"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    timestamp = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     session_id = Column(String(36), nullable=True)
     event_type = Column(String(50), nullable=False)  # click, view, error, flow
     target = Column(String(100), nullable=True)       # button id, panel name, feature
@@ -291,9 +299,9 @@ class BruteForceEvent(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     ip = Column(String(45), nullable=False)
-    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    timestamp = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     path = Column(String(512), nullable=True)
-    blocked_until = Column(DateTime, nullable=True)
+    blocked_until = Column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
         Index("ix_brute_force_ip", "ip"),
@@ -309,7 +317,7 @@ class IpListEntry(Base):
     ip = Column(String(45), nullable=False)
     list_type = Column(String(10), nullable=False)  # allow, block
     reason = Column(String(200), nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
     __table_args__ = (
         Index("ix_ip_lists_ip", "ip"),

@@ -18,7 +18,7 @@ from app.routes import router
 from app.services.system_capability import detect_system_capabilities, log_capabilities
 from app.services.cleanup import periodic_cleanup
 from app.services.analytics import load_analytics_snapshot, save_analytics_snapshot
-from app.config import PRELOAD_MODEL, ENABLE_COMPRESSION
+from app.config import PRELOAD_MODEL, ENABLE_COMPRESSION, ROLE, REDIS_URL
 
 import logging
 
@@ -77,11 +77,13 @@ async def lifespan(app: FastAPI):
         load_analytics_snapshot()
 
     log_task_event("system", "startup", **{
+        "role": ROLE,
         "platform": caps["platform"]["os"],
         "cpu_cores": caps["cpu"]["logical_cores"],
         "ram_gb": caps["memory"]["total_gb"],
         "gpu": caps["gpu"]["devices"][0]["name"] if caps["gpu"]["devices"] else "none",
         "tuning": caps["tuning"],
+        "redis": bool(REDIS_URL),
     })
 
     # Register this worker for health monitoring
@@ -89,8 +91,8 @@ async def lifespan(app: FastAPI):
     worker_id = register_worker()
     app.state.worker_id = worker_id
 
-    # Preload model if configured
-    if PRELOAD_MODEL and PRELOAD_MODEL in ("tiny", "base", "small", "medium", "large"):
+    # Preload model if configured (skip on web-only servers)
+    if ROLE != "web" and PRELOAD_MODEL and PRELOAD_MODEL in ("tiny", "base", "small", "medium", "large"):
         try:
             from app.services.model_manager import get_model
             import torch
@@ -151,10 +153,19 @@ async def lifespan(app: FastAPI):
     except Exception:
         pass
 
+    # Close Redis connections
+    if REDIS_URL:
+        try:
+            from app.services.redis_client import close_async_redis, close_sync_redis
+            await close_async_redis()
+            close_sync_redis()
+        except Exception:
+            pass
+
     # Close main DB
     await close_db()
 
-    logger.info("SHUTDOWN Complete")
+    logger.info(f"SHUTDOWN Complete (role={ROLE})")
 
 
 def _apply_tuning(tuning: dict):

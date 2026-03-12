@@ -1,4 +1,8 @@
-"""WebSocket endpoint for real-time task updates (replaces SSE for supported clients)."""
+"""WebSocket endpoint for real-time task updates (replaces SSE for supported clients).
+
+In standalone mode: reads from in-process queues.
+In multi-server mode: subscribes to Redis Pub/Sub.
+"""
 
 import asyncio
 import logging
@@ -6,12 +10,29 @@ import logging
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app import state
+from app.config import REDIS_URL
 
 logger = logging.getLogger("subtitle-generator")
 router = APIRouter(tags=["Progress"])
 
 # Active WebSocket connections: task_id -> set of WebSocket
 _connections: dict[str, set] = {}
+
+_SKIP_FIELDS = ("pause_event", "transcription_profiler", "cancel_requested")
+
+
+def _get_task_data(task_id: str) -> dict | None:
+    """Get task data from local state or Redis backend."""
+    if task_id in state.tasks:
+        return state.tasks[task_id]
+    if REDIS_URL:
+        try:
+            from app.services.task_backend import get_task_backend
+            backend = get_task_backend()
+            return backend.get(task_id)
+        except Exception:
+            pass
+    return None
 
 
 async def broadcast_to_task(task_id: str, event: dict):
@@ -39,48 +60,57 @@ async def task_websocket(websocket: WebSocket, task_id: str):
 
     try:
         # Send current state immediately
-        if task_id in state.tasks:
-            data = {k: v for k, v in state.tasks[task_id].items()
-                    if k not in ("pause_event", "transcription_profiler", "cancel_requested")}
+        task_data = _get_task_data(task_id)
+        if task_data:
+            data = {k: v for k, v in task_data.items() if k not in _SKIP_FIELDS}
             await websocket.send_json({"type": "state", **data})
 
-            # If task is already terminal, close immediately
             if data.get("status") in ("done", "error", "cancelled"):
                 await websocket.close()
                 return
 
-        # Poll for updates via the SSE queue (shared with SSE endpoint)
-        q = state.task_event_queues.get(task_id)
+        if REDIS_URL:
+            # Multi-server: subscribe to Redis Pub/Sub
+            from app.services.pubsub import subscribe_events
+            async for event in subscribe_events(task_id):
+                etype = event.get("type", "update")
+                if etype == "heartbeat":
+                    await websocket.send_json({"type": "heartbeat"})
+                    continue
+                await websocket.send_json(event)
+                if etype in ("done", "error", "cancelled"):
+                    break
+        else:
+            # Standalone: poll in-process queue
+            q = state.task_event_queues.get(task_id)
 
-        while True:
-            try:
-                if q:
-                    event = await asyncio.wait_for(
-                        asyncio.to_thread(q.get, timeout=1),
-                        timeout=2,
-                    )
-                    await websocket.send_json(event)
-                    if event.get("type") in ("done", "error", "cancelled"):
-                        break
-                else:
-                    await asyncio.sleep(1)
-                    # Check if task is done
+            while True:
+                try:
+                    if q:
+                        event = await asyncio.wait_for(
+                            asyncio.to_thread(q.get, timeout=1),
+                            timeout=2,
+                        )
+                        await websocket.send_json(event)
+                        if event.get("type") in ("done", "error", "cancelled"):
+                            break
+                    else:
+                        await asyncio.sleep(1)
+                        status = state.tasks.get(task_id, {}).get("status")
+                        if status in ("done", "error", "cancelled"):
+                            data = {k: v for k, v in state.tasks.get(task_id, {}).items()
+                                    if k not in _SKIP_FIELDS}
+                            await websocket.send_json({"type": status, **data})
+                            break
+
+                except asyncio.TimeoutError:
+                    await websocket.send_json({"type": "heartbeat"})
                     status = state.tasks.get(task_id, {}).get("status")
                     if status in ("done", "error", "cancelled"):
                         data = {k: v for k, v in state.tasks.get(task_id, {}).items()
-                                if k not in ("pause_event", "transcription_profiler", "cancel_requested")}
+                                if k not in _SKIP_FIELDS}
                         await websocket.send_json({"type": status, **data})
                         break
-
-            except asyncio.TimeoutError:
-                # Send heartbeat
-                await websocket.send_json({"type": "heartbeat"})
-                status = state.tasks.get(task_id, {}).get("status")
-                if status in ("done", "error", "cancelled"):
-                    data = {k: v for k, v in state.tasks.get(task_id, {}).items()
-                            if k not in ("pause_event", "transcription_profiler", "cancel_requested")}
-                    await websocket.send_json({"type": status, **data})
-                    break
 
     except WebSocketDisconnect:
         logger.debug(f"WS [{task_id[:8]}] Client disconnected")
