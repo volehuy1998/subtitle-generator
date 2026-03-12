@@ -17,9 +17,10 @@
   --color-text-2:    #6B7280;
   --color-text-3:    #9CA3AF;
 
-  --color-primary:         #6366F1;
-  --color-primary-light:   #EEF2FF;
-  --color-primary-border:  #C7D2FE;
+  --color-primary:         #863bff;
+  --color-primary-hover:   #7326f0;
+  --color-primary-light:   #f3eeff;
+  --color-primary-border:  #ddd6fe;
 
   --color-success:         #10B981;
   --color-success-light:   #ECFDF5;
@@ -56,12 +57,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Scrollbar */
+/* Scrollbar — always-visible track prevents layout shift when switching tabs */
+html { overflow-y: scroll; scrollbar-width: thin; scrollbar-color: var(--color-border-2) transparent; }
 ::-webkit-scrollbar       { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--color-border-2); border-radius: 9999px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-text-3); }
-* { scrollbar-width: thin; scrollbar-color: var(--color-border-2) transparent; }
 
 /* Focus ring */
 :focus-visible {

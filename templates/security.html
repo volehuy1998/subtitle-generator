@@ -167,6 +167,19 @@
         <div class="hero-body">
             <h1>Security</h1>
             <p>How SubForge protects your uploads, prevents attacks, and keeps the service safe for all users.</p>
+            {% if assertions and assertions.last_security_commit %}
+            <p style="margin-top:10px; font-size:0.775rem; color:rgba(255,255,255,0.45);">
+                Last security update:
+                <strong style="color:rgba(255,255,255,0.75);">{{ assertions.last_security_commit.datetime[:10] }}</strong>
+                &mdash;
+                <span style="font-style:italic;">{{ assertions.last_security_commit.message }}</span>
+                <a href="https://github.com/volehuy1998/subtitle-generator/commit/{{ assertions.last_security_commit.sha_full }}"
+                   target="_blank" rel="noopener"
+                   style="color:rgba(134,59,255,0.8); margin-left:6px; font-style:normal; font-family:monospace; font-size:0.72rem;">
+                    {{ assertions.last_security_commit.sha_full[:12] }}
+                </a>
+            </p>
+            {% endif %}
         </div>
         <div class="hero-badge">
             <span class="hero-badge-dot"></span>

@@ -3,7 +3,7 @@
 # Copies new certs to the project directory and restarts the service.
 set -e
 
-DEST=/home/claude-user/subtitle-generator
+DEST=/opt/subtitle-generator
 
 # Read DOMAIN from the project .env file if present; fall back to env var.
 if [[ -f "$DEST/.env" ]]; then

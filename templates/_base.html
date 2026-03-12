@@ -13,12 +13,12 @@
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* Refined scrollbar — thin, subtle, consistent across pages */
+        /* Scrollbar — always-visible track prevents layout shift */
+        html { overflow-y: scroll; scrollbar-width: thin; scrollbar-color: #CBD5E1 transparent; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 9999px; }
         ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
-        * { scrollbar-width: thin; scrollbar-color: #CBD5E1 transparent; }
 
         :root {
             --bg: #F1F5F9; --surface: #FFFFFF; --surface-2: #F8FAFC;

@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "c4f8089",
-    "sha_full": "c4f80891a13944bb6fa2efaee09e331a66dd036c",
-    "datetime": "2026-03-13T06:13:24+07:00",
-    "message": "Add missing SPA page components to git"
+    "sha": "96b14df",
+    "sha_full": "96b14df2effb106df10694346364dcc2a35a2e8a",
+    "datetime": "2026-03-13T06:54:54+07:00",
+    "message": "Misc fixes and infra additions: SPA routing, scrollbar, fail2ban, deploy scripts"
   },
   "assertions": [
     {

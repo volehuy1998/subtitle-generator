@@ -465,7 +465,10 @@ info "Waiting for service to become ready…"
 MAX_WAIT=45
 WAITED=0
 HEALTH_URL="http://localhost:8000/health"
-[[ "$MODE" == "prod" && "$USE_DOCKER" -eq 0 ]] && HEALTH_URL="https://localhost/health"
+if [[ "$MODE" == "prod" ]]; then
+  # Docker exposes TLS on host port 443; bare-metal binds directly to :443
+  HEALTH_URL="https://localhost/health"
+fi
 
 until curl -sk --max-time 5 "$HEALTH_URL" | grep -q '"status"' 2>/dev/null; do
   sleep 2

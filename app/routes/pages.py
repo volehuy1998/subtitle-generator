@@ -41,6 +41,8 @@ async def status_page_html(request: Request):
 
 @router.get("/security", response_class=HTMLResponse)
 async def security_page(request: Request):
+    if _USE_REACT:
+        return _react_index()
     from app.routes.security import load_security_assertions
     assertions_data = load_security_assertions()
     return templates.TemplateResponse("security.html", {
@@ -52,11 +54,15 @@ async def security_page(request: Request):
 
 @router.get("/about", response_class=HTMLResponse)
 async def about_page(request: Request):
+    if _USE_REACT:
+        return _react_index()
     return templates.TemplateResponse("about.html", {"request": request, "active_page": "about"})
 
 
 @router.get("/contact", response_class=HTMLResponse)
 async def contact_page(request: Request):
+    if _USE_REACT:
+        return _react_index()
     return templates.TemplateResponse("contact.html", {"request": request, "active_page": "contact"})
 
 

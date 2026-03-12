@@ -230,6 +230,28 @@ sudo bash /opt/subtitle-generator/scripts/deploy.sh \
 
 ---
 
+## Optional: fail2ban (brute-force protection)
+
+The `scripts/fail2ban/` directory contains ready-made filter and jail configs.
+The deploy script does **not** install fail2ban automatically — set it up manually after deployment:
+
+```bash
+sudo apt-get install -y fail2ban
+sudo cp /opt/subtitle-generator/scripts/fail2ban/filter.d/subtitle-generator.conf /etc/fail2ban/filter.d/
+sudo cp /opt/subtitle-generator/scripts/fail2ban/jail.d/subtitle-generator.conf   /etc/fail2ban/jail.d/
+sudo systemctl enable --now fail2ban
+sudo fail2ban-client reload
+```
+
+Verify the jails are active:
+
+```bash
+sudo fail2ban-client status subtitle-generator-auth
+sudo fail2ban-client status subtitle-generator-http
+```
+
+---
+
 ## Troubleshooting
 
 ### Service not responding after install

@@ -77,6 +77,7 @@ services:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - API_KEYS=${API_KEYS:-}
       - HF_TOKEN=${HF_TOKEN:-}
+      - PRELOAD_MODEL=${PRELOAD_MODEL:-}
       - FILE_RETENTION_HOURS=${FILE_RETENTION_HOURS:-24}
       - GITHUB_TOKEN=${GITHUB_TOKEN:-}
       - CORS_ORIGINS=https://${DOMAIN}
@@ -114,6 +115,7 @@ services:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - API_KEYS=${API_KEYS:-}
       - HF_TOKEN=${HF_TOKEN:-}
+      - PRELOAD_MODEL=${PRELOAD_MODEL:-}
       - FILE_RETENTION_HOURS=${FILE_RETENTION_HOURS:-24}
       - GITHUB_TOKEN=${GITHUB_TOKEN:-}
       - CORS_ORIGINS=https://${DOMAIN}
