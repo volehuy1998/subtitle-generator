@@ -294,48 +294,60 @@
 
         /* ── Embed card (inside output panel) ── */
         .embed-card { border: 1px solid var(--border); border-radius: var(--radius-sm); margin-top: 12px; overflow: hidden; }
-        .embed-card-header { padding: 10px 14px; background: var(--primary-light); display: flex; flex-direction: column; gap: 2px; }
-        .embed-card-header > span:first-child { font-size: 0.84rem; font-weight: 700; color: var(--primary); }
-        .embed-card-desc { font-size: 0.72rem; color: var(--text-3); }
-        .embed-card-body { display: block; padding: 14px; }
-        .embed-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
-        .embed-tab {
-            flex: 1; padding: 7px 10px; border-radius: var(--radius-xs); border: 1.5px solid var(--border);
-            font-size: 0.78rem; font-weight: 500; cursor: pointer; background: var(--surface);
-            color: var(--text-2); font-family: inherit; transition: all 0.15s; text-align: center;
+        .embed-card-header { padding: 11px 14px 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .embed-card-title { font-size: 0.82rem; font-weight: 600; color: var(--text); }
+        .embed-card-desc { font-size: 0.72rem; color: var(--text-3); margin-top: 1px; }
+        .embed-card-body { padding: 14px; }
+        /* Mode selector — two clean radio-style cards */
+        .embed-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+        .embed-mode-card {
+            padding: 10px 12px; border-radius: var(--radius-xs); border: 1.5px solid var(--border);
+            cursor: pointer; background: var(--surface); transition: all 0.15s; user-select: none;
         }
-        .embed-tab small { display: block; font-size: 0.65rem; opacity: 0.7; font-weight: 400; }
-        .embed-tab.active { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
-        .embed-tab:hover:not(.active) { border-color: var(--border-2); }
-        .embed-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        .embed-mode-card.active { border-color: var(--primary); background: var(--primary-light); }
+        .embed-mode-card:hover:not(.active) { border-color: var(--border-2); }
+        .embed-mode-name { font-size: 0.78rem; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 5px; margin-bottom: 2px; }
+        .embed-mode-card.active .embed-mode-name { color: var(--primary); }
+        .embed-mode-dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--border); flex-shrink: 0; transition: all 0.15s; }
+        .embed-mode-card.active .embed-mode-dot { background: var(--primary); border-color: var(--primary); }
+        .embed-mode-desc { font-size: 0.66rem; color: var(--text-3); line-height: 1.4; }
+        /* Style options */
+        .embed-style-opts { display: none; }
+        .embed-style-opts.show { display: block; }
+        .embed-section-label { font-size: 0.68rem; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+        .embed-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
         .embed-field label { font-size: 0.72rem; color: var(--text-2); font-weight: 500; display: block; margin-bottom: 4px; }
         .embed-field select, .embed-field input[type="color"] {
             width: 100%; padding: 5px 8px; border-radius: var(--radius-xs); border: 1.5px solid var(--border);
             font-size: 0.78rem; background: var(--surface); color: var(--text); font-family: inherit; outline: none;
         }
         .embed-field select:focus { border-color: var(--primary); }
-        .embed-field input[type="range"] { width: 100%; accent-color: var(--primary); }
-        .embed-style-opts { display: none; }
-        .embed-style-opts.show { display: block; }
-        .embed-style-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        .embed-field input[type="range"] { width: 100%; accent-color: var(--primary); margin-top: 4px; }
+        .embed-field-full { grid-column: 1 / -1; }
+        /* Subtitle preview strip */
         .embed-preview-bar {
-            height: 48px; background: #1a1a2e; border-radius: var(--radius-xs); display: flex;
-            align-items: center; justify-content: center; margin-bottom: 10px; overflow: hidden;
+            border-radius: var(--radius-xs); overflow: hidden; margin-bottom: 12px;
+            display: flex; align-items: flex-end; justify-content: center;
+            padding: 10px 12px; background: #111827; min-height: 52px;
         }
-        .embed-preview-text { font-size: 14px; text-align: center; }
-        .embed-actions { display: flex; justify-content: center; }
+        .embed-preview-text { font-size: 13px; text-align: center; line-height: 1.5; }
+        /* Action row */
+        .embed-actions { display: flex; align-items: center; gap: 10px; }
         .embed-start-btn {
-            padding: 8px 24px; border-radius: var(--radius-xs); border: none; cursor: pointer;
+            flex: 1; padding: 9px 16px; border-radius: var(--radius-xs); border: none; cursor: pointer;
             background: var(--success); color: #fff; font-size: 0.84rem; font-weight: 600;
             font-family: inherit; transition: background 0.15s;
         }
-        .embed-start-btn:hover { background: #059669; }
-        .embed-progress { display: none; margin-top: 10px; }
-        .embed-progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
-        .embed-progress-fill { height: 100%; background: var(--primary); border-radius: 2px; transition: width 0.3s; }
-        .embed-status { font-size: 0.78rem; color: var(--text-2); }
-        .embed-result { display: none; text-align: center; padding: 10px 0; }
-        .embed-result a { display: inline-block; padding: 7px 18px; background: var(--success); border-radius: var(--radius-xs); color: #fff; text-decoration: none; font-size: 0.82rem; font-weight: 600; }
+        .embed-start-btn:hover:not(:disabled) { background: #059669; }
+        .embed-start-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        /* Progress & result */
+        .embed-progress { display: none; margin-top: 12px; }
+        .embed-progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+        .embed-progress-fill { height: 100%; background: var(--primary); border-radius: 2px; transition: width 0.3s; width: 0%; }
+        .embed-status { font-size: 0.75rem; color: var(--text-3); }
+        .embed-result { display: none; margin-top: 12px; padding: 10px 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius-xs); }
+        .embed-result-msg { font-size: 0.78rem; color: #166534; margin-bottom: 8px; }
+        .embed-result a { display: block; padding: 8px 16px; background: var(--success); border-radius: var(--radius-xs); color: #fff; text-decoration: none; font-size: 0.82rem; font-weight: 600; text-align: center; }
 
         /* ── Subtitle editor ── */
 
@@ -778,31 +790,53 @@
                     <!-- Embed card -->
                     <div class="embed-card" id="embedCard" style="display:none">
                         <div class="embed-card-header">
-                            <span>&#127916; Embed Subtitles into Your Video</span>
-                            <span class="embed-card-desc">Bakes the generated subtitles into your original uploaded video</span>
+                            <div>
+                                <div class="embed-card-title">Embed Subtitles into Video</div>
+                                <div class="embed-card-desc">Mux the generated subtitles into your uploaded video file</div>
+                            </div>
                         </div>
                         <div class="embed-card-body" id="embedCardBody">
-                            <div class="embed-tabs">
-                                <button class="embed-tab active" onclick="setEmbedMode('soft')" id="embedTabSoft">Soft Mux<small>Fast &middot; Selectable track</small></button>
-                                <button class="embed-tab" onclick="setEmbedMode('hard')" id="embedTabHard">Hard Burn<small>Permanent &middot; Styled on video</small></button>
-                            </div>
-                            <div class="embed-grid" style="grid-template-columns:1fr;">
-                                <div class="embed-field"><label>Style Preset</label><select id="embedPreset" onchange="applyPreset(this.value);updateEmbedPreview()"><option value="default">Default</option><option value="youtube_white">YouTube White</option><option value="youtube_yellow">YouTube Yellow</option><option value="cinema">Cinema</option><option value="large_bold">Large Bold</option><option value="top_position">Top Position</option></select></div>
-                            </div>
-                            <div id="embedStyleOpts" class="embed-style-opts">
-                                <div class="embed-style-grid">
-                                    <div class="embed-field"><label>Font</label><select id="embedFont" onchange="updateEmbedPreview()"><option value="Arial">Arial</option><option value="Roboto">Roboto</option><option value="Open Sans">Open Sans</option><option value="Verdana">Verdana</option><option value="Tahoma">Tahoma</option><option value="Courier New">Courier New</option></select></div>
-                                    <div class="embed-field"><label>Size: <span id="embedSizeVal">24</span>px</label><input type="range" id="embedFontSize" min="12" max="56" value="24" onchange="$('embedSizeVal').textContent=this.value;updateEmbedPreview()"></div>
-                                    <div class="embed-field"><label>Color</label><input type="color" id="embedFontColor" value="#ffffff" onchange="updateEmbedPreview()"></div>
-                                    <div class="embed-field"><label>Position</label><select id="embedPosition" onchange="updateEmbedPreview()"><option value="bottom">Bottom</option><option value="center">Center</option><option value="top">Top</option></select></div>
-                                    <div class="embed-field"><label>Background: <span id="embedBgVal">75</span>%</label><input type="range" id="embedBgOpacity" min="0" max="100" value="75" onchange="$('embedBgVal').textContent=this.value;updateEmbedPreview()"></div>
-                                    <div class="embed-field"><label style="padding-top:16px"><input type="checkbox" id="embedBold" onchange="updateEmbedPreview()"> Bold</label></div>
+                            <!-- Mode selector -->
+                            <div class="embed-modes">
+                                <div class="embed-mode-card active" id="embedTabSoft" onclick="setEmbedMode('soft')">
+                                    <div class="embed-mode-name"><span class="embed-mode-dot"></span> Soft Mux</div>
+                                    <div class="embed-mode-desc">Subtitle track embedded as a selectable layer — fast, lossless, toggleable</div>
+                                </div>
+                                <div class="embed-mode-card" id="embedTabHard" onclick="setEmbedMode('hard')">
+                                    <div class="embed-mode-name"><span class="embed-mode-dot"></span> Hard Burn</div>
+                                    <div class="embed-mode-desc">Subtitles rendered permanently onto video frames — works on all players</div>
                                 </div>
                             </div>
-                            <div class="embed-preview-bar" id="embedPreviewBar"><span class="embed-preview-text" id="embedPreviewText" style="color:#fff;font-family:Arial;font-size:24px;">Sample subtitle text preview</span></div>
-                            <div class="embed-actions"><button class="embed-start-btn" id="embedStartBtn" onclick="startUnifiedEmbed()">Embed Now</button></div>
-                            <div class="embed-progress" id="embedProgress"><div class="embed-progress-bar"><div class="embed-progress-fill" id="embedProgressFill"></div></div><div class="embed-status" id="embedStatus">Preparing...</div></div>
-                            <div class="embed-result" id="embedResult"><div id="embedResultMsg">Embedding complete!</div><a id="embedDownloadLink" href="#" style="display:inline-block;margin-top:8px;padding:7px 18px;background:var(--success);border-radius:var(--radius-xs);color:#fff;text-decoration:none;font-size:0.82rem;font-weight:600">Download Video</a></div>
+                            <!-- Style options (hard burn only) -->
+                            <div id="embedStyleOpts" class="embed-style-opts">
+                                <div class="embed-section-label">Style</div>
+                                <div class="embed-grid" style="grid-template-columns:1fr; margin-bottom:8px;">
+                                    <div class="embed-field"><label>Preset</label><select id="embedPreset" onchange="applyPreset(this.value);updateEmbedPreview()"><option value="default">Default</option><option value="youtube_white">YouTube White</option><option value="youtube_yellow">YouTube Yellow</option><option value="cinema">Cinema</option><option value="large_bold">Large Bold</option><option value="top_position">Top Position</option></select></div>
+                                </div>
+                                <div class="embed-grid">
+                                    <div class="embed-field"><label>Font</label><select id="embedFont" onchange="updateEmbedPreview()"><option value="Arial">Arial</option><option value="Roboto">Roboto</option><option value="Open Sans">Open Sans</option><option value="Verdana">Verdana</option><option value="Tahoma">Tahoma</option><option value="Courier New">Courier New</option></select></div>
+                                    <div class="embed-field"><label>Position</label><select id="embedPosition" onchange="updateEmbedPreview()"><option value="bottom">Bottom</option><option value="center">Center</option><option value="top">Top</option></select></div>
+                                    <div class="embed-field"><label>Color</label><input type="color" id="embedFontColor" value="#ffffff" onchange="updateEmbedPreview()"></div>
+                                    <div class="embed-field"><label>Size: <span id="embedSizeVal">24</span>px</label><input type="range" id="embedFontSize" min="12" max="56" value="24" oninput="$('embedSizeVal').textContent=this.value;updateEmbedPreview()"></div>
+                                    <div class="embed-field embed-field-full"><label>Background opacity: <span id="embedBgVal">75</span>%</label><input type="range" id="embedBgOpacity" min="0" max="100" value="75" oninput="$('embedBgVal').textContent=this.value;updateEmbedPreview()"></div>
+                                </div>
+                                <!-- Live preview strip -->
+                                <div class="embed-preview-bar" id="embedPreviewBar">
+                                    <span class="embed-preview-text" id="embedPreviewText" style="color:#fff;font-family:Arial;font-size:13px;">Subtitle preview</span>
+                                </div>
+                            </div>
+                            <!-- Action -->
+                            <div class="embed-actions">
+                                <button class="embed-start-btn" id="embedStartBtn" onclick="startUnifiedEmbed()">Embed &amp; Download</button>
+                            </div>
+                            <div class="embed-progress" id="embedProgress">
+                                <div class="embed-progress-bar"><div class="embed-progress-fill" id="embedProgressFill"></div></div>
+                                <div class="embed-status" id="embedStatus">Preparing…</div>
+                            </div>
+                            <div class="embed-result" id="embedResult">
+                                <div class="embed-result-msg" id="embedResultMsg">Embedding complete</div>
+                                <a id="embedDownloadLink" href="#">Download Video</a>
+                            </div>
                         </div>
                     </div>
 
@@ -2041,8 +2075,8 @@
 
         function setEmbedMode(mode) {
             embedMode = mode;
-            $('embedTabSoft').className = 'embed-tab' + (mode === 'soft' ? ' active' : '');
-            $('embedTabHard').className = 'embed-tab' + (mode === 'hard' ? ' active' : '');
+            $('embedTabSoft').className = 'embed-mode-card' + (mode === 'soft' ? ' active' : '');
+            $('embedTabHard').className = 'embed-mode-card' + (mode === 'hard' ? ' active' : '');
             $('embedStyleOpts').className = 'embed-style-opts' + (mode === 'hard' ? ' show' : '');
             updateEmbedPreview();
         }
@@ -2538,7 +2572,7 @@
 
         // Track button clicks on key elements
         document.addEventListener('click', function(e) {
-            const btn = e.target.closest('button, a.download-btn, .opt-chip, .embed-tab');
+            const btn = e.target.closest('button, a.download-btn, .opt-chip, .embed-mode-card');
             if (!btn) return;
             const id = btn.id || btn.textContent.trim().substring(0, 30);
             track('click', id);
