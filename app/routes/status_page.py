@@ -201,9 +201,9 @@ async def status_page(request: Request):
 
 _GITHUB_REPO = "volehuy1998/subtitle-generator"
 
-# Cache commit data (refresh every 5 minutes)
+# Cache commit data (refresh every 60 seconds)
 _commits_cache: dict = {"data": None, "ts": 0}
-_COMMITS_CACHE_TTL = 300
+_COMMITS_CACHE_TTL = 60
 
 
 async def _fetch_github_json(path: str) -> dict | list | None:

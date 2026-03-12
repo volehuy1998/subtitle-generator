@@ -810,8 +810,10 @@
     // Initial load
     loadStatus();
     loadCommits();
-    // Auto-refresh every 30 seconds
-    setInterval(loadStatus, 30000);
+    // Auto-refresh every second
+    setInterval(loadStatus, 1000);
+    // Refresh deployment history every 60 seconds
+    setInterval(loadCommits, 60000);
 })();
 </script>
 
