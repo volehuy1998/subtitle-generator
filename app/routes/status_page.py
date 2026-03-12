@@ -1,5 +1,7 @@
 """Public status page — service health, uptime history, and incident timeline."""
 
+import asyncio
+import json
 import logging
 import shutil
 import time
@@ -195,6 +197,108 @@ async def _get_task_stats() -> dict:
 async def status_page(request: Request):
     """Public status page — inspired by status.claude.com."""
     return templates.TemplateResponse("status.html", {"request": request})
+
+
+_GITHUB_REPO = "volehuy1998/subtitle-generator"
+
+# Cache commit data (refresh every 5 minutes)
+_commits_cache: dict = {"data": None, "ts": 0}
+_COMMITS_CACHE_TTL = 300
+
+
+async def _fetch_github_json(path: str) -> dict | list | None:
+    """Fetch JSON from GitHub API (public, no auth needed)."""
+    import urllib.request
+    url = f"https://api.github.com/repos/{_GITHUB_REPO}{path}"
+    req = urllib.request.Request(url, headers={
+        "Accept": "application/vnd.github.v3+json",
+        "User-Agent": "SubForge-Status",
+    })
+    loop = asyncio.get_event_loop()
+    resp = await loop.run_in_executor(None, lambda: urllib.request.urlopen(req, timeout=15))
+    return json.loads(resp.read().decode())
+
+
+@router.get("/api/status/commits")
+async def status_commits():
+    """Git commit history with CI/CD status from GitHub API."""
+    now = time.time()
+    if _commits_cache["data"] and (now - _commits_cache["ts"]) < _COMMITS_CACHE_TTL:
+        return _commits_cache["data"]
+
+    try:
+        # Fetch commits and CI runs in parallel from GitHub API
+        commits_data, runs_data = await asyncio.gather(
+            _fetch_github_json("/commits?per_page=20"),
+            _fetch_github_json("/actions/runs?per_page=30"),
+            return_exceptions=True,
+        )
+
+        if isinstance(commits_data, Exception) or not commits_data:
+            logger.error(f"GitHub commits fetch failed: {commits_data}")
+            return {"commits": []}
+
+        # Build CI status map
+        ci_map = {}
+        if not isinstance(runs_data, Exception) and runs_data:
+            for run in runs_data.get("workflow_runs", []):
+                sha = run.get("head_sha")
+                if sha and sha not in ci_map:
+                    ci_map[sha] = run.get("conclusion") or run.get("status", "unknown")
+
+        commits = []
+        for gh_commit in commits_data:
+            sha = gh_commit["sha"]
+            info = gh_commit.get("commit", {})
+            message = info.get("message", "")
+            # Split subject and body
+            msg_parts = message.split("\n", 1)
+            subject = msg_parts[0].strip()
+            body = msg_parts[1].strip() if len(msg_parts) > 1 else ""
+            # Remove Co-Authored-By lines
+            body_lines = [ln for ln in body.split("\n")
+                          if not ln.strip().startswith("Co-Authored-By:")]
+            body = "\n".join(body_lines).strip()
+
+            date = info.get("author", {}).get("date", "")
+            files = gh_commit.get("files", [])
+
+            commits.append({
+                "sha": sha,
+                "sha_short": sha[:7],
+                "subject": subject,
+                "body": body,
+                "date": date,
+                "ci_status": ci_map.get(sha, "unknown"),
+                "files": [{"action": f.get("status", "modified")[0].upper(), "path": f["filename"]}
+                          for f in files] if files else [],
+                "files_count": len(files) if files else 0,
+            })
+
+        # If files not included in list endpoint, fetch per-commit detail for files
+        # (GitHub /commits list doesn't include files, need per-commit endpoint)
+        async def _fetch_commit_files(commit):
+            try:
+                detail = await _fetch_github_json(f"/commits/{commit['sha']}")
+                if detail and "files" in detail:
+                    commit["files"] = [
+                        {"action": f.get("status", "modified")[0].upper(), "path": f["filename"]}
+                        for f in detail["files"]
+                    ]
+                    commit["files_count"] = len(commit["files"])
+            except Exception:
+                pass
+
+        # Fetch file details for all commits in parallel
+        await asyncio.gather(*[_fetch_commit_files(c) for c in commits], return_exceptions=True)
+
+        result = {"commits": commits}
+        _commits_cache["data"] = result
+        _commits_cache["ts"] = now
+        return result
+    except Exception as e:
+        logger.error(f"STATUS commits failed: {e}")
+        return {"commits": [], "error": str(e)}
 
 
 @router.get("/api/status/page")

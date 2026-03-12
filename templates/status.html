@@ -299,6 +299,107 @@
         .update-time { font-size: 0.72rem; color: #555; }
         .update-message { font-size: 0.82rem; color: #999; line-height: 1.5; }
 
+        /* Commit history */
+        .commits-section { margin-top: 40px; }
+        .commit-card {
+            background: #161616;
+            border: 1px solid #222;
+            padding: 16px 20px;
+            margin-bottom: 2px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .commit-card:hover { background: #1a1a1a; }
+        .commit-card:first-of-type { border-radius: 8px 8px 0 0; }
+        .commit-card:last-of-type { border-radius: 0 0 8px 8px; }
+        .commit-card:only-of-type { border-radius: 8px; }
+        .commit-top {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .ci-badge {
+            flex-shrink: 0;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .ci-badge.success { background: #052e16; color: #4ade80; border: 1px solid #166534; }
+        .ci-badge.failure { background: #450a0a; color: #f87171; border: 1px solid #7f1d1d; }
+        .ci-badge.unknown { background: #1a1a1a; color: #666; border: 1px solid #333; }
+        .ci-badge.in_progress { background: #172554; color: #93c5fd; border: 1px solid #1e40af; }
+        .commit-subject {
+            font-weight: 600;
+            color: #e0e0e0;
+            font-size: 0.9rem;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .commit-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+        .commit-sha {
+            font-size: 0.72rem;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            color: #4f8ff7;
+            background: #4f8ff710;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .commit-date { font-size: 0.72rem; color: #555; }
+        .commit-files-count {
+            font-size: 0.7rem;
+            color: #666;
+            background: #1a1a1a;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .commit-detail {
+            display: none;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid #1e1e1e;
+        }
+        .commit-card.expanded .commit-detail { display: block; }
+        .commit-body {
+            font-size: 0.8rem;
+            color: #999;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            margin-bottom: 12px;
+        }
+        .commit-files-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .commit-file {
+            font-size: 0.7rem;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: #111;
+            border: 1px solid #1e1e1e;
+        }
+        .commit-file.A { color: #4ade80; border-color: #16653420; }
+        .commit-file.M { color: #fbbf24; border-color: #92400e20; }
+        .commit-file.D { color: #f87171; border-color: #991b1b20; }
+        .commit-expand-icon {
+            flex-shrink: 0;
+            color: #555;
+            font-size: 0.7rem;
+            transition: transform 0.2s;
+        }
+        .commit-card.expanded .commit-expand-icon { transform: rotate(90deg); }
+
         /* Footer */
         .status-footer {
             margin-top: 48px;
@@ -431,6 +532,14 @@
         <div class="section-title">Incident History (Last 14 Days)</div>
         <div id="incidents">
             <div class="no-incidents">Loading...</div>
+        </div>
+    </div>
+
+    <!-- Commit History -->
+    <div class="commits-section">
+        <div class="section-title">Deployment History</div>
+        <div id="commits">
+            <div class="no-incidents">Loading commit history...</div>
         </div>
     </div>
 
@@ -626,8 +735,81 @@
         }
     }
 
+    function renderCommits(data) {
+        var commits = data.commits || [];
+        if (commits.length === 0) {
+            $('commits').innerHTML = '<div class="no-incidents">No commit history available.</div>';
+            return;
+        }
+
+        var html = '';
+        commits.forEach(function(c, idx) {
+            var ciClass = c.ci_status === 'success' ? 'success' :
+                          c.ci_status === 'failure' ? 'failure' :
+                          c.ci_status === 'in_progress' ? 'in_progress' : 'unknown';
+            var ciLabel = c.ci_status === 'success' ? 'Passed' :
+                          c.ci_status === 'failure' ? 'Failed' :
+                          c.ci_status === 'in_progress' ? 'Running' : 'N/A';
+
+            var dateStr = '';
+            try {
+                var d = new Date(c.date);
+                dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+            } catch(e) { dateStr = c.date; }
+
+            var filesHtml = '';
+            if (c.files && c.files.length > 0) {
+                filesHtml = '<div class="commit-files-list">';
+                c.files.forEach(function(f) {
+                    var label = f.action === 'A' ? 'NEW' : f.action === 'D' ? 'DEL' : 'MOD';
+                    filesHtml += '<span class="commit-file ' + f.action + '" title="' + label + '">' + escapeHtml(f.path) + '</span>';
+                });
+                filesHtml += '</div>';
+            }
+
+            var bodyHtml = c.body ? '<div class="commit-body">' + escapeHtml(c.body).replace(/Co-Authored-By:.*$/gm, '').trim() + '</div>' : '';
+
+            html += '<div class="commit-card" data-idx="' + idx + '">' +
+                '<div class="commit-top">' +
+                    '<span class="ci-badge ' + ciClass + '">' + ciLabel + '</span>' +
+                    '<span class="commit-subject">' + escapeHtml(c.subject) + '</span>' +
+                    '<span class="commit-meta">' +
+                        '<span class="commit-files-count">' + c.files_count + ' file' + (c.files_count !== 1 ? 's' : '') + '</span>' +
+                        '<span class="commit-sha">' + c.sha_short + '</span>' +
+                        '<span class="commit-date">' + dateStr + '</span>' +
+                    '</span>' +
+                    '<span class="commit-expand-icon">&#9654;</span>' +
+                '</div>' +
+                '<div class="commit-detail">' +
+                    bodyHtml +
+                    filesHtml +
+                '</div>' +
+            '</div>';
+        });
+
+        $('commits').innerHTML = html;
+
+        // Toggle expand on click
+        document.querySelectorAll('.commit-card').forEach(function(card) {
+            card.addEventListener('click', function() {
+                this.classList.toggle('expanded');
+            });
+        });
+    }
+
+    async function loadCommits() {
+        try {
+            var res = await fetch('/api/status/commits');
+            var data = await res.json();
+            renderCommits(data);
+        } catch(e) {
+            console.error('Commits fetch failed:', e);
+        }
+    }
+
     // Initial load
     loadStatus();
+    loadCommits();
     // Auto-refresh every 30 seconds
     setInterval(loadStatus, 30000);
 })();
