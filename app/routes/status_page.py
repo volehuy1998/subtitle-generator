@@ -3,6 +3,7 @@
 import asyncio
 import json
 import logging
+import os
 import shutil
 import time
 from datetime import datetime, timedelta, timezone
@@ -16,6 +17,7 @@ from sqlalchemy import select, func
 from app import state
 from app.config import OUTPUT_DIR
 from app.db.engine import get_session
+from app.db.status_engine import get_status_session
 from app.db.models import StatusIncident, StatusIncidentUpdate, TaskRecord
 
 logger = logging.getLogger("subtitle-generator")
@@ -72,13 +74,20 @@ async def _check_component_status(component_id: str) -> dict:
 
 
 async def _get_uptime_history(days: int = 90) -> dict:
-    """Calculate daily uptime for each component over the last N days."""
+    """Calculate uptime for each component using actual incident durations.
+
+    Uptime % is based on total minutes, not whole days.
+    Daily bars still show worst-severity status for each day.
+    """
     history = {}
-    today = datetime.now(timezone.utc).date()
+    now_utc = datetime.now(timezone.utc)
+    today = now_utc.date()
+    window_start = now_utc - timedelta(days=days)
+    total_minutes = days * 24 * 60
 
     try:
-        async with get_session() as session:
-            cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+        async with get_status_session() as session:
+            cutoff = now_utc - timedelta(days=days)
             result = await session.execute(
                 select(StatusIncident).where(
                     StatusIncident.created_at >= cutoff
@@ -86,34 +95,65 @@ async def _get_uptime_history(days: int = 90) -> dict:
             )
             incidents = result.scalars().all()
 
-            # Build per-component per-day incident map
-            incident_days = defaultdict(lambda: defaultdict(list))
+            # Build per-component incident list with clamped timestamps
+            comp_incidents = defaultdict(list)
             for inc in incidents:
-                start = inc.created_at.date()
-                end = (inc.resolved_at or datetime.now(timezone.utc)).date()
-                d = start
-                while d <= end and d <= today:
-                    incident_days[inc.component][d].append(inc.severity)
-                    d += timedelta(days=1)
+                # SQLite returns naive datetimes — make them timezone-aware
+                inc_start = inc.created_at.replace(tzinfo=timezone.utc) if inc.created_at.tzinfo is None else inc.created_at
+                inc_end = inc.resolved_at
+                if inc_end is not None and inc_end.tzinfo is None:
+                    inc_end = inc_end.replace(tzinfo=timezone.utc)
+                start = max(inc_start, window_start)
+                end = inc_end or now_utc
+                end = min(end, now_utc)
+                comp_incidents[inc.component].append({
+                    "start": start, "end": end, "severity": inc.severity,
+                })
 
             for comp in COMPONENTS:
                 comp_id = comp["id"]
+                inc_list = comp_incidents.get(comp_id, [])
+
+                # Calculate total downtime minutes (critical/major = outage)
+                downtime_minutes = 0.0
+                for inc in inc_list:
+                    if inc["severity"] in ("critical", "major"):
+                        delta = (inc["end"] - inc["start"]).total_seconds() / 60.0
+                        downtime_minutes += max(delta, 0)
+
+                if total_minutes > 0 and downtime_minutes > 0:
+                    uptime_pct = ((total_minutes - downtime_minutes) / total_minutes) * 100
+                    uptime_pct = max(0.0, min(99.999999, uptime_pct))  # Never round to 100 if any downtime
+                else:
+                    uptime_pct = 100.0
+
+                # Build daily status bars (worst severity per day for visual display)
+                daily_severity = defaultdict(list)
+                for inc in inc_list:
+                    d = inc["start"].date()
+                    end_date = inc["end"].date()
+                    while d <= end_date and d <= today:
+                        daily_severity[d].append(inc["severity"])
+                        d += timedelta(days=1)
+
                 daily = []
                 for i in range(days):
                     d = today - timedelta(days=days - 1 - i)
-                    day_incidents = incident_days[comp_id].get(d, [])
-                    if any(s in ("critical", "major") for s in day_incidents):
+                    sev_list = daily_severity.get(d, [])
+                    if any(s in ("critical", "major") for s in sev_list):
                         daily.append({"date": d.isoformat(), "status": "outage"})
-                    elif any(s in ("minor",) for s in day_incidents):
+                    elif any(s == "minor" for s in sev_list):
                         daily.append({"date": d.isoformat(), "status": "degraded"})
-                    elif any(s in ("maintenance",) for s in day_incidents):
+                    elif any(s == "maintenance" for s in sev_list):
                         daily.append({"date": d.isoformat(), "status": "maintenance"})
                     else:
                         daily.append({"date": d.isoformat(), "status": "operational"})
 
-                operational_days = sum(1 for d in daily if d["status"] == "operational")
-                uptime_pct = round((operational_days / days) * 100, 2) if days > 0 else 100.0
-                history[comp_id] = {"daily": daily, "uptime_pct": uptime_pct}
+                history[comp_id] = {
+                    "daily": daily,
+                    "uptime_pct": uptime_pct,
+                    "downtime_min": round(downtime_minutes, 2),
+                }
 
     except Exception as e:
         logger.error(f"STATUS uptime history failed: {e}")
@@ -130,7 +170,7 @@ async def _get_uptime_history(days: int = 90) -> dict:
 async def _get_incidents(days: int = 14, limit: int = 20) -> list:
     """Get recent incidents with their update timeline."""
     try:
-        async with get_session() as session:
+        async with get_status_session() as session:
             cutoff = datetime.now(timezone.utc) - timedelta(days=days)
             result = await session.execute(
                 select(StatusIncident).where(
@@ -169,8 +209,38 @@ async def _get_incidents(days: int = 14, limit: int = 20) -> list:
         return []
 
 
+def _get_inmemory_task_stats() -> dict:
+    """Count task stats from in-memory state (includes tasks that failed to persist to DB)."""
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
+    stats = defaultdict(int)
+    seen_ids = set()
+    for tid, t in state.tasks.items():
+        task_status = t.get("status")
+        if task_status not in ("done", "error", "cancelled"):
+            continue
+        created = t.get("created_at", "")
+        if created:
+            try:
+                ts = datetime.fromisoformat(created.replace("Z", "+00:00"))
+                if ts.tzinfo is None:
+                    ts = ts.replace(tzinfo=timezone.utc)
+                if ts < cutoff:
+                    continue
+            except (ValueError, TypeError):
+                continue
+        stats[task_status] += 1
+        seen_ids.add(tid)
+    return dict(stats), seen_ids
+
+
 async def _get_task_stats() -> dict:
-    """Get task completion stats for the last 24 hours."""
+    """Get task completion stats for the last 24 hours.
+
+    Queries PostgreSQL first, then merges in-memory state to capture tasks
+    that failed to persist to DB (e.g. when DB was down during a critical abort).
+    """
+    db_stats = {}
+    db_task_ids = set()
     try:
         async with get_session() as session:
             cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
@@ -182,15 +252,46 @@ async def _get_task_stats() -> dict:
                     TaskRecord.created_at >= cutoff
                 ).group_by(TaskRecord.status)
             )
-            stats = {row.status: row.count for row in result}
-            return {
-                "total_24h": sum(stats.values()),
-                "completed_24h": stats.get("done", 0),
-                "failed_24h": stats.get("error", 0),
-                "cancelled_24h": stats.get("cancelled", 0),
-            }
+            db_stats = {row.status: row.count for row in result}
+            # Get IDs already in DB to avoid double-counting
+            id_result = await session.execute(
+                select(TaskRecord.task_id).where(
+                    TaskRecord.created_at >= cutoff
+                )
+            )
+            db_task_ids = {row.task_id for row in id_result}
     except Exception:
-        return {"total_24h": 0, "completed_24h": 0, "failed_24h": 0, "cancelled_24h": 0}
+        pass
+
+    # Merge in-memory tasks not yet in DB
+    mem_stats, mem_ids = _get_inmemory_task_stats()
+    merged = dict(db_stats)
+    for status, count in mem_stats.items():
+        # Count how many in-memory tasks of this status are NOT in DB
+        missing = 0
+        for tid, t in state.tasks.items():
+            if t.get("status") == status and tid not in db_task_ids:
+                created = t.get("created_at", "")
+                if created:
+                    try:
+                        ts = datetime.fromisoformat(created.replace("Z", "+00:00"))
+                        if ts.tzinfo is None:
+                            ts = ts.replace(tzinfo=timezone.utc)
+                        cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
+                        if ts < cutoff:
+                            continue
+                    except (ValueError, TypeError):
+                        continue
+                missing += 1
+        if missing > 0:
+            merged[status] = merged.get(status, 0) + missing
+
+    return {
+        "total_24h": sum(merged.values()),
+        "completed_24h": merged.get("done", 0),
+        "failed_24h": merged.get("error", 0),
+        "cancelled_24h": merged.get("cancelled", 0),
+    }
 
 
 @router.get("/status", response_class=HTMLResponse)
@@ -201,19 +302,25 @@ async def status_page(request: Request):
 
 _GITHUB_REPO = "volehuy1998/subtitle-generator"
 
-# Cache commit data (refresh every 60 seconds)
+# Cache commit data (refresh every 10 minutes to stay within rate limits)
 _commits_cache: dict = {"data": None, "ts": 0}
-_COMMITS_CACHE_TTL = 60
+_COMMITS_CACHE_TTL = 600
+
+# Optional GitHub token for higher rate limits (5000/hr vs 60/hr)
+_GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN") or ""
 
 
 async def _fetch_github_json(path: str) -> dict | list | None:
-    """Fetch JSON from GitHub API (public, no auth needed)."""
+    """Fetch JSON from GitHub API."""
     import urllib.request
     url = f"https://api.github.com/repos/{_GITHUB_REPO}{path}"
-    req = urllib.request.Request(url, headers={
+    headers = {
         "Accept": "application/vnd.github.v3+json",
         "User-Agent": "SubForge-Status",
-    })
+    }
+    if _GITHUB_TOKEN:
+        headers["Authorization"] = f"token {_GITHUB_TOKEN}"
+    req = urllib.request.Request(url, headers=headers)
     loop = asyncio.get_event_loop()
     resp = await loop.run_in_executor(None, lambda: urllib.request.urlopen(req, timeout=15))
     return json.loads(resp.read().decode())
@@ -227,7 +334,7 @@ async def status_commits():
         return _commits_cache["data"]
 
     try:
-        # Fetch commits and CI runs in parallel from GitHub API
+        # Fetch commits and CI runs in parallel (2 API calls only)
         commits_data, runs_data = await asyncio.gather(
             _fetch_github_json("/commits?per_page=20"),
             _fetch_github_json("/actions/runs?per_page=30"),
@@ -236,7 +343,10 @@ async def status_commits():
 
         if isinstance(commits_data, Exception) or not commits_data:
             logger.error(f"GitHub commits fetch failed: {commits_data}")
-            return {"commits": []}
+            # Cache the failure for 2 minutes to avoid hammering rate limit
+            _commits_cache["data"] = {"commits": []}
+            _commits_cache["ts"] = now - _COMMITS_CACHE_TTL + 120
+            return _commits_cache["data"]
 
         # Build CI status map
         ci_map = {}
@@ -261,7 +371,6 @@ async def status_commits():
             body = "\n".join(body_lines).strip()
 
             date = info.get("author", {}).get("date", "")
-            files = gh_commit.get("files", [])
 
             commits.append({
                 "sha": sha,
@@ -270,13 +379,10 @@ async def status_commits():
                 "body": body,
                 "date": date,
                 "ci_status": ci_map.get(sha, "unknown"),
-                "files": [{"action": f.get("status", "modified")[0].upper(), "path": f["filename"]}
-                          for f in files] if files else [],
-                "files_count": len(files) if files else 0,
+                "stats": gh_commit.get("stats", {}),
             })
 
-        # If files not included in list endpoint, fetch per-commit detail for files
-        # (GitHub /commits list doesn't include files, need per-commit endpoint)
+        # Fetch file details only for the 5 most recent commits (saves rate limit)
         async def _fetch_commit_files(commit):
             try:
                 detail = await _fetch_github_json(f"/commits/{commit['sha']}")
@@ -289,8 +395,10 @@ async def status_commits():
             except Exception:
                 pass
 
-        # Fetch file details for all commits in parallel
-        await asyncio.gather(*[_fetch_commit_files(c) for c in commits], return_exceptions=True)
+        await asyncio.gather(
+            *[_fetch_commit_files(c) for c in commits[:5]],
+            return_exceptions=True,
+        )
 
         result = {"commits": commits}
         _commits_cache["data"] = result
@@ -329,6 +437,7 @@ async def status_page_data():
     return {
         "overall": overall,
         "uptime_sec": uptime_sec,
+        "sla_target": 99.9,
         "components": components,
         "uptime_history": uptime,
         "incidents": incidents,

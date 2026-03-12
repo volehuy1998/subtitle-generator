@@ -26,6 +26,41 @@ from app.services.task_backend import get_task_backend
 
 logger = logging.getLogger("subtitle-generator")
 
+# Tasks that failed to persist to DB — retried on next successful persist
+_pending_db_persists: list[tuple[str, dict]] = []
+_pending_lock = threading.Lock()
+
+
+def _retry_pending_persists():
+    """Try to persist any tasks that previously failed to write to DB."""
+    if not _pending_db_persists:
+        return
+    backend = get_task_backend()
+    try:
+        from app.db.task_backend_db import DatabaseTaskBackend
+        if not isinstance(backend, DatabaseTaskBackend):
+            return
+    except ImportError:
+        return
+
+    with _pending_lock:
+        pending = list(_pending_db_persists)
+
+    succeeded = []
+    for task_id, task_data in pending:
+        try:
+            backend.schedule_persist(task_id, task_data)
+            succeeded.append((task_id, task_data))
+            logger.info(f"TASK [{task_id[:8]}] DB persist retry succeeded")
+        except Exception:
+            break  # DB probably still down
+
+    if succeeded:
+        with _pending_lock:
+            for item in succeeded:
+                if item in _pending_db_persists:
+                    _pending_db_persists.remove(item)
+
 
 def _check_critical(task_id: str):
     """Abort the pipeline if the system has entered critical state."""
@@ -68,7 +103,10 @@ def _auto_embed_subtitles(task_id: str, video_path: Path, mode: str, language: s
 
 
 def _persist_task(task_id: str, task: dict):
-    """Persist task to DB (mandatory). Logs error if DB write fails."""
+    """Persist task to DB (mandatory). Queues for retry if DB write fails."""
+    # First, try to flush any previously failed persists
+    _retry_pending_persists()
+
     backend = get_task_backend()
     try:
         from app.db.task_backend_db import DatabaseTaskBackend
@@ -78,7 +116,9 @@ def _persist_task(task_id: str, task: dict):
     except ImportError:
         pass
     except Exception as e:
-        logger.error(f"TASK [{task_id[:8]}] DB persist failed: {e}")
+        logger.error(f"TASK [{task_id[:8]}] DB persist failed, queued for retry: {e}")
+        with _pending_lock:
+            _pending_db_persists.append((task_id, dict(task)))
     # Fallback to legacy JSON persistence
     state.save_task_history()
 

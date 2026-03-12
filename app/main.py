@@ -33,9 +33,11 @@ async def lifespan(app: FastAPI):
     OUTPUT_DIR.mkdir(exist_ok=True)
     LOG_DIR.mkdir(exist_ok=True)
 
-    # Initialize database
+    # Initialize databases
     from app.db.engine import init_db, close_db
     await init_db()
+    from app.db.status_engine import init_status_db, close_status_db
+    await init_status_db()
 
     # Capture main event loop for thread-safe async scheduling
     state.main_event_loop = asyncio.get_running_loop()
@@ -165,6 +167,9 @@ async def lifespan(app: FastAPI):
             close_sync_redis()
         except Exception:
             pass
+
+    # Close status DB (local SQLite)
+    await close_status_db()
 
     # Close main DB
     await close_db()

@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 
 from app.config import OUTPUT_DIR
-from app.db.engine import get_session
+from app.db.status_engine import get_status_session
 from app.db.models import StatusIncident, StatusIncidentUpdate
 
 logger = logging.getLogger("subtitle-generator")
@@ -28,7 +28,7 @@ async def create_incident(
 ) -> int | None:
     """Create a new incident with an initial update."""
     try:
-        async with get_session() as session:
+        async with get_status_session() as session:
             incident = StatusIncident(
                 title=title,
                 severity=severity,
@@ -60,7 +60,7 @@ async def update_incident(
 ) -> bool:
     """Add a status update to an existing incident."""
     try:
-        async with get_session() as session:
+        async with get_status_session() as session:
             incident = await session.get(StatusIncident, incident_id)
             if not incident:
                 return False
@@ -166,7 +166,7 @@ async def auto_detect_incidents():
 async def load_open_incidents():
     """Load currently open incidents from DB on startup."""
     try:
-        async with get_session() as session:
+        async with get_status_session() as session:
             result = await session.execute(
                 select(StatusIncident).where(
                     StatusIncident.status != "resolved"

@@ -25,17 +25,21 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "${APP_PORT:-8000}:8000"
+      - "443:8000"
+      - "80:8080"
     volumes:
       - ./uploads:/app/uploads
       - ./outputs:/app/outputs
       - ./logs:/app/logs
+      - /etc/letsencrypt/live/openlabs.club/fullchain.pem:/certs/fullchain.pem:ro
+      - /etc/letsencrypt/live/openlabs.club/privkey.pem:/certs/privkey.pem:ro
     environment:
-      - ENVIRONMENT=${ENVIRONMENT:-dev}
+      - ENVIRONMENT=prod
       - DATABASE_URL=postgresql+asyncpg://subtitle:subtitle@postgres:5432/subtitle_generator
       - API_KEYS=${API_KEYS:-}
       - HF_TOKEN=${HF_TOKEN:-}
       - FILE_RETENTION_HOURS=${FILE_RETENTION_HOURS:-24}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -49,17 +53,21 @@ services:
       context: .
       dockerfile: Dockerfile.gpu
     ports:
-      - "${APP_PORT:-8000}:8000"
+      - "443:8000"
+      - "80:8080"
     volumes:
       - ./uploads:/app/uploads
       - ./outputs:/app/outputs
       - ./logs:/app/logs
+      - /etc/letsencrypt/live/openlabs.club/fullchain.pem:/certs/fullchain.pem:ro
+      - /etc/letsencrypt/live/openlabs.club/privkey.pem:/certs/privkey.pem:ro
     environment:
-      - ENVIRONMENT=${ENVIRONMENT:-dev}
+      - ENVIRONMENT=prod
       - DATABASE_URL=postgresql+asyncpg://subtitle:subtitle@postgres:5432/subtitle_generator
       - API_KEYS=${API_KEYS:-}
       - HF_TOKEN=${HF_TOKEN:-}
       - FILE_RETENTION_HOURS=${FILE_RETENTION_HOURS:-24}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
     depends_on:
       postgres:
         condition: service_healthy

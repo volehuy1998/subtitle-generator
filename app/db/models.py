@@ -19,6 +19,11 @@ class Base(DeclarativeBase):
     pass
 
 
+class StatusBase(DeclarativeBase):
+    """Separate declarative base for status page models (stored in local SQLite)."""
+    pass
+
+
 class TaskRecord(Base):
     """Persistent task record — replaces task_history.json and in-memory tasks dict."""
     __tablename__ = "tasks"
@@ -321,8 +326,8 @@ class BruteForceEvent(Base):
     )
 
 
-class StatusIncident(Base):
-    """Service incidents for public status page."""
+class StatusIncident(StatusBase):
+    """Service incidents for public status page (stored in local SQLite, not PostgreSQL)."""
     __tablename__ = "status_incidents"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -342,8 +347,8 @@ class StatusIncident(Base):
     )
 
 
-class StatusIncidentUpdate(Base):
-    """Timeline updates for a status incident."""
+class StatusIncidentUpdate(StatusBase):
+    """Timeline updates for a status incident (stored in local SQLite, not PostgreSQL)."""
     __tablename__ = "status_incident_updates"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

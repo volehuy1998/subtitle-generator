@@ -11,636 +11,576 @@
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%234f8ff7'/%3E%3Cstop offset='100%25' stop-color='%236c5ce7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='%23161616'/%3E%3Crect x='8' y='38' width='48' height='6' rx='3' fill='url(%23g)' opacity='.9'/%3E%3Crect x='14' y='48' width='36' height='5' rx='2.5' fill='url(%23g)' opacity='.5'/%3E%3Cpath d='M22 12 L42 24 L22 36Z' fill='url(%23g)' opacity='.85'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #F1F5F9; --surface: #FFFFFF; --surface-2: #F8FAFC;
+            --border: #E2E8F0; --border-2: #CBD5E1;
+            --primary: #6366F1; --primary-hover: #4F46E5; --primary-light: #EEF2FF;
+            --success: #10B981; --success-light: #ECFDF5; --success-border: #A7F3D0;
+            --warning: #F59E0B; --warning-light: #FFFBEB;
+            --error: #EF4444; --error-light: #FEF2F2;
+            --text: #1E293B; --text-2: #64748B; --text-3: #94A3B8;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+            --radius: 14px; --radius-sm: 8px; --radius-xs: 5px;
+        }
+        html, body { height: 100%; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f0f0f; color: #e0e0e0;
-            min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg); color: var(--text);
+            font-size: 14px; line-height: 1.5; min-height: 100vh;
+            display: flex; flex-direction: column;
         }
-        .page-layout {
-            width: 100%; max-width: 700px; padding: 0 12px;
-            flex: 1;
+        /* ── App shell ── */
+        .app-header {
+            background: var(--surface); border-bottom: 1px solid var(--border);
+            padding: 0 24px; height: 58px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 50;
+            box-shadow: var(--shadow);
         }
-        .container { width: 100%; padding: 40px 24px; }
-        .brand-header { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
-        .brand-logo { width: 44px; height: 44px; flex-shrink: 0; }
-        .brand-wordmark { display: flex; flex-direction: column; }
-        h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0; color: #fff; letter-spacing: -0.5px; }
-        h1 .brand-accent { background: linear-gradient(135deg, #4f8ff7, #6c5ce7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .page-subtitle { color: #888; margin-bottom: 24px; font-size: 0.95rem; }
+        .header-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .header-logo { width: 32px; height: 32px; }
+        .header-wordmark { font-size: 1.1rem; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+        .header-wordmark span { color: var(--primary); }
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        .header-status { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--text-2); cursor: pointer; padding: 5px 10px; border-radius: var(--radius-xs); transition: background 0.15s; }
+        .header-status:hover { background: var(--surface-2); }
+        .header-dot, .health-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+        .header-dot.warn, .health-dot.warning { background: var(--warning); }
+        .header-dot.err, .health-dot.critical { background: var(--error); }
+        .health-dot.offline { background: #aaa; }
+
+        .app-main {
+            flex: 1; display: flex; gap: 16px; padding: 20px 24px;
+            max-width: 1200px; width: 100%; margin: 0 auto; align-items: flex-start;
+        }
+
+        /* ── Cards ── */
+        .card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); box-shadow: var(--shadow);
+        }
+        .card-header {
+            padding: 16px 20px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .card-title { font-size: 0.85rem; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.06em; }
+        .card-body { padding: 20px; }
+
+        /* ── Input card (left) ── */
+        .input-card { flex: 1; min-width: 0; }
+
+        /* Mode tabs */
+        .mode-tabs { display: flex; gap: 4px; padding: 16px 20px 0; }
+        .mode-tab {
+            padding: 7px 16px; border-radius: var(--radius-xs); border: none; cursor: pointer;
+            font-size: 0.84rem; font-weight: 500; background: transparent; color: var(--text-2);
+            transition: all 0.15s;
+        }
+        .mode-tab.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+        .mode-tab:hover:not(.active) { background: var(--surface-2); color: var(--text); }
 
         /* Options */
-        .options-panel { display: flex; gap: 12px; margin-bottom: 20px; }
-        .option-group { flex: 1; background: #161616; border-radius: 8px; padding: 12px 14px; }
-        .option-label { font-size: 0.7rem; color: #555; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-        .option-buttons { display: flex; gap: 6px; }
-        .opt-btn {
-            flex: 1; padding: 8px 4px; border-radius: 6px; font-size: 0.8rem;
-            font-weight: 500; cursor: pointer; border: 1px solid #333;
-            background: #1a1a1a; color: #888; transition: all 0.2s; text-align: center;
+        .options-grid { display: flex; flex-direction: column; gap: 14px; }
+        .opt-row { display: flex; align-items: center; gap: 10px; }
+        .opt-label { font-size: 0.78rem; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.05em; min-width: 90px; }
+        .opt-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+        .opt-chip {
+            padding: 5px 12px; border-radius: 20px; border: 1.5px solid var(--border);
+            font-size: 0.8rem; font-weight: 500; cursor: pointer; background: var(--surface);
+            color: var(--text-2); transition: all 0.15s;
         }
-        .opt-btn:hover { border-color: #555; color: #ccc; }
-        .opt-btn.selected { background: #1a1a2e; color: #4f8ff7; border-color: #4f8ff7; }
-        .opt-btn.gpu-selected { background: #1a2e1a; color: #27ae60; border-color: #27ae60; }
-        .opt-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-        .opt-btn .opt-detail { font-size: 0.65rem; color: #555; display: block; margin-top: 2px; }
-        .opt-btn.selected .opt-detail { color: #4f8ff788; }
-        .opt-btn.gpu-selected .opt-detail { color: #27ae6088; }
-        .opt-btn.warning .opt-detail { color: #f39c12; }
-        .opt-btn.too-large .opt-detail { color: #e74c3c; }
-        .gpu-badge { display: inline-block; font-size: 0.7rem; color: #27ae60; background: #27ae6018; padding: 2px 8px; border-radius: 4px; margin-top: 6px; }
-        .no-gpu-badge { display: inline-block; font-size: 0.7rem; color: #e74c3c; background: #e74c3c18; padding: 2px 8px; border-radius: 4px; margin-top: 6px; }
-        .model-info { margin-top: 10px; border-radius: 8px; background: #111; border: 1px solid #222; font-size: 0.78rem; line-height: 1.5; color: #999; display: none; overflow: hidden; }
-        .model-info.show { display: block; animation: miFadeIn .2s ease; }
-        @keyframes miFadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-        .mi-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #161616; border-bottom: 1px solid #1e1e1e; }
-        .mi-title { font-size: 0.85rem; font-weight: 600; color: #e0e0e0; }
-        .mi-badges { display: flex; gap: 6px; }
-        .mi-badge { font-size: 0.65rem; font-weight: 600; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.3px; }
-        .mi-badge-speed { color: #4f8ff7; background: #4f8ff714; border: 1px solid #4f8ff730; }
-        .mi-badge-vram { color: #a78bfa; background: #a78bfa14; border: 1px solid #a78bfa30; }
-        .mi-badge-acc { color: #27ae60; background: #27ae6014; border: 1px solid #27ae6030; }
-        .mi-body { padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; }
-        .mi-row { display: flex; align-items: flex-start; gap: 8px; }
-        .mi-icon { flex-shrink: 0; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border-radius: 4px; font-size: 0.7rem; margin-top: 1px; }
-        .mi-icon-best { background: #27ae6018; color: #27ae60; }
-        .mi-icon-warn { background: #f39c1218; color: #f39c12; }
-        .mi-icon-tip { background: #4f8ff718; color: #4f8ff7; }
-        .mi-row-text { color: #aaa; }
-        .mi-row-text b { color: #ccc; font-weight: 500; }
-        .mi-meter { height: 3px; border-radius: 2px; background: #222; margin-top: 2px; }
-        .mi-meter-fill { height: 100%; border-radius: 2px; transition: width .3s ease; }
+        .opt-chip:hover { border-color: var(--primary); color: var(--primary); }
+        .opt-chip.selected { background: var(--primary-light); border-color: var(--primary); color: var(--primary); font-weight: 600; }
+        .opt-chip.gpu-selected { background: linear-gradient(135deg, #EEF2FF, #F5F3FF); border-color: var(--primary); color: var(--primary); font-weight: 600; }
+        .opt-chip:disabled { opacity: 0.4; cursor: not-allowed; }
+        select.opt-select {
+            padding: 5px 10px; border-radius: var(--radius-xs); border: 1.5px solid var(--border);
+            font-size: 0.82rem; background: var(--surface); color: var(--text); cursor: pointer;
+            font-family: inherit; outline: none; transition: border-color 0.15s;
+        }
+        select.opt-select:focus { border-color: var(--primary); }
+        #gpuInfo { font-size: 0.75rem; color: var(--text-3); margin-top: 2px; }
 
         /* Drop zone */
         .drop-zone {
-            border: 2px dashed #333; border-radius: 12px; padding: 48px 24px;
-            text-align: center; cursor: pointer; transition: all 0.2s; background: #161616;
+            margin-top: 16px; border: 2px dashed var(--border-2); border-radius: var(--radius);
+            padding: 36px 20px; text-align: center; cursor: pointer; transition: all 0.2s;
+            background: var(--surface-2);
         }
-        .drop-zone:hover, .drop-zone.dragover { border-color: #4f8ff7; background: #1a1a2e; }
-        .drop-zone-icon { font-size: 48px; margin-bottom: 16px; }
-        .drop-zone-text { font-size: 1.1rem; color: #aaa; margin-bottom: 8px; }
-        .drop-zone-hint { font-size: 0.8rem; color: #555; }
-        .drop-zone input[type="file"] { display: none; }
+        .drop-zone:hover, .drop-zone.drag-over { border-color: var(--primary); background: var(--primary-light); }
+        .drop-zone-icon { font-size: 2rem; margin-bottom: 10px; }
+        .drop-zone-text { font-size: 0.92rem; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+        .drop-zone-hint { font-size: 0.78rem; color: var(--text-3); }
+        .drop-zone-file-preview { margin-top: 10px; font-size: 0.8rem; color: var(--primary); font-weight: 500; }
+        input[type="file"] { display: none; }
 
-        /* Warning banner */
-        .warning-banner {
-            display: none; background: #2e2a1a; border: 1px solid #f39c1244;
-            border-radius: 8px; padding: 10px 14px; margin-bottom: 16px;
-            font-size: 0.85rem; color: #f39c12;
+        /* Upload button */
+        .upload-btn {
+            display: block; width: 100%; margin-top: 16px; padding: 11px;
+            border-radius: var(--radius-sm); border: none; cursor: pointer;
+            background: var(--primary); color: #fff; font-size: 0.9rem; font-weight: 600;
+            font-family: inherit; transition: background 0.15s; letter-spacing: 0.01em;
         }
+        .upload-btn:hover { background: var(--primary-hover); }
+        .upload-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* Progress */
-        .progress-section { display: none; margin-top: 32px; }
-        .file-info {
-            display: flex; align-items: center; gap: 12px; padding: 16px;
-            background: #161616; border-radius: 8px; margin-bottom: 20px;
+        /* Advanced toggle */
+        .adv-toggle-row { margin-top: 12px; text-align: center; }
+        .adv-toggle-btn {
+            background: none; border: 1px solid var(--border); color: var(--text-3);
+            padding: 5px 14px; border-radius: 20px; font-size: 0.78rem; cursor: pointer;
+            font-family: inherit; transition: all 0.15s;
         }
-        .file-icon { font-size: 28px; }
-        .file-name { font-weight: 500; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
-        .file-meta { font-size: 0.8rem; color: #666; white-space: nowrap; text-align: right; }
-        .file-meta span { display: block; }
-        .device-badge { display: inline-block; font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; margin-left: 8px; }
-        .device-badge.gpu { color: #27ae60; background: #27ae6018; }
-        .device-badge.cpu { color: #f39c12; background: #f39c1218; }
-
-        .steps { display: flex; gap: 8px; margin-bottom: 20px; }
-        .step {
-            flex: 1; text-align: center; padding: 10px 4px; background: #1a1a1a;
-            border-radius: 6px; font-size: 0.75rem; color: #555; transition: all 0.3s; border: 1px solid transparent;
+        .adv-toggle-btn:hover { border-color: var(--border-2); color: var(--text-2); }
+        .advanced-panel {
+            display: none; margin-top: 12px; padding: 14px; border-radius: var(--radius-sm);
+            background: var(--surface-2); border: 1px solid var(--border);
         }
-        .step.active { background: #1a1a2e; color: #4f8ff7; border-color: #4f8ff733; }
-        .step.completed { background: #1a2e1a; color: #27ae60; border-color: #27ae6033; }
-        .step.paused { background: #2e2a1a; color: #f39c12; border-color: #f39c1233; }
-        .step-num { font-weight: 700; font-size: 0.9rem; display: block; margin-bottom: 2px; }
-        .step-time { display: block; font-size: 0.7rem; color: #555; margin-top: 2px; min-height: 16px; font-variant-numeric: tabular-nums; font-weight: 600; letter-spacing: 0.02em; }
-        .step.completed .step-time { color: #27ae60; }
-        .step.active .step-time { color: #4f8ff7; animation: fade-in-time 0.3s ease; }
-        @keyframes fade-in-time { from { opacity: 0; } to { opacity: 1; } }
-
-        .progress-wrapper { margin-bottom: 12px; }
-        .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .progress-label { font-size: 0.85rem; color: #aaa; font-weight: 500; }
-        .progress-percent { font-size: 0.85rem; color: #4f8ff7; font-weight: 600; font-variant-numeric: tabular-nums; }
-        .progress-bar-container { background: #222; border-radius: 8px; height: 10px; overflow: hidden; }
-        .progress-bar {
-            height: 100%; width: 0%; background: linear-gradient(90deg, #4f8ff7, #6c5ce7);
-            border-radius: 8px; transition: width 0.3s ease; position: relative;
+        .advanced-panel.show { display: block; }
+        .adv-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; font-size: 0.82rem; }
+        .adv-row:last-child { margin-bottom: 0; }
+        .adv-label { color: var(--text-2); min-width: 130px; font-size: 0.8rem; }
+        .adv-check { accent-color: var(--primary); width: 15px; height: 15px; cursor: pointer; }
+        .adv-input {
+            background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-xs);
+            padding: 5px 8px; color: var(--text); font-size: 0.82rem; flex: 1; font-family: inherit; outline: none;
         }
-        .progress-bar.active::after {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15) 50%, transparent);
-            animation: shimmer 1.5s infinite;
+        .adv-input:focus { border-color: var(--primary); }
+
+        /* ── Progress view ── */
+        #progressView { display: none; }
+        .progress-file-info { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+        .progress-file-icon { font-size: 1.4rem; }
+        .progress-file-name { font-size: 0.9rem; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+        .progress-file-size { font-size: 0.78rem; color: var(--text-3); white-space: nowrap; }
+
+        /* Step pipeline */
+        .pipeline-steps { display: flex; gap: 0; margin-bottom: 16px; }
+        .step-item {
+            flex: 1; display: flex; flex-direction: column; align-items: center; position: relative;
         }
-        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
-        .progress-bar.error { background: #e74c3c; }
-        .progress-bar.done { background: linear-gradient(90deg, #27ae60, #2ecc71); }
-        .progress-bar.paused { background: linear-gradient(90deg, #f39c12, #e67e22); }
+        .step-item:not(:last-child)::after {
+            content: ''; position: absolute; top: 14px; left: 50%; width: 100%; height: 2px;
+            background: var(--border); z-index: 0;
+        }
+        .step-item.completed:not(:last-child)::after { background: var(--success); }
+        .step-dot {
+            width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border);
+            background: var(--surface); display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; font-weight: 700; color: var(--text-3); z-index: 1;
+            transition: all 0.3s;
+        }
+        .step-item.active .step-dot { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+        .step-item.completed .step-dot { border-color: var(--success); background: var(--success); color: #fff; }
+        .step-item.paused .step-dot { border-color: var(--warning); color: var(--warning); background: var(--warning-light); }
+        .step-label { font-size: 0.68rem; color: var(--text-3); margin-top: 5px; font-weight: 500; }
+        .step-item.active .step-label { color: var(--primary); }
+        .step-item.completed .step-label { color: var(--success); }
+        .step-time { font-size: 0.65rem; color: var(--text-3); font-variant-numeric: tabular-nums; }
+        .fade-in-time { animation: fadeInTime 0.4s ease; }
+        @keyframes fadeInTime { from { opacity: 0; } to { opacity: 1; } }
 
-        .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
-        .detail-box { background: #161616; border-radius: 6px; padding: 10px 12px; }
-        .detail-label { font-size: 0.7rem; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }
-        .detail-value { font-size: 0.9rem; color: #ccc; font-weight: 500; font-variant-numeric: tabular-nums; margin-top: 2px; }
-
-        .status-text { font-size: 0.85rem; color: #888; margin-bottom: 16px; }
-        .status-text.error { color: #e74c3c; }
-        .status-text.paused { color: #f39c12; }
+        /* Progress bar */
+        .progress-track { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
+        .progress-fill { height: 100%; background: var(--primary); border-radius: 3px; transition: width 0.4s ease; width: 0%; }
+        .progress-fill.success { background: var(--success); }
+        .progress-fill.paused { background: var(--warning); }
+        .progress-fill.error { background: var(--error); }
+        .progress-meta { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-3); margin-bottom: 12px; }
+        .progress-label { color: var(--text-2); font-weight: 500; }
+        .progress-pct { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--primary); }
 
         /* Speed indicator */
-        .speed-indicator {
-            display: none; font-size: 0.75rem; color: #555;
-            text-align: right; margin-bottom: 8px;
+        .speed-badge {
+            display: none; padding: 3px 8px; border-radius: 20px; font-size: 0.72rem; font-weight: 600;
+            background: var(--primary-light); color: var(--primary);
         }
-        .speed-value { color: #4f8ff7; font-weight: 600; }
-        .speed-value.slow { color: #e74c3c; }
-        .speed-value.fast { color: #27ae60; }
 
-        /* Live subtitle preview */
-        .preview-panel {
-            display: none; background: #111; border: 1px solid #222; border-radius: 8px;
-            margin-bottom: 16px; overflow: hidden;
-        }
-        .preview-header {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 14px; background: #161616; border-bottom: 1px solid #222;
-        }
-        .preview-title { font-size: 0.8rem; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-        .preview-count { font-size: 0.75rem; color: #555; }
+        /* Live preview */
+        .preview-panel { margin-top: 12px; }
+        .preview-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .preview-title { font-size: 0.78rem; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.05em; }
+        .preview-count { font-size: 0.72rem; color: var(--text-3); }
         .preview-body {
-            max-height: 200px; overflow-y: auto; padding: 8px 0;
-            scroll-behavior: smooth;
+            max-height: 160px; overflow-y: auto; border-radius: var(--radius-sm);
+            background: var(--surface-2); border: 1px solid var(--border); padding: 10px;
         }
-        .preview-segment {
-            padding: 6px 14px; font-size: 0.85rem; display: flex; gap: 10px;
-            animation: fadeIn 0.3s ease;
-        }
-        .preview-segment:hover { background: #1a1a1a; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-        .seg-time { color: #4f8ff7; font-size: 0.75rem; white-space: nowrap; min-width: 110px; font-variant-numeric: tabular-nums; padding-top: 1px; }
-        .seg-text { color: #ddd; line-height: 1.4; }
-        .seg-new { background: #4f8ff708; }
+        .preview-segment { display: flex; gap: 10px; padding: 4px 0; border-bottom: 1px solid var(--border); font-size: 0.79rem; }
+        .preview-segment:last-child { border-bottom: none; }
+        .seg-time { color: var(--primary); font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 0.72rem; white-space: nowrap; min-width: 110px; }
+        .seg-text { color: var(--text); }
+        .seg-new { animation: fadeIn 0.4s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
-        /* Connection indicator */
-        .connection-indicator {
-            display: none; position: fixed; top: 12px; right: 12px;
-            font-size: 0.7rem; padding: 4px 10px; border-radius: 12px;
-        }
-        .connection-indicator.connected { background: #27ae6022; color: #27ae60; }
-        .connection-indicator.disconnected { background: #e74c3c22; color: #e74c3c; }
-
-        /* System health indicator */
-        .health-indicator {
-            position: fixed; top: 12px; left: 12px; display: flex; align-items: center;
-            gap: 6px; padding: 4px 10px; border-radius: 12px; background: #161616;
-            border: 1px solid #222; cursor: pointer; font-size: 0.72rem; color: #888;
-            z-index: 1000; transition: all 0.3s; user-select: none;
-        }
-        .health-indicator:hover { background: #1a1a1a; border-color: #333; }
-        .health-dot {
-            width: 8px; height: 8px; border-radius: 50%; background: #555; transition: background 0.5s;
-        }
-        .health-dot.healthy { background: #27ae60; box-shadow: 0 0 6px #27ae6066; }
-        .health-dot.warning { background: #f39c12; box-shadow: 0 0 6px #f39c1266; }
-        .health-dot.critical { background: #e74c3c; box-shadow: 0 0 6px #e74c3c66; animation: pulse-health 2s infinite; }
-        .health-dot.offline { background: #666; box-shadow: 0 0 4px #66666644; }
-        @keyframes pulse-health {
-            0%, 100% { box-shadow: 0 0 6px #e74c3c66; }
-            50% { box-shadow: 0 0 12px #e74c3caa; }
-        }
-        .health-load-bar { width: 32px; height: 4px; background: #222; border-radius: 2px; overflow: hidden; margin-left: 2px; }
-        .health-load-fill { height: 100%; border-radius: 2px; transition: width 0.8s ease, background 0.5s ease; }
-        .health-row-gauge { display: flex; align-items: center; gap: 6px; }
-        .health-mini-bar { width: 60px; height: 6px; background: #222; border-radius: 3px; overflow: hidden; }
-        .health-mini-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
-        .health-latency-badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 0.72rem; font-weight: 600; }
-        .health-latency-badge.good { background: #27ae6020; color: #27ae60; }
-        .health-latency-badge.medium { background: #f39c1220; color: #f39c12; }
-        .health-latency-badge.slow { background: #e74c3c20; color: #e74c3c; }
-
-        /* Service unavailable banner */
-        .service-banner {
-            display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 999;
-            padding: 10px 20px; text-align: center; font-size: 0.85rem; font-weight: 600;
-            animation: slide-down-banner 0.3s ease;
-        }
-        .service-banner.critical {
-            background: linear-gradient(135deg, #e74c3c, #c0392b); color: #fff;
-        }
-        .service-banner.warning {
-            background: linear-gradient(135deg, #f39c12, #e67e22); color: #fff;
-        }
-        .service-banner.hidden { display: none; }
-        @keyframes slide-down-banner {
-            from { transform: translateY(-100%); } to { transform: translateY(0); }
-        }
-        .drop-zone.disabled {
-            opacity: 0.4; pointer-events: none; cursor: not-allowed;
-        }
-        .health-panel {
-            display: none; position: fixed; top: 42px; left: 12px; width: 300px;
-            background: #161616; border: 1px solid #333; border-radius: 10px;
-            z-index: 1001; box-shadow: 0 8px 32px rgba(0,0,0,0.4); font-size: 0.82rem;
-        }
-        .health-panel.open { display: block; }
-        .health-panel-header {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 14px; border-bottom: 1px solid #222; font-weight: 600; color: #ccc;
-        }
-        .health-panel-close {
-            background: none; border: none; color: #666; font-size: 1.2rem; cursor: pointer; padding: 0 4px;
-        }
-        .health-panel-close:hover { color: #e74c3c; }
-        .health-panel-body { padding: 12px 14px; }
-        .health-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 6px 0; border-bottom: 1px solid #1a1a1a;
-        }
-        .health-row:last-child { border-bottom: none; }
-        .health-row-label { color: #888; }
-        .health-row-value { color: #ccc; font-weight: 500; }
-        .health-row-value.ok { color: #27ae60; }
-        .health-row-value.warn { color: #f39c12; }
-        .health-row-value.bad { color: #e74c3c; }
-        .health-alerts { margin-top: 8px; padding: 8px 10px; background: #1a1a1a; border-radius: 6px; font-size: 0.78rem; }
-        .health-alert-item { padding: 4px 0; color: #f39c12; }
-        .health-alert-item.critical { color: #e74c3c; }
-        @media (max-width: 480px) {
-            .health-indicator { top: auto; bottom: 12px; left: 12px; }
-            .health-panel { top: auto; bottom: 42px; }
-        }
-
-        /* Unified embed section */
-        .embed-card {
-            display: none; margin-top: 18px; background: #111; border-radius: 12px;
-            border: 1px solid #222; overflow: hidden; text-align: left;
-        }
-        .embed-card-header {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 14px 18px; background: #161616; border-bottom: 1px solid #222; cursor: pointer;
-        }
-        .embed-card-title { font-size: 0.88rem; font-weight: 600; color: #ccc; display: flex; align-items: center; gap: 8px; }
-        .embed-card-title .embed-icon { font-size: 1rem; }
-        .embed-card-toggle { font-size: 0.7rem; color: #555; transition: transform 0.2s; }
-        .embed-card-body { padding: 16px 18px; }
-        .embed-card-body.collapsed { display: none; }
-
-        /* Timing summary bar */
-        .timing-summary {
-            display: none; margin-top: 12px; padding: 10px 14px; background: #111; border-radius: 8px;
-            border: 1px solid #222; font-size: 0.78rem;
-        }
-        .timing-summary-row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; }
-        .timing-summary-label { color: #888; }
-        .timing-summary-value { color: #ccc; font-weight: 600; font-variant-numeric: tabular-nums; }
-        .timing-summary-total { color: #4f8ff7; font-weight: 700; font-size: 0.85rem; border-top: 1px solid #222; padding-top: 6px; margin-top: 4px; }
-
-        /* Embed style controls */
-        .embed-tabs { display:flex;gap:0;margin-bottom:20px;background:#0a0a0a;border-radius:8px;padding:3px; }
-        .embed-tab { flex:1;padding:10px;text-align:center;border-radius:6px;font-size:0.82rem;font-weight:500;cursor:pointer;color:#888;border:none;background:none;transition:all 0.2s; }
-        .embed-tab.active { background:#1a1a2e;color:#4f8ff7; }
-        .embed-tab:hover:not(.active) { color:#ccc; }
-        .embed-tab small { display:block;font-size:0.7rem;color:#555;margin-top:2px;font-weight:400; }
-        .embed-tab.active small { color:#4f8ff788; }
-        .embed-grid { display:grid;grid-template-columns:1fr 1fr;gap:14px; }
-        .embed-field { display:flex;flex-direction:column;gap:4px; }
-        .embed-field label { font-size:0.72rem;color:#666;text-transform:uppercase;letter-spacing:0.5px; }
-        .embed-field select, .embed-field input[type=file] { background:#0a0a0a;border:1px solid #333;border-radius:6px;padding:8px 10px;color:#ddd;font-size:0.82rem; }
-        .embed-field select:focus { border-color:#4f8ff7;outline:none; }
-        .embed-style-opts { display:none;margin-top:16px;padding-top:16px;border-top:1px solid #1a1a1a; }
-        .embed-style-opts.show { display:block; }
-        .embed-style-grid { display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px; }
-        .embed-field input[type=color] { width:36px;height:36px;border:1px solid #333;border-radius:6px;background:#0a0a0a;cursor:pointer;padding:2px; }
-        .embed-field input[type=range] { accent-color:#4f8ff7;width:100%; }
-        .embed-preview-bar { margin-top:16px;background:#000;border-radius:8px;padding:24px 16px;text-align:center;position:relative;min-height:80px;display:flex;align-items:center;justify-content:center; }
-        .embed-preview-text { font-size:1.1rem;line-height:1.4;max-width:90%; }
-        .embed-actions { margin-top:16px;display:flex;gap:12px;align-items:center; }
+        /* Details grid */
+        .details-grid { display: none; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+        .detail-box { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-xs); padding: 8px 10px; }
+        .detail-label { font-size: 0.68rem; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; }
+        .detail-value { font-size: 0.82rem; color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
 
         /* Controls */
-        .controls { display: flex; gap: 10px; justify-content: center; }
+        .task-controls { display: none; gap: 8px; margin-top: 12px; }
         .ctrl-btn {
-            padding: 10px 24px; border-radius: 8px; font-size: 0.9rem;
-            font-weight: 500; cursor: pointer; border: none; transition: all 0.2s;
+            padding: 7px 18px; border-radius: var(--radius-xs); border: 1.5px solid; cursor: pointer;
+            font-size: 0.82rem; font-weight: 600; font-family: inherit; transition: all 0.15s;
         }
-        .ctrl-btn:hover { opacity: 0.85; }
-        .ctrl-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-        .btn-pause { background: #f39c12; color: #000; }
-        .btn-resume { background: #27ae60; color: #fff; }
-        .btn-cancel { background: #333; color: #e74c3c; border: 1px solid #e74c3c44; }
-        .btn-cancel:hover { background: #e74c3c22; }
+        .btn-pause { border-color: var(--warning); color: var(--warning); background: var(--warning-light); }
+        .btn-pause:hover { background: #fef3c7; }
+        .btn-resume { border-color: var(--success); color: var(--success); background: var(--success-light); }
+        .btn-resume:hover { background: #d1fae5; }
+        .btn-cancel { border-color: var(--border-2); color: var(--text-2); background: var(--surface); }
+        .btn-cancel:hover { border-color: var(--error); color: var(--error); background: var(--error-light); }
 
-        /* Download */
-        .download-section { display: none; margin-top: 24px; text-align: center; }
-        .download-btn {
-            display: inline-block; padding: 14px 32px;
-            background: linear-gradient(135deg, #27ae60, #2ecc71);
-            color: #fff; text-decoration: none; border-radius: 8px;
-            font-size: 1rem; font-weight: 600; transition: opacity 0.2s;
+        /* Status text */
+        .status-text { font-size: 0.82rem; color: var(--text-2); min-height: 20px; }
+        .status-text.paused { color: var(--warning); }
+        .status-text.error { color: var(--error); }
+
+        /* Warning banner */
+        .warning-banner { display: none; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--warning-light); border: 1px solid #FDE68A; color: #92400E; font-size: 0.82rem; margin-bottom: 14px; }
+
+        /* Cancelled section */
+        .cancelled-section { display: none; text-align: center; padding: 20px; }
+        .cancelled-section .new-btn { padding: 8px 20px; border-radius: var(--radius-xs); border: 1.5px solid var(--border); background: var(--surface); color: var(--text-2); font-size: 0.82rem; font-weight: 500; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+        .cancelled-section .new-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+        /* ── Output card (right, ALWAYS VISIBLE) ── */
+        .output-card { width: 300px; flex-shrink: 0; position: sticky; top: 78px; }
+        .output-empty { text-align: center; padding: 32px 16px; }
+        .output-empty-icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.3; }
+        .output-empty-text { font-size: 0.85rem; color: var(--text-3); line-height: 1.6; }
+        #outputResults { display: none; }
+        .output-filename { font-size: 0.88rem; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 4px; }
+        .output-meta { font-size: 0.75rem; color: var(--text-3); margin-bottom: 16px; }
+        .dl-btn {
+            display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 14px; margin-bottom: 8px;
+            border-radius: var(--radius-sm); border: 1.5px solid; cursor: pointer; text-decoration: none;
+            font-size: 0.84rem; font-weight: 600; font-family: inherit; transition: all 0.15s; box-sizing: border-box;
         }
-        .download-btn:hover { opacity: 0.85; }
-        .result-info { margin-top: 12px; font-size: 0.8rem; color: #666; }
-        .new-btn {
-            display: inline-block; padding: 10px 24px;
-            background: transparent; border: 1px solid #333; color: #aaa;
-            border-radius: 8px; cursor: pointer; font-size: 0.9rem;
+        .dl-btn-srt { border-color: var(--success-border); background: var(--success-light); color: #065F46; }
+        .dl-btn-srt:hover { background: #d1fae5; border-color: var(--success); }
+        .dl-btn-vtt { border-color: #C7D2FE; background: var(--primary-light); color: #3730A3; }
+        .dl-btn-vtt:hover { background: #e0e7ff; border-color: var(--primary); }
+        .dl-btn-json { border-color: #DDD6FE; background: #F5F3FF; color: #5B21B6; }
+        .dl-btn-json:hover { background: #ede9fe; }
+        .dl-btn-icon { font-size: 1rem; }
+        .dl-btn-text { flex: 1; }
+        .dl-btn-ext { font-size: 0.7rem; opacity: 0.6; font-weight: 400; }
+        .next-file-btn {
+            display: block; width: 100%; margin-top: 12px; padding: 9px;
+            border-radius: var(--radius-sm); border: 1.5px solid var(--border);
+            background: var(--surface); color: var(--text-2); font-size: 0.84rem; font-weight: 600;
+            cursor: pointer; font-family: inherit; transition: all 0.15s; text-align: center;
         }
-        .new-btn:hover { border-color: #555; color: #fff; }
-        .result-top-bar {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 16px;
+        .next-file-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+        .output-divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+        /* Timing summary */
+        .timing-toggle { display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 0.78rem; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 0; }
+        .timing-toggle-icon { color: var(--text-3); font-size: 0.7rem; }
+        .timing-summary { display: none; margin-top: 8px; }
+        .timing-summary.show { display: block; }
+        .timing-summary-row { display: flex; justify-content: space-between; font-size: 0.78rem; padding: 3px 0; }
+        .timing-summary-label { color: var(--text-2); }
+        .timing-summary-value { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
+        .timing-summary-total .timing-summary-label { font-weight: 600; color: var(--text); }
+        .timing-summary-total .timing-summary-value { font-weight: 700; color: var(--primary); }
+
+        /* ── Embed card (inside output panel) ── */
+        .embed-card { border: 1px solid var(--border); border-radius: var(--radius-sm); margin-top: 12px; overflow: hidden; }
+        .embed-card-header { padding: 10px 14px; background: var(--surface-2); cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; font-weight: 600; color: var(--text); }
+        .embed-card-header:hover { background: var(--primary-light); color: var(--primary); }
+        .embed-card-toggle { font-size: 0.7rem; color: var(--text-3); transition: transform 0.2s; }
+        .embed-card-body { display: none; padding: 14px; }
+        .embed-card-body.show { display: block; }
+        .embed-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+        .embed-tab {
+            flex: 1; padding: 7px 10px; border-radius: var(--radius-xs); border: 1.5px solid var(--border);
+            font-size: 0.78rem; font-weight: 500; cursor: pointer; background: var(--surface);
+            color: var(--text-2); font-family: inherit; transition: all 0.15s; text-align: center;
         }
-        .result-top-bar .result-title { font-size: 1.1rem; font-weight: 600; color: #27ae60; }
-        .new-again-btn {
-            padding: 8px 20px; background: #1a1a2e; border: 1px solid #4f8ff744;
-            color: #4f8ff7; border-radius: 8px; cursor: pointer; font-size: 0.85rem;
-            font-weight: 500; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+        .embed-tab small { display: block; font-size: 0.65rem; opacity: 0.7; font-weight: 400; }
+        .embed-tab.active { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+        .embed-tab:hover:not(.active) { border-color: var(--border-2); }
+        .embed-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        .embed-field label { font-size: 0.72rem; color: var(--text-2); font-weight: 500; display: block; margin-bottom: 4px; }
+        .embed-field select, .embed-field input[type="color"] {
+            width: 100%; padding: 5px 8px; border-radius: var(--radius-xs); border: 1.5px solid var(--border);
+            font-size: 0.78rem; background: var(--surface); color: var(--text); font-family: inherit; outline: none;
         }
-        .new-again-btn:hover { background: #4f8ff722; border-color: #4f8ff7; color: #fff; }
+        .embed-field select:focus { border-color: var(--primary); }
+        .embed-field input[type="range"] { width: 100%; accent-color: var(--primary); }
+        .embed-style-opts { display: none; }
+        .embed-style-opts.show { display: block; }
+        .embed-style-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        .embed-preview-bar {
+            height: 48px; background: #1a1a2e; border-radius: var(--radius-xs); display: flex;
+            align-items: center; justify-content: center; margin-bottom: 10px; overflow: hidden;
+        }
+        .embed-preview-text { font-size: 14px; text-align: center; }
+        .embed-actions { display: flex; justify-content: center; }
         .embed-start-btn {
-            padding: 10px 24px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
-            cursor: pointer; border: none; background: linear-gradient(135deg, #27ae60, #2ecc71);
-            color: #fff; transition: all 0.2s;
+            padding: 8px 24px; border-radius: var(--radius-xs); border: none; cursor: pointer;
+            background: var(--success); color: #fff; font-size: 0.84rem; font-weight: 600;
+            font-family: inherit; transition: background 0.15s;
         }
-        .embed-start-btn:hover { opacity: 0.9; transform: translateY(-1px); }
-        .embed-start-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-        .embed-progress { margin-top: 12px; display: none; }
-        .embed-progress-bar { height: 4px; background: #1a1a1a; border-radius: 2px; overflow: hidden; }
-        .embed-progress-fill { height: 100%; background: linear-gradient(90deg, #27ae60, #2ecc71); border-radius: 2px; transition: width 0.3s; width: 0%; }
-        .embed-status { font-size: 0.8rem; color: #888; margin-top: 8px; }
-        .embed-status.success { color: #27ae60; }
-        .embed-status.error { color: #e74c3c; }
-        .embed-result { display: none; margin-top: 12px; background: #0a2e0a; border: 1px solid #27ae6044; border-radius: 8px; padding: 12px 16px; text-align: center; }
-        .embed-result a { color: #4ade80; font-weight: 600; text-decoration: none; }
-        .embed-result a:hover { text-decoration: underline; }
-        .cancelled-section { display: none; margin-top: 24px; text-align: center; }
-        .cancelled-text { color: #e74c3c; margin-bottom: 16px; }
+        .embed-start-btn:hover { background: #059669; }
+        .embed-progress { display: none; margin-top: 10px; }
+        .embed-progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+        .embed-progress-fill { height: 100%; background: var(--primary); border-radius: 2px; transition: width 0.3s; }
+        .embed-status { font-size: 0.78rem; color: var(--text-2); }
+        .embed-result { display: none; text-align: center; padding: 10px 0; }
+        .embed-result a { display: inline-block; padding: 7px 18px; background: var(--success); border-radius: var(--radius-xs); color: #fff; text-decoration: none; font-size: 0.82rem; font-weight: 600; }
 
-        /* Combine mode */
-        .mode-toggle { display: flex; gap: 0; margin-bottom: 20px; background: #0a0a0a; border-radius: 8px; padding: 3px; }
-        .mode-btn {
-            flex: 1; padding: 10px; text-align: center; border-radius: 6px; font-size: 0.85rem;
-            font-weight: 500; cursor: pointer; color: #888; border: none; background: none; transition: all 0.2s;
-        }
-        .mode-btn.active { background: #1a1a2e; color: #4f8ff7; }
-        .mode-btn:hover:not(.active) { color: #ccc; }
-        .mode-btn small { display: block; font-size: 0.7rem; color: #555; margin-top: 2px; font-weight: 400; }
-        .mode-btn.active small { color: #4f8ff788; }
-        .combine-section { display: none; }
-        .combine-dropzones { display: flex; gap: 12px; margin-bottom: 16px; }
-        .combine-drop {
-            flex: 1; border: 2px dashed #333; border-radius: 10px; padding: 28px 16px;
-            text-align: center; cursor: pointer; transition: all 0.2s; background: #161616;
-        }
-        .combine-drop:hover, .combine-drop.dragover { border-color: #4f8ff7; background: #1a1a2e; }
-        .combine-drop.has-file { border-color: #27ae60; background: #0a2e0a; }
-        .combine-drop-icon { font-size: 32px; margin-bottom: 8px; }
-        .combine-drop-label { font-size: 0.85rem; color: #aaa; margin-bottom: 4px; }
-        .combine-drop-hint { font-size: 0.72rem; color: #555; }
-        .combine-drop-file { font-size: 0.8rem; color: #27ae60; margin-top: 8px; word-break: break-all; }
-        .combine-drop input[type="file"] { display: none; }
-        .combine-options { margin-bottom: 16px; }
-        .combine-progress-section { display: none; margin-top: 20px; }
-        .combine-result { display: none; margin-top: 16px; text-align: center; }
-        .combine-result a {
-            display: inline-block; padding: 12px 28px;
-            background: linear-gradient(135deg, #27ae60, #2ecc71);
-            color: #fff; text-decoration: none; border-radius: 8px;
-            font-size: 0.95rem; font-weight: 600; transition: opacity 0.2s;
-        }
-        .combine-result a:hover { opacity: 0.85; }
-
-        /* S2-1: Subtitle editor */
-        .editor-section { display: none; margin-top: 20px; }
-        .editor-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 12px;
-        }
-        .editor-title { font-size: 0.95rem; font-weight: 600; color: #ccc; }
+        /* ── Subtitle editor ── */
+        .editor-section { display: none; margin-top: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+        .editor-header { padding: 10px 14px; background: var(--surface-2); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .editor-title { font-size: 0.82rem; font-weight: 600; color: var(--text); }
         .editor-actions { display: flex; gap: 8px; }
         .editor-btn {
-            padding: 6px 16px; border-radius: 6px; font-size: 0.8rem;
-            font-weight: 500; cursor: pointer; border: none; transition: all 0.2s;
+            padding: 5px 12px; border-radius: var(--radius-xs); border: 1.5px solid; font-size: 0.78rem;
+            font-weight: 500; cursor: pointer; font-family: inherit; transition: all 0.15s;
         }
-        .editor-btn:hover { opacity: 0.85; }
-        .editor-btn.save { background: #27ae60; color: #fff; }
-        .editor-btn.cancel-edit { background: #333; color: #aaa; }
-        .editor-table {
-            width: 100%; border-collapse: collapse; font-size: 0.82rem;
+        .editor-btn.cancel-edit { border-color: var(--border); color: var(--text-2); background: var(--surface); }
+        .editor-btn.cancel-edit:hover { border-color: var(--border-2); }
+        .editor-btn.save { border-color: var(--success-border); background: var(--success-light); color: #065F46; }
+        .editor-btn.save:hover { background: #d1fae5; }
+        .editor-body { padding: 12px; }
+        .editor-segment { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; }
+        .editor-time { font-family: monospace; font-size: 0.72rem; color: var(--primary); white-space: nowrap; padding-top: 7px; }
+        .editor-text-input {
+            flex: 1; padding: 6px 8px; border-radius: var(--radius-xs); border: 1.5px solid var(--border);
+            font-size: 0.82rem; background: var(--surface); color: var(--text); font-family: inherit; resize: vertical; outline: none;
         }
-        .editor-table th {
-            text-align: left; padding: 8px 10px; background: #161616;
-            color: #555; font-size: 0.7rem; text-transform: uppercase;
-            letter-spacing: 0.5px; border-bottom: 1px solid #222;
-        }
-        .editor-table td { padding: 4px 6px; border-bottom: 1px solid #1a1a1a; }
-        .editor-table .seg-num { color: #555; width: 30px; text-align: center; }
-        .editor-table input[type="text"] {
-            width: 100%; background: #1a1a1a; border: 1px solid #333;
-            border-radius: 4px; padding: 5px 8px; color: #ddd; font-size: 0.82rem;
-        }
-        .editor-table input[type="text"]:focus {
-            border-color: #4f8ff7; outline: none;
-        }
-        .editor-table .ts-input {
-            width: 90px; font-variant-numeric: tabular-nums; text-align: center;
-        }
-        .editor-table .text-input { min-width: 200px; }
-        .editor-table .del-btn {
-            background: none; border: none; color: #e74c3c44; cursor: pointer;
-            font-size: 1rem; padding: 2px 6px;
-        }
-        .editor-table .del-btn:hover { color: #e74c3c; }
-        .editor-scroll { max-height: 400px; overflow-y: auto; border: 1px solid #222; border-radius: 8px; }
+        .editor-text-input:focus { border-color: var(--primary); }
 
-        /* S2-2: Video preview */
-        .video-preview-section { display: none; margin-top: 20px; }
-        .video-preview-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 10px;
-        }
-        .video-preview-title { font-size: 0.85rem; color: #888; font-weight: 600; text-transform: uppercase; }
-        .video-preview-load {
-            padding: 6px 14px; border-radius: 6px; font-size: 0.8rem;
-            background: #1a1a2e; color: #4f8ff7; border: 1px solid #4f8ff744;
-            cursor: pointer;
-        }
-        .video-preview-load:hover { border-color: #4f8ff7; }
-        .video-container {
-            position: relative; background: #000; border-radius: 8px; overflow: hidden;
-        }
-        .video-container video {
-            width: 100%; max-height: 400px; display: block;
-        }
-        .video-container input[type="file"] { display: none; }
+        /* ── Video preview ── */
+        .video-preview-section { display: none; margin-top: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+        .video-preview-header { padding: 10px 14px; background: var(--surface-2); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .video-preview-title { font-size: 0.82rem; font-weight: 600; color: var(--text); }
+        .video-preview-body { position: relative; background: #000; }
+        video { width: 100%; max-height: 280px; display: block; }
+        track {}
 
-        /* S2-3: Batch queue */
-        .batch-queue { margin-top: 16px; }
-        .batch-item {
-            display: flex; align-items: center; gap: 10px; padding: 10px 14px;
-            background: #161616; border-radius: 8px; margin-bottom: 8px;
-            font-size: 0.82rem; animation: fadeIn 0.3s ease;
+        /* ── Combine section ── */
+        .combine-section { display: none; }
+        .combine-dropzones { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+        .combine-drop {
+            border: 2px dashed var(--border-2); border-radius: var(--radius-sm); padding: 20px 12px;
+            text-align: center; cursor: pointer; transition: all 0.2s; background: var(--surface-2);
         }
-        .batch-item .bi-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #ccc; }
-        .batch-item .bi-status {
-            font-size: 0.7rem; padding: 2px 8px; border-radius: 4px;
-            text-transform: uppercase; letter-spacing: 0.5px;
+        .combine-drop:hover { border-color: var(--primary); background: var(--primary-light); }
+        .combine-drop-icon { font-size: 1.8rem; margin-bottom: 6px; }
+        .combine-drop-label { font-size: 0.84rem; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+        .combine-drop-hint { font-size: 0.72rem; color: var(--text-3); }
+        .combine-drop-file { font-size: 0.75rem; color: var(--primary); font-weight: 500; margin-top: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .combine-options { display: flex; flex-direction: column; gap: 12px; }
+        .combine-style-opts { display: none; }
+        .combine-style-opts.show { display: block; }
+        .combine-style-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        .combine-preview-bar {
+            height: 48px; background: #1a1a2e; border-radius: var(--radius-xs); display: flex;
+            align-items: center; justify-content: center; margin-bottom: 10px; overflow: hidden;
         }
-        .bi-status.queued { background: #333; color: #888; }
-        .bi-status.active { background: #1a1a2e; color: #4f8ff7; }
-        .bi-status.done { background: #1a2e1a; color: #27ae60; }
-        .bi-status.error { background: #2e1a1a; color: #e74c3c; }
-        .batch-item .bi-progress {
-            width: 80px; height: 4px; background: #333; border-radius: 2px; overflow: hidden;
+        .combine-lang-group { }
+        .combine-btn {
+            padding: 10px 24px; border-radius: var(--radius-sm); border: none; cursor: pointer;
+            background: var(--success); color: #fff; font-size: 0.9rem; font-weight: 600;
+            font-family: inherit; transition: background 0.15s;
         }
-        .batch-item .bi-bar { height: 100%; background: #4f8ff7; border-radius: 2px; transition: width 0.3s; }
-        .batch-item .bi-bar.done { background: #27ae60; }
+        .combine-btn:hover { background: #059669; }
+        .combine-result { display: none; text-align: center; padding: 12px 0; }
+        .combine-progress { display: none; margin-top: 10px; }
+        .combine-progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+        .combine-progress-fill { height: 100%; background: var(--primary); border-radius: 2px; transition: width 0.3s; }
+        .combine-status { font-size: 0.78rem; color: var(--text-2); }
+        .combine-new-btn {
+            display: inline-block; margin-top: 8px; padding: 7px 18px;
+            border-radius: var(--radius-xs); border: 1.5px solid var(--border);
+            background: var(--surface); color: var(--text-2); font-size: 0.82rem; font-weight: 500;
+            cursor: pointer; font-family: inherit; text-decoration: none; transition: all 0.15s;
+        }
+        .combine-new-btn:hover { border-color: var(--primary); color: var(--primary); }
 
-        /* S2-5: Enhanced drag-drop */
-        .drop-zone.dragover {
-            border-color: #4f8ff7; background: #1a1a2e;
-            box-shadow: 0 0 20px rgba(79, 143, 247, 0.1);
-            transform: scale(1.01);
-        }
-        .drop-zone-file-preview {
-            display: none; margin-top: 8px; font-size: 0.8rem; color: #4f8ff7;
-            background: #4f8ff710; padding: 6px 12px; border-radius: 6px;
-        }
-        .drop-zone.dragover .drop-zone-text { color: #4f8ff7; }
-        .drop-zone.dragover .drop-zone-icon { transform: scale(1.1); transition: transform 0.2s; }
-
-        /* S2-6: Task queue panel */
-        /* Task Queue — sidebar next to main content */
+        /* ── Task queue (bottom-left fixed panel) ── */
         .task-queue-panel {
-            position: fixed; top: 20px; right: 20px; width: 260px;
-            background: #111; border: 1px solid #222; border-radius: 10px;
-            overflow: hidden; z-index: 100;
-            display: flex; flex-direction: column; max-height: calc(100vh - 40px);
+            position: fixed; bottom: 20px; left: 20px; width: 240px;
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+            box-shadow: var(--shadow-md); overflow: hidden; z-index: 40;
+            display: flex; flex-direction: column; max-height: calc(100vh - 100px);
         }
         .tq-header {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 12px 14px; background: #161616; border-bottom: 1px solid #222;
+            padding: 10px 14px; background: var(--surface-2); border-bottom: 1px solid var(--border);
             cursor: pointer;
         }
-        .tq-title { font-size: 0.8rem; color: #888; font-weight: 600; text-transform: uppercase; }
-        .tq-toggle { font-size: 0.75rem; color: #555; transition: transform 0.3s; }
+        .tq-title { font-size: 0.72rem; color: var(--text-2); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+        .tq-toggle { font-size: 0.65rem; color: var(--text-3); }
         .tq-body { flex: 1; overflow-y: auto; }
-        .tq-item {
-            display: flex; align-items: center; gap: 10px; padding: 8px 14px;
-            border-bottom: 1px solid #1a1a1a; font-size: 0.8rem;
-        }
+        .tq-item { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-bottom: 1px solid var(--border); font-size: 0.78rem; }
         .tq-item:last-child { border-bottom: none; }
-        .tq-item .tq-dot {
-            width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+        .tq-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+        .tq-dot.queued { background: var(--text-3); }
+        .tq-dot.extracting, .tq-dot.transcribing { background: var(--primary); animation: pulse 1s infinite; }
+        .tq-dot.done { background: var(--success); }
+        .tq-dot.error, .tq-dot.cancelled { background: var(--error); }
+        .tq-dot.combining { background: #8B5CF6; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .tq-item .tq-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); }
+        .tq-item .tq-pct { font-variant-numeric: tabular-nums; color: var(--text-3); min-width: 35px; text-align: right; }
+        .tq-item .tq-time { font-size: 0.62rem; color: var(--text-3); min-width: 44px; text-align: right; flex-shrink: 0; }
+
+        /* ── Health panel ── */
+        .connection-indicator { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); background: var(--warning); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; z-index: 200; display: none; }
+        .connection-indicator.connected { display: none; }
+        .connection-indicator.disconnected { display: block; }
+        .service-banner { padding: 10px 24px; background: var(--error-light); border-bottom: 2px solid var(--error); color: var(--error); font-size: 0.82rem; font-weight: 500; }
+        .service-banner.hidden { display: none; }
+        .health-panel {
+            position: fixed; top: 68px; right: 20px; width: 320px;
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+            box-shadow: var(--shadow-md); z-index: 60; display: none; max-height: 400px; overflow-y: auto;
         }
-        .tq-dot.queued { background: #888; }
-        .tq-dot.extracting, .tq-dot.transcribing { background: #4f8ff7; animation: pulse 1s infinite; }
-        .tq-dot.done { background: #27ae60; }
-        .tq-dot.error, .tq-dot.cancelled { background: #e74c3c; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-        .tq-item .tq-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #aaa; }
-        .tq-item .tq-pct { font-variant-numeric: tabular-nums; color: #555; min-width: 35px; text-align: right; }
-        .tq-item .tq-time { font-size: 0.65rem; color: #444; min-width: 50px; text-align: right; flex-shrink: 0; }
-        .tq-dot.combining { background: #9b59b6; animation: pulse 1s infinite; }
+        .health-panel.show { display: block; }
+        .health-panel-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+        .health-panel-header span { font-size: 0.82rem; font-weight: 600; color: var(--text); }
+        .health-panel-close { background: none; border: none; cursor: pointer; color: var(--text-3); font-size: 1rem; padding: 2px; }
+        .health-panel-close:hover { color: var(--text); }
+        .health-panel-body { padding: 14px 16px; font-size: 0.8rem; color: var(--text-2); }
+        .health-mini-bar { width: 60px; height: 5px; background: var(--border); border-radius: 2px; overflow: hidden; display: inline-block; vertical-align: middle; margin-left: 6px; }
+        .health-mini-fill { height: 100%; border-radius: 2px; }
+        .health-load-bar { width: 32px; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; display: inline-block; vertical-align: middle; margin-left: 4px; }
+        .health-load-fill { height: 100%; border-radius: 2px; }
+
+        /* ── Batch queue ── */
+        .batch-queue { margin-top: 14px; }
+        .batch-item { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 0.8rem; }
+        .batch-item:last-child { border-bottom: none; }
+        .batch-item .bi-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+        .batch-item .bi-status { font-size: 0.7rem; padding: 2px 7px; border-radius: 10px; font-weight: 600; }
+        .bi-status.queued { background: var(--border); color: var(--text-3); }
+        .bi-status.uploading, .bi-status.processing { background: var(--primary-light); color: var(--primary); }
+        .bi-status.done { background: var(--success-light); color: var(--success); }
+        .bi-status.error { background: var(--error-light); color: var(--error); }
+        .batch-item .bi-progress { width: 70px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+        .batch-item .bi-bar { height: 100%; background: var(--primary); border-radius: 2px; transition: width 0.3s; }
+        .batch-item .bi-bar.done { background: var(--success); }
+
+        /* Model info */
+        .model-info { display: none; margin-top: 8px; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--border); font-size: 0.78rem; color: var(--text-2); line-height: 1.5; }
+        .model-info .mi-badges { display: flex; gap: 6px; margin-bottom: 6px; }
+        .mi-badge { padding: 2px 8px; border-radius: 10px; font-size: 0.68rem; font-weight: 600; }
+        .mi-badge.basic { background: var(--primary-light); color: var(--primary); }
+        .mi-badge.speed { background: var(--success-light); color: var(--success); }
+        .mi-badge.size { background: var(--border); color: var(--text-2); }
+        .mi-pros li { color: var(--success); }
+        .mi-cons li { color: var(--warning); }
+        .mi-features li { color: var(--primary); }
+        .model-info ul { list-style: none; padding-left: 0; }
+        .model-info ul li::before { content: '• '; opacity: 0.6; }
 
         /* Speaker labels */
-        .speaker-label {
-            font-size: 0.7rem; font-weight: 600; padding: 1px 6px; border-radius: 3px;
-            margin-right: 4px; display: inline-block;
-        }
-        .speaker-0 { background: #38bdf822; color: #38bdf8; }
-        .speaker-1 { background: #4ade8022; color: #4ade80; }
-        .speaker-2 { background: #fbbf2422; color: #fbbf24; }
-        .speaker-3 { background: #f8717122; color: #f87171; }
-        .speaker-4 { background: #a78bfa22; color: #a78bfa; }
-
-        /* Advanced options */
-        .advanced-toggle {
-            text-align: center; margin-bottom: 16px;
-        }
-        .advanced-toggle button {
-            background: none; border: 1px solid #333; color: #666; padding: 6px 16px;
-            border-radius: 6px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s;
-        }
-        .advanced-toggle button:hover { border-color: #555; color: #aaa; }
-        .advanced-panel {
-            display: none; background: #161616; border-radius: 8px; padding: 14px;
-            margin-bottom: 16px; border: 1px solid #222;
-        }
-        .advanced-panel.show { display: block; }
-        .adv-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-        .adv-row:last-child { margin-bottom: 0; }
-        .adv-label { font-size: 0.8rem; color: #888; min-width: 130px; }
-        .adv-check { accent-color: #4f8ff7; width: 16px; height: 16px; cursor: pointer; }
-        .adv-input {
-            background: #1a1a1a; border: 1px solid #333; border-radius: 4px;
-            padding: 5px 8px; color: #ddd; font-size: 0.82rem; flex: 1;
-        }
-        .adv-input:focus { border-color: #4f8ff7; outline: none; }
-
-        /* S2-4: Mobile responsive */
-        @media (max-width: 1000px) {
-            .task-queue-panel { position: static; width: 100%; max-width: 700px;
-                margin: 0 auto; max-height: none; }
-        }
-        @media (max-width: 600px) {
-            body { align-items: flex-start; }
-            .container { padding: 20px 12px; }
-            h1 { font-size: 1.5rem; }
-            .brand-logo { width: 34px; height: 34px; }
-            .brand-header { gap: 10px; }
-            .options-panel { flex-direction: column; }
-            .option-buttons { flex-wrap: wrap; }
-            .opt-btn { min-width: 0; font-size: 0.7rem; padding: 6px 2px; }
-            .opt-btn .opt-detail { font-size: 0.55rem; }
-            .drop-zone { padding: 32px 16px; }
-            .drop-zone-icon { font-size: 36px; }
-            .drop-zone-text { font-size: 0.95rem; }
-            .file-info { flex-direction: column; text-align: center; gap: 6px; }
-            .file-meta { text-align: center; }
-            .steps { gap: 4px; }
-            .step { font-size: 0.65rem; padding: 8px 2px; }
-            .step-num { font-size: 0.75rem; }
-            .details-grid { grid-template-columns: 1fr; }
-            .preview-segment { flex-direction: column; gap: 2px; }
-            .seg-time { min-width: 0; }
-            .download-btn { padding: 12px 20px; font-size: 0.9rem; }
-            .editor-scroll { max-height: 300px; }
-            .editor-table .ts-input { width: 70px; font-size: 0.7rem; }
-            .editor-table .text-input { min-width: 120px; }
-            .video-container video { max-height: 250px; }
-            .embed-grid { grid-template-columns: 1fr; }
-            .embed-style-grid { grid-template-columns: 1fr 1fr; }
-            .embed-tabs { flex-direction: column; }
-            .embed-preview-text { font-size: 16px !important; }
-        }
-        @media (max-width: 400px) {
-            .options-panel { gap: 8px; margin-bottom: 12px; }
-            .option-group { padding: 8px 10px; }
-            .download-section > div { flex-direction: column; align-items: center; }
-        }
+        .speaker-label { font-size: 0.68rem; font-weight: 600; padding: 1px 5px; border-radius: 3px; margin-right: 4px; display: inline-block; }
+        .speaker-0 { background: #DBEAFE; color: #1D4ED8; }
+        .speaker-1 { background: #D1FAE5; color: #065F46; }
+        .speaker-2 { background: #FEF3C7; color: #92400E; }
+        .speaker-3 { background: #FEE2E2; color: #991B1B; }
+        .speaker-4 { background: #EDE9FE; color: #5B21B6; }
 
         /* Footer */
-        .site-footer {
-            width: 100%; max-width: 700px; margin: 40px auto 0; padding: 20px 24px;
-            border-top: 1px solid #222; text-align: center;
+        .site-footer { border-top: 1px solid var(--border); padding: 16px 24px; text-align: center; background: var(--surface); }
+        .footer-brand { font-size: 0.78rem; color: var(--text-3); margin-bottom: 4px; font-weight: 500; }
+        .footer-tech { font-size: 0.72rem; color: var(--text-3); margin-bottom: 4px; }
+        .footer-github { font-size: 0.72rem; color: var(--text-3); }
+        .footer-github a { color: var(--primary); text-decoration: none; }
+        .footer-github a:hover { text-decoration: underline; }
+
+        /* New/action buttons */
+        .new-btn {
+            padding: 7px 16px; border-radius: var(--radius-xs); border: 1.5px solid var(--border);
+            background: var(--surface); color: var(--text-2); font-size: 0.82rem; font-weight: 500;
+            cursor: pointer; font-family: inherit; transition: all 0.15s;
         }
-        .footer-brand { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-        .footer-brand svg { width: 20px; height: 20px; }
-        .footer-brand span { font-size: 0.8rem; font-weight: 600; color: #555; letter-spacing: -0.3px; }
-        .footer-tagline { font-size: 0.7rem; color: #444; margin-bottom: 10px; }
-        .footer-github { font-size: 0.75rem; color: #555; }
-        .footer-github a { color: #4f8ff7; text-decoration: none; }
-        .footer-github a:hover { text-decoration: underline; color: #6c9ff7; }
+        .new-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+
+        /* Critical lockdown overlay */
+        .critical-overlay { position: fixed; inset: 0; background: rgba(239,68,68,0.1); z-index: 1000; pointer-events: none; }
+        .critical-banner { background: var(--error); color: #fff; padding: 12px 24px; font-size: 0.84rem; font-weight: 600; text-align: center; }
+
+        /* Scrollbars */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .app-main { flex-direction: column; padding: 14px 16px; }
+            .output-card { width: 100%; position: static; }
+            .task-queue-panel { position: static; width: 100%; max-height: none; bottom: auto; left: auto; margin: 0; }
+        }
+        @media (max-width: 600px) {
+            .app-main { padding: 10px 12px; }
+            .pipeline-steps { display: none; }
+            .combine-dropzones { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 400px) {
+            .app-header { padding: 0 10px; }
+            .header-wordmark { display: none; }
+            .opt-chips { gap: 4px; }
+            .opt-chip { padding: 5px 8px; font-size: 0.72rem; }
+        }
+
+        /* Legacy compat */
+        .gpu-badge { display: inline-block; font-size: 0.7rem; color: var(--success); background: var(--success-light); padding: 2px 8px; border-radius: 4px; margin-top: 6px; }
+        .no-gpu-badge { display: inline-block; font-size: 0.7rem; color: var(--error); background: var(--error-light); padding: 2px 8px; border-radius: 4px; margin-top: 6px; }
+
+        /* ── Model info panel ── */
+        .model-info.show { display: block; }
+        .mi-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+        .mi-title { font-size: 0.85rem; font-weight: 700; color: var(--text); }
+        .mi-badges { display: flex; gap: 4px; flex-wrap: wrap; }
+        .mi-badge-acc { background: var(--primary-light); color: var(--primary); padding: 2px 7px; border-radius: 10px; font-size: 0.68rem; font-weight: 600; }
+        .mi-badge-speed { background: var(--success-light); color: var(--success); padding: 2px 7px; border-radius: 10px; font-size: 0.68rem; font-weight: 600; }
+        .mi-badge-vram { background: var(--border); color: var(--text-2); padding: 2px 7px; border-radius: 10px; font-size: 0.68rem; font-weight: 600; }
+        .mi-meter { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 2px; }
+        .mi-meter-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+        .mi-row { display: flex; gap: 6px; align-items: flex-start; margin-top: 6px; font-size: 0.78rem; line-height: 1.4; }
+        .mi-icon { flex-shrink: 0; font-size: 0.78rem; font-weight: 700; margin-top: 1px; }
+        .mi-icon-best { color: var(--success); }
+        .mi-icon-warn { color: var(--warning); }
+        .mi-icon-tip { color: var(--primary); }
+        .mi-row-text { color: var(--text-2); }
+
+        /* ── Health panel rows ── */
+        .health-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 0.8rem; }
+        .health-row:last-child { border-bottom: none; }
+        .health-row-label { color: var(--text-2); font-weight: 500; }
+        .health-row-value { color: var(--text); font-weight: 600; display: flex; align-items: center; gap: 4px; }
+        .health-row-value.ok { color: var(--success); }
+        .health-row-value.bad { color: var(--error); }
+        .health-latency-badge { padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 600; }
+        .health-latency-badge.good { background: var(--success-light); color: #065F46; }
+        .health-latency-badge.medium { background: var(--warning-light); color: #92400E; }
+        .health-latency-badge.slow { background: var(--error-light); color: #991B1B; }
+        .health-alerts { margin-top: 10px; }
+        .health-alert-item { padding: 6px 8px; border-radius: var(--radius-xs); margin-top: 4px; font-size: 0.78rem; }
+        .health-alert-item.warning { background: var(--warning-light); color: #92400E; border-left: 3px solid var(--warning); }
+        .health-alert-item.critical { background: var(--error-light); color: #991B1B; border-left: 3px solid var(--error); }
+
     </style>
 </head>
 <body>
     <div class="connection-indicator" id="connIndicator"></div>
-    <!-- System Health Indicator -->
     <div class="service-banner hidden" id="serviceBanner"></div>
-    <div class="health-indicator" id="healthIndicator" onclick="toggleHealthPanel()">
-        <span class="health-dot" id="healthDot"></span>
-        <span class="health-label" id="healthLabel">System</span>
-        <span class="health-load-bar"><span class="health-load-fill" id="healthLoadFill" style="width:0%;background:#27ae60;"></span></span>
-    </div>
+    
+    <!-- Health panel popup -->
     <div class="health-panel" id="healthPanel">
         <div class="health-panel-header">
             <span>System Status</span>
@@ -648,532 +588,416 @@
         </div>
         <div class="health-panel-body" id="healthPanelBody">Loading...</div>
     </div>
-    <div class="page-layout">
-    <div class="container">
-        <div class="brand-header">
-            <svg class="brand-logo" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <linearGradient id="brandGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
-                        <stop offset="0%" stop-color="#4f8ff7"/>
-                        <stop offset="100%" stop-color="#6c5ce7"/>
-                    </linearGradient>
-                </defs>
-                <rect width="64" height="64" rx="14" fill="#161616"/>
-                <rect x="8" y="38" width="48" height="6" rx="3" fill="url(#brandGrad)" opacity=".9"/>
-                <rect x="14" y="48" width="36" height="5" rx="2.5" fill="url(#brandGrad)" opacity=".5"/>
-                <path d="M22 12 L42 24 L22 36Z" fill="url(#brandGrad)" opacity=".85"/>
+
+    <!-- Header -->
+    <header class="app-header">
+        <a class="header-brand" href="/">
+            <svg class="header-logo" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="64" height="64" rx="14" fill="#6366F1"/>
+                <rect x="8" y="38" width="48" height="6" rx="3" fill="white" opacity=".9"/>
+                <rect x="14" y="48" width="36" height="5" rx="2.5" fill="white" opacity=".5"/>
+                <path d="M22 12 L42 24 L22 36Z" fill="white" opacity=".85"/>
             </svg>
-            <div class="brand-wordmark">
-                <h1>Sub<span class="brand-accent">Forge</span></h1>
+            <span class="header-wordmark">Sub<span>Forge</span></span>
+        </a>
+        <div class="header-right">
+            <div class="header-status" id="healthIndicator" onclick="toggleHealthPanel()">
+                <span class="health-dot" id="healthDot"></span>
+                <span id="healthLabel">System</span>
+                <span class="health-load-bar"><span class="health-load-fill" id="healthLoadFill" style="width:0%;background:var(--success);"></span></span>
             </div>
         </div>
-        <p class="page-subtitle">Automatic subtitle generation built with FastAPI, faster-whisper, and FFmpeg</p>
+    </header>
 
-        <!-- Warning banner -->
-        <div class="warning-banner" id="warningBanner"></div>
+    <!-- Main two-column layout -->
+    <main class="app-main">
 
-        <!-- Mode toggle -->
-        <div class="mode-toggle" id="modeToggle">
-            <button class="mode-btn active" id="modeTranscribe" onclick="setAppMode('transcribe')">
-                Transcribe<small>AI-powered subtitles</small>
-            </button>
-            <button class="mode-btn" id="modeCombine" onclick="setAppMode('combine')">
-                Combine<small>Video + Subtitle file</small>
-            </button>
-        </div>
-
-        <!-- Options -->
-        <div class="options-panel" id="optionsPanel">
-            <div class="option-group">
-                <div class="option-label">Processing Device</div>
-                <div class="option-buttons" id="deviceButtons">
-                    <button class="opt-btn gpu-selected" data-value="cuda" id="btnCuda">GPU<span class="opt-detail">Fast</span></button>
-                    <button class="opt-btn" data-value="cpu" id="btnCpu">CPU<span class="opt-detail">Slow</span></button>
-                </div>
-                <div id="gpuInfo"></div>
-            </div>
-            <div class="option-group">
-                <div class="option-label">Model Quality</div>
-                <div class="option-buttons" id="modelButtons">
-                    <button class="opt-btn selected" data-value="tiny">Tiny<span class="opt-detail">~75MB</span></button>
-                    <button class="opt-btn" data-value="base">Base<span class="opt-detail">~140MB</span></button>
-                    <button class="opt-btn" data-value="small">Small<span class="opt-detail">~460MB</span></button>
-                    <button class="opt-btn" data-value="medium">Med<span class="opt-detail">~1.5GB</span></button>
-                    <button class="opt-btn" data-value="large">Large<span class="opt-detail">~3GB</span></button>
-                </div>
-            </div>
-        </div>
-        <div class="model-info" id="modelInfo"></div>
-        <div class="options-panel" id="optionsPanel2">
-            <div class="option-group">
-                <div class="option-label">Language</div>
-                <select id="languageSelect" style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid #333;background:#1a1a1a;color:#ccc;font-size:0.85rem;cursor:pointer;">
-                    <option value="auto" selected>Auto-detect</option>
-                </select>
-            </div>
-            <div class="option-group">
-                <div class="option-label">Output Format</div>
-                <div class="option-buttons" id="formatButtons">
-                    <button class="opt-btn selected" data-value="srt">SRT<span class="opt-detail">Standard</span></button>
-                    <button class="opt-btn" data-value="vtt">VTT<span class="opt-detail">Web</span></button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Advanced Options -->
-        <div class="advanced-toggle" id="advancedToggle">
-            <button onclick="toggleAdvanced()">Advanced Options</button>
-        </div>
-        <div class="advanced-panel" id="advancedPanel">
-            <div class="adv-row">
-                <span class="adv-label">Word Timestamps</span>
-                <input type="checkbox" class="adv-check" id="advWordTimestamps">
-                <span style="font-size:0.75rem;color:#555">Karaoke-style timing</span>
-            </div>
-            <div class="adv-row">
-                <span class="adv-label">Speaker Diarization</span>
-                <input type="checkbox" class="adv-check" id="advDiarize">
-                <span style="font-size:0.75rem;color:#555">Who is speaking</span>
-            </div>
-            <div class="adv-row">
-                <span class="adv-label">Translate to English</span>
-                <input type="checkbox" class="adv-check" id="advTranslate">
-                <span style="font-size:0.75rem;color:#555">Any language → English</span>
-            </div>
-            <div class="adv-row" style="border-top:1px solid #1a1a1a;padding-top:10px;margin-top:4px;">
-                <span class="adv-label">Auto-embed subtitles</span>
-                <select id="advAutoEmbed" style="background:#1a1a1a;border:1px solid #333;border-radius:4px;padding:5px 8px;color:#ddd;font-size:0.82rem;">
-                    <option value="">Off</option>
-                    <option value="soft">Soft Mux (fast, selectable track)</option>
-                    <option value="hard">Hard Burn (permanent, styled)</option>
-                </select>
-            </div>
-            <div class="adv-row">
-                <span class="adv-label">Custom Vocabulary</span>
-                <input type="text" class="adv-input" id="advVocabulary" placeholder="Domain-specific terms (e.g., product names, jargon)">
-            </div>
-            <div class="adv-row">
-                <span class="adv-label">Max chars/line</span>
-                <input type="range" id="advMaxChars" min="20" max="80" value="42" style="flex:1;accent-color:#4f8ff7">
-                <span id="advMaxCharsValue" style="font-size:0.8rem;color:#888;min-width:30px">42</span>
-            </div>
-        </div>
-
-        <!-- Upload -->
-        <div class="drop-zone" id="dropZone">
-            <div class="drop-zone-icon">&#127916;</div>
-            <div class="drop-zone-text">Drop your video(s) here or click to browse</div>
-            <div class="drop-zone-hint">MP4, MKV, AVI, WebM, MOV, MP3, WAV, FLAC &bull; Max 2 GB &bull; Multiple files supported</div>
-            <div class="drop-zone-file-preview" id="dropPreview"></div>
-            <input type="file" id="fileInput" accept=".mp4,.mkv,.avi,.webm,.mov,.mp3,.wav,.flac" multiple>
-        </div>
-
-        <!-- S2-3: Batch queue -->
-        <div class="batch-queue" id="batchQueue"></div>
-
-        <!-- Combine section -->
-        <div class="combine-section" id="combineSection">
-            <div class="combine-dropzones">
-                <div class="combine-drop" id="combineVideoDrop">
-                    <div class="combine-drop-icon">&#127916;</div>
-                    <div class="combine-drop-label">Video File</div>
-                    <div class="combine-drop-hint">MP4, MKV, AVI, WebM, MOV</div>
-                    <div class="combine-drop-file" id="combineVideoName"></div>
-                    <input type="file" id="combineVideoInput" accept=".mp4,.mkv,.avi,.webm,.mov">
-                </div>
-                <div class="combine-drop" id="combineSubDrop">
-                    <div class="combine-drop-icon">&#128196;</div>
-                    <div class="combine-drop-label">Subtitle File</div>
-                    <div class="combine-drop-hint">SRT or VTT</div>
-                    <div class="combine-drop-file" id="combineSubName"></div>
-                    <input type="file" id="combineSubInput" accept=".srt,.vtt">
-                </div>
-            </div>
-
-            <div class="combine-options">
-                <!-- Mode tabs -->
-                <div class="embed-tabs">
-                    <button class="embed-tab active" onclick="setCombineEmbedMode('soft')" id="combineTabSoft">
-                        Soft Mux<small>Fast &middot; Selectable track</small>
-                    </button>
-                    <button class="embed-tab" onclick="setCombineEmbedMode('hard')" id="combineTabHard">
-                        Hard Burn<small>Permanent &middot; Styled on video</small>
-                    </button>
-                </div>
-
-                <!-- Preset row -->
-                <div class="embed-grid" style="grid-template-columns:1fr;">
-                    <div class="embed-field">
-                        <label>Style Preset</label>
-                        <select id="combinePreset" onchange="applyCombinePreset(this.value);updateCombinePreview()">
-                            <option value="default">Default</option>
-                            <option value="youtube_white">YouTube White</option>
-                            <option value="youtube_yellow">YouTube Yellow</option>
-                            <option value="cinema">Cinema</option>
-                            <option value="large_bold">Large Bold</option>
-                            <option value="top_position">Top Position</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Custom style options (hard burn only) -->
-                <div id="combineStyleOpts" class="embed-style-opts">
-                    <div class="embed-style-grid">
-                        <div class="embed-field">
-                            <label>Font</label>
-                            <select id="combineFont" onchange="updateCombinePreview()">
-                                <option value="Arial">Arial</option>
-                                <option value="Roboto">Roboto</option>
-                                <option value="Open Sans">Open Sans</option>
-                                <option value="Verdana">Verdana</option>
-                                <option value="Tahoma">Tahoma</option>
-                                <option value="Courier New">Courier New</option>
-                            </select>
-                        </div>
-                        <div class="embed-field">
-                            <label>Size: <span id="combineSizeVal">24</span>px</label>
-                            <input type="range" id="combineFontSize" min="12" max="56" value="24" onchange="$('combineSizeVal').textContent=this.value;updateCombinePreview()">
-                        </div>
-                        <div class="embed-field">
-                            <label>Color</label>
-                            <input type="color" id="combineFontColor" value="#ffffff" onchange="updateCombinePreview()">
-                        </div>
-                        <div class="embed-field">
-                            <label>Position</label>
-                            <select id="combinePosition" onchange="updateCombinePreview()">
-                                <option value="bottom">Bottom</option>
-                                <option value="center">Center</option>
-                                <option value="top">Top</option>
-                            </select>
-                        </div>
-                        <div class="embed-field">
-                            <label>Background: <span id="combineBgVal">75</span>%</label>
-                            <input type="range" id="combineBgOpacity" min="0" max="100" value="75" onchange="$('combineBgVal').textContent=this.value;updateCombinePreview()">
-                        </div>
-                        <div class="embed-field">
-                            <label style="padding-top:16px;">
-                                <input type="checkbox" id="combineBold" onchange="updateCombinePreview()"> Bold
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Live preview -->
-                <div class="embed-preview-bar" id="combinePreviewBar">
-                    <span class="embed-preview-text" id="combinePreviewText" style="color:#fff;font-family:Arial;font-size:24px;">
-                        Sample subtitle text preview
-                    </span>
-                </div>
-            </div>
-
-            <!-- Language for soft mux metadata (only relevant for soft mux) -->
-            <div class="embed-grid" id="combineLangGroup" style="grid-template-columns:1fr;margin-bottom:16px;">
-                <div class="embed-field">
-                    <label>Subtitle Language <small style="color:#666;">(track metadata for soft mux)</small></label>
-                    <select id="combineLanguage">
-                        <option value="eng">English</option>
-                        <option value="spa">Spanish</option>
-                        <option value="fra">French</option>
-                        <option value="deu">German</option>
-                        <option value="por">Portuguese</option>
-                        <option value="ita">Italian</option>
-                        <option value="jpn">Japanese</option>
-                        <option value="kor">Korean</option>
-                        <option value="zho">Chinese</option>
-                        <option value="rus">Russian</option>
-                        <option value="ara">Arabic</option>
-                        <option value="hin">Hindi</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Combine button -->
-            <div class="embed-actions">
-                <button class="embed-start-btn" id="combineStartBtn" onclick="startCombine()" disabled>
-                    Combine Now
+        <!-- LEFT: Input card -->
+        <div class="card input-card">
+            <!-- Mode tabs -->
+            <div class="mode-tabs">
+                <button class="mode-tab active" id="modeTranscribe" onclick="setAppMode('transcribe')">
+                    Transcribe <small style="font-size:0.7rem;opacity:0.6;font-weight:400">AI-powered</small>
+                </button>
+                <button class="mode-tab" id="modeCombine" onclick="setAppMode('combine')">
+                    Combine <small style="font-size:0.7rem;opacity:0.6;font-weight:400">Merge files</small>
                 </button>
             </div>
 
-            <!-- Combine progress -->
-            <div class="combine-progress-section" id="combineProgressSection">
-                <div class="embed-progress" style="display:block;">
-                    <div class="embed-progress-bar"><div class="embed-progress-fill" id="combineProgressFill"></div></div>
-                    <div class="embed-status" id="combineStatus">Uploading...</div>
-                </div>
-            </div>
+            <div class="card-body">
+                <!-- Warning banner -->
+                <div class="warning-banner" id="warningBanner"></div>
 
-            <!-- Combine result -->
-            <div class="combine-result" id="combineResult">
-                <div style="margin-bottom:10px;color:#27ae60;font-weight:600;" id="combineResultMsg">Combined successfully!</div>
-                <a id="combineDownloadLink" href="#">Download Combined Video</a>
-                <div style="margin-top:12px;">
-                    <button class="new-btn" onclick="resetCombine()">Combine Another</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Progress -->
-        <div class="progress-section" id="progressSection">
-            <div class="file-info">
-                <div class="file-icon">&#128196;</div>
-                <div class="file-name" id="fileName"></div>
-                <div class="file-meta"><span id="fileDuration"></span><span id="fileSize"></span></div>
-            </div>
-            <div class="steps">
-                <div class="step" id="step1"><span class="step-num">1</span>Upload<span class="step-time" id="stepTime1"></span></div>
-                <div class="step" id="step2"><span class="step-num">2</span>Extract<span class="step-time" id="stepTime2"></span></div>
-                <div class="step" id="step3"><span class="step-num">3</span>Transcribe<span class="step-time" id="stepTime3"></span></div>
-                <div class="step" id="step4"><span class="step-num">4</span>Done<span class="step-time" id="stepTime4"></span></div>
-            </div>
-            <div class="progress-wrapper">
-                <div class="progress-header">
-                    <span class="progress-label" id="progressLabel">Uploading...</span>
-                    <span class="progress-percent" id="progressPercent">0%</span>
-                </div>
-                <div class="progress-bar-container">
-                    <div class="progress-bar active" id="progressBar"></div>
-                </div>
-            </div>
-            <div class="speed-indicator" id="speedIndicator">
-                Speed: <span class="speed-value" id="speedValue">-</span>
-            </div>
-            <div class="details-grid" id="detailsGrid" style="display:none;">
-                <div class="detail-box"><div class="detail-label">Data Processed</div><div class="detail-value" id="detailBytes">-</div></div>
-                <div class="detail-box"><div class="detail-label">Time Remaining</div><div class="detail-value" id="detailEta">-</div></div>
-                <div class="detail-box"><div class="detail-label">Elapsed</div><div class="detail-value" id="detailElapsed">-</div></div>
-                <div class="detail-box"><div class="detail-label">Audio Progress</div><div class="detail-value" id="detailAudio">-</div></div>
-            </div>
-
-            <!-- Live subtitle preview -->
-            <div class="preview-panel" id="previewPanel">
-                <div class="preview-header">
-                    <span class="preview-title">Live Subtitles</span>
-                    <span class="preview-count" id="previewCount">0 segments</span>
-                </div>
-                <div class="preview-body" id="previewBody"></div>
-            </div>
-
-            <div class="status-text" id="statusText">Starting...</div>
-            <div class="controls" id="controls" style="display:none;">
-                <button class="ctrl-btn btn-pause" id="pauseBtn" onclick="pauseTask()">Pause</button>
-                <button class="ctrl-btn btn-cancel" id="cancelBtn" onclick="cancelTask()">Cancel</button>
-            </div>
-        </div>
-
-        <!-- Download -->
-        <div class="download-section" id="downloadSection">
-            <!-- Top bar: title + Generate Another -->
-            <div class="result-top-bar">
-                <span class="result-title">Subtitles Ready</span>
-                <button class="new-again-btn" onclick="resetUI()">&#8634; New File</button>
-            </div>
-
-            <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-                <a class="download-btn" id="downloadBtnSrt" href="#">&#11015; Download .SRT</a>
-                <a class="download-btn" id="downloadBtnVtt" href="#" style="background:linear-gradient(135deg,#4f8ff7,#6c5ce7);">&#11015; Download .VTT</a>
-                <a class="download-btn" id="downloadBtnJson" href="#" style="display:none;background:linear-gradient(135deg,#a78bfa,#6c5ce7);">&#11015; Download .JSON</a>
-            </div>
-            <div class="result-info" id="resultInfo"></div>
-
-            <!-- Timing summary -->
-            <div class="timing-summary" id="timingSummary">
-                <div class="timing-summary-row"><span class="timing-summary-label">Upload & Probe</span><span class="timing-summary-value" id="tsSummaryUpload">-</span></div>
-                <div class="timing-summary-row"><span class="timing-summary-label">Audio Extraction</span><span class="timing-summary-value" id="tsSummaryExtract">-</span></div>
-                <div class="timing-summary-row"><span class="timing-summary-label">Transcription</span><span class="timing-summary-value" id="tsSummaryTranscribe">-</span></div>
-                <div class="timing-summary-row"><span class="timing-summary-label">File Generation</span><span class="timing-summary-value" id="tsSummaryFinalize">-</span></div>
-                <div class="timing-summary-row timing-summary-total"><span class="timing-summary-label">Total</span><span class="timing-summary-value" id="tsSummaryTotal">-</span></div>
-            </div>
-
-            <!-- Unified Embed Section (shows only for video uploads) -->
-            <div class="embed-card" id="embedCard">
-                <div class="embed-card-header" onclick="toggleEmbedCard()">
-                    <span class="embed-card-title"><span class="embed-icon">&#9654;</span> Embed Subtitles into Video</span>
-                    <span class="embed-card-toggle" id="embedCardToggle">&#9660;</span>
-                </div>
-                <div class="embed-card-body" id="embedCardBody">
-                    <!-- Mode tabs -->
-                    <div class="embed-tabs">
-                        <button class="embed-tab active" onclick="setEmbedMode('soft')" id="embedTabSoft">
-                            Soft Mux<small>Fast &middot; Selectable track</small>
-                        </button>
-                        <button class="embed-tab" onclick="setEmbedMode('hard')" id="embedTabHard">
-                            Hard Burn<small>Permanent &middot; Styled on video</small>
-                        </button>
+                <!-- Transcribe form (idle state) -->
+                <div id="transcribeForm">
+                    <div class="options-grid">
+                        <!-- Device -->
+                        <div class="opt-row">
+                            <span class="opt-label">Device</span>
+                            <div class="opt-chips" id="deviceButtons">
+                                <button class="opt-chip gpu-selected" data-value="cuda" id="btnCuda">GPU <span style="opacity:0.6;font-size:0.72rem">Fast</span></button>
+                                <button class="opt-chip" data-value="cpu" id="btnCpu">CPU <span style="opacity:0.6;font-size:0.72rem">Slow</span></button>
+                            </div>
+                            <div id="gpuInfo"></div>
+                        </div>
+                        <!-- Model -->
+                        <div class="opt-row" style="flex-wrap:wrap;gap:8px;">
+                            <span class="opt-label">Model</span>
+                            <div class="opt-chips" id="modelButtons">
+                                <button class="opt-chip selected" data-value="tiny">Tiny <span style="opacity:0.5;font-size:0.7rem">75MB</span></button>
+                                <button class="opt-chip" data-value="base">Base <span style="opacity:0.5;font-size:0.7rem">140MB</span></button>
+                                <button class="opt-chip" data-value="small">Small <span style="opacity:0.5;font-size:0.7rem">460MB</span></button>
+                                <button class="opt-chip" data-value="medium">Med <span style="opacity:0.5;font-size:0.7rem">1.5GB</span></button>
+                                <button class="opt-chip" data-value="large">Large <span style="opacity:0.5;font-size:0.7rem">3GB</span></button>
+                            </div>
+                        </div>
+                        <div class="model-info" id="modelInfo"></div>
+                        <!-- Language + Format -->
+                        <div class="opt-row">
+                            <span class="opt-label">Language</span>
+                            <select class="opt-select" id="languageSelect"></select>
+                        </div>
+                        <div class="opt-row">
+                            <span class="opt-label">Format</span>
+                            <div class="opt-chips" id="formatButtons">
+                                <button class="opt-chip selected" data-value="srt">SRT</button>
+                                <button class="opt-chip" data-value="vtt">VTT</button>
+                                <button class="opt-chip" data-value="json">JSON</button>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Preset row -->
-                    <div class="embed-grid" style="grid-template-columns:1fr;">
-                        <div class="embed-field">
-                            <label>Style Preset</label>
-                            <select id="embedPreset" onchange="applyPreset(this.value);updateEmbedPreview()">
-                                <option value="default">Default</option>
-                                <option value="youtube_white">YouTube White</option>
-                                <option value="youtube_yellow">YouTube Yellow</option>
-                                <option value="cinema">Cinema</option>
-                                <option value="large_bold">Large Bold</option>
-                                <option value="top_position">Top Position</option>
+                    <!-- Drop zone -->
+                    <div class="drop-zone" id="dropZone">
+                        <div class="drop-zone-icon">&#127916;</div>
+                        <div class="drop-zone-text">Drop files here or <span style="color:var(--primary)">browse</span></div>
+                        <div class="drop-zone-hint">MP4, MKV, AVI, WebM, MOV, MP3, WAV, FLAC &middot; Max 2 GB &middot; Multiple files</div>
+                        <div class="drop-zone-file-preview" id="dropPreview"></div>
+                        <input type="file" id="fileInput" accept=".mp4,.mkv,.avi,.webm,.mov,.mp3,.wav,.flac" multiple>
+                    </div>
+
+                    <!-- Batch queue -->
+                    <div class="batch-queue" id="batchQueue"></div>
+
+                    <!-- Advanced -->
+                    <div class="adv-toggle-row" id="advancedToggle">
+                        <button class="adv-toggle-btn" onclick="toggleAdvanced()">Advanced options &#9660;</button>
+                    </div>
+                    <div class="advanced-panel" id="advancedPanel">
+                        <div class="adv-row">
+                            <label class="adv-label"><input type="checkbox" class="adv-check" id="advWordTimestamps"> Word timestamps</label>
+                        </div>
+                        <div class="adv-row">
+                            <label class="adv-label"><input type="checkbox" class="adv-check" id="advDiarize"> Speaker diarization</label>
+                        </div>
+                        <div class="adv-row">
+                            <label class="adv-label"><input type="checkbox" class="adv-check" id="advTranslate"> Translate to English</label>
+                        </div>
+                        <div class="adv-row">
+                            <span class="adv-label">Vocabulary hints</span>
+                            <input type="text" class="adv-input" id="advVocabulary" placeholder="Domain-specific terms, word1, word2, ...">
+                        </div>
+                        <div class="adv-row">
+                            <span class="adv-label">Max chars/line</span>
+                            <input type="range" id="advMaxChars" min="20" max="80" value="42" style="flex:1;accent-color:var(--primary)">
+                            <span id="advMaxCharsValue" style="font-size:0.78rem;color:var(--text-3);min-width:28px">42</span>
+                        </div>
+                        <div class="adv-row">
+                            <span class="adv-label">Auto embed</span>
+                            <select class="adv-input" id="advAutoEmbed" style="flex:1">
+                                <option value="">Disabled</option>
+                                <option value="soft">Soft mux (fast)</option>
+                                <option value="hard">Hard burn</option>
                             </select>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Custom style options (hard burn only) -->
-                    <div id="embedStyleOpts" class="embed-style-opts">
-                        <div class="embed-style-grid">
-                            <div class="embed-field">
-                                <label>Font</label>
-                                <select id="embedFont" onchange="updateEmbedPreview()">
-                                    <option value="Arial">Arial</option>
-                                    <option value="Roboto">Roboto</option>
-                                    <option value="Open Sans">Open Sans</option>
-                                    <option value="Verdana">Verdana</option>
-                                    <option value="Tahoma">Tahoma</option>
-                                    <option value="Courier New">Courier New</option>
-                                </select>
-                            </div>
-                            <div class="embed-field">
-                                <label>Size: <span id="embedSizeVal">24</span>px</label>
-                                <input type="range" id="embedFontSize" min="12" max="56" value="24" onchange="$('embedSizeVal').textContent=this.value;updateEmbedPreview()">
-                            </div>
-                            <div class="embed-field">
-                                <label>Color</label>
-                                <input type="color" id="embedFontColor" value="#ffffff" onchange="updateEmbedPreview()">
-                            </div>
-                            <div class="embed-field">
-                                <label>Position</label>
-                                <select id="embedPosition" onchange="updateEmbedPreview()">
-                                    <option value="bottom">Bottom</option>
-                                    <option value="center">Center</option>
-                                    <option value="top">Top</option>
-                                </select>
-                            </div>
-                            <div class="embed-field">
-                                <label>Background: <span id="embedBgVal">75</span>%</label>
-                                <input type="range" id="embedBgOpacity" min="0" max="100" value="75" onchange="$('embedBgVal').textContent=this.value;updateEmbedPreview()">
-                            </div>
-                            <div class="embed-field">
-                                <label style="padding-top:16px;">
-                                    <input type="checkbox" id="embedBold" onchange="updateEmbedPreview()"> Bold
-                                </label>
-                            </div>
+                <!-- Progress view (active task) -->
+                <div id="progressView">
+                    <div class="progress-file-info">
+                        <span class="progress-file-icon">&#127916;</span>
+                        <span class="progress-file-name" id="fileName"></span>
+                        <span class="progress-file-size" id="fileSize"></span>
+                        <span id="fileDuration" style="display:none"></span>
+                    </div>
+
+                    <!-- Pipeline steps -->
+                    <div class="pipeline-steps" id="pipelineSteps">
+                        <div class="step-item" id="step0">
+                            <div class="step-dot">1</div>
+                            <div class="step-label">Upload</div>
+                            <div class="step-time" id="stepTime1"></div>
+                        </div>
+                        <div class="step-item" id="step1">
+                            <div class="step-dot">2</div>
+                            <div class="step-label">Extract</div>
+                            <div class="step-time" id="stepTime2"></div>
+                        </div>
+                        <div class="step-item" id="step2">
+                            <div class="step-dot">3</div>
+                            <div class="step-label">Transcribe</div>
+                            <div class="step-time" id="stepTime3"></div>
+                        </div>
+                        <div class="step-item" id="step3">
+                            <div class="step-dot">&#10003;</div>
+                            <div class="step-label">Done</div>
+                            <div class="step-time" id="stepTime4"></div>
                         </div>
                     </div>
 
-                    <!-- Live preview -->
-                    <div class="embed-preview-bar" id="embedPreviewBar">
-                        <span class="embed-preview-text" id="embedPreviewText" style="color:#fff;font-family:Arial;font-size:24px;">
-                            Sample subtitle text preview
-                        </span>
+                    <!-- Progress bar -->
+                    <div class="progress-track">
+                        <div class="progress-fill" id="progressBar"></div>
+                    </div>
+                    <div class="progress-meta">
+                        <span class="progress-label" id="progressLabel">Starting...</span>
+                        <span class="progress-pct" id="progressPercent">0%</span>
                     </div>
 
-                    <!-- Actions -->
-                    <div class="embed-actions">
-                        <button class="embed-start-btn" id="embedStartBtn" onclick="startUnifiedEmbed()">Embed Now</button>
+                    <!-- Details grid -->
+                    <div class="details-grid" id="detailsGrid">
+                        <div class="detail-box"><div class="detail-label">Data Processed</div><div class="detail-value" id="detailBytes">-</div></div>
+                        <div class="detail-box"><div class="detail-label">Time Remaining</div><div class="detail-value" id="detailEta">-</div></div>
+                        <div class="detail-box"><div class="detail-label">Elapsed</div><div class="detail-value" id="detailElapsed">-</div></div>
+                        <div class="detail-box"><div class="detail-label">Audio Progress</div><div class="detail-value" id="detailAudio">-</div></div>
                     </div>
 
-                    <!-- Progress -->
-                    <div class="embed-progress" id="embedProgress">
-                        <div class="embed-progress-bar"><div class="embed-progress-fill" id="embedProgressFill"></div></div>
-                        <div class="embed-status" id="embedStatus">Preparing...</div>
+                    <!-- Speed badge -->
+                    <div class="speed-badge" id="speedIndicator">
+                        <span id="speedValue">0x</span>
                     </div>
 
-                    <!-- Result -->
-                    <div class="embed-result" id="embedResult">
-                        <div id="embedResultMsg">Embedding complete!</div>
-                        <a id="embedDownloadLink" href="#" style="display:inline-block;margin-top:8px;padding:8px 20px;background:#27ae60;border-radius:6px;color:#fff;text-decoration:none;">Download Video</a>
+                    <!-- Live subtitle preview -->
+                    <div class="preview-panel" id="previewPanel" style="display:none">
+                        <div class="preview-header">
+                            <span class="preview-title">Live Subtitles</span>
+                            <span class="preview-count" id="previewCount">0 segments</span>
+                        </div>
+                        <div class="preview-body" id="previewBody"></div>
+                    </div>
+
+                    <div class="status-text" id="statusText"></div>
+                    <div class="task-controls" id="controls">
+                        <button class="ctrl-btn btn-pause" id="pauseBtn" onclick="pauseTask()">Pause</button>
+                        <button class="ctrl-btn btn-cancel" id="cancelBtn" onclick="cancelTask()">Cancel</button>
                     </div>
                 </div>
-            </div>
 
-            <!-- Action buttons -->
-            <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap;">
-                <button class="new-btn" onclick="openEditor()">Edit Subtitles</button>
-                <button class="new-btn" onclick="openVideoPreview()">Preview with Video</button>
-            </div>
-        </div>
-        <!-- S2-1: Subtitle editor -->
-        <div class="editor-section" id="editorSection">
-            <div class="editor-header">
-                <span class="editor-title">Edit Subtitles</span>
-                <div class="editor-actions">
-                    <button class="editor-btn cancel-edit" onclick="closeEditor()">Close</button>
-                    <button class="editor-btn save" onclick="saveEdits()">Save & Regenerate</button>
+                <!-- Cancelled section -->
+                <div class="cancelled-section" id="cancelledSection">
+                    <p style="color:var(--text-3);margin-bottom:12px;font-size:0.84rem">Task cancelled.</p>
+                    <button class="new-btn" onclick="resetUI()">Try again</button>
                 </div>
-            </div>
-            <div class="editor-scroll">
-                <table class="editor-table">
-                    <thead><tr><th>#</th><th>Start</th><th>End</th><th>Text</th><th></th></tr></thead>
-                    <tbody id="editorBody"></tbody>
-                </table>
-            </div>
-        </div>
 
-        <!-- S2-2: Video preview -->
-        <div class="video-preview-section" id="videoPreviewSection">
-            <div class="video-preview-header">
-                <span class="video-preview-title">Preview with Subtitles</span>
-                <div style="display:flex;gap:8px;">
-                    <button class="video-preview-load" onclick="$('videoFileInput').click()">Load Video</button>
-                    <button class="video-preview-load" onclick="$('videoPreviewSection').style.display='none'" style="color:#e74c3c;border-color:#e74c3c44;">Close</button>
+                <!-- Combine section -->
+                <div class="combine-section" id="combineSection">
+                    <div class="combine-dropzones">
+                        <div class="combine-drop" id="combineVideoDrop">
+                            <div class="combine-drop-icon">&#127916;</div>
+                            <div class="combine-drop-label">Video File</div>
+                            <div class="combine-drop-hint">MP4, MKV, AVI, WebM, MOV</div>
+                            <div class="combine-drop-file" id="combineVideoName"></div>
+                            <input type="file" id="combineVideoInput" accept=".mp4,.mkv,.avi,.webm,.mov">
+                        </div>
+                        <div class="combine-drop" id="combineSubDrop">
+                            <div class="combine-drop-icon">&#128196;</div>
+                            <div class="combine-drop-label">Subtitle File</div>
+                            <div class="combine-drop-hint">SRT or VTT</div>
+                            <div class="combine-drop-file" id="combineSubName"></div>
+                            <input type="file" id="combineSubInput" accept=".srt,.vtt">
+                        </div>
+                    </div>
+                    <div class="combine-options">
+                        <div class="embed-tabs">
+                            <button class="embed-tab active" onclick="setCombineEmbedMode('soft')" id="combineTabSoft">Soft Mux<small>Fast &middot; Selectable track</small></button>
+                            <button class="embed-tab" onclick="setCombineEmbedMode('hard')" id="combineTabHard">Hard Burn<small>Permanent &middot; Styled on video</small></button>
+                        </div>
+                        <div class="combine-style-opts" id="combineStyleOpts">
+                            <div class="combine-style-grid">
+                                <div class="embed-field"><label>Font</label><select id="combineFont"><option value="Arial">Arial</option><option value="Roboto">Roboto</option><option value="Open Sans">Open Sans</option><option value="Verdana">Verdana</option></select></div>
+                                <div class="embed-field"><label>Size: <span id="combineSizeVal">24</span>px</label><input type="range" id="combineFontSize" min="12" max="56" value="24" onchange="$('combineSizeVal').textContent=this.value;updateCombinePreview()"></div>
+                                <div class="embed-field"><label>Color</label><input type="color" id="combineFontColor" value="#ffffff" onchange="updateCombinePreview()"></div>
+                                <div class="embed-field"><label>Position</label><select id="combinePosition" onchange="updateCombinePreview()"><option value="bottom">Bottom</option><option value="center">Center</option><option value="top">Top</option></select></div>
+                                <div class="embed-field"><label>Background: <span id="combineBgVal">75</span>%</label><input type="range" id="combineBgOpacity" min="0" max="100" value="75" onchange="$('combineBgVal').textContent=this.value;updateCombinePreview()"></div>
+                                <div class="embed-field"><label style="padding-top:16px"><input type="checkbox" id="combineBold" onchange="updateCombinePreview()"> Bold</label></div>
+                            </div>
+                        </div>
+                        <div class="combine-preview-bar" id="combinePreviewBar">
+                            <span class="embed-preview-text" id="combinePreviewText" style="color:#fff;font-family:Arial;font-size:24px;">Sample subtitle text preview</span>
+                        </div>
+                        <div class="combine-lang-group" id="combineLangGroup">
+                            <div class="opt-row">
+                                <span class="opt-label">Language</span>
+                                <select class="opt-select" id="combineLanguage"><option value="eng">English</option><option value="vie">Vietnamese</option><option value="fra">French</option><option value="deu">German</option><option value="spa">Spanish</option><option value="jpn">Japanese</option><option value="kor">Korean</option><option value="zho">Chinese</option></select>
+                            </div>
+                        </div>
+                        <button class="combine-btn" id="combineStartBtn" onclick="startCombine()" disabled>Combine Now</button>
+                        <div class="combine-progress" id="combineProgressSection" style="display:none">
+                            <div class="combine-progress-bar"><div class="combine-progress-fill" id="combineProgressFill"></div></div>
+                            <div class="combine-status" id="combineStatus">Processing...</div>
+                        </div>
+                        <div class="combine-result" id="combineResult" style="display:none">
+                            <div id="combineResultMsg">Combine complete!</div>
+                            <a id="combineDownloadLink" href="#" style="display:inline-block;margin-top:8px;padding:7px 18px;background:var(--success);border-radius:var(--radius-xs);color:#fff;text-decoration:none;font-size:0.82rem;font-weight:600">Download Video</a>
+                            <button class="combine-new-btn" onclick="resetCombine()" style="margin-top:8px">New Combine</button>
+                        </div>
+                    </div>
                 </div>
+
+            </div><!-- /.card-body -->
+        </div><!-- /.input-card -->
+
+        <!-- RIGHT: Output card (ALWAYS VISIBLE) -->
+        <div class="card output-card" id="outputPanel">
+            <div class="card-header">
+                <span class="card-title">Output</span>
             </div>
-            <div class="video-container" id="videoContainer">
-                <video id="videoPlayer" controls crossorigin="anonymous">
-                    <track id="subtitleTrack" kind="subtitles" srclang="en" label="Subtitles" default>
-                </video>
-                <input type="file" id="videoFileInput" accept=".mp4,.mkv,.avi,.webm,.mov">
-            </div>
-        </div>
+            <div class="card-body">
+                <!-- Empty state -->
+                <div class="output-empty" id="outputEmpty">
+                    <div class="output-empty-icon">&#128301;</div>
+                    <div class="output-empty-text">No results yet.<br>Upload a file to get started.</div>
+                </div>
 
-        <div class="cancelled-section" id="cancelledSection">
-            <div class="cancelled-text">Task was cancelled.</div>
-            <button class="new-btn" onclick="resetUI()">Try again</button>
-        </div>
+                <!-- Results state (populated by handleDone) -->
+                <div id="outputResults">
+                    <div class="output-filename" id="outputFilename"></div>
+                    <div class="output-meta" id="outputMeta"></div>
+                    <a class="dl-btn dl-btn-srt" id="downloadBtnSrt" href="#">
+                        <span class="dl-btn-icon">&#11015;</span>
+                        <span class="dl-btn-text">Download SRT</span>
+                        <span class="dl-btn-ext">.srt</span>
+                    </a>
+                    <a class="dl-btn dl-btn-vtt" id="downloadBtnVtt" href="#">
+                        <span class="dl-btn-icon">&#11015;</span>
+                        <span class="dl-btn-text">Download VTT</span>
+                        <span class="dl-btn-ext">.vtt</span>
+                    </a>
+                    <a class="dl-btn dl-btn-json" id="downloadBtnJson" href="#" style="display:none">
+                        <span class="dl-btn-icon">&#11015;</span>
+                        <span class="dl-btn-text">Download JSON</span>
+                        <span class="dl-btn-ext">.json</span>
+                    </a>
+                    <button class="next-file-btn" onclick="resetUI()">&#8634; Process Next File</button>
 
-    </div>
+                    <hr class="output-divider">
 
-    </div><!-- /.page-layout -->
+                    <!-- Timing summary (collapsible) -->
+                    <div id="timingSummarySection" style="display:none">
+                        <div class="timing-toggle" onclick="this.nextElementSibling.classList.toggle('show');this.querySelector('.timing-toggle-icon').textContent = this.nextElementSibling.classList.contains('show') ? '&#9650;' : '&#9660;'">
+                            <span>Timing Breakdown</span>
+                            <span class="timing-toggle-icon">&#9660;</span>
+                        </div>
+                        <div class="timing-summary" id="timingSummary">
+                            <div class="timing-summary-row"><span class="timing-summary-label">Upload &amp; Probe</span><span class="timing-summary-value" id="tsSummaryUpload">-</span></div>
+                            <div class="timing-summary-row"><span class="timing-summary-label">Audio Extraction</span><span class="timing-summary-value" id="tsSummaryExtract">-</span></div>
+                            <div class="timing-summary-row"><span class="timing-summary-label">Transcription</span><span class="timing-summary-value" id="tsSummaryTranscribe">-</span></div>
+                            <div class="timing-summary-row"><span class="timing-summary-label">File Generation</span><span class="timing-summary-value" id="tsSummaryFinalize">-</span></div>
+                            <div class="timing-summary-row timing-summary-total"><span class="timing-summary-label">Total</span><span class="timing-summary-value" id="tsSummaryTotal">-</span></div>
+                        </div>
+                    </div>
 
-    <!-- Task Queue — fixed sidebar -->
+                    <!-- Embed card -->
+                    <div class="embed-card" id="embedCard" style="display:none">
+                        <div class="embed-card-header" onclick="toggleEmbedCard()">
+                            <span>&#9654; Embed Subtitles into Video</span>
+                            <span class="embed-card-toggle" id="embedCardToggle">&#9660;</span>
+                        </div>
+                        <div class="embed-card-body" id="embedCardBody">
+                            <div class="embed-tabs">
+                                <button class="embed-tab active" onclick="setEmbedMode('soft')" id="embedTabSoft">Soft Mux<small>Fast &middot; Selectable track</small></button>
+                                <button class="embed-tab" onclick="setEmbedMode('hard')" id="embedTabHard">Hard Burn<small>Permanent &middot; Styled on video</small></button>
+                            </div>
+                            <div class="embed-grid" style="grid-template-columns:1fr;">
+                                <div class="embed-field"><label>Style Preset</label><select id="embedPreset" onchange="applyPreset(this.value);updateEmbedPreview()"><option value="default">Default</option><option value="youtube_white">YouTube White</option><option value="youtube_yellow">YouTube Yellow</option><option value="cinema">Cinema</option><option value="large_bold">Large Bold</option><option value="top_position">Top Position</option></select></div>
+                            </div>
+                            <div id="embedStyleOpts" class="embed-style-opts">
+                                <div class="embed-style-grid">
+                                    <div class="embed-field"><label>Font</label><select id="embedFont" onchange="updateEmbedPreview()"><option value="Arial">Arial</option><option value="Roboto">Roboto</option><option value="Open Sans">Open Sans</option><option value="Verdana">Verdana</option><option value="Tahoma">Tahoma</option><option value="Courier New">Courier New</option></select></div>
+                                    <div class="embed-field"><label>Size: <span id="embedSizeVal">24</span>px</label><input type="range" id="embedFontSize" min="12" max="56" value="24" onchange="$('embedSizeVal').textContent=this.value;updateEmbedPreview()"></div>
+                                    <div class="embed-field"><label>Color</label><input type="color" id="embedFontColor" value="#ffffff" onchange="updateEmbedPreview()"></div>
+                                    <div class="embed-field"><label>Position</label><select id="embedPosition" onchange="updateEmbedPreview()"><option value="bottom">Bottom</option><option value="center">Center</option><option value="top">Top</option></select></div>
+                                    <div class="embed-field"><label>Background: <span id="embedBgVal">75</span>%</label><input type="range" id="embedBgOpacity" min="0" max="100" value="75" onchange="$('embedBgVal').textContent=this.value;updateEmbedPreview()"></div>
+                                    <div class="embed-field"><label style="padding-top:16px"><input type="checkbox" id="embedBold" onchange="updateEmbedPreview()"> Bold</label></div>
+                                </div>
+                            </div>
+                            <div class="embed-preview-bar" id="embedPreviewBar"><span class="embed-preview-text" id="embedPreviewText" style="color:#fff;font-family:Arial;font-size:24px;">Sample subtitle text preview</span></div>
+                            <div class="embed-actions"><button class="embed-start-btn" id="embedStartBtn" onclick="startUnifiedEmbed()">Embed Now</button></div>
+                            <div class="embed-progress" id="embedProgress"><div class="embed-progress-bar"><div class="embed-progress-fill" id="embedProgressFill"></div></div><div class="embed-status" id="embedStatus">Preparing...</div></div>
+                            <div class="embed-result" id="embedResult"><div id="embedResultMsg">Embedding complete!</div><a id="embedDownloadLink" href="#" style="display:inline-block;margin-top:8px;padding:7px 18px;background:var(--success);border-radius:var(--radius-xs);color:#fff;text-decoration:none;font-size:0.82rem;font-weight:600">Download Video</a></div>
+                        </div>
+                    </div>
+
+                    <!-- Action buttons -->
+                    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+                        <button class="new-btn" onclick="openEditor()">Edit Subtitles</button>
+                        <button class="new-btn" onclick="openVideoPreview()">Preview with Video</button>
+                    </div>
+                </div>
+
+                <!-- Subtitle editor -->
+                <div class="editor-section" id="editorSection">
+                    <div class="editor-header">
+                        <span class="editor-title">Edit Subtitles</span>
+                        <div class="editor-actions">
+                            <button class="editor-btn cancel-edit" onclick="closeEditor()">Close</button>
+                            <button class="editor-btn save" onclick="saveEdits()">Save &amp; Regenerate</button>
+                        </div>
+                    </div>
+                    <div class="editor-body" id="editorBody"></div>
+                </div>
+
+                <!-- Video preview -->
+                <div class="video-preview-section" id="videoPreviewSection">
+                    <div class="video-preview-header">
+                        <span class="video-preview-title">Preview with Subtitles</span>
+                        <button class="new-btn" onclick="closeVideoPreview()" style="font-size:0.75rem;padding:4px 10px">Close</button>
+                    </div>
+                    <div class="video-preview-body">
+                        <video id="videoPlayer" controls crossorigin="anonymous">
+                            <track kind="subtitles" id="subtitleTrack" default>
+                        </video>
+                    </div>
+                    <div style="padding:8px 12px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;">
+                        <label class="new-btn" style="cursor:pointer;font-size:0.75rem;padding:4px 10px">
+                            Load Video
+                            <input type="file" id="videoFileInput" accept="video/*" style="display:none">
+                        </label>
+                    </div>
+                </div>
+
+            </div><!-- /.card-body -->
+        </div><!-- /.output-card -->
+
+    </main>
+
+    <!-- Task Queue fixed panel (collapsed by default) -->
     <div class="task-queue-panel" id="taskQueuePanel">
         <div class="tq-header" onclick="toggleTaskQueue()">
             <span class="tq-title">Task Queue</span>
             <span class="tq-toggle" id="tqToggle">&#9660;</span>
         </div>
-        <div class="tq-body" id="tqBody"></div>
+        <div class="tq-body" id="tqBody" style="display:none"></div>
     </div>
 
     <footer class="site-footer">
-        <div class="footer-brand">
-            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs><linearGradient id="fGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#4f8ff7"/><stop offset="100%" stop-color="#6c5ce7"/></linearGradient></defs>
-                <rect width="64" height="64" rx="14" fill="#161616"/>
-                <rect x="8" y="38" width="48" height="6" rx="3" fill="url(#fGrad)" opacity=".9"/>
-                <rect x="14" y="48" width="36" height="5" rx="2.5" fill="url(#fGrad)" opacity=".5"/>
-                <path d="M22 12 L42 24 L22 36Z" fill="url(#fGrad)" opacity=".85"/>
-            </svg>
-            <span>SubForge</span>
-        </div>
-        <div class="footer-tagline">Built with Python &bull; FastAPI &bull; faster-whisper (CTranslate2) &bull; FFmpeg &bull; PostgreSQL &bull; Open Source</div>
-        <div class="footer-github">
-            <a href="/status">System Status</a> &middot;
-            Contributions welcome &mdash; star, fork, or open a PR on
-            <a href="https://github.com/volehuy1998/subtitle-generator" target="_blank" rel="noopener">GitHub</a>
-        </div>
+        <div class="footer-brand">&#11014; SubForge</div>
+        <div class="footer-tech">Built with Python &middot; FastAPI &middot; faster-whisper &middot; FFmpeg &middot; PostgreSQL &middot; Open Source</div>
+        <div class="footer-github"><a href="/status">System Status</a> &middot; Contributions welcome &mdash; <a href="https://github.com/volehuy1998/subtitle-generator">star, fork, or open a PR on GitHub</a></div>
     </footer>
 
     <script>
         const $ = id => document.getElementById(id);
         const dropZone = $('dropZone'), fileInput = $('fileInput');
-        const progressSection = $('progressSection'), progressBar = $('progressBar');
+        const progressBar = $('progressBar');
         const progressLabel = $('progressLabel'), progressPercent = $('progressPercent');
         const statusText = $('statusText'), detailsGrid = $('detailsGrid');
-        const downloadSection = $('downloadSection');
         const downloadBtnSrt = $('downloadBtnSrt'), downloadBtnVtt = $('downloadBtnVtt');
-        const resultInfo = $('resultInfo'), fileName = $('fileName');
+        const fileName = $('fileName');
         const fileDuration = $('fileDuration'), fileSize = $('fileSize');
         const controls = $('controls'), pauseBtn = $('pauseBtn'), cancelBtn = $('cancelBtn');
-        const cancelledSection = $('cancelledSection'), optionsPanel = $('optionsPanel');
-        const optionsPanel2 = $('optionsPanel2');
+        const cancelledSection = $('cancelledSection');
         const gpuInfo = $('gpuInfo');
         const languageSelect = $('languageSelect');
         const previewPanel = $('previewPanel'), previewBody = $('previewBody'), previewCount = $('previewCount');
@@ -1181,9 +1005,11 @@
         const warningBanner = $('warningBanner');
         const speedIndicator = $('speedIndicator'), speedValue = $('speedValue');
 
-        const steps = [$('step1'), $('step2'), $('step3'), $('step4')];
+        // New layout references
+        function getSteps() { return document.querySelectorAll('#pipelineSteps .step-item'); }
+        const steps = { forEach: (fn) => getSteps().forEach(fn) };
         const stepTimeEls = [$('stepTime1'), $('stepTime2'), $('stepTime3'), $('stepTime4')];
-        let eventSource = null, pollInterval = null, currentTaskId = null, isPaused = false;
+        let eventSource = null, pollInterval = null, currentTaskId = null, isPaused = false, taskIsComplete = false;
         let sseRetryTimeout = null, sseRetryDelay = 1000, sseLastEventTime = 0;
         let selectedDevice = 'cuda', selectedModel = 'tiny', selectedFormat = 'srt';
         let lastSegmentCount = 0;
@@ -1266,9 +1092,9 @@
         var languagesReady = loadLanguages();
 
         // ── Format Selection ──
-        document.querySelectorAll('#formatButtons .opt-btn').forEach(btn => {
+        document.querySelectorAll('#formatButtons .opt-chip').forEach(btn => {
             btn.addEventListener('click', function() {
-                document.querySelectorAll('#formatButtons .opt-btn').forEach(b => b.classList.remove('selected'));
+                document.querySelectorAll('#formatButtons .opt-chip').forEach(b => b.classList.remove('selected'));
                 this.classList.add('selected');
                 selectedFormat = this.dataset.value;
                 saveFormState();
@@ -1286,8 +1112,8 @@
                     selectedDevice = 'cuda';
                     if (info.auto_model) {
                         autoModelName = info.auto_model;
-                        const autoBtn = document.querySelector('#modelButtons .opt-btn[data-value="auto"]');
-                        if (autoBtn) autoBtn.querySelector('.opt-detail').textContent = info.auto_model;
+                        const autoBtn = document.querySelector('#modelButtons .opt-chip[data-value="auto"]');
+                        if (autoBtn) { const d = autoBtn.querySelector('.opt-detail'); if (d) d.textContent = info.auto_model; }
                     }
                     updateModelWarnings();
                 } else {
@@ -1303,21 +1129,19 @@
 
         function updateModelWarnings() {
             if (selectedDevice !== 'cuda') {
-                document.querySelectorAll('#modelButtons .opt-btn').forEach(btn => {
+                document.querySelectorAll('#modelButtons .opt-chip').forEach(btn => {
                     btn.classList.remove('warning', 'too-large');
                 });
                 warningBanner.style.display = 'none';
                 return;
             }
-            document.querySelectorAll('#modelButtons .opt-btn').forEach(btn => {
+            document.querySelectorAll('#modelButtons .opt-chip').forEach(btn => {
                 const model = btn.dataset.value;
                 const rec = modelRecommendations[model];
                 btn.classList.remove('warning', 'too-large');
                 if (rec === 'tight') {
-                    btn.querySelector('.opt-detail').textContent = 'Tight fit';
                     btn.classList.add('warning');
                 } else if (rec === 'too_large') {
-                    btn.querySelector('.opt-detail').textContent = 'Too large!';
                     btn.classList.add('too-large');
                 }
             });
@@ -1411,9 +1235,9 @@
             el.className = 'model-info show';
         }
 
-        document.querySelectorAll('#modelButtons .opt-btn').forEach(btn => {
+        document.querySelectorAll('#modelButtons .opt-chip').forEach(btn => {
             btn.addEventListener('click', function() {
-                document.querySelectorAll('#modelButtons .opt-btn').forEach(b => b.classList.remove('selected'));
+                document.querySelectorAll('#modelButtons .opt-chip').forEach(b => b.classList.remove('selected'));
                 this.classList.add('selected');
                 selectedModel = this.dataset.value;
                 updateModelWarnings();
@@ -1465,7 +1289,7 @@
             // Restore model
             if (state.model) {
                 selectedModel = state.model;
-                document.querySelectorAll('#modelButtons .opt-btn').forEach(function(b) {
+                document.querySelectorAll('#modelButtons .opt-chip').forEach(function(b) {
                     b.classList.toggle('selected', b.dataset.value === state.model);
                 });
                 updateModelInfo(state.model);
@@ -1473,7 +1297,7 @@
             // Restore format
             if (state.format) {
                 selectedFormat = state.format;
-                document.querySelectorAll('#formatButtons .opt-btn').forEach(function(b) {
+                document.querySelectorAll('#formatButtons .opt-chip').forEach(function(b) {
                     b.classList.toggle('selected', b.dataset.value === state.format);
                 });
             }
@@ -1507,12 +1331,8 @@
                     // Task completed while user was away — restore results
                     currentTaskId = savedTaskId;
                     fileName.textContent = data.filename || 'Completed task';
-                    dropZone.style.display = 'none';
-                    optionsPanel.style.display = 'none';
-                    optionsPanel2.style.display = 'none';
-                    $('advancedToggle').style.display = 'none';
-                    $('advancedPanel').style.display = 'none';
-                    progressSection.style.display = 'block';
+                    $('transcribeForm').style.display = 'none';
+                    $('progressView').style.display = 'block';
                     handleDone(data, savedTaskId);
                     return;
                 }
@@ -1523,13 +1343,9 @@
                 // Task is still running - reconnect
                 currentTaskId = savedTaskId;
                 fileName.textContent = data.filename || 'Reconnected task';
-                dropZone.style.display = 'none';
-                optionsPanel.style.display = 'none';
-                optionsPanel2.style.display = 'none';
-                $('advancedToggle').style.display = 'none';
-                $('advancedPanel').style.display = 'none';
-                progressSection.style.display = 'block';
-                progressBar.className = 'progress-bar active';
+                $('transcribeForm').style.display = 'none';
+                $('progressView').style.display = 'block';
+                progressBar.style.width = '0%';
                 progressLabel.textContent = 'Reconnecting...';
                 handleProgressData(data);
                 connectSSE(savedTaskId);
@@ -1539,7 +1355,8 @@
         })();
 
         function setStep(i, paused = false) {
-            steps.forEach((s, j) => {
+            var stepEls = document.querySelectorAll('#pipelineSteps .step-item');
+            stepEls.forEach(function(s, j) {
                 s.classList.remove('active', 'completed', 'paused');
                 if (j < i) s.classList.add('completed');
                 else if (j === i) s.classList.add(paused ? 'paused' : 'active');
@@ -1632,15 +1449,11 @@
             const autoEmbed = $('advAutoEmbed').value;
             if (autoEmbed) fd.append('auto_embed', autoEmbed);
 
-            dropZone.style.display = 'none';
-            optionsPanel.style.display = 'none';
-            optionsPanel2.style.display = 'none';
-            $('advancedToggle').style.display = 'none';
-            $('advancedPanel').style.display = 'none';
-            warningBanner.style.display = 'none';
-            progressSection.style.display = 'block';
-            downloadSection.style.display = 'none';
+            // Switch input card to progress view
+            $('transcribeForm').style.display = 'none';
+            $('progressView').style.display = 'block';
             cancelledSection.style.display = 'none';
+            warningBanner.style.display = 'none';
             detailsGrid.style.display = 'none';
             controls.style.display = 'none';
             previewPanel.style.display = 'none';
@@ -1648,7 +1461,7 @@
             previewBody.innerHTML = '';
             lastSegmentCount = 0;
             setStep(0);
-            progressBar.className = 'progress-bar active';
+            progressBar.style.width = '0%';
             progressLabel.textContent = 'Uploading...';
             isPaused = false;
 
@@ -1818,7 +1631,7 @@
                 setStep(2, true);
                 progressLabel.textContent = 'Paused';
                 progressPercent.style.color = '#f39c12';
-                progressBar.className = 'progress-bar paused';
+                progressBar.classList.add('paused'); progressBar.classList.remove('success', 'error');
                 statusText.className = 'status-text paused';
                 statusText.textContent = data.message || 'Paused';
                 isPaused = true;
@@ -1833,9 +1646,9 @@
                 startStepTimer(2, true);
                 pauseBtn.textContent = 'Pause';
                 pauseBtn.className = 'ctrl-btn btn-pause';
-                progressBar.className = 'progress-bar active';
+                progressBar.classList.remove('success', 'paused', 'error');
                 statusText.className = 'status-text';
-                progressPercent.style.color = '#4f8ff7';
+                progressPercent.style.color = 'var(--primary)';
             });
         }
 
@@ -1893,13 +1706,13 @@
                 controls.style.display = 'flex'; pauseBtn.style.display = 'inline-block';
                 if (!isPaused) {
                     pauseBtn.textContent = 'Pause'; pauseBtn.className = 'ctrl-btn btn-pause';
-                    progressBar.className = 'progress-bar active';
+                    progressBar.classList.remove('success', 'paused', 'error');
                 }
             } else if (status === 'paused') {
                 setStep(2, true);
                 progressLabel.textContent = 'Paused';
                 progressPercent.style.color = '#f39c12';
-                progressBar.className = 'progress-bar paused';
+                progressBar.classList.add('paused'); progressBar.classList.remove('success', 'error');
                 statusText.className = 'status-text paused';
                 statusText.textContent = data.message || 'Paused';
                 isPaused = true;
@@ -1909,7 +1722,7 @@
             } else if (status === 'writing') {
                 setStep(3); startStepTimer(3); progressLabel.textContent = 'Generating subtitles...'; controls.style.display = 'none';
             }
-            if (status && status !== 'paused') progressPercent.style.color = '#4f8ff7';
+            if (status && status !== 'paused') progressPercent.style.color = 'var(--primary)';
 
             // Render segments from polling fallback
             if (data.segments_preview) {
@@ -1955,11 +1768,10 @@
             setStep(3);
             progressBar.style.width = '100%';
             progressPercent.textContent = '100%';
-            progressBar.classList.remove('active'); progressBar.classList.add('done');
+            progressBar.classList.remove('active', 'error', 'paused'); progressBar.classList.add('success');
             progressLabel.textContent = 'Complete!';
-            progressPercent.style.color = '#27ae60';
+            progressPercent.style.color = 'var(--success)';
             controls.style.display = 'none';
-            // Collapse verbose progress details so download section is visible
             detailsGrid.style.display = 'none';
             speedIndicator.style.display = 'none';
             statusText.textContent = data.message || 'Done!';
@@ -1973,15 +1785,19 @@
             } else {
                 jsonBtn.style.display = 'none';
             }
-            let info = '';
-            if (data.segments) info += data.segments + ' segments';
-            if (data.language) info += ` | ${data.language}`;
-            if (data.speed_factor) info += ` | ${data.speed_factor.toFixed(1)}x realtime`;
-            if (data.total_time_sec) info += ` | ${data.total_time_sec.toFixed(1)}s total`;
-            resultInfo.textContent = info;
-            downloadSection.style.display = 'block';
-            // Scroll download section into view so user sees the buttons
-            setTimeout(function() { downloadSection.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
+            taskIsComplete = true;
+            // Show output panel results
+            $('outputEmpty').style.display = 'none';
+            $('outputResults').style.display = 'block';
+            $('outputFilename').textContent = data.filename || 'Completed';
+            var metaParts = [];
+            if (data.segments) metaParts.push(data.segments + ' segments');
+            if (data.language) metaParts.push(data.language.toUpperCase());
+            if (data.total_time_sec) metaParts.push(data.total_time_sec.toFixed(1) + 's total');
+            $('outputMeta').textContent = metaParts.join(' \xb7 ');
+            // Switch input card to show done state in progress view
+            $('transcribeForm').style.display = 'none';
+            $('progressView').style.display = 'block';
 
             // Show final step timings
             if (data.step_timings) {
@@ -1993,7 +1809,7 @@
                 $('tsSummaryFinalize').textContent = ts.finalize != null ? formatStepDuration(ts.finalize) : '-';
                 var total = (ts.upload || 0) + (ts.extract || 0) + (ts.transcribe || 0) + (ts.finalize || 0);
                 $('tsSummaryTotal').textContent = formatStepDuration(total);
-                $('timingSummary').style.display = 'block';
+                $('timingSummarySection').style.display = 'block';
             }
 
             // Show unified embed card if input was a video file
@@ -2008,7 +1824,7 @@
             if ($('advAutoEmbed').value) {
                 statusText.textContent = 'Embedding subtitles into video...';
                 progressLabel.textContent = 'Embedding';
-                progressBar.classList.remove('done'); progressBar.classList.add('active');
+                progressBar.classList.remove('success'); progressBar.classList.add('active');
             }
         }
 
@@ -2018,7 +1834,8 @@
             localStorage.removeItem('sg_currentTaskId');
             stopStepTimer();
             controls.style.display = 'none';
-            progressSection.style.display = 'none';
+            $('progressView').style.display = 'none';
+            $('transcribeForm').style.display = 'none';
             cancelledSection.style.display = 'block';
         }
 
@@ -2031,9 +1848,8 @@
             progressLabel.textContent = 'Error';
             controls.style.display = 'none';
             // Show retry button
-            cancelledSection.querySelector('.cancelled-text').textContent = msg;
+            $('progressView').style.display = 'none';
             cancelledSection.style.display = 'block';
-            progressSection.style.display = 'none';
         }
 
         function escapeHtml(t) {
@@ -2098,11 +1914,19 @@
 
         function resetUI() {
             closeSSE();
+            taskIsComplete = false;
+            // Reset output panel
+            $('outputEmpty').style.display = 'block';
+            $('outputResults').style.display = 'none';
+            $('outputFilename').textContent = '';
+            $('outputMeta').textContent = '';
+            if ($('timingSummarySection')) $('timingSummarySection').style.display = 'none';
+            // Reset input panel views
+            $('transcribeForm').style.display = 'block';
+            $('progressView').style.display = 'none';
             localStorage.removeItem('sg_currentTaskId');
             sessionStorage.removeItem('sg_formState');
-            dropZone.style.display = 'block'; optionsPanel.style.display = 'flex'; optionsPanel2.style.display = 'flex';
             $('advancedToggle').style.display = ''; $('advancedPanel').className = 'advanced-panel';
-            progressSection.style.display = 'none'; downloadSection.style.display = 'none';
             cancelledSection.style.display = 'none'; detailsGrid.style.display = 'none';
             controls.style.display = 'none'; previewPanel.style.display = 'none';
             speedIndicator.style.display = 'none'; warningBanner.style.display = 'none';
@@ -2121,24 +1945,23 @@
             $('subtitleTrack').removeAttribute('src');
             // Reset state
             previewBody.innerHTML = ''; lastSegmentCount = 0;
-            progressBar.style.width = '0%'; progressBar.className = 'progress-bar active';
+            progressBar.style.width = '0%';
+            progressBar.classList.remove('success', 'paused', 'error');
             statusText.className = 'status-text';
-            progressPercent.textContent = '0%'; progressPercent.style.color = '#4f8ff7';
+            progressPercent.textContent = '0%'; progressPercent.style.color = 'var(--primary)';
             progressLabel.textContent = ''; fileInput.value = '';
             fileDuration.textContent = ''; fileSize.textContent = '';
             cancelBtn.disabled = false; isPaused = false; currentTaskId = null;
-            steps.forEach(s => s.classList.remove('active', 'completed', 'paused'));
+            getSteps().forEach(s => s.classList.remove('active', 'completed', 'paused'));
             batchFiles = []; $('batchQueue').innerHTML = '';
             // Reset step timings
             resetStepTimings();
-            $('timingSummary').style.display = 'none';
             // Reset embed card body state
             $('embedCardBody').classList.remove('collapsed');
             $('embedCardToggle').innerHTML = '&#9660;';
             // Reset combine section
             resetCombine();
             setAppMode('transcribe');
-            $('modeToggle').style.display = 'flex';
             refreshTaskQueue();
         }
 
@@ -2157,9 +1980,8 @@
             batchFiles = valid.map(f => ({ file: f, status: 'queued', taskId: null, percent: 0 }));
             batchIndex = 0;
 
-            dropZone.style.display = 'none';
-            optionsPanel.style.display = 'none';
-            optionsPanel2.style.display = 'none';
+            $('transcribeForm').style.display = 'none';
+            $('progressView').style.display = 'block';
             warningBanner.style.display = 'none';
             renderBatchQueue();
             processBatchNext();
@@ -2194,11 +2016,11 @@
             fileName.textContent = item.file.name;
             fileDuration.textContent = '';
             fileSize.textContent = formatBytes(item.file.size);
-            progressSection.style.display = 'block';
-            downloadSection.style.display = 'none';
+            $('transcribeForm').style.display = 'none';
+            $('progressView').style.display = 'block';
             previewBody.innerHTML = ''; lastSegmentCount = 0;
             setStep(0);
-            progressBar.className = 'progress-bar active';
+            progressBar.classList.remove('success', 'paused', 'error');
             progressBar.style.width = '0%';
             progressLabel.textContent = `Uploading (${batchIndex + 1}/${batchFiles.length})...`;
             progressPercent.textContent = '0%';
@@ -2314,15 +2136,16 @@
             const body = $('editorBody');
             body.innerHTML = '';
             editorSegments.forEach((seg, i) => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="seg-num">${i + 1}</td>
-                    <td><input type="text" class="ts-input" value="${formatTs(seg.start)}" data-idx="${i}" data-field="start"></td>
-                    <td><input type="text" class="ts-input" value="${formatTs(seg.end)}" data-idx="${i}" data-field="end"></td>
-                    <td><input type="text" class="text-input" value="${escapeAttr(seg.text)}" data-idx="${i}" data-field="text"></td>
-                    <td><button class="del-btn" onclick="deleteSegment(${i})" title="Delete">x</button></td>
+                const div = document.createElement('div');
+                div.className = 'editor-segment';
+                div.innerHTML = `
+                    <span class="editor-time">${i + 1}. ${formatTs(seg.start)} → ${formatTs(seg.end)}</span>
+                    <input type="hidden" class="ts-input" value="${formatTs(seg.start)}" data-idx="${i}" data-field="start">
+                    <input type="hidden" class="ts-input" value="${formatTs(seg.end)}" data-idx="${i}" data-field="end">
+                    <textarea class="editor-text-input text-input" data-idx="${i}" data-field="text" rows="2">${escapeAttr(seg.text)}</textarea>
+                    <button class="del-btn editor-btn cancel-edit" onclick="deleteSegment(${i})" title="Delete" style="padding:4px 8px;align-self:flex-start;">×</button>
                 `;
-                body.appendChild(tr);
+                body.appendChild(div);
             });
         }
 
@@ -2355,7 +2178,7 @@
 
         async function saveEdits() {
             // Read values from inputs
-            const inputs = $('editorBody').querySelectorAll('input');
+            const inputs = $('editorBody').querySelectorAll('input, textarea');
             inputs.forEach(inp => {
                 const idx = parseInt(inp.dataset.idx);
                 const field = inp.dataset.field;
@@ -2389,6 +2212,12 @@
             }
         }
 
+        function closeVideoPreview() {
+            $('videoPreviewSection').style.display = 'none';
+            const vp = $('videoPlayer');
+            if (vp) { vp.pause(); }
+        }
+
         function loadVideoFile(fileInput) {
             if (!fileInput.files.length) return;
             const file = fileInput.files[0];
@@ -2414,7 +2243,7 @@
         }
 
         // ── S2-6: Task Queue ──
-        let tqOpen = true;
+        let tqOpen = false;
 
         function toggleTaskQueue() {
             tqOpen = !tqOpen;
@@ -2674,42 +2503,26 @@
         function setAppMode(mode) {
             if (appMode === 'transcribe' && mode !== 'transcribe') saveFormState();
             appMode = mode;
-            $('modeTranscribe').className = 'mode-btn' + (mode === 'transcribe' ? ' active' : '');
-            $('modeCombine').className = 'mode-btn' + (mode === 'combine' ? ' active' : '');
-
-            // Transcribe-only elements
-            var transcribeEls = [optionsPanel, optionsPanel2, $('advancedToggle'), dropZone, $('batchQueue'), $('progressSection'), $('downloadSection')];
+            $('modeTranscribe').className = 'mode-tab' + (mode === 'transcribe' ? ' active' : '');
+            $('modeCombine').className = 'mode-tab' + (mode === 'combine' ? ' active' : '');
 
             if (mode === 'transcribe') {
                 $('combineSection').style.display = 'none';
-                // State-aware restore: don't show upload form if task is active/completed
+                // State-aware restore: show progress view if task active, else show form
                 if (currentTaskId) {
-                    // Task in progress or completed — keep progress/download visible
-                    optionsPanel.style.display = 'none';
-                    optionsPanel2.style.display = 'none';
-                    $('advancedToggle').style.display = 'none';
-                    dropZone.style.display = 'none';
+                    $('transcribeForm').style.display = 'none';
+                    $('progressView').style.display = 'block';
                     $('batchQueue').style.display = '';
-                    $('progressSection').style.display = 'block';
-                    // downloadSection visibility is managed by handleDone/handleProgressData
                 } else {
-                    optionsPanel.style.display = 'flex';
-                    optionsPanel2.style.display = 'flex';
-                    $('advancedToggle').style.display = '';
-                    dropZone.style.display = 'block';
+                    $('transcribeForm').style.display = 'block';
+                    $('progressView').style.display = 'none';
                     $('batchQueue').style.display = '';
-                    $('progressSection').style.display = 'none';
-                    $('downloadSection').style.display = 'none';
                 }
             } else {
-                optionsPanel.style.display = 'none';
-                optionsPanel2.style.display = 'none';
-                $('advancedToggle').style.display = 'none';
                 $('advancedPanel').classList.remove('show');
-                dropZone.style.display = 'none';
                 $('batchQueue').style.display = 'none';
-                $('progressSection').style.display = 'none';
-                $('downloadSection').style.display = 'none';
+                $('transcribeForm').style.display = 'none';
+                $('progressView').style.display = 'none';
                 $('combineSection').style.display = 'block';
             }
         }
@@ -2834,7 +2647,7 @@
             fd.append('video', combineVideoFile);
             fd.append('subtitle', combineSubFile);
             fd.append('mode', combineEmbedMode);
-            fd.append('preset', $('combinePreset').value);
+            fd.append('preset', 'default');
             fd.append('language', $('combineLanguage').value);
 
             if (combineEmbedMode === 'hard') {
@@ -2950,7 +2763,7 @@
 
         function toggleHealthPanel() {
             healthPanelOpen = !healthPanelOpen;
-            $('healthPanel').className = 'health-panel' + (healthPanelOpen ? ' open' : '');
+            $('healthPanel').className = 'health-panel' + (healthPanelOpen ? ' show' : '');
             if (healthPanelOpen) renderHealthPanel();
         }
 
@@ -3263,7 +3076,7 @@
 
         // Track button clicks on key elements
         document.addEventListener('click', function(e) {
-            const btn = e.target.closest('button, a.download-btn, .opt-btn, .embed-tab');
+            const btn = e.target.closest('button, a.download-btn, .opt-chip, .embed-tab');
             if (!btn) return;
             const id = btn.id || btn.textContent.trim().substring(0, 30);
             track('click', id);

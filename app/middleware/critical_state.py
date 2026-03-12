@@ -23,7 +23,9 @@ logger = logging.getLogger("subtitle-generator")
 _PASSTHROUGH_PREFIXES = (
     "/health",
     "/ready",
+    "/status",
     "/api/status",
+    "/api/capabilities",
     "/metrics",
     "/docs",
     "/redoc",
