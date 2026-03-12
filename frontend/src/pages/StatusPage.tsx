@@ -328,7 +328,12 @@ function CommitCard({ commit, idx, expanded, onToggle }: {
   }[commit.ci_status] ?? { label: 'N/A', color: '#94A3B8', bg: '#F8FAFC' }
 
   const dateStr = (() => {
-    try { return new Date(commit.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) }
+    try {
+      return new Date(commit.date).toLocaleString(undefined, {
+        month: 'short', day: 'numeric', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
+      })
+    }
     catch { return commit.date }
   })()
 
@@ -436,7 +441,7 @@ export default function StatusPage() {
   useEffect(() => {
     loadStatus()
     loadCommits()
-    const si = setInterval(loadStatus, 1000)
+    const si = setInterval(loadStatus, 30000)
     const ci = setInterval(loadCommits, 60000)
     return () => { clearInterval(si); clearInterval(ci) }
   }, [loadStatus, loadCommits])
