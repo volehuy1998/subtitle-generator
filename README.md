@@ -58,11 +58,13 @@ cp .env.example .env
 # Run database migrations (if using PostgreSQL)
 alembic upgrade head
 
-# Start the server
+# Start the server (development mode — plain HTTP, no HSTS)
 python main.py
 ```
 
-The server starts at `http://localhost:8000`.
+The server starts at `http://localhost:8000` (or `http://127.0.0.1:8000`).
+
+> **Note:** Development mode is the default (`ENVIRONMENT=dev`). HTTPS redirect and HSTS are disabled automatically. For production deployment, see [DEPLOY.md](DEPLOY.md).
 
 ### Using the Makefile
 
@@ -144,71 +146,36 @@ pytest tests/test_api.py::test_health_endpoint -v
 ruff check . --select E,F,W --ignore E501
 ```
 
-## Deployment (Linux Server)
+## Deployment
 
-### Bare Metal
+The application supports two environment modes controlled by `ENVIRONMENT`:
+
+| Mode | HTTPS Redirect | HSTS | TLS | Default |
+|------|---------------|------|-----|---------|
+| `dev` | Off | Off | Not required | **Yes** |
+| `prod` | On | On | Required (`SSL_CERTFILE` + `SSL_KEYFILE`) | No |
+
+### Development Mode (default)
 
 ```bash
-# Install system dependencies
-sudo apt update && sudo apt install -y python3.12 python3.12-venv ffmpeg
+# Plain HTTP on port 8000 — no TLS certificates needed
+python main.py
 
-# Clone and setup
-git clone <repo-url> subtitle-generator
-cd subtitle-generator
-python3.12 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+# Or with a custom port
+PORT=3000 python main.py
+```
 
-# Configure
-cp .env.example .env
-# Edit .env: set DATABASE_URL, API_KEYS, etc.
+### Production Mode
 
-# Run migrations (PostgreSQL)
-alembic upgrade head
-
-# Start with systemd or directly
+```bash
+# With TLS certificates (HTTPS on 443 + HTTP→HTTPS redirect on 80)
+ENVIRONMENT=prod \
+SSL_CERTFILE=/etc/letsencrypt/live/yourdomain.com/fullchain.pem \
+SSL_KEYFILE=/etc/letsencrypt/live/yourdomain.com/privkey.pem \
 python main.py
 ```
 
-### Docker (Recommended)
-
-```bash
-# Install Docker
-curl -fsSL https://get.docker.com | sh
-
-# Start
-cp .env.example .env
-docker compose --profile cpu up --build -d
-
-# Check status
-docker compose --profile cpu ps
-docker compose --profile cpu logs -f
-```
-
-### Systemd Service (Optional)
-
-```ini
-# /etc/systemd/system/subtitle-generator.service
-[Unit]
-Description=Subtitle Generator
-After=network.target postgresql.service
-
-[Service]
-Type=simple
-User=www-data
-WorkingDirectory=/opt/subtitle-generator
-EnvironmentFile=/opt/subtitle-generator/.env
-ExecStart=/opt/subtitle-generator/venv/bin/python main.py
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-```
-
-```bash
-sudo systemctl enable --now subtitle-generator
-```
+> For full deployment instructions (single-node, multi-node, Docker, GPU), see [DEPLOY.md](DEPLOY.md).
 
 ## License
 

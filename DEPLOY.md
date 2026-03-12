@@ -1,10 +1,12 @@
 # Deployment Guide — Ubuntu Server 24.04
 
-Deploy the subtitle generator in single-node or multi-node mode on fresh Ubuntu 24.04 hosts.
+Deploy the subtitle generator in development, single-node, or multi-node mode.
 
 ## Table of Contents
 
+- [Environment Modes](#environment-modes)
 - [System Requirements](#system-requirements)
+- [Development Mode](#development-mode)
 - [Common Setup (All Nodes)](#common-setup-all-nodes)
 - [Mode A: Single-Node Deployment](#mode-a-single-node-deployment)
 - [Mode B: Multi-Node Deployment](#mode-b-multi-node-deployment)
@@ -13,6 +15,19 @@ Deploy the subtitle generator in single-node or multi-node mode on fresh Ubuntu 
 - [Environment Variables Reference](#environment-variables-reference)
 - [Useful Commands](#useful-commands)
 - [Troubleshooting](#troubleshooting)
+
+---
+
+## Environment Modes
+
+The application behavior is controlled by the `ENVIRONMENT` variable:
+
+| Mode | HTTPS Redirect | HSTS | TLS Handling | Use Case |
+|------|---------------|------|-------------|----------|
+| **`dev`** (default) | Off | Off | Not required — plain HTTP | Local development, testing |
+| **`prod`** | On | On | TLS via `SSL_CERTFILE`/`SSL_KEYFILE` or reverse proxy | Production servers |
+
+Setting `ENVIRONMENT=prod` automatically enables `HTTPS_REDIRECT` and `HSTS_ENABLED`. You can still override them individually via env vars if needed.
 
 ---
 
@@ -48,9 +63,60 @@ Deploy the subtitle generator in single-node or multi-node mode on fresh Ubuntu 
 
 ---
 
+## Development Mode
+
+For local development on Windows, macOS, or Linux. No TLS certificates, no HSTS, plain HTTP.
+
+### Prerequisites
+
+- Python 3.12+
+- ffmpeg on PATH
+- (Optional) PostgreSQL 16+ — SQLite used by default
+
+### Quick Start
+
+```bash
+# Clone and install
+git clone https://github.com/volehuy1998/subtitle-generator.git
+cd subtitle-generator
+pip install -r requirements.txt
+mkdir -p uploads outputs logs
+
+# Start (development mode is the default)
+python main.py
+```
+
+The server starts at **http://localhost:8000** (or http://127.0.0.1:8000).
+
+### With PostgreSQL (optional)
+
+```bash
+# Start PostgreSQL via Docker
+docker compose up postgres -d
+
+# Run with PostgreSQL
+DATABASE_URL=postgresql+asyncpg://subtitle:subtitle@localhost:5432/subtitle_generator python main.py
+```
+
+### Custom Port
+
+```bash
+PORT=3000 python main.py
+```
+
+### Troubleshooting: Browser Redirects to HTTPS
+
+If your browser previously visited the app in production mode, it may have cached an HSTS policy that forces HTTPS. Fixes:
+
+1. **Use `http://127.0.0.1:8000`** instead of `localhost` (Chrome auto-upgrades `localhost` to HTTPS)
+2. **Chrome**: go to `chrome://net-internals/#hsts` → "Delete domain security policies" → enter `localhost` → Delete
+3. **Try an incognito/private window** (starts with a clean HSTS cache)
+
+---
+
 ## Common Setup (All Nodes)
 
-These steps apply to every server, regardless of deployment mode.
+These steps apply to every production server, regardless of deployment mode.
 
 ### Step 1: System Update & Dependencies
 
@@ -120,6 +186,9 @@ ExecStart=/opt/subtitle-generator/.venv/bin/python main.py
 Restart=on-failure
 RestartSec=5
 Environment=PYTHONUNBUFFERED=1
+Environment=ENVIRONMENT=prod
+Environment=SSL_CERTFILE=/etc/letsencrypt/live/openlabs.club/fullchain.pem
+Environment=SSL_KEYFILE=/etc/letsencrypt/live/openlabs.club/privkey.pem
 
 [Install]
 WantedBy=multi-user.target
@@ -178,6 +247,9 @@ ExecStart=/opt/subtitle-generator/.venv/bin/python main.py
 Restart=on-failure
 RestartSec=5
 Environment=PYTHONUNBUFFERED=1
+Environment=ENVIRONMENT=prod
+Environment=SSL_CERTFILE=/etc/letsencrypt/live/$DOMAIN/fullchain.pem
+Environment=SSL_KEYFILE=/etc/letsencrypt/live/$DOMAIN/privkey.pem
 
 [Install]
 WantedBy=multi-user.target
@@ -669,7 +741,13 @@ If GPU is not detected, the application falls back to CPU mode automatically.
 
 | Variable | Purpose | Default |
 |----------|---------|---------|
+| `ENVIRONMENT` | Environment mode: `dev` or `prod` | `dev` |
 | `ROLE` | Server role: `standalone`, `web`, or `worker` | `standalone` |
+| `PORT` | HTTP listen port (dev mode) | `8000` |
+| `SSL_CERTFILE` | Path to TLS certificate (prod mode) | empty |
+| `SSL_KEYFILE` | Path to TLS private key (prod mode) | empty |
+| `HTTPS_REDIRECT` | Force HTTP→HTTPS redirect | `true` in prod, `false` in dev |
+| `HSTS_ENABLED` | Send HSTS header | `true` in prod, `false` in dev |
 | `API_KEYS` | Comma-separated API keys (auth disabled if empty) | empty |
 | `HF_TOKEN` | Hugging Face token for model downloads | empty |
 | `PRELOAD_MODEL` | Preload whisper model at startup (tiny/base/small/medium/large) | empty |
@@ -781,14 +859,25 @@ sudo certbot certificates
 # Renew if expired
 sudo certbot renew
 
-# Test without TLS (for debugging)
-HTTPS_REDIRECT=false python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+# Test without TLS (development mode — no certs needed)
+python3 main.py
 ```
 
 If certificates don't exist yet, obtain them:
 ```bash
 sudo certbot certonly --standalone -d YOUR_DOMAIN --non-interactive --agree-tos -m your@email.com
 ```
+
+### Browser Forces HTTPS on localhost
+
+**Symptom**: Typing `localhost:8000` in Chrome redirects to `https://localhost` and fails.
+
+**Cause**: Chrome auto-upgrades `localhost` to HTTPS, or a previous HSTS header was cached.
+
+**Fix**:
+- Use **`http://127.0.0.1:8000`** instead of `localhost`
+- Or clear HSTS: `chrome://net-internals/#hsts` → Delete `localhost`
+- Or use an incognito window
 
 ### GPU Not Detected
 

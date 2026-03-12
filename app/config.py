@@ -100,9 +100,14 @@ S3_ACCESS_KEY = os.environ.get("S3_ACCESS_KEY", "")
 S3_SECRET_KEY = os.environ.get("S3_SECRET_KEY", "")
 S3_REGION = os.environ.get("S3_REGION", "us-east-1")
 
+# --- Environment mode ---
+# "dev" = local development (HTTP, no HSTS), "prod" = production (HTTPS, HSTS)
+ENVIRONMENT = os.environ.get("ENVIRONMENT", "dev")
+_is_prod = ENVIRONMENT == "prod"
+
 # --- Security infrastructure ---
-HSTS_ENABLED = os.environ.get("HSTS_ENABLED", "true").lower() == "true"
-HTTPS_REDIRECT = os.environ.get("HTTPS_REDIRECT", "true").lower() == "true"
+HSTS_ENABLED = os.environ.get("HSTS_ENABLED", str(_is_prod)).lower() == "true"
+HTTPS_REDIRECT = os.environ.get("HTTPS_REDIRECT", str(_is_prod)).lower() == "true"
 CSP_NONCE_ENABLED = os.environ.get("CSP_NONCE_ENABLED", "false").lower() == "true"
 CORS_DEFAULT_DENY = os.environ.get("CORS_DEFAULT_DENY", "false").lower() == "true"
 

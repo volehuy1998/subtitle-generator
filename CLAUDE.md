@@ -9,8 +9,11 @@ Subtitle generator web app: upload audio/video, transcribe with faster-whisper (
 ## Commands
 
 ```bash
-# Run the app
+# Run the app (development mode — plain HTTP, no HSTS)
 python main.py                    # starts uvicorn on 0.0.0.0:8000
+
+# Run in production mode (HTTPS)
+ENVIRONMENT=prod SSL_CERTFILE=/path/to/cert.pem SSL_KEYFILE=/path/to/key.pem python main.py
 
 # Run all tests (643 tests, ~20s)
 pytest tests/ -v --tb=short
@@ -69,6 +72,10 @@ When adding tests, follow the existing sprint pattern or add to the relevant dom
 
 | Variable | Purpose | Default |
 |----------|---------|---------|
+| `ENVIRONMENT` | `dev` (HTTP, no HSTS) or `prod` (HTTPS, HSTS) | `dev` |
+| `SSL_CERTFILE` | TLS certificate path (prod mode) | empty |
+| `SSL_KEYFILE` | TLS private key path (prod mode) | empty |
+| `PORT` | HTTP listen port (dev mode) | 8000 |
 | `API_KEYS` | Comma-separated API keys (auth disabled if empty) | empty |
 | `HF_TOKEN` | Hugging Face token for model downloads | empty |
 | `PRELOAD_MODEL` | Preload whisper model at startup (tiny/base/small/medium/large) | empty |
