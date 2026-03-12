@@ -1,7 +1,6 @@
 services:
-  # PostgreSQL database (always available, no profile needed)
-  # Start DB only:  docker compose up postgres -d
-  # Start all (CPU): docker compose --profile cpu up -d
+  # ── Infrastructure ──────────────────────────────────────────────────────────
+
   postgres:
     image: postgres:16-alpine
     ports:
@@ -19,7 +18,44 @@ services:
       retries: 5
     restart: unless-stopped
 
-  # CPU-only mode
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # S3-compatible object storage (optional — use for shared file storage across nodes)
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/data
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-subtitle}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-subtitle_secret}
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    profiles:
+      - s3
+
+  # ── Single-server (CPU) ─────────────────────────────────────────────────────
+  # Usage: docker compose --profile cpu up -d
+
   subtitle-generator:
     build:
       context: .
@@ -35,7 +71,10 @@ services:
       - /etc/letsencrypt/live/${DOMAIN}/privkey.pem:/certs/privkey.pem:ro
     environment:
       - ENVIRONMENT=prod
+      - ROLE=standalone
       - DATABASE_URL=postgresql+asyncpg://subtitle:subtitle@postgres:5432/subtitle_generator
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
       - API_KEYS=${API_KEYS:-}
       - HF_TOKEN=${HF_TOKEN:-}
       - FILE_RETENTION_HOURS=${FILE_RETENTION_HOURS:-24}
@@ -45,11 +84,15 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
     profiles:
       - cpu
 
-  # GPU mode (requires NVIDIA Container Toolkit)
+  # ── Single-server (GPU) ─────────────────────────────────────────────────────
+  # Usage: docker compose --profile gpu up -d
+
   subtitle-generator-gpu:
     build:
       context: .
@@ -65,7 +108,10 @@ services:
       - /etc/letsencrypt/live/${DOMAIN}/privkey.pem:/certs/privkey.pem:ro
     environment:
       - ENVIRONMENT=prod
+      - ROLE=standalone
       - DATABASE_URL=postgresql+asyncpg://subtitle:subtitle@postgres:5432/subtitle_generator
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
       - API_KEYS=${API_KEYS:-}
       - HF_TOKEN=${HF_TOKEN:-}
       - FILE_RETENTION_HOURS=${FILE_RETENTION_HOURS:-24}
@@ -74,6 +120,8 @@ services:
       - WEBHOOK_ALERT_URL=${WEBHOOK_ALERT_URL:-}
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     deploy:
       resources:
@@ -86,5 +134,147 @@ services:
     profiles:
       - gpu
 
+  # ── Distributed mode: API layer ─────────────────────────────────────────────
+  # Usage: docker compose --profile distributed up -d
+  # Scale API: docker compose --profile distributed up -d --scale subtitle-api=3
+
+  subtitle-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000"
+    volumes:
+      - ./logs:/app/logs
+    environment:
+      - ENVIRONMENT=prod
+      - ROLE=web
+      - DATABASE_URL=postgresql+asyncpg://subtitle:subtitle@postgres:5432/subtitle_generator
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - STORAGE_BACKEND=${STORAGE_BACKEND:-local}
+      - S3_BUCKET=${S3_BUCKET:-subtitles}
+      - S3_ENDPOINT=${S3_ENDPOINT:-}
+      - S3_ACCESS_KEY=${MINIO_ROOT_USER:-subtitle}
+      - S3_SECRET_KEY=${MINIO_ROOT_PASSWORD:-subtitle_secret}
+      - API_KEYS=${API_KEYS:-}
+      - HF_TOKEN=${HF_TOKEN:-}
+      - FILE_RETENTION_HOURS=${FILE_RETENTION_HOURS:-24}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - CORS_ORIGINS=https://${DOMAIN}
+      - WEBHOOK_ALERT_URL=${WEBHOOK_ALERT_URL:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    profiles:
+      - distributed
+
+  # CPU worker node (one per server without GPU)
+  subtitle-worker-cpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./uploads:/app/uploads
+      - ./outputs:/app/outputs
+      - ./logs:/app/logs
+    environment:
+      - ROLE=worker
+      - DATABASE_URL=postgresql+asyncpg://subtitle:subtitle@postgres:5432/subtitle_generator
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - STORAGE_BACKEND=${STORAGE_BACKEND:-local}
+      - S3_BUCKET=${S3_BUCKET:-subtitles}
+      - S3_ENDPOINT=${S3_ENDPOINT:-}
+      - S3_ACCESS_KEY=${MINIO_ROOT_USER:-subtitle}
+      - S3_SECRET_KEY=${MINIO_ROOT_PASSWORD:-subtitle_secret}
+      - HF_TOKEN=${HF_TOKEN:-}
+      - FILE_RETENTION_HOURS=${FILE_RETENTION_HOURS:-24}
+    command: celery -A app.celery_app worker --concurrency=1 --loglevel=info -Q transcription
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    profiles:
+      - distributed
+
+  # GPU worker node — run one per GPU server
+  subtitle-worker-gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile.gpu
+    volumes:
+      - ./uploads:/app/uploads
+      - ./outputs:/app/outputs
+      - ./logs:/app/logs
+    environment:
+      - ROLE=worker
+      - DATABASE_URL=postgresql+asyncpg://subtitle:subtitle@postgres:5432/subtitle_generator
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - STORAGE_BACKEND=${STORAGE_BACKEND:-local}
+      - S3_BUCKET=${S3_BUCKET:-subtitles}
+      - S3_ENDPOINT=${S3_ENDPOINT:-}
+      - S3_ACCESS_KEY=${MINIO_ROOT_USER:-subtitle}
+      - S3_SECRET_KEY=${MINIO_ROOT_PASSWORD:-subtitle_secret}
+      - HF_TOKEN=${HF_TOKEN:-}
+      - FILE_RETENTION_HOURS=${FILE_RETENTION_HOURS:-24}
+    command: celery -A app.celery_app worker --concurrency=1 --loglevel=info -Q transcription
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    profiles:
+      - distributed-gpu
+
+  # Flower: Celery task monitoring dashboard (http://localhost:5555)
+  flower:
+    image: mher/flower:2.0
+    ports:
+      - "5555:5555"
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - FLOWER_BASIC_AUTH=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-changeme}
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    profiles:
+      - distributed
+      - distributed-gpu
+
+  # nginx load balancer (for distributed mode with multiple API nodes)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt/live/${DOMAIN}/fullchain.pem:/certs/fullchain.pem:ro
+      - /etc/letsencrypt/live/${DOMAIN}/privkey.pem:/certs/privkey.pem:ro
+    depends_on:
+      - subtitle-api
+    restart: unless-stopped
+    profiles:
+      - distributed
+      - distributed-gpu
+
 volumes:
   pgdata:
+  redisdata:
+  miniodata:
