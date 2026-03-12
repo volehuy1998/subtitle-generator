@@ -1,4 +1,8 @@
 import { useEffect, useState, useCallback } from 'react'
+import { AppHeader } from '@/components/layout/AppHeader'
+import { HealthPanel } from '@/components/system/HealthPanel'
+import { useHealthStream } from '@/hooks/useHealthStream'
+import { useUIStore } from '@/store/uiStore'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -412,6 +416,8 @@ export default function StatusPage() {
   const [statusData, setStatusData] = useState<StatusPage | null>(null)
   const [commitsData, setCommitsData] = useState<CommitsData | null>(null)
   const [expandedCommits, setExpandedCommits] = useState<Set<number>>(new Set())
+  const health = useHealthStream()
+  const { healthPanelOpen, setHealthPanelOpen } = useUIStore()
 
   const loadStatus = useCallback(async () => {
     try {
@@ -445,39 +451,8 @@ export default function StatusPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#F1F5F9', fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif', fontSize: '14px', color: '#1E293B' }}>
-      {/* Header */}
-      <header style={{
-        background: '#fff', borderBottom: '1px solid #E2E8F0',
-        height: '58px', display: 'flex', alignItems: 'center',
-        padding: '0 24px', position: 'sticky', top: 0, zIndex: 50,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-      }}>
-        <div style={{ maxWidth: '960px', margin: '0 auto', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <a href="/" style={{
-            display: 'flex', alignItems: 'center', gap: '10px',
-            textDecoration: 'none', fontWeight: '700', fontSize: '1.05rem', color: '#1E293B',
-          }}>
-            <svg viewBox="0 0 64 64" width="28" height="28">
-              <rect width="64" height="64" rx="14" fill="#6366F1" />
-              <rect x="8" y="38" width="48" height="6" rx="3" fill="white" opacity=".9" />
-              <rect x="14" y="48" width="36" height="5" rx="2.5" fill="white" opacity=".5" />
-              <path d="M22 12 L42 24 L22 36Z" fill="white" opacity=".85" />
-            </svg>
-            Sub<span style={{ color: '#6366F1' }}>Forge</span>
-            <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: '400', marginLeft: '4px' }}>Status</span>
-          </a>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <a href="/" style={{
-              fontSize: '0.82rem', color: '#64748B', padding: '5px 12px',
-              border: '1px solid #E2E8F0', borderRadius: '5px', textDecoration: 'none',
-            }}>← App</a>
-            <a href="/docs" style={{
-              fontSize: '0.82rem', color: '#64748B', padding: '5px 12px',
-              border: '1px solid #E2E8F0', borderRadius: '5px', textDecoration: 'none',
-            }}>API Docs</a>
-          </div>
-        </div>
-      </header>
+      <AppHeader />
+      {healthPanelOpen && <HealthPanel />}
 
       {/* Body */}
       <main style={{ maxWidth: '960px', margin: '0 auto', padding: '32px 24px' }}>
