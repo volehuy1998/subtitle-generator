@@ -352,11 +352,12 @@
         .editor-btn.save { border-color: var(--success-border); background: var(--success-light); color: #065F46; }
         .editor-btn.save:hover { background: #d1fae5; }
         .editor-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .editor-body { padding: 12px; max-height: 420px; overflow-y: auto; }
-        .editor-segment { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; }
-        .editor-time { font-family: monospace; font-size: 0.7rem; color: var(--primary); white-space: nowrap; padding-top: 7px; min-width: 0; }
+        .editor-body { padding: 10px 12px; max-height: 420px; overflow-y: auto; }
+        .editor-segment { margin-bottom: 10px; }
+        .editor-seg-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; gap: 4px; }
+        .editor-time { font-family: monospace; font-size: 0.66rem; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
         .editor-text-input {
-            flex: 1; padding: 6px 8px; border-radius: var(--radius-xs); border: 1.5px solid var(--border);
+            display: block; width: 100%; padding: 6px 8px; border-radius: var(--radius-xs); border: 1.5px solid var(--border);
             font-size: 0.82rem; background: var(--surface); color: var(--text); font-family: inherit; resize: vertical; outline: none;
         }
         .editor-text-input:focus { border-color: var(--primary); }
@@ -2213,9 +2214,11 @@
                 var div = document.createElement('div');
                 div.className = 'editor-segment';
                 div.innerHTML =
-                    '<span class="editor-time">' + (segIdx + 1) + '. ' + formatTs(seg.start) + ' \u2192 ' + formatTs(seg.end) + '</span>' +
-                    '<textarea class="editor-text-input" rows="2"></textarea>' +
-                    '<button class="del-btn editor-btn cancel-edit" title="Delete" style="padding:4px 8px;align-self:flex-start;">\xd7</button>';
+                    '<div class="editor-seg-header">' +
+                        '<span class="editor-time">' + (segIdx + 1) + '. ' + formatTs(seg.start) + ' \u2192 ' + formatTs(seg.end) + '</span>' +
+                        '<button class="del-btn editor-btn cancel-edit" title="Delete" style="padding:2px 7px;flex-shrink:0">\xd7</button>' +
+                    '</div>' +
+                    '<textarea class="editor-text-input" rows="2"></textarea>';
                 var ta = div.querySelector('textarea');
                 ta.value = seg.text;
                 // Track changes directly into editorSegments — O(1) per keystroke, no DOM scan on save
