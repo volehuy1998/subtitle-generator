@@ -452,7 +452,7 @@ export default function StatusPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#F1F5F9', fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif', fontSize: '14px', color: '#1E293B' }}>
       <AppHeader />
-      {healthPanelOpen && <HealthPanel />}
+      {healthPanelOpen && <HealthPanel health={health} onClose={() => setHealthPanelOpen(false)} />}
 
       {/* Body */}
       <main style={{ maxWidth: '960px', margin: '0 auto', padding: '32px 24px' }}>
