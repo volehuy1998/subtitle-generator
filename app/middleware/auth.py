@@ -33,6 +33,7 @@ PUBLIC_PATHS = {"/", "/health", "/ready", "/metrics", "/system-info", "/language
                 "/monitoring/metrics", "/monitoring/alerts", "/monitoring/dashboard",
                 "/monitoring/thresholds", "/monitoring/performance",
                 "/status", "/api/status/page", "/api/status/commits",
+                "/status/manage", "/api/status/incidents/open",
                 "/api/capabilities"}
 
 # Load API keys from environment (comma-separated)

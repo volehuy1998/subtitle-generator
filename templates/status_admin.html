@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SubForge — Status Management</title>
+    <meta name="theme-color" content="#6366F1">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%236366F1'/%3E%3Crect x='8' y='38' width='48' height='6' rx='3' fill='white' opacity='.9'/%3E%3Crect x='14' y='48' width='36' height='5' rx='2.5' fill='white' opacity='.5'/%3E%3Cpath d='M22 12 L42 24 L22 36Z' fill='white' opacity='.85'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #F1F5F9; --surface: #FFFFFF; --surface-2: #F8FAFC;
+            --border: #E2E8F0; --border-2: #CBD5E1;
+            --primary: #6366F1; --primary-hover: #4F46E5; --primary-light: #EEF2FF;
+            --success: #10B981; --success-light: #ECFDF5; --success-border: #A7F3D0;
+            --warning: #F59E0B; --warning-light: #FFFBEB;
+            --error: #EF4444; --error-light: #FEF2F2;
+            --text: #1E293B; --text-2: #64748B; --text-3: #94A3B8;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --radius: 14px; --radius-sm: 8px; --radius-xs: 5px;
+        }
+        html, body { min-height: 100%; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+        a { color: var(--primary); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* Header */
+        .header {
+            background: var(--surface); border-bottom: 1px solid var(--border);
+            padding: 0 24px; height: 58px; display: flex; align-items: center;
+            position: sticky; top: 0; z-index: 50; box-shadow: var(--shadow);
+        }
+        .header-inner { max-width: 960px; margin: 0 auto; width: 100%; display: flex; align-items: center; justify-content: space-between; }
+        .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; font-size: 1.05rem; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+        .logo svg { width: 30px; height: 30px; }
+        .logo-accent { color: var(--primary); }
+        .header-links { display: flex; gap: 8px; align-items: center; }
+        .header-links a { font-size: 0.82rem; color: var(--text-2); padding: 5px 12px; border: 1px solid var(--border); border-radius: var(--radius-xs); transition: all 0.15s; }
+        .header-links a:hover { color: var(--text); border-color: var(--border-2); text-decoration: none; }
+        .admin-badge { font-size: 0.68rem; font-weight: 700; background: #FFF7ED; color: #9A3412; border: 1px solid #FED7AA; padding: 3px 9px; border-radius: 20px; letter-spacing: 0.3px; }
+
+        /* Container */
+        .container { max-width: 960px; margin: 0 auto; padding: 28px 24px; }
+
+        /* Auth bar */
+        .auth-bar {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 16px 20px;
+            margin-bottom: 24px; display: flex; align-items: center; gap: 12px;
+            box-shadow: var(--shadow);
+        }
+        .auth-bar label { font-size: 0.82rem; font-weight: 600; color: var(--text-2); white-space: nowrap; }
+        .auth-bar input {
+            flex: 1; border: 1px solid var(--border); border-radius: var(--radius-xs);
+            padding: 7px 12px; font-size: 0.82rem; font-family: 'SF Mono', 'Fira Code', monospace;
+            background: var(--surface-2); color: var(--text); outline: none;
+            transition: border-color 0.15s;
+        }
+        .auth-bar input:focus { border-color: var(--primary); }
+        .auth-status { font-size: 0.75rem; font-weight: 600; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+        .auth-status.ok { background: var(--success-light); color: #065F46; }
+        .auth-status.none { background: var(--surface-2); color: var(--text-3); border: 1px solid var(--border); }
+
+        /* Section title */
+        .section-title { font-size: 0.8rem; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+        /* Cards */
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 20px 24px; box-shadow: var(--shadow); margin-bottom: 16px; }
+
+        /* Forms */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .form-group.full { grid-column: 1 / -1; }
+        label { font-size: 0.78rem; font-weight: 600; color: var(--text-2); }
+        input[type=text], select, textarea {
+            border: 1px solid var(--border); border-radius: var(--radius-xs);
+            padding: 8px 12px; font-size: 0.85rem; font-family: inherit;
+            background: var(--surface-2); color: var(--text); outline: none;
+            transition: border-color 0.15s; width: 100%;
+        }
+        input[type=text]:focus, select:focus, textarea:focus { border-color: var(--primary); background: var(--surface); }
+        textarea { resize: vertical; min-height: 80px; }
+        .field-hint { font-size: 0.68rem; color: var(--text-3); margin-top: 2px; }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 18px; border-radius: var(--radius-xs); border: none;
+            font-size: 0.82rem; font-weight: 600; cursor: pointer;
+            transition: all 0.15s; font-family: inherit; white-space: nowrap;
+        }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-success { background: var(--success); color: #fff; }
+        .btn-success:hover { background: #059669; }
+        .btn-danger { background: var(--error); color: #fff; }
+        .btn-danger:hover { background: #DC2626; }
+        .btn-ghost { background: transparent; color: var(--text-2); border: 1px solid var(--border); }
+        .btn-ghost:hover { border-color: var(--border-2); color: var(--text); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-row { display: flex; gap: 8px; margin-top: 16px; align-items: center; }
+
+        /* Open incidents */
+        .open-incident {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 18px 22px;
+            margin-bottom: 10px; box-shadow: var(--shadow);
+        }
+        .inc-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+        .inc-title { font-weight: 700; font-size: 0.95rem; color: var(--text); }
+        .inc-meta { font-size: 0.72rem; color: var(--text-3); margin-top: 3px; }
+        .inc-badge {
+            font-size: 0.66rem; font-weight: 700; padding: 3px 10px;
+            border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
+            flex-shrink: 0; border: 1px solid;
+        }
+        .inc-badge.critical { background: var(--error-light); color: #991B1B; border-color: #FECACA; }
+        .inc-badge.major { background: #FFF7ED; color: #9A3412; border-color: #FED7AA; }
+        .inc-badge.minor { background: var(--warning-light); color: #92400E; border-color: #FDE68A; }
+        .inc-badge.maintenance { background: var(--primary-light); color: #3730A3; border-color: #C7D2FE; }
+        .inc-status-chip { font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 20px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-2); }
+
+        /* Timeline inside open incident */
+        .inc-timeline { padding-left: 12px; border-left: 2px solid var(--border); margin-bottom: 14px; }
+        .inc-update { padding: 5px 0 5px 12px; position: relative; }
+        .inc-update::before { content: ''; position: absolute; left: -7px; top: 11px; width: 10px; height: 10px; border-radius: 50%; background: var(--border-2); border: 2px solid var(--bg); }
+        .inc-update.investigating::before { background: var(--error); }
+        .inc-update.identified::before { background: var(--warning); }
+        .inc-update.monitoring::before { background: var(--primary); }
+        .up-header { display: flex; justify-content: space-between; font-size: 0.72rem; margin-bottom: 2px; }
+        .up-status { font-weight: 700; text-transform: capitalize; }
+        .up-status.investigating { color: var(--error); }
+        .up-status.identified { color: var(--warning); }
+        .up-status.monitoring { color: var(--primary); }
+        .up-time { color: var(--text-3); }
+        .up-msg { font-size: 0.78rem; color: var(--text-2); }
+
+        /* Inline update form */
+        .update-form { display: grid; grid-template-columns: 160px 1fr; gap: 10px; align-items: start; margin-top: 4px; }
+        .update-form select, .update-form textarea { font-size: 0.82rem; }
+        .update-form textarea { min-height: 60px; }
+
+        /* Empty state */
+        .empty { text-align: center; padding: 32px; color: var(--text-3); font-size: 0.85rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+
+        /* Toast */
+        #toast {
+            position: fixed; bottom: 24px; right: 24px; z-index: 1000;
+            background: var(--text); color: #fff; padding: 12px 20px;
+            border-radius: var(--radius-sm); font-size: 0.82rem; font-weight: 500;
+            box-shadow: var(--shadow-md); opacity: 0; transform: translateY(8px);
+            transition: all 0.2s; pointer-events: none;
+        }
+        #toast.show { opacity: 1; transform: translateY(0); }
+        #toast.success { background: var(--success); }
+        #toast.error { background: var(--error); }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .container { padding: 16px 14px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .update-form { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-inner">
+        <a class="logo" href="/">
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="64" height="64" rx="14" fill="#6366F1"/>
+                <rect x="8" y="38" width="48" height="6" rx="3" fill="white" opacity=".9"/>
+                <rect x="14" y="48" width="36" height="5" rx="2.5" fill="white" opacity=".5"/>
+                <path d="M22 12 L42 24 L22 36Z" fill="white" opacity=".85"/>
+            </svg>
+            Sub<span class="logo-accent">Forge</span>
+        </a>
+        <div class="header-links">
+            <span class="admin-badge">Admin</span>
+            <a href="/status">Public Status</a>
+            <a href="/">App</a>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+
+    <!-- API Key bar -->
+    <div class="auth-bar">
+        <label for="apiKey">API Key</label>
+        <input type="password" id="apiKey" placeholder="Paste your API key here (leave empty if auth is disabled)" autocomplete="off">
+        <span class="auth-status none" id="authStatus">Not set</span>
+    </div>
+
+    <!-- Create incident -->
+    <div class="section-title">Post New Incident</div>
+    <div class="card">
+        <div class="form-grid">
+            <div class="form-group full">
+                <label for="incTitle">Incident Title</label>
+                <input type="text" id="incTitle" placeholder="e.g. Transcription latency elevated">
+            </div>
+            <div class="form-group">
+                <label for="incComponent">Affected Component</label>
+                <select id="incComponent">
+                    <option value="transcription">Transcription Engine</option>
+                    <option value="combine">Video Combine</option>
+                    <option value="api">Web Application</option>
+                    <option value="database">Database</option>
+                    <option value="storage">File Storage</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="incSeverity">Severity</label>
+                <select id="incSeverity">
+                    <option value="minor">Minor — degraded performance</option>
+                    <option value="major">Major — significant impact</option>
+                    <option value="critical">Critical — service unavailable</option>
+                    <option value="maintenance">Maintenance — planned work</option>
+                </select>
+            </div>
+            <div class="form-group full">
+                <label for="incMessage">Initial Message</label>
+                <textarea id="incMessage" placeholder="We are investigating reports of…"></textarea>
+                <div class="field-hint">Describe what is happening and what is being done. This is the first update users will see.</div>
+            </div>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-primary" onclick="createIncident()">Post Incident</button>
+        </div>
+    </div>
+
+    <!-- Open incidents -->
+    <div class="section-title" style="margin-top:8px;">Open Incidents</div>
+    <div id="openIncidents">
+        <div class="empty">Loading…</div>
+    </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function() {
+    var API_KEY = '';
+
+    // API key input
+    var keyInput = document.getElementById('apiKey');
+    var authStatus = document.getElementById('authStatus');
+    keyInput.addEventListener('input', function() {
+        API_KEY = keyInput.value.trim();
+        if (API_KEY) {
+            authStatus.textContent = 'Key set';
+            authStatus.className = 'auth-status ok';
+        } else {
+            authStatus.textContent = 'Not set';
+            authStatus.className = 'auth-status none';
+        }
+    });
+
+    function headers() {
+        var h = { 'Content-Type': 'application/json' };
+        if (API_KEY) h['X-API-Key'] = API_KEY;
+        return h;
+    }
+
+    function escapeHtml(s) {
+        var d = document.createElement('div');
+        d.textContent = s || '';
+        return d.innerHTML;
+    }
+
+    function formatDateTime(iso) {
+        try {
+            var d = new Date(iso);
+            return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) +
+                   ' at ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+        } catch(e) { return iso; }
+    }
+
+    var _toastTimer = null;
+    function toast(msg, type) {
+        var el = document.getElementById('toast');
+        el.textContent = msg;
+        el.className = 'show ' + (type || '');
+        clearTimeout(_toastTimer);
+        _toastTimer = setTimeout(function() { el.className = ''; }, 3500);
+    }
+
+    async function apiFetch(method, path, body) {
+        var opts = { method: method, headers: headers() };
+        if (body !== undefined) opts.body = JSON.stringify(body);
+        var res = await fetch(path, opts);
+        var data = await res.json().catch(function() { return {}; });
+        if (!res.ok) throw new Error(data.detail || ('HTTP ' + res.status));
+        return data;
+    }
+
+    async function createIncident() {
+        var title = document.getElementById('incTitle').value.trim();
+        var component = document.getElementById('incComponent').value;
+        var severity = document.getElementById('incSeverity').value;
+        var message = document.getElementById('incMessage').value.trim();
+
+        if (!title) { toast('Title is required', 'error'); return; }
+        if (!message) { toast('Initial message is required', 'error'); return; }
+
+        try {
+            var data = await apiFetch('POST', '/api/status/incidents', { title, component, severity, message });
+            toast('Incident #' + data.id + ' created', 'success');
+            document.getElementById('incTitle').value = '';
+            document.getElementById('incMessage').value = '';
+            loadOpenIncidents();
+        } catch(e) {
+            toast(e.message, 'error');
+        }
+    }
+
+    async function postUpdate(incidentId) {
+        var status = document.getElementById('updStatus_' + incidentId).value;
+        var message = document.getElementById('updMsg_' + incidentId).value.trim();
+        if (!message) { toast('Message is required', 'error'); return; }
+        try {
+            await apiFetch('POST', '/api/status/incidents/' + incidentId + '/update', { status, message });
+            toast('Update posted', 'success');
+            loadOpenIncidents();
+        } catch(e) {
+            toast(e.message, 'error');
+        }
+    }
+
+    async function resolveIncident(incidentId) {
+        var message = document.getElementById('resMsg_' + incidentId).value.trim();
+        try {
+            await apiFetch('POST', '/api/status/incidents/' + incidentId + '/resolve', { message });
+            toast('Incident #' + incidentId + ' resolved', 'success');
+            loadOpenIncidents();
+        } catch(e) {
+            toast(e.message, 'error');
+        }
+    }
+
+    function severityBadge(s) {
+        return '<span class="inc-badge ' + s + '">' + s + '</span>';
+    }
+
+    function statusChip(s) {
+        return '<span class="inc-status-chip">' + s + '</span>';
+    }
+
+    function renderOpenIncidents(incidents) {
+        var el = document.getElementById('openIncidents');
+        if (!incidents.length) {
+            el.innerHTML = '<div class="empty">No open incidents — all systems operating normally.</div>';
+            return;
+        }
+
+        var COMP_NAMES = {
+            transcription: 'Transcription Engine',
+            combine: 'Video Combine',
+            api: 'Web Application',
+            database: 'Database',
+            storage: 'File Storage',
+        };
+
+        var html = '';
+        incidents.forEach(function(inc) {
+            html += '<div class="open-incident">';
+
+            // Header
+            html += '<div class="inc-header">';
+            html += '<div>';
+            html += '<div class="inc-title">' + escapeHtml(inc.title) + '</div>';
+            html += '<div class="inc-meta">#' + inc.id + ' &middot; ' +
+                (COMP_NAMES[inc.component] || inc.component) + ' &middot; ' +
+                formatDateTime(inc.created_at) + '</div>';
+            html += '</div>';
+            html += '<div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">' +
+                severityBadge(inc.severity) + statusChip(inc.status) + '</div>';
+            html += '</div>';
+
+            // Update timeline
+            if (inc.updates && inc.updates.length) {
+                html += '<div class="inc-timeline">';
+                inc.updates.slice(0, 5).forEach(function(u) {
+                    html += '<div class="inc-update ' + u.status + '">';
+                    html += '<div class="up-header">';
+                    html += '<span class="up-status ' + u.status + '">' + u.status + '</span>';
+                    html += '<span class="up-time">' + formatDateTime(u.created_at) + '</span>';
+                    html += '</div>';
+                    html += '<div class="up-msg">' + escapeHtml(u.message) + '</div>';
+                    html += '</div>';
+                });
+                html += '</div>';
+            }
+
+            // Post update form
+            html += '<div style="margin-bottom:12px;">';
+            html += '<div style="font-size:0.75rem;font-weight:600;color:var(--text-2);margin-bottom:6px;">Post Update</div>';
+            html += '<div class="update-form">';
+            html += '<select id="updStatus_' + inc.id + '">';
+            html += '<option value="investigating">Investigating</option>';
+            html += '<option value="identified">Identified</option>';
+            html += '<option value="monitoring">Monitoring</option>';
+            html += '</select>';
+            html += '<textarea id="updMsg_' + inc.id + '" placeholder="Update message…"></textarea>';
+            html += '</div>';
+            html += '<div class="btn-row" style="margin-top:8px;">';
+            html += '<button class="btn btn-ghost" onclick="postUpdate(' + inc.id + ')">Post Update</button>';
+            html += '</div>';
+            html += '</div>';
+
+            // Resolve form
+            html += '<div style="border-top:1px solid var(--border);padding-top:12px;">';
+            html += '<div style="font-size:0.75rem;font-weight:600;color:var(--text-2);margin-bottom:6px;">Resolve Incident</div>';
+            html += '<textarea id="resMsg_' + inc.id + '" placeholder="Resolution message (optional — a default will be used if left blank)" style="width:100%;min-height:54px;margin-bottom:8px;font-size:0.82rem;"></textarea>';
+            html += '<button class="btn btn-success" onclick="resolveIncident(' + inc.id + ')">Mark Resolved</button>';
+            html += '</div>';
+
+            html += '</div>';
+        });
+
+        el.innerHTML = html;
+    }
+
+    async function loadOpenIncidents() {
+        try {
+            var data = await apiFetch('GET', '/api/status/incidents/open');
+            renderOpenIncidents(data.incidents || []);
+        } catch(e) {
+            document.getElementById('openIncidents').innerHTML =
+                '<div class="empty">Failed to load incidents: ' + escapeHtml(e.message) + '</div>';
+        }
+    }
+
+    // Expose to onclick handlers
+    window.createIncident = createIncident;
+    window.postUpdate = postUpdate;
+    window.resolveIncident = resolveIncident;
+
+    loadOpenIncidents();
+    setInterval(loadOpenIncidents, 15000);
+})();
+</script>
+
+</body>
+</html>

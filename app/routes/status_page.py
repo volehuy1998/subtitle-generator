@@ -300,6 +300,128 @@ async def status_page(request: Request):
     return templates.TemplateResponse("status.html", {"request": request})
 
 
+@router.get("/status/manage", response_class=HTMLResponse)
+async def status_manage_page(request: Request):
+    """Admin panel for managing service status and incidents."""
+    return templates.TemplateResponse("status_admin.html", {"request": request})
+
+
+@router.get("/api/status/incidents/open")
+async def status_open_incidents():
+    """Return all currently open (unresolved) incidents for the admin panel."""
+    try:
+        async with get_status_session() as session:
+            result = await session.execute(
+                select(StatusIncident).where(
+                    StatusIncident.status != "resolved"
+                ).order_by(StatusIncident.created_at.desc())
+            )
+            incidents = result.scalars().all()
+            items = []
+            for inc in incidents:
+                updates_result = await session.execute(
+                    select(StatusIncidentUpdate).where(
+                        StatusIncidentUpdate.incident_id == inc.id
+                    ).order_by(StatusIncidentUpdate.created_at.desc())
+                )
+                updates = updates_result.scalars().all()
+                items.append({
+                    "id": inc.id,
+                    "title": inc.title,
+                    "severity": inc.severity,
+                    "component": inc.component,
+                    "status": inc.status,
+                    "created_at": inc.created_at.isoformat(),
+                    "updates": [{
+                        "status": u.status,
+                        "message": u.message,
+                        "created_at": u.created_at.isoformat(),
+                    } for u in updates],
+                })
+            return {"incidents": items}
+    except Exception as e:
+        logger.error(f"STATUS open_incidents failed: {e}")
+        return {"incidents": []}
+
+
+class CreateIncidentRequest(dict):
+    pass
+
+
+@router.post("/api/status/incidents")
+async def create_incident_api(request: Request):
+    """Create a new incident. Requires auth when API_KEYS is configured."""
+    from app.services.incident_logger import create_incident
+    try:
+        body = await request.json()
+    except Exception:
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=400, content={"detail": "Invalid JSON body"})
+
+    title = (body.get("title") or "").strip()
+    component = (body.get("component") or "").strip()
+    severity = body.get("severity", "minor")
+    message = (body.get("message") or "").strip()
+
+    if not title or not component:
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=422, content={"detail": "title and component are required"})
+    if severity not in ("minor", "major", "critical", "maintenance"):
+        severity = "minor"
+    if component not in {c["id"] for c in COMPONENTS}:
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=422, content={"detail": f"Unknown component: {component}"})
+
+    incident_id = await create_incident(title=title, component=component, severity=severity, message=message)
+    if incident_id is None:
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=500, content={"detail": "Failed to create incident"})
+    return {"id": incident_id, "title": title, "status": "investigating"}
+
+
+@router.post("/api/status/incidents/{incident_id}/update")
+async def update_incident_api(incident_id: int, request: Request):
+    """Add a status update to an existing incident."""
+    from app.services.incident_logger import update_incident
+    try:
+        body = await request.json()
+    except Exception:
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=400, content={"detail": "Invalid JSON body"})
+
+    status = (body.get("status") or "").strip()
+    message = (body.get("message") or "").strip()
+
+    if status not in ("investigating", "identified", "monitoring", "resolved"):
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=422, content={"detail": "Invalid status"})
+    if not message:
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=422, content={"detail": "message is required"})
+
+    ok = await update_incident(incident_id, status, message)
+    if not ok:
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=404, content={"detail": "Incident not found"})
+    return {"id": incident_id, "status": status}
+
+
+@router.post("/api/status/incidents/{incident_id}/resolve")
+async def resolve_incident_api(incident_id: int, request: Request):
+    """Resolve an incident."""
+    from app.services.incident_logger import resolve_incident
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    message = (body.get("message") or "").strip()
+    ok = await resolve_incident(incident_id, message)
+    if not ok:
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=404, content={"detail": "Incident not found"})
+    return {"id": incident_id, "status": "resolved"}
+
+
 _GITHUB_REPO = "volehuy1998/subtitle-generator"
 
 # Cache commit data (300s TTL to stay within GitHub's 60 req/hr unauthenticated limit)
