@@ -243,10 +243,10 @@ class TestSessionReconnection:
         del state.tasks["test-reconnect"]
 
     def test_frontend_has_session_reconnect_logic(self):
-        """Verify frontend contains sessionStorage reconnection code."""
+        """Verify frontend contains localStorage reconnection code."""
         html = (PROJECT_ROOT / "templates" / "index.html").read_text()
         assert "sg_currentTaskId" in html
-        assert "sessionStorage" in html
+        assert "localStorage" in html
         assert "reconnectSession" in html
 
 
