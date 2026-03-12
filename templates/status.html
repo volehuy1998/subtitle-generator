@@ -376,7 +376,10 @@
 
     <!-- Deployment History -->
     <div class="commits-section">
-        <div class="section-title">Deployment History</div>
+        <div class="section-title" style="display:flex;justify-content:space-between;align-items:center;">
+            <span>Deployment History</span>
+            <a href="https://github.com/volehuy1998/subtitle-generator/actions" target="_blank" style="font-size:0.72rem;font-weight:500;color:var(--primary);text-transform:none;letter-spacing:0;border:1px solid var(--border);padding:3px 10px;border-radius:var(--radius-xs);">CI/CD Runs &#8599;</a>
+        </div>
         <div id="commits">
             <div class="no-incidents">Loading commit history...</div>
         </div>
@@ -647,7 +650,7 @@
     loadStatus();
     loadCommits();
     setInterval(loadStatus, 1000);
-    setInterval(loadCommits, 60000);
+    setInterval(loadCommits, 10000);
 })();
 </script>
 
