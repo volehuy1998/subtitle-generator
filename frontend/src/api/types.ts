@@ -90,6 +90,7 @@ export interface HealthStatus {
   memory_percent?: number
   disk_percent?: number
   disk_free_gb?: number
+  disk_ok?: boolean
   db_ok?: boolean
   alerts?: string[]
   load?: number
