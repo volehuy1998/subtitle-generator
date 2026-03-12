@@ -78,6 +78,13 @@ async def health_check_loop():
             else:
                 state.clear_critical()
 
+            # Auto-detect incidents for status page (runs every cycle)
+            try:
+                from app.services.incident_logger import auto_detect_incidents
+                await auto_detect_incidents()
+            except Exception as e:
+                logger.debug(f"HEALTH_MONITOR incident detection error: {e}")
+
         except Exception as e:
             logger.error(f"HEALTH_MONITOR Unexpected error: {e}")
             state.set_critical([f"Health monitor error: {e}"])

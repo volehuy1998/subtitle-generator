@@ -17,7 +17,7 @@ from app.main import app
 from app.config import PRELOAD_MODEL, ENABLE_COMPRESSION, STATIC_CACHE_MAX_AGE
 from fastapi.testclient import TestClient
 
-client = TestClient(app)
+client = TestClient(app, base_url="https://testserver")
 
 PROJECT_ROOT = Path(__file__).parent.parent
 

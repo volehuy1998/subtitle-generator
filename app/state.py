@@ -170,7 +170,7 @@ _PERSIST_FIELDS = {
     "status", "percent", "message", "filename", "duration", "file_size",
     "file_size_fmt", "audio_size_fmt", "segments", "language",
     "language_requested", "device", "model_size",
-    "word_timestamps", "diarize", "speakers", "session_id",
+    "word_timestamps", "diarize", "speakers", "session_id", "created_at",
 }
 
 

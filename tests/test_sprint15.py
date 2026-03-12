@@ -14,7 +14,7 @@ from app.config import OUTPUT_DIR
 from app.routes.export import _share_links
 from fastapi.testclient import TestClient
 
-client = TestClient(app)
+client = TestClient(app, base_url="https://testserver")
 
 
 def _cleanup():

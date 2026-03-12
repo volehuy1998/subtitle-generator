@@ -8,7 +8,7 @@ from app.utils.srt import segments_to_vtt, _format_vtt_timestamp, segments_to_sr
 from app import state
 from fastapi.testclient import TestClient
 
-client = TestClient(app)
+client = TestClient(app, base_url="https://testserver")
 
 SAMPLE_SEGMENTS = [
     {"start": 0.0, "end": 2.5, "text": "Hello world"},

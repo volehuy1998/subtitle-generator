@@ -81,12 +81,12 @@ async def task_websocket(websocket: WebSocket, task_id: str):
                 if etype in ("done", "error", "cancelled"):
                     break
         else:
-            # Standalone: poll in-process queue
-            q = state.task_event_queues.get(task_id)
-
-            while True:
-                try:
-                    if q:
+            # Standalone: each WS connection gets its own subscriber queue
+            from app.services.sse import subscribe, unsubscribe
+            q = subscribe(task_id)
+            try:
+                while True:
+                    try:
                         event = await asyncio.wait_for(
                             asyncio.to_thread(q.get, timeout=1),
                             timeout=2,
@@ -94,23 +94,16 @@ async def task_websocket(websocket: WebSocket, task_id: str):
                         await websocket.send_json(event)
                         if event.get("type") in ("done", "error", "cancelled"):
                             break
-                    else:
-                        await asyncio.sleep(1)
+                    except asyncio.TimeoutError:
+                        await websocket.send_json({"type": "heartbeat"})
                         status = state.tasks.get(task_id, {}).get("status")
                         if status in ("done", "error", "cancelled"):
                             data = {k: v for k, v in state.tasks.get(task_id, {}).items()
                                     if k not in _SKIP_FIELDS}
                             await websocket.send_json({"type": status, **data})
                             break
-
-                except asyncio.TimeoutError:
-                    await websocket.send_json({"type": "heartbeat"})
-                    status = state.tasks.get(task_id, {}).get("status")
-                    if status in ("done", "error", "cancelled"):
-                        data = {k: v for k, v in state.tasks.get(task_id, {}).items()
-                                if k not in _SKIP_FIELDS}
-                        await websocket.send_json({"type": status, **data})
-                        break
+            finally:
+                unsubscribe(task_id, q)
 
     except WebSocketDisconnect:
         logger.debug(f"WS [{task_id[:8]}] Client disconnected")

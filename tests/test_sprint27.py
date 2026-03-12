@@ -13,7 +13,7 @@ import time
 from fastapi.testclient import TestClient
 from app.main import app
 
-client = TestClient(app)
+client = TestClient(app, base_url="https://testserver")
 
 
 # ── Cache Backend Tests ──

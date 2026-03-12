@@ -85,6 +85,7 @@ class TaskRecord(Base):
             "diarize": bool(self.diarize),
             "speakers": self.speakers,
             "session_id": self.session_id,
+            "created_at": self.created_at.isoformat() if self.created_at else "",
         }
         if self.segments:
             try:
@@ -108,7 +109,18 @@ class TaskRecord(Base):
             try:
                 raw_dur = float(raw_dur)
             except ValueError:
-                raw_dur = None  # can't store formatted strings in Float column
+                # Parse formatted strings like "2m 16s", "1h 5m 30s"
+                import re
+                total = 0.0
+                parts = re.findall(r'(\d+(?:\.\d+)?)\s*([hms])', raw_dur.lower())
+                for val, unit in parts:
+                    if unit == 'h':
+                        total += float(val) * 3600
+                    elif unit == 'm':
+                        total += float(val) * 60
+                    elif unit == 's':
+                        total += float(val)
+                raw_dur = total if total > 0 else None
 
         return cls(
             id=task_id,
@@ -306,6 +318,44 @@ class BruteForceEvent(Base):
     __table_args__ = (
         Index("ix_brute_force_ip", "ip"),
         Index("ix_brute_force_ts", "timestamp"),
+    )
+
+
+class StatusIncident(Base):
+    """Service incidents for public status page."""
+    __tablename__ = "status_incidents"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    title = Column(String(300), nullable=False)
+    severity = Column(String(20), nullable=False, default="minor")  # minor, major, critical, maintenance
+    component = Column(String(100), nullable=False)  # transcription, combine, api, database, storage
+    status = Column(String(20), nullable=False, default="investigating")  # investigating, identified, monitoring, resolved
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
+
+    updates = relationship("StatusIncidentUpdate", back_populates="incident",
+                           order_by="StatusIncidentUpdate.created_at")
+
+    __table_args__ = (
+        Index("ix_status_incidents_created", "created_at"),
+        Index("ix_status_incidents_status", "status"),
+    )
+
+
+class StatusIncidentUpdate(Base):
+    """Timeline updates for a status incident."""
+    __tablename__ = "status_incident_updates"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    incident_id = Column(Integer, ForeignKey("status_incidents.id"), nullable=False)
+    status = Column(String(20), nullable=False)  # investigating, identified, monitoring, resolved
+    message = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+
+    incident = relationship("StatusIncident", back_populates="updates")
+
+    __table_args__ = (
+        Index("ix_status_updates_incident", "incident_id"),
     )
 
 

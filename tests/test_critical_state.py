@@ -653,7 +653,7 @@ class TestCriticalStateMiddleware:
         self.snapshot = _save_critical_state()
         from app.main import app
         from fastapi.testclient import TestClient
-        self.client = TestClient(app)
+        self.client = TestClient(app, base_url="https://testserver")
 
     def teardown_method(self):
         _restore_critical_state(self.snapshot)
@@ -971,7 +971,7 @@ class TestApiStatusCriticalFields:
         self.snapshot = _save_critical_state()
         from app.main import app
         from fastapi.testclient import TestClient
-        self.client = TestClient(app)
+        self.client = TestClient(app, base_url="https://testserver")
         # Clear the /api/status response cache so tests get fresh data
         from app.routes.health import _status_cache
         _status_cache["data"] = None

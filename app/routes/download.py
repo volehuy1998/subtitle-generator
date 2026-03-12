@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse
 
 from app import state
 from app.config import OUTPUT_DIR, STORAGE_BACKEND

@@ -52,6 +52,12 @@
         .opt-btn.too-large .opt-detail { color: #e74c3c; }
         .gpu-badge { display: inline-block; font-size: 0.7rem; color: #27ae60; background: #27ae6018; padding: 2px 8px; border-radius: 4px; margin-top: 6px; }
         .no-gpu-badge { display: inline-block; font-size: 0.7rem; color: #e74c3c; background: #e74c3c18; padding: 2px 8px; border-radius: 4px; margin-top: 6px; }
+        .model-info { margin-top: 10px; padding: 10px 12px; border-radius: 6px; background: #161616; border: 1px solid #222; font-size: 0.78rem; line-height: 1.5; color: #999; display: none; }
+        .model-info.show { display: block; }
+        .model-info strong { color: #ccc; }
+        .model-info .mi-good { color: #27ae60; }
+        .model-info .mi-warn { color: #f39c12; }
+        .model-info .mi-bad { color: #e74c3c; }
 
         /* Drop zone */
         .drop-zone {
@@ -519,6 +525,8 @@
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
         .tq-item .tq-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #aaa; }
         .tq-item .tq-pct { font-variant-numeric: tabular-nums; color: #555; min-width: 35px; text-align: right; }
+        .tq-item .tq-time { font-size: 0.65rem; color: #444; min-width: 50px; text-align: right; flex-shrink: 0; }
+        .tq-dot.combining { background: #9b59b6; animation: pulse 1s infinite; }
 
         /* Speaker labels */
         .speaker-label {
@@ -681,6 +689,7 @@
                     <button class="opt-btn" data-value="medium">Med<span class="opt-detail">~1.5GB</span></button>
                     <button class="opt-btn" data-value="large">Large<span class="opt-detail">~3GB</span></button>
                 </div>
+                <div class="model-info" id="modelInfo"></div>
             </div>
         </div>
         <div class="options-panel" id="optionsPanel2">
@@ -1132,6 +1141,7 @@
         </div>
         <div class="footer-tagline">Built with Python &bull; FastAPI &bull; faster-whisper (CTranslate2) &bull; FFmpeg &bull; PostgreSQL &bull; Open Source</div>
         <div class="footer-github">
+            <a href="/status">System Status</a> &middot;
             Contributions welcome &mdash; star, fork, or open a PR on
             <a href="https://github.com/volehuy1998/subtitle-generator" target="_blank" rel="noopener">GitHub</a>
         </div>
@@ -1308,12 +1318,70 @@
             this.classList.add('selected'); $('btnCuda').classList.remove('gpu-selected');
             updateModelWarnings();
         });
+        const MODEL_INFO = {
+            auto: null,
+            tiny: {
+                speed: '~32x realtime',
+                accuracy: 'Basic',
+                vram: '0.5 GB',
+                best: 'Quick drafts, short clips with clear audio',
+                warn: 'Struggles with accents, background noise, and non-English languages. May hallucinate words.',
+                example: 'A 10-minute video processes in about 20 seconds, but expect some wrong words in noisy sections.'
+            },
+            base: {
+                speed: '~16x realtime',
+                accuracy: 'Decent',
+                vram: '0.8 GB',
+                best: 'Clear English speech, podcasts, interviews in quiet environments',
+                warn: 'Still weak on heavy accents, technical jargon, or mixed-language content.',
+                example: 'Good enough for English YouTube videos with clear narration. A 10-min video takes about 40 seconds.'
+            },
+            small: {
+                speed: '~6x realtime',
+                accuracy: 'Good',
+                vram: '1.5 GB',
+                best: 'Most languages and general-purpose use. Best balance of speed and quality.',
+                warn: 'Slower on CPU-only servers. May still miss specialized vocabulary.',
+                example: 'Handles accented English, European languages, and moderate background noise well. A 10-min video takes ~2 minutes on CPU.'
+            },
+            medium: {
+                speed: '~2x realtime',
+                accuracy: 'Strong',
+                vram: '3 GB',
+                best: 'Non-English content, noisy recordings, technical or medical vocabulary',
+                warn: 'Significantly slower, especially on CPU. GPU strongly recommended. Uses more server memory.',
+                example: 'Near-perfect for conference talks, lectures, and foreign language films. A 10-min video takes ~5 minutes on CPU, ~1 minute with GPU.'
+            },
+            large: {
+                speed: '~1x realtime',
+                accuracy: 'Best available',
+                vram: '5.5 GB',
+                best: 'Maximum accuracy for any language, rare dialects, overlapping speakers, heavy noise',
+                warn: 'Very slow on CPU (real-time or slower). Requires a GPU with 6+ GB VRAM for practical use. High memory consumption.',
+                example: 'Best choice for professional subtitling where every word matters. A 10-min video takes ~10 minutes on CPU, ~2 minutes with GPU.'
+            }
+        };
+
+        function updateModelInfo(model) {
+            var el = $('modelInfo');
+            var info = MODEL_INFO[model];
+            if (!info) { el.className = 'model-info'; return; }
+            el.innerHTML =
+                '<strong>' + model.charAt(0).toUpperCase() + model.slice(1) + '</strong> &mdash; ' +
+                info.accuracy + ' accuracy, ' + info.speed + ', needs ' + info.vram + ' VRAM<br>' +
+                '<span class="mi-good">Best for:</span> ' + info.best + '<br>' +
+                '<span class="mi-warn">Note:</span> ' + info.warn + '<br>' +
+                '<span style="color:#4f8ff7">Example:</span> ' + info.example;
+            el.className = 'model-info show';
+        }
+
         document.querySelectorAll('#modelButtons .opt-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('#modelButtons .opt-btn').forEach(b => b.classList.remove('selected'));
                 this.classList.add('selected');
                 selectedModel = this.dataset.value;
                 updateModelWarnings();
+                updateModelInfo(this.dataset.value);
             });
         });
 
@@ -1327,16 +1395,16 @@
 
         // ── Session Reconnection ──
         (function reconnectSession() {
-            const savedTaskId = sessionStorage.getItem('sg_currentTaskId');
+            const savedTaskId = localStorage.getItem('sg_currentTaskId');
             if (!savedTaskId) return;
             // Check if this task still exists and is in-progress
             fetch(`/progress/${savedTaskId}`).then(r => {
-                if (!r.ok) { sessionStorage.removeItem('sg_currentTaskId'); return Promise.reject('not found'); }
+                if (!r.ok) { localStorage.removeItem('sg_currentTaskId'); return Promise.reject('not found'); }
                 return r.json();
             }).then(data => {
-                if (!data || !data.status) { sessionStorage.removeItem('sg_currentTaskId'); return; }
+                if (!data || !data.status) { localStorage.removeItem('sg_currentTaskId'); return; }
                 if (data.status === 'done' || data.status === 'error' || data.status === 'cancelled') {
-                    sessionStorage.removeItem('sg_currentTaskId');
+                    localStorage.removeItem('sg_currentTaskId');
                     return;
                 }
                 // Task is still running - reconnect
@@ -1353,7 +1421,7 @@
                 handleProgressData(data);
                 connectSSE(savedTaskId);
             }).catch(() => {
-                sessionStorage.removeItem('sg_currentTaskId');
+                localStorage.removeItem('sg_currentTaskId');
             });
         })();
 
@@ -1483,7 +1551,7 @@
                 if (xhr.status === 200) {
                     const data = JSON.parse(xhr.responseText);
                     currentTaskId = data.task_id;
-                    sessionStorage.setItem('sg_currentTaskId', data.task_id);
+                    localStorage.setItem('sg_currentTaskId', data.task_id);
                     if (data.model_size) selectedModel = data.model_size;
                     progressLabel.textContent = 'Processing...';
                     connectSSE(data.task_id);
@@ -1754,7 +1822,7 @@
         }
 
         function handleDone(data, taskId) {
-            sessionStorage.removeItem('sg_currentTaskId');
+            localStorage.removeItem('sg_currentTaskId');
             stopStepTimer();
             setStep(3);
             progressBar.style.width = '100%';
@@ -1814,7 +1882,7 @@
         // startQuickEmbed removed — unified into startUnifiedEmbed
 
         function handleCancelled() {
-            sessionStorage.removeItem('sg_currentTaskId');
+            localStorage.removeItem('sg_currentTaskId');
             stopStepTimer();
             controls.style.display = 'none';
             progressSection.style.display = 'none';
@@ -1822,7 +1890,7 @@
         }
 
         function showError(msg) {
-            sessionStorage.removeItem('sg_currentTaskId');
+            localStorage.removeItem('sg_currentTaskId');
             stopStepTimer();
             statusText.textContent = msg;
             statusText.classList.add('error');
@@ -1897,7 +1965,7 @@
 
         function resetUI() {
             closeSSE();
-            sessionStorage.removeItem('sg_currentTaskId');
+            localStorage.removeItem('sg_currentTaskId');
             dropZone.style.display = 'block'; optionsPanel.style.display = 'flex'; optionsPanel2.style.display = 'flex';
             $('advancedToggle').style.display = ''; $('advancedPanel').className = 'advanced-panel';
             progressSection.style.display = 'none'; downloadSection.style.display = 'none';
@@ -2221,6 +2289,25 @@
             if (tqOpen) refreshTaskQueue();
         }
 
+        function formatTaskTime(isoStr) {
+            if (!isoStr) return '';
+            try {
+                var d = new Date(isoStr);
+                if (isNaN(d.getTime())) return '';
+                var now = new Date();
+                var diffMs = now - d;
+                var diffSec = Math.floor(diffMs / 1000);
+                if (diffSec < 60) return 'just now';
+                var diffMin = Math.floor(diffSec / 60);
+                if (diffMin < 60) return diffMin + 'm ago';
+                var diffHr = Math.floor(diffMin / 60);
+                if (diffHr < 24) return diffHr + 'h ago';
+                var diffDay = Math.floor(diffHr / 24);
+                if (diffDay < 7) return diffDay + 'd ago';
+                return d.toLocaleDateString(undefined, {month:'short', day:'numeric'});
+            } catch(e) { return ''; }
+        }
+
         async function refreshTaskQueue() {
             try {
                 const res = await fetch('/tasks');
@@ -2232,12 +2319,14 @@
                     return;
                 }
                 body.innerHTML = '';
-                tasks.reverse().forEach(t => {
+                tasks.forEach(t => {
                     const pct = t.status === 'done' ? '100%' : t.percent + '%';
+                    const timeStr = formatTaskTime(t.created_at);
                     body.innerHTML += `<div class="tq-item">
                         <span class="tq-dot ${t.status}"></span>
-                        <span class="tq-name">${escapeHtml(t.filename)}</span>
+                        <span class="tq-name" title="${escapeHtml(t.filename)}">${escapeHtml(t.filename)}</span>
                         <span class="tq-pct">${pct}</span>
+                        <span class="tq-time">${timeStr}</span>
                     </div>`;
                 });
             } catch (e) { /* ignore */ }

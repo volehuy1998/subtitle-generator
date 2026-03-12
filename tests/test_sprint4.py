@@ -29,7 +29,7 @@ from app.services.diarization import (
 from app.services.transcription import get_optimal_transcribe_options
 from fastapi.testclient import TestClient
 
-client = TestClient(app)
+client = TestClient(app, base_url="https://testserver")
 
 
 # ── S4-4: Subtitle Line-Breaking Rules ──

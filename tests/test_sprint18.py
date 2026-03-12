@@ -21,7 +21,7 @@ from app.main import app
 from app.config import DATABASE_URL
 
 
-client = TestClient(app)
+client = TestClient(app, base_url="https://testserver")
 
 
 # ── Helper to run async code in tests ──

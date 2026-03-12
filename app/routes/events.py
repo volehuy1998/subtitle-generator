@@ -38,9 +38,11 @@ def _filter_task(data: dict) -> dict:
 @router.get("/events/{task_id}")
 async def task_events_sse(task_id: str):
     """Server-Sent Events endpoint for real-time task updates."""
-    q = state.task_event_queues.get(task_id)
+    from app.services.sse import subscribe, unsubscribe
+
+    has_subs = task_id in state.task_event_queues
     task_data = _get_task_data(task_id)
-    if not q and task_data is None:
+    if not has_subs and task_data is None:
         raise HTTPException(404, "Task not found")
 
     async def event_generator():
@@ -60,30 +62,34 @@ async def task_events_sse(task_id: str):
                 yield f"event: {etype}\ndata: {json.dumps(event, default=str)}\n\n"
                 if etype in ("done", "error", "cancelled", "embed_done", "embed_error"):
                     break
-        elif q:
-            # Standalone: poll in-process queue
-            while True:
-                try:
-                    event = await asyncio.wait_for(
-                        asyncio.to_thread(q.get, timeout=1),
-                        timeout=2,
-                    )
-                    etype = event.get("type", "update")
-                    yield f"event: {etype}\ndata: {json.dumps(event, default=str)}\n\n"
-                    if etype in ("done", "error", "cancelled"):
-                        task = state.tasks.get(task_id, {})
-                        if not task.get("embed_in_progress"):
+        else:
+            # Standalone: each SSE connection gets its own subscriber queue
+            q = subscribe(task_id)
+            try:
+                while True:
+                    try:
+                        event = await asyncio.wait_for(
+                            asyncio.to_thread(q.get, timeout=1),
+                            timeout=2,
+                        )
+                        etype = event.get("type", "update")
+                        yield f"event: {etype}\ndata: {json.dumps(event, default=str)}\n\n"
+                        if etype in ("done", "error", "cancelled"):
+                            task = state.tasks.get(task_id, {})
+                            if not task.get("embed_in_progress"):
+                                break
+                        if etype in ("embed_done", "embed_error"):
                             break
-                    if etype in ("embed_done", "embed_error"):
-                        break
-                except (asyncio.TimeoutError, Exception):
-                    yield "event: heartbeat\ndata: {}\n\n"
-                    task = state.tasks.get(task_id, {})
-                    status = task.get("status")
-                    if status in ("done", "error", "cancelled") and not task.get("embed_in_progress"):
-                        data = _filter_task(task)
-                        yield f"event: {status}\ndata: {json.dumps(data, default=str)}\n\n"
-                        break
+                    except (asyncio.TimeoutError, Exception):
+                        yield "event: heartbeat\ndata: {}\n\n"
+                        task = state.tasks.get(task_id, {})
+                        status = task.get("status")
+                        if status in ("done", "error", "cancelled") and not task.get("embed_in_progress"):
+                            data = _filter_task(task)
+                            yield f"event: {status}\ndata: {json.dumps(data, default=str)}\n\n"
+                            break
+            finally:
+                unsubscribe(task_id, q)
 
     return StreamingResponse(
         event_generator(),

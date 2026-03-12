@@ -17,7 +17,7 @@ import json
 from app.main import app
 from fastapi.testclient import TestClient
 
-client = TestClient(app)
+client = TestClient(app, base_url="https://testserver")
 
 
 # ── Helper ──

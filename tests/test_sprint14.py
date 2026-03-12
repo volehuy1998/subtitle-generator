@@ -16,7 +16,7 @@ from app import state
 from app.routes.webhooks import _webhooks
 from fastapi.testclient import TestClient
 
-client = TestClient(app)
+client = TestClient(app, base_url="https://testserver")
 
 PROJECT_ROOT = Path(__file__).parent.parent
 

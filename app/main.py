@@ -106,6 +106,10 @@ async def lifespan(app: FastAPI):
     # Start background cleanup task
     cleanup_task = asyncio.create_task(periodic_cleanup())
 
+    # Load open incidents for status page
+    from app.services.incident_logger import load_open_incidents
+    await load_open_incidents()
+
     # Start background health monitor (sets/clears state.system_critical)
     from app.services.health_monitor import health_check_loop
     health_task = asyncio.create_task(health_check_loop())

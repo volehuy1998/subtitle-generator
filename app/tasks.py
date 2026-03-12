@@ -1,7 +1,6 @@
 """Celery task definitions for distributed transcription processing."""
 
 import logging
-from pathlib import Path
 
 from app.celery_app import celery
 

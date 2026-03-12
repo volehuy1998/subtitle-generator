@@ -15,7 +15,7 @@ import asyncio
 from fastapi.testclient import TestClient
 from app.main import app
 
-client = TestClient(app)
+client = TestClient(app, base_url="https://testserver")
 
 
 def run_async(coro):

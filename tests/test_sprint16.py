@@ -32,7 +32,7 @@ from app.middleware.brute_force import (
 from app.middleware.cors import get_cors_origins
 from app.services.quarantine import QUARANTINE_DIR, quarantine_file, get_quarantine_count
 
-client = TestClient(app)
+client = TestClient(app, base_url="https://testserver")
 
 
 def _cleanup_audit():

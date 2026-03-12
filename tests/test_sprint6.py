@@ -18,7 +18,7 @@ from app.services.transcription import get_optimal_transcribe_options
 from app.middleware.session import SESSION_COOKIE
 from fastapi.testclient import TestClient
 
-client = TestClient(app)
+client = TestClient(app, base_url="https://testserver")
 
 
 # ── S6-2: Performance Monitoring Dashboard ──

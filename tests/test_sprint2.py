@@ -8,7 +8,7 @@ from app.routes.subtitles import _parse_srt, _parse_timestamp
 from app.utils.srt import segments_to_srt, segments_to_vtt
 from fastapi.testclient import TestClient
 
-client = TestClient(app)
+client = TestClient(app, base_url="https://testserver")
 
 SAMPLE_SEGMENTS = [
     {"start": 0.0, "end": 2.5, "text": "Hello world"},

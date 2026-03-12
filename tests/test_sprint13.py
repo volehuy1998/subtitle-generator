@@ -13,7 +13,7 @@ from app.main import app
 from app import state
 from fastapi.testclient import TestClient
 
-client = TestClient(app)
+client = TestClient(app, base_url="https://testserver")
 
 
 def _setup_test_tasks():

@@ -61,9 +61,40 @@ class DatabaseTaskBackend(TaskBackend):
 
     # ── Async DB operations ──
 
+    @staticmethod
+    def _parse_duration(raw) -> float | None:
+        """Convert duration to float seconds. Handles strings like '2m 16s'."""
+        if raw is None:
+            return None
+        if isinstance(raw, (int, float)):
+            return float(raw)
+        if isinstance(raw, str):
+            try:
+                return float(raw)
+            except ValueError:
+                pass
+            # Parse formatted strings like "2m 16s", "1h 5m 30s"
+            import re
+            total = 0.0
+            parts = re.findall(r'(\d+(?:\.\d+)?)\s*([hms])', raw.lower())
+            for val, unit in parts:
+                if unit == 'h':
+                    total += float(val) * 3600
+                elif unit == 'm':
+                    total += float(val) * 60
+                elif unit == 's':
+                    total += float(val)
+            return total if total > 0 else None
+        return None
+
     async def persist_task(self, task_id: str, data: dict) -> None:
         """Write or update a task in the database."""
         try:
+            # Ensure session record exists before inserting task (FK constraint)
+            sid = data.get("session_id")
+            if sid:
+                await self.persist_session(sid)
+
             async with get_session() as session:
                 existing = await session.get(TaskRecord, task_id)
                 if existing is not None:
@@ -77,7 +108,9 @@ class DatabaseTaskBackend(TaskBackend):
                     existing.file_size = data.get("file_size", existing.file_size)
                     existing.file_size_fmt = data.get("file_size_fmt", existing.file_size_fmt)
                     existing.audio_size_fmt = data.get("audio_size_fmt", existing.audio_size_fmt)
-                    existing.duration = data.get("duration", existing.duration)
+                    raw_dur = data.get("duration")
+                    if raw_dur is not None:
+                        existing.duration = self._parse_duration(raw_dur)
                     existing.word_timestamps = int(data.get("word_timestamps", False))
                     existing.diarize = int(data.get("diarize", False))
                     existing.speakers = data.get("speakers", existing.speakers)

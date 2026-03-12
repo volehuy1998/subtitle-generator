@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 
 import logging
 
-client = TestClient(app)
+client = TestClient(app, base_url="https://testserver")
 
 
 # ── System Capability Detection ──

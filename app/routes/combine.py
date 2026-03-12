@@ -175,12 +175,14 @@ async def combine_video_subtitle(
     output_path = OUTPUT_DIR / f"combine_{task_id}{out_ext}"
 
     # Initialize task state
+    from datetime import datetime, timezone
     state.tasks[task_id] = {
         "status": "combining",
         "percent": 0,
         "message": "Starting combine...",
         "filename": video.filename or "video",
         "mode": mode,
+        "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
     # Create SSE event queue

@@ -2,7 +2,6 @@
 
 import io
 import logging
-import tempfile
 from pathlib import Path
 
 import boto3

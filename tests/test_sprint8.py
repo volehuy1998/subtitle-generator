@@ -22,7 +22,7 @@ from app.services.analytics import (
 )
 from fastapi.testclient import TestClient
 
-client = TestClient(app)
+client = TestClient(app, base_url="https://testserver")
 
 PROJECT_ROOT = Path(__file__).parent.parent
 

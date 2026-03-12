@@ -28,6 +28,7 @@ from app.routes.auth import router as auth_router
 from app.routes.query import router as query_router
 from app.routes.monitoring import router as monitoring_router
 from app.routes.combine import router as combine_router
+from app.routes.status_page import router as status_page_router
 
 router = APIRouter()
 router.include_router(pages_router)
@@ -56,3 +57,4 @@ router.include_router(auth_router)
 router.include_router(query_router)
 router.include_router(monitoring_router)
 router.include_router(combine_router)
+router.include_router(status_page_router)

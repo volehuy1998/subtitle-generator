@@ -57,7 +57,7 @@ STATIC_CACHE_MAX_AGE = 3600  # 1 hour cache for static-like responses
 
 # --- Task persistence (legacy, replaced by PostgreSQL in Sprint 18) ---
 TASK_HISTORY_FILE = BASE_DIR / "task_history.json"
-MAX_TASK_HISTORY = 50
+MAX_TASK_HISTORY = 100
 
 # --- Database ---
 DATABASE_URL = os.environ.get(

@@ -132,6 +132,7 @@ async def upload(
     record_upload(language=language, model=model_size, device=device, file_size=size)
     inc("uploads_total")
 
+    from datetime import datetime, timezone
     state.tasks[task_id] = {
         "status": "queued",
         "percent": 0,
@@ -139,6 +140,7 @@ async def upload(
         "filename": safe_filename,
         "language_requested": language,
         "session_id": session_id,
+        "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
     # Persist new task to DB

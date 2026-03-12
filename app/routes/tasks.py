@@ -53,9 +53,13 @@ async def list_tasks(request: Request, session_only: bool = Query(False)):
             "device": t.get("device", ""),
             "language": t.get("language", ""),
             "segments": t.get("segments", 0),
+            "created_at": t.get("created_at", ""),
             "own": t.get("session_id", "") == getattr(request.state, "session_id", ""),
             **queue_info,
         })
+    # Sort newest first, limit to last 100
+    result.sort(key=lambda x: x.get("created_at") or "", reverse=True)
+    result = result[:100]
     return {"tasks": result}
 
 

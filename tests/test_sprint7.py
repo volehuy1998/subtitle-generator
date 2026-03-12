@@ -12,7 +12,7 @@ from pathlib import Path
 from app.main import app
 from fastapi.testclient import TestClient
 
-client = TestClient(app)
+client = TestClient(app, base_url="https://testserver")
 
 PROJECT_ROOT = Path(__file__).parent.parent
 

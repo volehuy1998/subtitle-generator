@@ -36,7 +36,7 @@ from app.services.analytics_db import (
     get_db_info,
 )
 
-client = TestClient(app)
+client = TestClient(app, base_url="https://testserver")
 
 
 def _cleanup_workers():

@@ -18,7 +18,7 @@ from app.services.analytics import (
 )
 from fastapi.testclient import TestClient
 
-client = TestClient(app)
+client = TestClient(app, base_url="https://testserver")
 
 
 def _reset_user_tracking():

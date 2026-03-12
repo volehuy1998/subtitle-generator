@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SubForge Status</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0f0f0f;
+            color: #d4d4d4;
+            line-height: 1.6;
+        }
+        a { color: #4f8ff7; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* Header */
+        .status-header {
+            border-bottom: 1px solid #1e1e1e;
+            padding: 20px 0;
+        }
+        .status-header-inner {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .status-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #e0e0e0;
+        }
+        .status-logo svg { width: 28px; height: 28px; }
+        .status-logo span { color: #4f8ff7; }
+        .header-links { display: flex; gap: 16px; align-items: center; }
+        .header-links a {
+            font-size: 0.85rem;
+            color: #888;
+            padding: 6px 12px;
+            border: 1px solid #333;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .header-links a:hover { color: #ccc; border-color: #555; text-decoration: none; }
+
+        /* Main container */
+        .status-container { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
+
+        /* Overall status banner */
+        .overall-banner {
+            padding: 28px 32px;
+            border-radius: 10px;
+            margin-bottom: 36px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 1.15rem;
+            font-weight: 600;
+        }
+        .overall-banner.operational { background: #0d2818; color: #4ade80; border: 1px solid #166534; }
+        .overall-banner.degraded { background: #2d1f05; color: #fbbf24; border: 1px solid #92400e; }
+        .overall-banner.outage { background: #2d0a0a; color: #f87171; border: 1px solid #991b1b; }
+        .overall-banner .banner-icon { font-size: 1.5rem; }
+        .overall-banner .banner-sub {
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: inherit;
+            opacity: 0.7;
+            margin-top: 2px;
+        }
+
+        /* Stats bar */
+        .stats-bar {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 36px;
+            flex-wrap: wrap;
+        }
+        .stat-card {
+            flex: 1;
+            min-width: 120px;
+            background: #161616;
+            border: 1px solid #222;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .stat-value { font-size: 1.6rem; font-weight: 700; color: #e0e0e0; }
+        .stat-label { font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+        /* Components section */
+        .section-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #1e1e1e;
+        }
+        .component-card {
+            background: #161616;
+            border: 1px solid #222;
+            border-radius: 8px;
+            padding: 18px 20px;
+            margin-bottom: 2px;
+        }
+        .component-card:first-of-type { border-radius: 8px 8px 0 0; }
+        .component-card:last-of-type { border-radius: 0 0 8px 8px; margin-bottom: 0; }
+        .component-card:only-of-type { border-radius: 8px; }
+        .component-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .component-name { font-weight: 600; color: #e0e0e0; font-size: 0.95rem; }
+        .component-desc { font-size: 0.78rem; color: #666; }
+        .component-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.82rem;
+            font-weight: 500;
+        }
+        .component-status .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .component-status.operational .dot { background: #4ade80; }
+        .component-status.operational { color: #4ade80; }
+        .component-status.degraded .dot { background: #fbbf24; }
+        .component-status.degraded { color: #fbbf24; }
+        .component-status.outage .dot { background: #f87171; }
+        .component-status.outage { color: #f87171; }
+        .component-status.maintenance .dot { background: #60a5fa; }
+        .component-status.maintenance { color: #60a5fa; }
+
+        /* Uptime bar */
+        .uptime-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .uptime-bar {
+            flex: 1;
+            display: flex;
+            gap: 1px;
+            height: 28px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .uptime-bar .day {
+            flex: 1;
+            min-width: 2px;
+            cursor: pointer;
+            transition: opacity 0.15s;
+            position: relative;
+        }
+        .uptime-bar .day:hover { opacity: 0.7; }
+        .uptime-bar .day.operational { background: #166534; }
+        .uptime-bar .day.degraded { background: #92400e; }
+        .uptime-bar .day.outage { background: #991b1b; }
+        .uptime-bar .day.maintenance { background: #1e40af; }
+        .uptime-pct {
+            font-size: 0.78rem;
+            color: #888;
+            min-width: 65px;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+        .uptime-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4px;
+            padding: 0 75px 0 0;
+        }
+        .uptime-labels span { font-size: 0.65rem; color: #555; }
+
+        /* Tooltip */
+        .day-tooltip {
+            display: none;
+            position: absolute;
+            bottom: 36px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #222;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 0.72rem;
+            color: #ccc;
+            white-space: nowrap;
+            z-index: 100;
+            pointer-events: none;
+        }
+        .uptime-bar .day:hover .day-tooltip { display: block; }
+
+        /* Incidents section */
+        .incidents-section { margin-top: 40px; }
+        .no-incidents {
+            text-align: center;
+            padding: 40px 20px;
+            color: #555;
+            font-style: italic;
+            background: #161616;
+            border: 1px solid #222;
+            border-radius: 8px;
+        }
+        .incident-date-group { margin-bottom: 24px; }
+        .incident-date {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #888;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #1e1e1e;
+        }
+        .incident-card {
+            background: #161616;
+            border: 1px solid #222;
+            border-radius: 8px;
+            padding: 18px 20px;
+            margin-bottom: 8px;
+        }
+        .incident-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        .incident-title { font-weight: 600; color: #e0e0e0; font-size: 0.95rem; }
+        .incident-badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+        }
+        .incident-badge.critical { background: #450a0a; color: #fca5a5; border: 1px solid #7f1d1d; }
+        .incident-badge.major { background: #431407; color: #fed7aa; border: 1px solid #9a3412; }
+        .incident-badge.minor { background: #422006; color: #fde68a; border: 1px solid #92400e; }
+        .incident-badge.maintenance { background: #172554; color: #93c5fd; border: 1px solid #1e40af; }
+        .incident-badge.resolved { background: #052e16; color: #86efac; border: 1px solid #166534; }
+
+        .incident-component {
+            font-size: 0.75rem;
+            color: #666;
+            margin-bottom: 12px;
+        }
+
+        /* Incident timeline */
+        .incident-timeline { padding-left: 16px; border-left: 2px solid #222; }
+        .incident-update {
+            padding: 8px 0 8px 14px;
+            position: relative;
+        }
+        .incident-update::before {
+            content: '';
+            position: absolute;
+            left: -7px;
+            top: 14px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #333;
+            border: 2px solid #0f0f0f;
+        }
+        .incident-update.investigating::before { background: #f87171; }
+        .incident-update.identified::before { background: #fbbf24; }
+        .incident-update.monitoring::before { background: #60a5fa; }
+        .incident-update.resolved::before { background: #4ade80; }
+
+        .update-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .update-status {
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+        .update-status.investigating { color: #f87171; }
+        .update-status.identified { color: #fbbf24; }
+        .update-status.monitoring { color: #60a5fa; }
+        .update-status.resolved { color: #4ade80; }
+        .update-time { font-size: 0.72rem; color: #555; }
+        .update-message { font-size: 0.82rem; color: #999; line-height: 1.5; }
+
+        /* Footer */
+        .status-footer {
+            margin-top: 48px;
+            padding: 24px 0;
+            border-top: 1px solid #1e1e1e;
+            text-align: center;
+        }
+        .status-footer p { font-size: 0.78rem; color: #555; }
+        .status-footer a { color: #4f8ff7; }
+
+        /* Uptime legend */
+        .uptime-legend {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-top: 8px;
+            margin-bottom: 24px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.7rem;
+            color: #666;
+        }
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+        }
+        .legend-dot.operational { background: #166534; }
+        .legend-dot.degraded { background: #92400e; }
+        .legend-dot.outage { background: #991b1b; }
+        .legend-dot.maintenance { background: #1e40af; }
+
+        /* Loading skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, #1a1a1a 25%, #222 50%, #1a1a1a 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 6px;
+        }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .skeleton-banner { height: 80px; margin-bottom: 36px; border-radius: 10px; }
+        .skeleton-card { height: 90px; margin-bottom: 2px; }
+
+        /* Auto-refresh indicator */
+        .refresh-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.72rem;
+            color: #555;
+        }
+        .refresh-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #4ade80;
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .status-container { padding: 20px 16px; }
+            .overall-banner { padding: 20px; font-size: 1rem; }
+            .stats-bar { gap: 8px; }
+            .stat-card { padding: 12px; min-width: 80px; }
+            .stat-value { font-size: 1.2rem; }
+            .uptime-bar { height: 20px; }
+            .header-links a { font-size: 0.75rem; padding: 4px 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="status-header">
+    <div class="status-header-inner">
+        <div class="status-logo">
+            <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs><linearGradient id="g" x1="0" y1="0" x2="40" y2="40"><stop stop-color="#4f8ff7"/><stop offset="1" stop-color="#6c5ce7"/></linearGradient></defs>
+                <rect width="40" height="40" rx="8" fill="url(#g)"/>
+                <path d="M10 28L18 12h4l-4 8h6l-10 16 2-8H10z" fill="white"/>
+            </svg>
+            Sub<span>Forge</span>&nbsp;Status
+        </div>
+        <div class="header-links">
+            <div class="refresh-indicator"><span class="refresh-dot"></span> Live</div>
+            <a href="/">Go to SubForge</a>
+            <a href="https://github.com/volehuy1998/subtitle-generator" target="_blank">GitHub</a>
+        </div>
+    </div>
+</header>
+
+<div class="status-container">
+    <!-- Overall status banner -->
+    <div id="overallBanner" class="overall-banner operational">
+        <div class="skeleton skeleton-banner" style="width:100%"></div>
+    </div>
+
+    <!-- Stats bar -->
+    <div class="stats-bar" id="statsBar">
+        <div class="stat-card"><div class="stat-value" id="statUptime">--</div><div class="stat-label">Uptime</div></div>
+        <div class="stat-card"><div class="stat-value" id="statTasks">--</div><div class="stat-label">Tasks (24h)</div></div>
+        <div class="stat-card"><div class="stat-value" id="statCompleted">--</div><div class="stat-label">Completed</div></div>
+        <div class="stat-card"><div class="stat-value" id="statFailed">--</div><div class="stat-label">Failed</div></div>
+    </div>
+
+    <!-- Components -->
+    <div class="section-title">Service Components</div>
+    <div id="components">
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+    </div>
+
+    <!-- Uptime legend -->
+    <div class="uptime-legend">
+        <div class="legend-item"><div class="legend-dot operational"></div> Operational</div>
+        <div class="legend-item"><div class="legend-dot degraded"></div> Degraded</div>
+        <div class="legend-item"><div class="legend-dot outage"></div> Outage</div>
+        <div class="legend-item"><div class="legend-dot maintenance"></div> Maintenance</div>
+    </div>
+
+    <!-- Incidents -->
+    <div class="incidents-section">
+        <div class="section-title">Incident History (Last 14 Days)</div>
+        <div id="incidents">
+            <div class="no-incidents">Loading...</div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="status-footer">
+        <p>
+            <strong>SubForge</strong> &mdash; Open-source AI subtitle generator built with FastAPI, faster-whisper, and FFmpeg<br>
+            <a href="https://github.com/volehuy1998/subtitle-generator" target="_blank">Contribute on GitHub</a>
+            &nbsp;&middot;&nbsp;
+            <a href="/">Back to SubForge</a>
+        </p>
+    </div>
+</div>
+
+<script>
+(function() {
+    function $(id) { return document.getElementById(id); }
+
+    function escapeHtml(s) {
+        var d = document.createElement('div');
+        d.textContent = s || '';
+        return d.innerHTML;
+    }
+
+    function formatUptime(sec) {
+        if (sec < 60) return sec + 's';
+        if (sec < 3600) return Math.floor(sec / 60) + 'm';
+        if (sec < 86400) return Math.floor(sec / 3600) + 'h ' + Math.floor((sec % 3600) / 60) + 'm';
+        var days = Math.floor(sec / 86400);
+        var hours = Math.floor((sec % 86400) / 3600);
+        return days + 'd ' + hours + 'h';
+    }
+
+    function formatDate(iso) {
+        try {
+            var d = new Date(iso);
+            return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+        } catch(e) { return iso; }
+    }
+
+    function formatTime(iso) {
+        try {
+            var d = new Date(iso);
+            return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+        } catch(e) { return ''; }
+    }
+
+    function formatDateTime(iso) {
+        try {
+            var d = new Date(iso);
+            return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' at ' +
+                   d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+        } catch(e) { return iso; }
+    }
+
+    function statusLabel(s) {
+        if (s === 'operational') return 'Operational';
+        if (s === 'degraded') return 'Degraded Performance';
+        if (s === 'outage') return 'Major Outage';
+        if (s === 'maintenance') return 'Under Maintenance';
+        return s;
+    }
+
+    function renderBanner(data) {
+        var banner = $('overallBanner');
+        var icon = data.overall === 'operational' ? '\u2714' : data.overall === 'degraded' ? '\u26A0' : '\u2716';
+        var label = data.overall === 'operational' ? 'All Systems Operational' :
+                    data.overall === 'degraded' ? 'Some Systems Experiencing Issues' :
+                    'Service Disruption Detected';
+        banner.className = 'overall-banner ' + data.overall;
+        banner.innerHTML =
+            '<div class="banner-icon">' + icon + '</div>' +
+            '<div><div>' + label + '</div>' +
+            '<div class="banner-sub">Last updated: ' + formatDateTime(data.updated_at) + '</div></div>';
+    }
+
+    function renderStats(data) {
+        $('statUptime').textContent = formatUptime(data.uptime_sec);
+        $('statTasks').textContent = data.task_stats.total_24h;
+        $('statCompleted').textContent = data.task_stats.completed_24h;
+        $('statFailed').textContent = data.task_stats.failed_24h;
+    }
+
+    function renderComponents(data) {
+        var html = '';
+        data.components.forEach(function(c) {
+            var history = data.uptime_history[c.id] || {};
+            var daily = history.daily || [];
+            var pct = history.uptime_pct != null ? history.uptime_pct : 100;
+
+            var barsHtml = '';
+            daily.forEach(function(d) {
+                barsHtml += '<div class="day ' + d.status + '">' +
+                    '<div class="day-tooltip">' + formatDate(d.date) + '<br>' + statusLabel(d.status) + '</div>' +
+                    '</div>';
+            });
+
+            html += '<div class="component-card">' +
+                '<div class="component-top">' +
+                    '<div>' +
+                        '<div class="component-name">' + escapeHtml(c.name) + '</div>' +
+                        '<div class="component-desc">' + escapeHtml(c.description) + '</div>' +
+                    '</div>' +
+                    '<div class="component-status ' + c.status + '">' +
+                        '<span class="dot"></span> ' + statusLabel(c.status) +
+                    '</div>' +
+                '</div>' +
+                '<div class="uptime-row">' +
+                    '<div class="uptime-bar">' + barsHtml + '</div>' +
+                    '<div class="uptime-pct">' + pct.toFixed(2) + ' %</div>' +
+                '</div>' +
+            '</div>';
+        });
+
+        html += '<div class="uptime-labels"><span>90 days ago</span><span>Today</span></div>';
+        $('components').innerHTML = html;
+    }
+
+    function renderIncidents(data) {
+        var incidents = data.incidents || [];
+        if (incidents.length === 0) {
+            $('incidents').innerHTML = '<div class="no-incidents">No incidents reported in the last 14 days. All systems have been operating normally.</div>';
+            return;
+        }
+
+        // Group by date
+        var groups = {};
+        var groupOrder = [];
+        incidents.forEach(function(inc) {
+            var dateKey = inc.created_at.split('T')[0];
+            if (!groups[dateKey]) {
+                groups[dateKey] = [];
+                groupOrder.push(dateKey);
+            }
+            groups[dateKey].push(inc);
+        });
+
+        var html = '';
+        groupOrder.forEach(function(dateKey) {
+            html += '<div class="incident-date-group">';
+            html += '<div class="incident-date">' + formatDate(dateKey + 'T00:00:00') + '</div>';
+
+            groups[dateKey].forEach(function(inc) {
+                var badgeClass = inc.status === 'resolved' ? 'resolved' : inc.severity;
+                var badgeLabel = inc.status === 'resolved' ? 'Resolved' : inc.severity;
+
+                var compName = '';
+                data.components.forEach(function(c) { if (c.id === inc.component) compName = c.name; });
+
+                html += '<div class="incident-card">';
+                html += '<div class="incident-header">';
+                html += '<div class="incident-title">' + escapeHtml(inc.title) + '</div>';
+                html += '<div class="incident-badge ' + badgeClass + '">' + badgeLabel + '</div>';
+                html += '</div>';
+                html += '<div class="incident-component">Affected: ' + escapeHtml(compName || inc.component) + '</div>';
+
+                if (inc.updates && inc.updates.length > 0) {
+                    html += '<div class="incident-timeline">';
+                    inc.updates.forEach(function(u) {
+                        html += '<div class="incident-update ' + u.status + '">';
+                        html += '<div class="update-header">';
+                        html += '<span class="update-status ' + u.status + '">' + u.status + '</span>';
+                        html += '<span class="update-time">' + formatDateTime(u.created_at) + '</span>';
+                        html += '</div>';
+                        html += '<div class="update-message">' + escapeHtml(u.message) + '</div>';
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                }
+
+                html += '</div>';
+            });
+
+            html += '</div>';
+        });
+
+        $('incidents').innerHTML = html;
+    }
+
+    var lastData = null;
+
+    async function loadStatus() {
+        try {
+            var res = await fetch('/api/status/page');
+            var data = await res.json();
+            lastData = data;
+            renderBanner(data);
+            renderStats(data);
+            renderComponents(data);
+            renderIncidents(data);
+        } catch(e) {
+            console.error('Status fetch failed:', e);
+        }
+    }
+
+    // Initial load
+    loadStatus();
+    // Auto-refresh every 30 seconds
+    setInterval(loadStatus, 30000);
+})();
+</script>
+
+</body>
+</html>
