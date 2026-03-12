@@ -564,6 +564,9 @@
                 <button class="mode-tab active" id="modeTranscribe" onclick="setAppMode('transcribe')">
                     Transcribe <small style="font-size:0.7rem;opacity:0.6;font-weight:400">AI-powered</small>
                 </button>
+                <button class="mode-tab" id="modeEmbed" onclick="setAppMode('embed')">
+                    Embed Subtitles <small style="font-size:0.7rem;opacity:0.6;font-weight:400">Local files</small>
+                </button>
             </div>
 
             <div class="card-body">
@@ -651,6 +654,62 @@
                                 <option value="soft">Soft mux (fast)</option>
                                 <option value="hard">Hard burn</option>
                             </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Standalone embed form -->
+                <div id="embedForm" style="display:none">
+                    <div style="display:flex;flex-direction:column;gap:14px;">
+                        <!-- Video file -->
+                        <div>
+                            <div class="opt-label" style="margin-bottom:6px">Video file</div>
+                            <label id="ceVideoLabel" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px dashed var(--border);border-radius:var(--radius-xs);cursor:pointer;background:var(--surface-2);transition:border-color 0.15s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor=ceVideoFile?'var(--primary)':'var(--border)'">
+                                <span style="font-size:1.2rem">🎬</span>
+                                <div style="flex:1;min-width:0">
+                                    <div id="ceVideoName" style="font-size:0.82rem;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Choose video…</div>
+                                    <div style="font-size:0.7rem;color:var(--text-3)">MP4, MKV, AVI, WebM, MOV</div>
+                                </div>
+                                <input type="file" id="ceVideoInput" accept="video/*,.mkv,.avi,.mov,.webm,.mp4" style="display:none" onchange="ceSetVideo(this)">
+                            </label>
+                        </div>
+                        <!-- Subtitle file -->
+                        <div>
+                            <div class="opt-label" style="margin-bottom:6px">Subtitle file</div>
+                            <label id="ceSubLabel" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px dashed var(--border);border-radius:var(--radius-xs);cursor:pointer;background:var(--surface-2);transition:border-color 0.15s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor=ceSubFile?'var(--primary)':'var(--border)'">
+                                <span style="font-size:1.2rem">📄</span>
+                                <div style="flex:1;min-width:0">
+                                    <div id="ceSubName" style="font-size:0.82rem;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Choose subtitle…</div>
+                                    <div style="font-size:0.7rem;color:var(--text-3)">SRT or VTT</div>
+                                </div>
+                                <input type="file" id="ceSubInput" accept=".srt,.vtt" style="display:none" onchange="ceSetSub(this)">
+                            </label>
+                        </div>
+                        <!-- Mode -->
+                        <div>
+                            <div class="opt-label" style="margin-bottom:6px">Embed mode</div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                                <div class="embed-mode-card active" id="ceModeCardSoft" onclick="ceSetMode('soft')">
+                                    <div class="embed-mode-name"><span class="embed-mode-dot"></span> Soft Mux</div>
+                                    <div class="embed-mode-desc">Subtitle track attached as a layer — fast, lossless, toggleable</div>
+                                </div>
+                                <div class="embed-mode-card" id="ceModeCardHard" onclick="ceSetMode('hard')">
+                                    <div class="embed-mode-name"><span class="embed-mode-dot"></span> Hard Burn</div>
+                                    <div class="embed-mode-desc">Subtitles rendered onto frames — works on all players</div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Submit -->
+                        <button id="ceStartBtn" class="upload-btn" onclick="ceStart()" disabled style="opacity:0.5">Embed &amp; Download</button>
+                        <!-- Progress -->
+                        <div id="ceProgress" style="display:none">
+                            <div style="height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:6px"><div id="ceProgressFill" style="height:100%;background:var(--primary);border-radius:2px;width:0%;transition:width 0.3s"></div></div>
+                            <div id="ceStatus" style="font-size:0.75rem;color:var(--text-3)">Preparing…</div>
+                        </div>
+                        <!-- Result -->
+                        <div id="ceResult" style="display:none;padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--radius-xs)">
+                            <div id="ceResultMsg" style="font-size:0.78rem;color:#166534;margin-bottom:8px">Embedding complete</div>
+                            <a id="ceDownloadLink" href="#" style="display:block;padding:8px 16px;background:var(--success);border-radius:var(--radius-xs);color:#fff;text-decoration:none;font-size:0.82rem;font-weight:600;text-align:center">Download Video</a>
                         </div>
                     </div>
                 </div>
@@ -2216,16 +2275,125 @@
 
         function setAppMode(mode) {
             appMode = mode;
-            $('modeTranscribe').className = 'mode-tab active';
-            if (currentTaskId) {
+            $('modeTranscribe').className = 'mode-tab' + (mode === 'transcribe' ? ' active' : '');
+            $('modeEmbed').className = 'mode-tab' + (mode === 'embed' ? ' active' : '');
+            if (mode === 'embed') {
                 $('transcribeForm').style.display = 'none';
-                $('progressView').style.display = 'block';
-                $('batchQueue').style.display = '';
-            } else {
-                $('transcribeForm').style.display = 'block';
                 $('progressView').style.display = 'none';
-                $('batchQueue').style.display = '';
+                $('embedForm').style.display = 'block';
+            } else {
+                $('embedForm').style.display = 'none';
+                if (currentTaskId) {
+                    $('transcribeForm').style.display = 'none';
+                    $('progressView').style.display = 'block';
+                } else {
+                    $('transcribeForm').style.display = 'block';
+                    $('progressView').style.display = 'none';
+                }
             }
+        }
+
+        // ── Standalone Embed (Combine) ──
+        let ceVideoFile = null, ceSubFile = null, ceCombineMode = 'soft';
+
+        function ceSetVideo(input) {
+            ceVideoFile = input.files[0] || null;
+            $('ceVideoName').textContent = ceVideoFile ? ceVideoFile.name : 'Choose video…';
+            $('ceVideoLabel').style.borderColor = ceVideoFile ? 'var(--primary)' : 'var(--border)';
+            ceUpdateBtn();
+        }
+        function ceSetSub(input) {
+            ceSubFile = input.files[0] || null;
+            $('ceSubName').textContent = ceSubFile ? ceSubFile.name : 'Choose subtitle…';
+            $('ceSubLabel').style.borderColor = ceSubFile ? 'var(--primary)' : 'var(--border)';
+            ceUpdateBtn();
+        }
+        function ceSetMode(mode) {
+            ceCombineMode = mode;
+            $('ceModeCardSoft').className = 'embed-mode-card' + (mode === 'soft' ? ' active' : '');
+            $('ceModeCardHard').className = 'embed-mode-card' + (mode === 'hard' ? ' active' : '');
+        }
+        function ceUpdateBtn() {
+            var btn = $('ceStartBtn');
+            var ready = ceVideoFile && ceSubFile;
+            btn.disabled = !ready;
+            btn.style.opacity = ready ? '1' : '0.5';
+        }
+        async function ceStart() {
+            if (!ceVideoFile || !ceSubFile) return;
+            var btn = $('ceStartBtn');
+            btn.disabled = true; btn.style.opacity = '0.6';
+            $('ceResult').style.display = 'none';
+            $('ceProgress').style.display = 'block';
+            $('ceProgressFill').style.width = '0%';
+            $('ceStatus').textContent = 'Uploading…';
+
+            var fd = new FormData();
+            fd.append('video', ceVideoFile);
+            fd.append('subtitle', ceSubFile);
+            fd.append('mode', ceCombineMode);
+            fd.append('preset', 'default');
+
+            try {
+                // Animate progress indeterminately during upload
+                var fakeW = 0;
+                var fakeInterval = setInterval(function() {
+                    fakeW = Math.min(fakeW + Math.random() * 8, 85);
+                    $('ceProgressFill').style.width = fakeW + '%';
+                }, 400);
+
+                var res = await fetch('/combine', { method: 'POST', body: fd });
+                clearInterval(fakeInterval);
+
+                if (!res.ok) {
+                    var err = await res.json().catch(() => ({ detail: 'Unknown error' }));
+                    throw new Error(err.detail || 'Server error');
+                }
+                var data = await res.json();
+
+                // Poll for completion
+                var taskId = data.task_id;
+                $('ceStatus').textContent = 'Processing…';
+                await cePoll(taskId);
+            } catch (e) {
+                $('ceProgress').style.display = 'none';
+                $('ceStatus').textContent = '';
+                alert('Error: ' + e.message);
+                btn.disabled = false; btn.style.opacity = '1';
+            }
+        }
+        async function cePoll(taskId) {
+            for (var i = 0; i < 300; i++) {
+                await new Promise(r => setTimeout(r, 1000));
+                try {
+                    var res = await fetch('/combine/status/' + taskId);
+                    if (!res.ok) continue;
+                    var data = await res.json();
+                    if (data.status === 'done') {
+                        $('ceProgressFill').style.width = '100%';
+                        $('ceStatus').textContent = 'Done!';
+                        setTimeout(function() { $('ceProgress').style.display = 'none'; }, 600);
+                        $('ceResultMsg').textContent = 'Embedding complete — ' + (data.file_size ? Math.round(data.file_size / 1024 / 1024 * 10) / 10 + ' MB' : '');
+                        $('ceDownloadLink').href = '/combine/download/' + taskId;
+                        $('ceResult').style.display = 'block';
+                        $('ceStartBtn').disabled = false; $('ceStartBtn').style.opacity = '1';
+                        return;
+                    } else if (data.status === 'error') {
+                        throw new Error(data.error || 'Embedding failed');
+                    }
+                    // Update progress if available
+                    if (data.percent != null) {
+                        $('ceProgressFill').style.width = Math.min(95, data.percent) + '%';
+                    }
+                } catch (e) {
+                    $('ceProgress').style.display = 'none';
+                    alert('Error: ' + e.message);
+                    $('ceStartBtn').disabled = false; $('ceStartBtn').style.opacity = '1';
+                    return;
+                }
+            }
+            alert('Timed out waiting for embedding to complete.');
+            $('ceStartBtn').disabled = false; $('ceStartBtn').style.opacity = '1';
         }
 
 
