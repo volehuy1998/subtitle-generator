@@ -2,13 +2,14 @@ import { useState, useEffect, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { api } from '@/api/client'
 import { useUIStore } from '@/store/uiStore'
-import type { SystemInfo } from '@/api/types'
+import type { SystemInfo, TranslationPair } from '@/api/types'
 
 export interface UploadOptions {
   device: string
   model: string
   language: string
   format: string
+  translateTo: string
 }
 
 interface Props {
@@ -43,18 +44,21 @@ export function TranscribeForm({ onUpload }: Props) {
   const { dbOk } = useUIStore()
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null)
   const [languages, setLanguages] = useState<Record<string, string>>({})
+  const [translationTargets, setTranslationTargets] = useState<TranslationPair[]>([])
   const [loading, setLoading] = useState(true)
 
   const [device, setDevice] = useState<string>('cpu')
   const [model, setModel] = useState<string>('base')
   const [language, setLanguage] = useState<string>('auto')
   const [format, setFormat] = useState<string>('srt')
+  const [translateTo, setTranslateTo] = useState<string>('')
 
   useEffect(() => {
-    Promise.all([api.systemInfo(), api.languages()])
-      .then(([info, langs]) => {
+    Promise.all([api.systemInfo(), api.languages(), api.translationLanguages()])
+      .then(([info, langs, transLangs]) => {
         setSystemInfo(info)
         setLanguages(langs.languages)
+        setTranslationTargets(transLangs.pairs)
         setDevice(info.cuda_available ? 'cuda' : 'cpu')
       })
       .catch(() => {})
@@ -64,8 +68,8 @@ export function TranscribeForm({ onUpload }: Props) {
   const onDrop = useCallback((accepted: File[]) => {
     const file = accepted[0]
     if (!file) return
-    onUpload(file, { device, model, language, format })
-  }, [onUpload, device, model, language, format])
+    onUpload(file, { device, model, language, format, translateTo })
+  }, [onUpload, device, model, language, format, translateTo])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -303,8 +307,43 @@ export function TranscribeForm({ onUpload }: Props) {
             }}
           >
             <option value="auto">Auto-detect</option>
-            {Object.entries(languages).map(([code, name]) => (
+            {Object.entries(languages).filter(([code]) => code !== 'auto').map(([code, name]) => (
               <option key={code} value={code}>{name}</option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {/* Translate to dropdown */}
+      <div className="flex flex-col gap-2">
+        <label
+          htmlFor="translate-select"
+          className="text-xs font-semibold tracking-wider"
+          style={{ color: 'var(--color-text-2)', letterSpacing: '0.07em' }}
+        >
+          TRANSLATE TO
+        </label>
+        {loading ? (
+          <Skeleton className="h-8 w-full" />
+        ) : (
+          <select
+            id="translate-select"
+            value={translateTo}
+            onChange={(e) => setTranslateTo(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg text-sm border appearance-none"
+            style={{
+              background: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
+              color: 'var(--color-text)',
+              outline: 'none',
+            }}
+          >
+            <option value="">No translation</option>
+            {/* Deduplicate target languages */}
+            {[...new Map(translationTargets.map(p => [p.target, p])).values()].map((pair) => (
+              <option key={pair.target} value={pair.target}>
+                {pair.target_name}{pair.method === 'whisper_translate' ? ' (Whisper)' : ''}
+              </option>
             ))}
           </select>
         )}

@@ -13,7 +13,7 @@ def transcribe_task(self, task_id: str, video_filename: str, model_size: str,
                     word_timestamps: bool = False, initial_prompt: str = "",
                     diarize: bool = False, num_speakers: int | None = None,
                     max_line_chars: int = 42, translate_to_english: bool = False,
-                    auto_embed: str = ""):
+                    auto_embed: str = "", translate_to: str = ""):
     """Run the transcription pipeline on a Celery worker.
 
     This is the distributed equivalent of the asyncio.to_thread(process_video, ...)
@@ -51,6 +51,7 @@ def transcribe_task(self, task_id: str, video_filename: str, model_size: str,
         word_timestamps=word_timestamps, initial_prompt=initial_prompt,
         diarize=diarize, num_speakers=num_speakers, max_line_chars=max_line_chars,
         translate_to_english=translate_to_english, auto_embed=auto_embed,
+        translate_to=translate_to,
     )
 
     # If using S3, upload output files

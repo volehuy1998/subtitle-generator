@@ -44,6 +44,7 @@ async def upload(
     max_line_chars: int = Form(42),
     translate_to_english: bool = Form(False),
     auto_embed: str = Form(""),
+    translate_to: str = Form(""),
 ):
     # Note: shutdown and DB checks are handled by CriticalStateMiddleware
 
@@ -177,7 +178,12 @@ async def upload(
 
     # Build translate option
     extra_transcribe_opts = {}
-    if translate_to_english:
+    if translate_to and translate_to in SUPPORTED_LANGUAGES and translate_to != "auto":
+        if translate_to == "en":
+            # Use Whisper's built-in translate for English target (higher quality)
+            translate_to_english = True
+            translate_to = ""
+    elif translate_to_english:
         extra_transcribe_opts["translate_to_english"] = True
 
     # Validate auto_embed option
@@ -199,6 +205,7 @@ async def upload(
             word_timestamps=word_timestamps, initial_prompt=initial_prompt,
             diarize=diarize, num_speakers=num_speakers, max_line_chars=max_line_chars,
             translate_to_english=translate_to_english, auto_embed=auto_embed,
+            translate_to=translate_to,
         )
     else:
         # Standalone: process locally in background thread
@@ -207,6 +214,7 @@ async def upload(
             word_timestamps=word_timestamps, initial_prompt=initial_prompt,
             diarize=diarize, num_speakers=num_speakers, max_line_chars=max_line_chars,
             translate_to_english=translate_to_english, auto_embed=auto_embed,
+            translate_to=translate_to,
         ))
 
     return {"task_id": task_id, "model_size": model_size, "language": language,

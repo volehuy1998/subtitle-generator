@@ -128,7 +128,7 @@ def process_video(task_id: str, video_path: Path, model_size: str, device: str,
                    initial_prompt: str = "", diarize: bool = False,
                    num_speakers: int = None, max_line_chars: int = 42,
                    translate_to_english: bool = False,
-                   auto_embed: str = ""):
+                   auto_embed: str = "", translate_to: str = ""):
     """Main processing pipeline. Runs in a background thread."""
     # Acquire concurrency semaphore
     sem = state.get_task_semaphore()
@@ -297,6 +297,34 @@ def process_video(task_id: str, video_path: Path, model_size: str, device: str,
         # Step 4c: Apply line-breaking rules
         segments = format_segments_with_linebreaks(segments, max_chars=max_line_chars)
 
+        # Step 4d: Translation (optional, for non-English targets)
+        step_translate_elapsed = 0
+        detected_lang = result.get("language", "unknown")
+        if translate_to and translate_to != "en" and translate_to != detected_lang:
+            from app.services.translation import translate_segments as do_translate
+            task["status"] = "translating"
+            task["message"] = f"Translating subtitles to {translate_to}..."
+            emit_event(task_id, "step_change", {
+                "step": 2, "status": "translating",
+                "percent": 90, "message": task["message"],
+            })
+            with StepTimer(task_id, "translate", task_log_func=log_task_event) as step_translate:
+                segments = do_translate(segments, detected_lang, translate_to, task_id)
+            step_translate_elapsed = step_translate.elapsed
+            pipeline.record_step("translate", step_translate_elapsed)
+            # Re-apply line-breaking on translated text (different word lengths)
+            segments = format_segments_with_linebreaks(segments, max_chars=max_line_chars)
+            task["translated_to"] = translate_to
+            # Update live preview with translated segments
+            from app.utils.formatting import format_time_short
+            for seg in segments:
+                emit_event(task_id, "segment", {"segment": {
+                    "start": seg["start"], "end": seg["end"], "text": seg["text"],
+                    "start_fmt": format_time_short(seg["start"]),
+                    "end_fmt": format_time_short(seg["end"]),
+                    "speaker": seg.get("speaker"),
+                }, "translated": True})
+
         # Validate timing quality
         timing_issues = 0
         for seg in segments:
@@ -396,27 +424,36 @@ def process_video(task_id: str, video_path: Path, model_size: str, device: str,
 
         task["status"] = "done"
         task["percent"] = 100
+        done_suffix = ""
+        if translate_to and translate_to != "en" and translate_to != detected_lang:
+            done_suffix = f", translated to {translate_to}"
         task["message"] = (
             f"Done! {num_segments} subtitles generated "
-            f"(language: {language}, {device.upper()}, took {format_time_display(transcribe_time)})"
+            f"(language: {language}, {device.upper()}, took {format_time_display(transcribe_time)}{done_suffix})"
         )
         task["segments"] = num_segments
         task["language"] = language
-        task["step_timing"] = {
+        final_step_timing = {
             "upload": round(step_probe.elapsed, 2),
             "extract": round(step_extract.elapsed, 2),
             "transcribe": round(step_transcribe.elapsed, 2),
             "finalize": round(step_srt.elapsed, 2),
         }
+        if step_translate_elapsed > 0:
+            final_step_timing["translate"] = round(step_translate_elapsed, 2)
+        task["step_timing"] = final_step_timing
 
-        emit_event(task_id, "done", {
+        done_data = {
             "status": "done", "percent": 100, "message": task["message"],
             "segments": num_segments, "language": language,
             "total_time_sec": round(pipeline_summary.get("total_time_sec", 0), 2),
             "speed_factor": round(speed_factor, 2),
             "step_timings": task["step_timing"],
             "is_video": is_video_file,
-        })
+        }
+        if task.get("translated_to"):
+            done_data["translated_to"] = task["translated_to"]
+        emit_event(task_id, "done", done_data)
 
         # Record analytics
         total_time = pipeline_summary.get("total_time_sec", 0)

@@ -48,7 +48,7 @@ function formatDuration(sec: number | null): string {
 
 export function OutputPanel() {
   const store = useTaskStore()
-  const { taskId, isComplete, filename, language, segments, totalTimeSec, stepTimings, isVideo } = store
+  const { taskId, isComplete, filename, language, segments, totalTimeSec, stepTimings, isVideo, translatedTo } = store
 
   const showResults = isComplete && taskId
 
@@ -167,7 +167,7 @@ export function OutputPanel() {
                   border: '1px solid var(--color-primary-border, #d8b4fe)',
                 }}
               >
-                <EmbedPanel taskId={taskId} />
+                <EmbedPanel taskId={taskId} alreadyTranslated={!!translatedTo} />
               </div>
             )}
 

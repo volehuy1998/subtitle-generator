@@ -48,6 +48,7 @@ async def embed_subtitles(
     bold: Optional[bool] = Form(None),
     position: Optional[str] = Form(None),
     background_opacity: Optional[float] = Form(None),
+    translate_to: str = Form(""),
 ):
     """Embed subtitles into an uploaded video file.
 
@@ -131,16 +132,33 @@ async def embed_subtitles(
     output_path = OUTPUT_DIR / f"embed_{task_id}_{embed_id}{out_ext}"
 
     # Run embedding in background
+    _translate_to = translate_to
+
     def do_embed():
         try:
             # Check critical state before starting
             if state.system_critical:
                 raise RuntimeError("System in critical state — embed aborted")
+
+            effective_srt = srt_path
+            # Translate subtitles if requested
+            if _translate_to:
+                from app.utils.srt import parse_srt, segments_to_srt
+                from app.services.translation import translate_segments
+                srt_content = srt_path.read_text(encoding="utf-8")
+                segments = parse_srt(srt_content)
+                source_lang = state.tasks[task_id].get("language", "en")
+                translated = translate_segments(segments, source_lang, _translate_to, task_id)
+                translated_srt = segments_to_srt(translated, include_speakers=False)
+                translated_path = OUTPUT_DIR / f"{task_id}_translated.srt"
+                translated_path.write_text(translated_srt, encoding="utf-8")
+                effective_srt = translated_path
+
             if mode == "soft":
-                soft_embed_subtitles(video_path, srt_path, output_path, task_id,
+                soft_embed_subtitles(video_path, effective_srt, output_path, task_id,
                                      language=state.tasks[task_id].get("language", "eng"))
             else:
-                hard_burn_subtitles(video_path, srt_path, output_path, style, task_id)
+                hard_burn_subtitles(video_path, effective_srt, output_path, style, task_id)
 
             state.tasks[task_id]["embedded_video"] = str(output_path.name)
             log_task_event(task_id, "embed_complete", mode=mode, output=output_path.name)
@@ -171,6 +189,7 @@ async def quick_embed(
     bold: Optional[bool] = Form(None),
     position: Optional[str] = Form(None),
     background_opacity: Optional[float] = Form(None),
+    translate_to: str = Form(""),
 ):
     """Embed subtitles using the preserved original video (no re-upload needed).
 
@@ -238,18 +257,34 @@ async def quick_embed(
     output_path = OUTPUT_DIR / f"embed_{task_id}{out_ext}"
 
     task["embed_in_progress"] = True
+    _translate_to = translate_to
 
     def do_embed():
         try:
             # Check critical state before starting
             if state.system_critical:
                 raise RuntimeError("System in critical state — embed aborted")
+
+            effective_srt = srt_path
+            # Translate subtitles if requested
+            if _translate_to:
+                from app.utils.srt import parse_srt, segments_to_srt
+                from app.services.translation import translate_segments
+                srt_content = srt_path.read_text(encoding="utf-8")
+                segments = parse_srt(srt_content)
+                source_lang = task.get("language", "en")
+                translated = translate_segments(segments, source_lang, _translate_to, task_id)
+                translated_srt = segments_to_srt(translated, include_speakers=False)
+                translated_path = OUTPUT_DIR / f"{task_id}_translated.srt"
+                translated_path.write_text(translated_srt, encoding="utf-8")
+                effective_srt = translated_path
+
             emit_event(task_id, "embed_progress", {"message": "Embedding subtitles...", "percent": 100})
             if mode == "soft":
-                soft_embed_subtitles(video_path, srt_path, output_path, task_id,
+                soft_embed_subtitles(video_path, effective_srt, output_path, task_id,
                                      language=task.get("language", "eng"))
             else:
-                hard_burn_subtitles(video_path, srt_path, output_path, style, task_id)
+                hard_burn_subtitles(video_path, effective_srt, output_path, style, task_id)
 
             task["embedded_video"] = str(output_path.name)
             log_task_event(task_id, "quick_embed_complete", mode=mode, output=output_path.name)

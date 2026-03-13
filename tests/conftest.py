@@ -45,3 +45,13 @@ _disk.read_bytes = 100 * 1024**2
 _disk.write_bytes = 50 * 1024**2
 _psutil_mock.disk_io_counters.return_value = _disk
 sys.modules["psutil"] = _psutil_mock
+
+# Mock argos-translate
+_argos_package_mock = MagicMock()
+_argos_package_mock.get_installed_packages.return_value = []
+_argos_package_mock.get_available_packages.return_value = []
+sys.modules["argostranslate"] = MagicMock()
+sys.modules["argostranslate.package"] = _argos_package_mock
+_argos_translate_mock = MagicMock()
+_argos_translate_mock.get_installed_languages.return_value = []
+sys.modules["argostranslate.translate"] = _argos_translate_mock

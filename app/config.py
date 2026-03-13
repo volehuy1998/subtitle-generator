@@ -32,6 +32,10 @@ MAX_AUDIO_DURATION = 4 * 3600  # 4 hours max
 ALLOWED_SUBTITLE_EXTENSIONS = {".srt", ".vtt"}
 MAX_SUBTITLE_SIZE = 10 * 1024 * 1024  # 10 MB
 
+# --- Translation ---
+TRANSLATION_MODEL_DIR = BASE_DIR / "translation_models"
+TRANSLATION_BATCH_SIZE = 50  # segments per progress update
+
 # Allowed MIME types mapped from extensions
 ALLOWED_MIME_PREFIXES = {"video/", "audio/", "application/octet-stream"}
 

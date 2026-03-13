@@ -67,7 +67,7 @@ export default function App() {
       })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleUpload = async (file: File, opts: { device: string; model: string; language: string; format: string }) => {
+  const handleUpload = async (file: File, opts: { device: string; model: string; language: string; format: string; translateTo?: string }) => {
     const fd = new FormData()
     fd.append('file', file)
     fd.append('model_size', opts.model)
@@ -75,6 +75,9 @@ export default function App() {
     fd.append('device', opts.device)
     fd.append('format', opts.format)
     fd.append('enable_diarization', 'false')
+    if (opts.translateTo) {
+      fd.append('translate_to', opts.translateTo)
+    }
 
     try {
       const result = await api.upload(fd)

@@ -19,6 +19,8 @@ export interface TaskState {
   percent: number
   message: string
   isPaused: boolean
+  isPauseRequesting: boolean
+  isCancelRequesting: boolean
   isComplete: boolean
   error: string | null
 
@@ -36,6 +38,9 @@ export interface TaskState {
 
   // Live preview
   liveSegments: LiveSegment[]
+
+  // Translation
+  translatedTo: string | null
 
   // Download
   downloadReady: boolean
@@ -56,6 +61,8 @@ interface TaskActions {
   setError: (msg: string) => void
   setPaused: () => void
   setResumed: () => void
+  setPauseRequesting: (v: boolean) => void
+  setCancelRequesting: (v: boolean) => void
   setWarning: (msg: string) => void
   setEmbedDownload: (url: string) => void
   reset: () => void
@@ -63,10 +70,10 @@ interface TaskActions {
 
 const initial: TaskState = {
   taskId: null, filename: null, fileSize: null,
-  status: null, percent: 0, message: '', isPaused: false, isComplete: false, error: null,
+  status: null, percent: 0, message: '', isPaused: false, isPauseRequesting: false, isCancelRequesting: false, isComplete: false, error: null,
   activeStep: -1, stepTimings: {},
   language: null, segments: 0, totalTimeSec: null, audioDuration: null,
-  isVideo: false, speedFactor: null,
+  isVideo: false, speedFactor: null, translatedTo: null,
   liveSegments: [],
   downloadReady: false, embedDownloadUrl: null,
   warning: null,
@@ -90,15 +97,20 @@ export const useTaskStore = create<TaskState & TaskActions>((set) => ({
   setComplete: (data) => set((s) => ({
     ...s, ...data,
     status: 'done', percent: 100, isComplete: true, downloadReady: true,
+    translatedTo: (data as Record<string, unknown>).translated_to as string ?? s.translatedTo,
   })),
 
-  setCancelled: () => set({ status: 'cancelled', isPaused: false }),
+  setCancelled: () => set({ status: 'cancelled', isPaused: false, isPauseRequesting: false, isCancelRequesting: false }),
 
   setError: (msg) => set({ status: 'error', error: msg }),
 
-  setPaused: () => set({ isPaused: true, status: 'paused' }),
+  setPaused: () => set({ isPaused: true, isPauseRequesting: false, status: 'paused' }),
 
-  setResumed: () => set({ isPaused: false, status: 'transcribing' }),
+  setResumed: () => set({ isPaused: false, isPauseRequesting: false, status: 'transcribing' }),
+
+  setPauseRequesting: (v) => set({ isPauseRequesting: v }),
+
+  setCancelRequesting: (v) => set({ isCancelRequesting: v }),
 
   setWarning: (msg) => set({ warning: msg }),
 

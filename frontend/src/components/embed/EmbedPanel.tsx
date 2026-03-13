@@ -1,17 +1,33 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { api } from '@/api/client'
+import type { TranslationPair } from '@/api/types'
 
 interface Props {
   taskId: string
+  alreadyTranslated?: boolean
 }
 
 type EmbedState = 'idle' | 'processing' | 'done' | 'error'
 
-export function EmbedPanel({ taskId }: Props) {
+export function EmbedPanel({ taskId, alreadyTranslated }: Props) {
   const [embedState, setEmbedState] = useState<EmbedState>('idle')
   const [progress, setProgress] = useState(0)
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [translateTo, setTranslateTo] = useState<string>('')
+  const [translationTargets, setTranslationTargets] = useState<TranslationPair[]>([])
+  const esRef = useRef<EventSource | null>(null)
+
+  useEffect(() => {
+    api.translationLanguages()
+      .then((res) => setTranslationTargets(res.pairs))
+      .catch(() => {})
+  }, [])
+
+  // Clean up SSE on unmount
+  useEffect(() => {
+    return () => { esRef.current?.close() }
+  }, [])
 
   const handleEmbed = async () => {
     setEmbedState('processing')
@@ -21,16 +37,60 @@ export function EmbedPanel({ taskId }: Props) {
     try {
       const fd = new FormData()
       fd.append('mode', 'soft')
+      if (translateTo) {
+        fd.append('translate_to', translateTo)
+      }
 
       const timer = setInterval(() => {
-        setProgress((prev) => Math.min(prev + 6, 90))
+        setProgress((prev) => Math.min(prev + 3, 85))
       }, 500)
 
-      const result = await api.embedQuick(taskId, fd)
-      clearInterval(timer)
-      setProgress(100)
-      setDownloadUrl(result.download_url ?? api.embedDownloadUrl(taskId))
-      setEmbedState('done')
+      // Start the embed (async on server)
+      await api.embedQuick(taskId, fd)
+
+      // Listen for completion via SSE
+      const es = new EventSource(`/events/${taskId}`)
+      esRef.current = es
+
+      es.addEventListener('embed_done', (e) => {
+        clearInterval(timer)
+        const data = JSON.parse((e as MessageEvent).data)
+        setProgress(100)
+        setDownloadUrl(data.download_url ?? api.embedDownloadUrl(taskId))
+        setEmbedState('done')
+        es.close()
+      })
+
+      es.addEventListener('embed_error', (e) => {
+        clearInterval(timer)
+        const data = JSON.parse((e as MessageEvent).data)
+        setEmbedState('error')
+        setErrorMsg(data.message ?? 'Embedding failed')
+        es.close()
+      })
+
+      es.onerror = () => {
+        // On SSE error, fall back to polling the download endpoint
+        clearInterval(timer)
+        es.close()
+        // Give it a moment then check if the file is ready
+        setTimeout(async () => {
+          try {
+            const resp = await fetch(api.embedDownloadUrl(taskId), { method: 'HEAD' })
+            if (resp.ok) {
+              setProgress(100)
+              setDownloadUrl(api.embedDownloadUrl(taskId))
+              setEmbedState('done')
+            } else {
+              setEmbedState('error')
+              setErrorMsg('Embedding may have failed. Please try again.')
+            }
+          } catch {
+            setEmbedState('error')
+            setErrorMsg('Could not verify embedding status.')
+          }
+        }, 2000)
+      }
     } catch (err) {
       setEmbedState('error')
       setErrorMsg(err instanceof Error ? err.message : 'Embedding failed')
@@ -84,6 +144,28 @@ export function EmbedPanel({ taskId }: Props) {
           <p className="text-xs" style={{ color: 'var(--color-text-3)' }}>Soft mux — subtitles selectable in VLC, YouTube, etc.</p>
         </div>
       </div>
+
+      {/* Translate subtitles (hidden if already translated during transcription) */}
+      {translationTargets.length > 0 && embedState === 'idle' && !alreadyTranslated && (
+        <select
+          value={translateTo}
+          onChange={(e) => setTranslateTo(e.target.value)}
+          className="w-full px-3 py-2 rounded-lg text-xs border appearance-none"
+          style={{
+            background: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
+            color: 'var(--color-text)',
+            outline: 'none',
+          }}
+        >
+          <option value="">No translation</option>
+          {[...new Map(translationTargets.map(p => [p.target, p])).values()].map((pair) => (
+            <option key={pair.target} value={pair.target}>
+              Translate to {pair.target_name}
+            </option>
+          ))}
+        </select>
+      )}
 
       {embedState === 'processing' && (
         <div className="flex flex-col gap-1">

@@ -34,6 +34,7 @@ export type TaskStatus =
   | 'cancelled'
   | 'paused'
   | 'combining'
+  | 'translating'
 
 export interface TaskProgress {
   task_id: string
@@ -59,6 +60,7 @@ export interface StepTimings {
   upload?: number
   extract?: number
   transcribe?: number
+  translate?: number
   finalize?: number
 }
 
@@ -127,6 +129,20 @@ export interface SubtitlesResponse {
   segments: SubtitleSegment[]
 }
 
+export interface TranslationPair {
+  source: string
+  source_name: string
+  target: string
+  target_name: string
+  installed: boolean
+  method?: string
+}
+
+export interface TranslationLanguagesResponse {
+  pairs: TranslationPair[]
+  count: number
+}
+
 // ── SSE event payloads ──
 export type SSEEventType =
   | 'state'
@@ -143,3 +159,4 @@ export type SSEEventType =
   | 'paused'
   | 'resumed'
   | 'heartbeat'
+  | 'translate_progress'

@@ -6,12 +6,14 @@ interface Props {
   isPaused: boolean
 }
 
-const STEPS = [
+const BASE_STEPS = [
   { label: 'Upload', key: 'upload' as keyof StepTimings },
   { label: 'Extract', key: 'extract' as keyof StepTimings },
   { label: 'Transcribe', key: 'transcribe' as keyof StepTimings },
-  { label: 'Done', key: 'finalize' as keyof StepTimings },
 ]
+
+const TRANSLATE_STEP = { label: 'Translate', key: 'translate' as keyof StepTimings }
+const DONE_STEP = { label: 'Done', key: 'finalize' as keyof StepTimings }
 
 function formatTiming(sec: number | undefined): string {
   if (sec === undefined || sec === null) return ''
@@ -20,6 +22,12 @@ function formatTiming(sec: number | undefined): string {
 }
 
 export function PipelineSteps({ activeStep, stepTimings, isPaused }: Props) {
+  // Include Translate step only when translation timing is present
+  const hasTranslation = stepTimings.translate !== undefined
+  const STEPS = hasTranslation
+    ? [...BASE_STEPS, TRANSLATE_STEP, DONE_STEP]
+    : [...BASE_STEPS, DONE_STEP]
+
   return (
     <div className="flex items-start w-full">
       {STEPS.map((step, index) => {

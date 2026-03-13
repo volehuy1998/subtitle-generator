@@ -3,6 +3,7 @@ import type {
   SystemInfo, LanguagesResponse, UploadResponse,
   TaskProgress, TasksResponse, HealthStatus,
   EmbedResult, CombineStatus, SubtitlesResponse,
+  TranslationLanguagesResponse,
 } from './types'
 
 const json = async <T>(res: Response): Promise<T> => {
@@ -61,4 +62,7 @@ export const api = {
 
   subtitles: (taskId: string) =>
     fetch(`/subtitles/${taskId}`).then(r => json<SubtitlesResponse>(r)),
+
+  translationLanguages: () =>
+    fetch('/translation/languages').then(r => json<TranslationLanguagesResponse>(r)),
 }

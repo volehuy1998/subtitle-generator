@@ -18,6 +18,10 @@ tasks: dict[str, dict] = {}
 loaded_models: dict[tuple[str, str], object] = {}
 model_lock = threading.Lock()
 
+# Cached argos-translate models: (source_lang, target_lang) -> translation object
+translation_models: dict[tuple[str, str], object] = {}
+translation_model_lock = threading.Lock()
+
 # SSE event queues: task_id -> Queue
 task_event_queues: dict[str, queue.Queue] = {}
 

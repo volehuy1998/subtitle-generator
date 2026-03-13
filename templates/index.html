@@ -580,6 +580,12 @@
                             <select class="opt-select" id="languageSelect"></select>
                         </div>
                         <div class="opt-row">
+                            <span class="opt-label">Translate to</span>
+                            <select class="opt-select" id="translateSelect">
+                                <option value="">No translation</option>
+                            </select>
+                        </div>
+                        <div class="opt-row">
                             <span class="opt-label">Format</span>
                             <div class="opt-chips" id="formatButtons">
                                 <button class="opt-chip selected" data-value="srt">SRT</button>
@@ -653,6 +659,13 @@
                             <div class="embed-preview-bar" id="cePreviewBar">
                                 <span class="embed-preview-text" id="cePreviewText" style="color:#fff;font-size:13px;">Sample subtitle text</span>
                             </div>
+                        </div>
+                        <!-- Translate subtitles -->
+                        <div>
+                            <div class="opt-label" style="margin-bottom:6px">Translate subtitles</div>
+                            <select class="opt-select" id="ceTranslateSelect" style="width:100%">
+                                <option value="">No translation</option>
+                            </select>
                         </div>
                         <!-- Submit -->
                         <button id="ceStartBtn" class="upload-btn" onclick="ceStart()" disabled style="opacity:0.5">Embed &amp; Download</button>
@@ -972,6 +985,42 @@
             } catch (e) { console.error('Failed to load languages:', e); }
         }
         var languagesReady = loadLanguages();
+
+        // ── Translation Languages ──
+        async function loadTranslationLanguages() {
+            try {
+                const res = await fetch('/translation/languages');
+                const data = await res.json();
+                var pairs = data.pairs || [];
+                // Deduplicate by target language
+                var seen = {};
+                var unique = [];
+                pairs.forEach(function(p) {
+                    if (!seen[p.target]) { seen[p.target] = true; unique.push(p); }
+                });
+                // Populate transcribe translate dropdown
+                var sel = $('translateSelect');
+                if (sel) {
+                    unique.forEach(function(p) {
+                        var opt = document.createElement('option');
+                        opt.value = p.target;
+                        opt.textContent = p.target_name + (p.method === 'whisper_translate' ? ' (Whisper)' : '');
+                        sel.appendChild(opt);
+                    });
+                }
+                // Populate embed translate dropdown
+                var ceSel = $('ceTranslateSelect');
+                if (ceSel) {
+                    unique.forEach(function(p) {
+                        var opt = document.createElement('option');
+                        opt.value = p.target;
+                        opt.textContent = p.target_name + (p.method === 'whisper_translate' ? ' (Whisper)' : '');
+                        ceSel.appendChild(opt);
+                    });
+                }
+            } catch (e) { console.error('Failed to load translation languages:', e); }
+        }
+        loadTranslationLanguages();
 
         // ── Format Selection ──
         document.querySelectorAll('#formatButtons .opt-chip').forEach(btn => {
@@ -1301,6 +1350,10 @@
             fd.append('device', selectedDevice);
             fd.append('model_size', selectedModel);
             fd.append('language', languageSelect.value);
+            var translateSel = $('translateSelect');
+            if (translateSel && translateSel.value) {
+                fd.append('translate_to', translateSel.value);
+            }
 
             // Switch input card to progress view
             $('transcribeForm').style.display = 'none';
@@ -1385,10 +1438,17 @@
 
             eventSource.addEventListener('heartbeat', e => { onSSEData(); });
 
+            let translatedReset = false;
             eventSource.addEventListener('segment', e => {
                 onSSEData();
                 const data = JSON.parse(e.data);
-                if (data.segment) { addSegment(data.segment, data.segment_count); }
+                // When translated segments arrive, clear the preview first
+                if (data.translated && !translatedReset) {
+                    translatedReset = true;
+                    previewBody.innerHTML = '';
+                    lastSegmentCount = 0;
+                }
+                if (data.segment) { addSegment(data.segment, data.translated ? (lastSegmentCount + 1) : data.segment_count); }
             });
 
             eventSource.addEventListener('warning', e => {
@@ -2193,6 +2253,10 @@
             if (ceCombineMode === 'hard') {
                 fd.append('font_size', $('ceFontSize').value);
                 fd.append('font_color', $('ceFontColor').value);
+            }
+            var ceTransSel = $('ceTranslateSelect');
+            if (ceTransSel && ceTransSel.value) {
+                fd.append('translate_to', ceTransSel.value);
             }
 
             try {

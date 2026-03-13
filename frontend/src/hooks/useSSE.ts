@@ -57,9 +57,15 @@ export function useSSE(taskId: string | null) {
       if (data.step !== undefined) store.setStep(data.step)
     })
 
+    let translatedReset = false
     es.addEventListener('segment', (e) => {
       onData()
       const data = JSON.parse((e as MessageEvent).data)
+      // When translated segments arrive, clear the preview first
+      if (data.translated && !translatedReset) {
+        translatedReset = true
+        store.setLiveSegments([])
+      }
       store.addSegment(data.segment ?? data)
     })
 

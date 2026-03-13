@@ -97,6 +97,7 @@ async def combine_video_subtitle(
     position: Optional[str] = Form(None),
     background_opacity: Optional[float] = Form(None),
     language: str = Form("eng"),
+    translate_to: str = Form(""),
 ):
     """Combine a video file with a subtitle file (SRT/VTT).
 
@@ -194,10 +195,29 @@ async def combine_video_subtitle(
 
     log_task_event(task_id, "combine_started", mode=mode, video=video.filename, subtitle=subtitle.filename)
 
+    _translate_to = translate_to
+
     def do_combine():
         try:
             if state.system_critical:
                 raise RuntimeError("System in critical state — combine aborted")
+
+            effective_sub = sub_path
+            # Translate subtitles if requested
+            if _translate_to:
+                from app.utils.srt import parse_srt, parse_vtt, segments_to_srt
+                from app.services.translation import translate_segments
+                sub_content = sub_path.read_text(encoding="utf-8")
+                if sub_path.suffix.lower() == ".vtt":
+                    segments = parse_vtt(sub_content)
+                else:
+                    segments = parse_srt(sub_content)
+                # Use "en" as source language guess for user-uploaded subtitles
+                translated = translate_segments(segments, "en", _translate_to, task_id)
+                translated_srt = segments_to_srt(translated, include_speakers=False)
+                translated_path = OUTPUT_DIR / f"combine_{task_id}_translated.srt"
+                translated_path.write_text(translated_srt, encoding="utf-8")
+                effective_sub = translated_path
 
             emit_event(task_id, "combine_progress", {
                 "message": f"Combining video and subtitles ({mode} mode)...",
@@ -207,9 +227,9 @@ async def combine_video_subtitle(
             state.tasks[task_id]["message"] = f"Combining ({mode} mode)..."
 
             if mode == "soft":
-                soft_embed_subtitles(video_path, sub_path, output_path, task_id, language=language)
+                soft_embed_subtitles(video_path, effective_sub, output_path, task_id, language=language)
             else:
-                hard_burn_subtitles(video_path, sub_path, output_path, style, task_id)
+                hard_burn_subtitles(video_path, effective_sub, output_path, style, task_id)
 
             state.tasks[task_id]["status"] = "done"
             state.tasks[task_id]["percent"] = 100

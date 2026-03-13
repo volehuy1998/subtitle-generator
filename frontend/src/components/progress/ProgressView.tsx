@@ -32,10 +32,12 @@ export function ProgressView({ taskId }: Props) {
 
   const {
     filename, fileSize, status, percent, message, isPaused,
+    isPauseRequesting, isCancelRequesting,
     isComplete, activeStep, stepTimings, liveSegments, warning,
   } = store
 
   const isActive = !isComplete && status !== 'error' && status !== 'cancelled'
+  const anyRequesting = isPauseRequesting || isCancelRequesting
 
   // Auto-scroll segments
   useEffect(() => {
@@ -43,28 +45,49 @@ export function ProgressView({ taskId }: Props) {
   }, [liveSegments.length])
 
   const handlePauseResume = async () => {
+    store.setPauseRequesting(true)
     if (isPaused) {
-      await api.resume(taskId).catch(() => {})
+      await api.resume(taskId).catch(() => { store.setPauseRequesting(false) })
     } else {
-      await api.pause(taskId).catch(() => {})
+      await api.pause(taskId).catch(() => { store.setPauseRequesting(false) })
     }
   }
 
   const handleCancel = async () => {
-    await api.cancel(taskId).catch(() => {})
+    if (!window.confirm('Cancel the transcription?')) return
+    store.setCancelRequesting(true)
+    await api.cancel(taskId).catch(() => { store.setCancelRequesting(false) })
   }
 
   const progressBarColor =
     isComplete ? 'var(--color-success)' :
     status === 'error' ? 'var(--color-danger)' :
-    isPaused ? 'var(--color-warning)' :
+    status === 'cancelled' ? 'var(--color-danger)' :
+    isPaused || isPauseRequesting ? 'var(--color-warning)' :
     'var(--color-primary)'
 
   const statusColor =
     isComplete ? 'var(--color-success)' :
     status === 'error' ? 'var(--color-danger)' :
-    isPaused ? 'var(--color-warning)' :
+    status === 'cancelled' ? 'var(--color-danger)' :
+    isPaused || isPauseRequesting ? 'var(--color-warning)' :
     'var(--color-text-2)'
+
+  // Status text logic
+  const statusText =
+    status === 'error' ? (store.error ?? 'An error occurred') :
+    status === 'cancelled' ? 'Task cancelled.' :
+    isCancelRequesting ? 'Cancelling...' :
+    isPaused ? 'Paused' :
+    isPauseRequesting ? 'Pausing after current segment...' :
+    message
+
+  // Pause button label
+  const pauseLabel =
+    isPauseRequesting && !isPaused ? 'Pausing...' :
+    isPauseRequesting && isPaused ? 'Resuming...' :
+    isPaused ? 'Resume' :
+    'Pause'
 
   return (
     <div className="flex flex-col gap-5">
@@ -134,10 +157,7 @@ export function ProgressView({ taskId }: Props) {
         {/* Status / percent row */}
         <div className="flex items-center justify-between">
           <span className="text-xs" style={{ color: statusColor }}>
-            {status === 'error' ? (store.error ?? 'An error occurred') :
-             status === 'cancelled' ? 'Cancelled' :
-             isPaused ? 'Paused' :
-             message}
+            {statusText}
           </span>
           <span
             className="text-xs font-semibold tabular-nums"
@@ -202,45 +222,67 @@ export function ProgressView({ taskId }: Props) {
           <button
             type="button"
             onClick={handlePauseResume}
+            disabled={anyRequesting}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-all"
+            style={{
+              background: 'var(--color-surface)',
+              borderColor: isPaused ? 'var(--color-success)' : isPauseRequesting ? 'var(--color-warning)' : 'var(--color-border)',
+              color: isPaused ? 'var(--color-success)' : isPauseRequesting ? 'var(--color-warning)' : 'var(--color-text)',
+              opacity: anyRequesting ? 0.6 : 1,
+              cursor: anyRequesting ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {isPaused ? (
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                <path d="M3 2l7 4-7 4V2z" fill="currentColor" />
+              </svg>
+            ) : (
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                <rect x="2.5" y="2" width="2.5" height="8" rx="1" fill="currentColor" />
+                <rect x="7" y="2" width="2.5" height="8" rx="1" fill="currentColor" />
+              </svg>
+            )}
+            {pauseLabel}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleCancel}
+            disabled={isCancelRequesting}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-all"
+            style={{
+              background: 'var(--color-surface)',
+              borderColor: isCancelRequesting ? 'var(--color-danger)' : 'var(--color-border)',
+              color: 'var(--color-danger)',
+              opacity: isCancelRequesting ? 0.6 : 1,
+              cursor: isCancelRequesting ? 'not-allowed' : 'pointer',
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            {isCancelRequesting ? 'Cancelling...' : 'Cancel'}
+          </button>
+        </div>
+      )}
+
+      {/* Cancelled view */}
+      {status === 'cancelled' && (
+        <div className="flex flex-col items-center gap-3 py-4">
+          <span className="text-sm" style={{ color: 'var(--color-text-3)' }}>
+            Task cancelled.
+          </span>
+          <button
+            type="button"
+            onClick={() => { store.reset(); setAppMode('transcribe') }}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border transition-all"
             style={{
               background: 'var(--color-surface)',
               borderColor: 'var(--color-border)',
               color: 'var(--color-text)',
             }}
           >
-            {isPaused ? (
-              <>
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                  <path d="M3 2l7 4-7 4V2z" fill="currentColor" />
-                </svg>
-                Resume
-              </>
-            ) : (
-              <>
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                  <rect x="2.5" y="2" width="2.5" height="8" rx="1" fill="currentColor" />
-                  <rect x="7" y="2" width="2.5" height="8" rx="1" fill="currentColor" />
-                </svg>
-                Pause
-              </>
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleCancel}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-all"
-            style={{
-              background: 'var(--color-surface)',
-              borderColor: 'var(--color-border)',
-              color: 'var(--color-danger)',
-            }}
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-              <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-            Cancel
+            Try Again
           </button>
         </div>
       )}

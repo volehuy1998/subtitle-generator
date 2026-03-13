@@ -1,9 +1,10 @@
-import { useState, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { api } from '@/api/client'
 import { ModeSelector } from './ModeSelector'
 import { StyleOptions } from './StyleOptions'
 import { useUIStore } from '@/store/uiStore'
 import type { EmbedMode } from '@/store/uiStore'
+import type { TranslationPair } from '@/api/types'
 
 type EmbedState = 'idle' | 'processing' | 'done' | 'error'
 
@@ -75,6 +76,14 @@ export function EmbedTab() {
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [combineTaskId, setCombineTaskId] = useState<string | null>(null)
+  const [translateTo, setTranslateTo] = useState<string>('')
+  const [translationTargets, setTranslationTargets] = useState<TranslationPair[]>([])
+
+  useEffect(() => {
+    api.translationLanguages()
+      .then((res) => setTranslationTargets(res.pairs))
+      .catch(() => {})
+  }, [])
 
   const canEmbed = videoFile !== null && subtitleFile !== null && embedState !== 'processing'
 
@@ -93,6 +102,9 @@ export function EmbedTab() {
       if (mode === 'hard') {
         fd.append('font_color', color.replace('#', ''))
         fd.append('font_size', String(size))
+      }
+      if (translateTo) {
+        fd.append('translate_to', translateTo)
       }
 
       const { task_id } = await api.combineStart(fd)
@@ -188,6 +200,34 @@ export function EmbedTab() {
           onChange={(c, s) => { setColor(c); setSize(s) }}
         />
       )}
+
+      {/* Translate subtitles */}
+      <div className="flex flex-col gap-2">
+        <span
+          className="text-xs font-semibold tracking-wider"
+          style={{ color: 'var(--color-text-2)', letterSpacing: '0.07em' }}
+        >
+          TRANSLATE SUBTITLES
+        </span>
+        <select
+          value={translateTo}
+          onChange={(e) => setTranslateTo(e.target.value)}
+          className="w-full px-3 py-2 rounded-lg text-sm border appearance-none"
+          style={{
+            background: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
+            color: 'var(--color-text)',
+            outline: 'none',
+          }}
+        >
+          <option value="">No translation</option>
+          {[...new Map(translationTargets.map(p => [p.target, p])).values()].map((pair) => (
+            <option key={pair.target} value={pair.target}>
+              {pair.target_name}{pair.method === 'whisper_translate' ? ' (Whisper)' : ''}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {/* Error */}
       {embedState === 'error' && errorMsg && (
