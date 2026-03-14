@@ -190,7 +190,7 @@ class TestWebhooks:
 class TestAPIVersion:
     def test_api_version_2(self):
         res = client.get("/openapi.json")
-        assert res.json()["info"]["version"] == "2.0.0"
+        assert res.json()["info"]["version"] == "2.1.0"
 
 
 # ── S14-6: Tag Descriptions ──
