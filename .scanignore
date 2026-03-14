@@ -1,0 +1,22 @@
+# .scanignore — allowlist for scan_sensitive.py
+#
+# One regex per line. Lines starting with # are comments.
+# If any allowlist pattern matches the finding value OR the full line
+# containing the finding, the finding is suppressed.
+#
+# Use this sparingly — only for patterns that are genuinely safe
+# (e.g., example IPs in documentation, localhost aliases, test fixtures).
+# All entries should have a comment explaining why they are safe.
+
+# Loopback and wildcard addresses used in server binding
+0\.0\.0\.0
+127\.0\.0
+
+# Documentation example IPs (non-routable TEST-NET per RFC 5737)
+192\.0\.2\.
+198\.51\.100\.
+203\.0\.113\.
+
+# Hardcoded test fixture password in test files (not a real credential)
+password.*=.*test
+password.*=.*secret.*test
