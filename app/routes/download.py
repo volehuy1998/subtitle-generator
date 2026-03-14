@@ -24,9 +24,11 @@ def _get_task_data(task_id: str) -> dict | None:
     if task_id in state.tasks:
         return state.tasks[task_id]
     from app.config import REDIS_URL
+
     if REDIS_URL:
         try:
             from app.services.task_backend import get_task_backend
+
             return get_task_backend().get(task_id)
         except Exception:
             pass
@@ -50,6 +52,7 @@ async def download(task_id: str, request: Request, format: Literal["srt", "vtt",
     if STORAGE_BACKEND == "s3":
         # Try S3 pre-signed URL first
         from app.services.storage import get_storage
+
         storage = get_storage()
         # Ensure file is available locally (download from S3 if needed)
         local_path = storage.get_output_path(filename)
@@ -69,6 +72,8 @@ async def download(task_id: str, request: Request, format: Literal["srt", "vtt",
     logger.info(f"DOWNLOAD [{task_id[:8]}] Serving {original_name}")
     log_task_event(task_id, "downloaded", filename=original_name, format=format)
     return FileResponse(
-        sub_path, filename=original_name, media_type=media_type,
+        sub_path,
+        filename=original_name,
+        media_type=media_type,
         headers={"Content-Disposition": f'attachment; filename="{original_name}"'},
     )

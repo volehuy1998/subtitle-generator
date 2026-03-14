@@ -15,28 +15,15 @@ client = TestClient(app, base_url="https://testserver")
 def _make_video_bytes():
     """Create minimal bytes that pass magic-bytes check as a video file."""
     # ftyp box header for MP4: 8 bytes size + 'ftyp' + brand
-    return b'\x00\x00\x00\x18ftypmp42\x00\x00\x00\x00mp42isom' + b'\x00' * 1024
+    return b"\x00\x00\x00\x18ftypmp42\x00\x00\x00\x00mp42isom" + b"\x00" * 1024
 
 
 def _make_srt_content():
-    return (
-        b"1\n"
-        b"00:00:01,000 --> 00:00:03,000\n"
-        b"Hello world\n\n"
-        b"2\n"
-        b"00:00:04,000 --> 00:00:06,000\n"
-        b"This is a test\n"
-    )
+    return b"1\n00:00:01,000 --> 00:00:03,000\nHello world\n\n2\n00:00:04,000 --> 00:00:06,000\nThis is a test\n"
 
 
 def _make_vtt_content():
-    return (
-        b"WEBVTT\n\n"
-        b"00:00:01.000 --> 00:00:03.000\n"
-        b"Hello world\n\n"
-        b"00:00:04.000 --> 00:00:06.000\n"
-        b"This is a test\n"
-    )
+    return b"WEBVTT\n\n00:00:01.000 --> 00:00:03.000\nHello world\n\n00:00:04.000 --> 00:00:06.000\nThis is a test\n"
 
 
 class TestCombineValidation:
@@ -270,6 +257,7 @@ class TestSubtitleValidation:
     def test_valid_srt_detection(self):
         from app.routes.combine import _validate_subtitle_file
         import tempfile
+
         with tempfile.NamedTemporaryFile(suffix=".srt", mode="w", delete=False) as f:
             f.write("1\n00:00:01,000 --> 00:00:03,000\nHello\n")
             f.flush()
@@ -279,6 +267,7 @@ class TestSubtitleValidation:
     def test_valid_vtt_detection(self):
         from app.routes.combine import _validate_subtitle_file
         import tempfile
+
         with tempfile.NamedTemporaryFile(suffix=".vtt", mode="w", delete=False) as f:
             f.write("WEBVTT\n\n00:00:01.000 --> 00:00:03.000\nHello\n")
             f.flush()
@@ -288,6 +277,7 @@ class TestSubtitleValidation:
     def test_invalid_srt_detection(self):
         from app.routes.combine import _validate_subtitle_file
         import tempfile
+
         with tempfile.NamedTemporaryFile(suffix=".srt", mode="w", delete=False) as f:
             f.write("This is just random text with no timestamps\n")
             f.flush()
@@ -297,6 +287,7 @@ class TestSubtitleValidation:
     def test_invalid_vtt_detection(self):
         from app.routes.combine import _validate_subtitle_file
         import tempfile
+
         with tempfile.NamedTemporaryFile(suffix=".vtt", mode="w", delete=False) as f:
             f.write("Not a VTT file\n")
             f.flush()
@@ -306,6 +297,7 @@ class TestSubtitleValidation:
     def test_empty_file_detection(self):
         from app.routes.combine import _validate_subtitle_file
         import tempfile
+
         with tempfile.NamedTemporaryFile(suffix=".srt", mode="w", delete=False) as f:
             f.write("")
             f.flush()

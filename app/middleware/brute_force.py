@@ -19,8 +19,8 @@ _lock = threading.Lock()
 
 # Config
 MAX_FAILURES = 10  # max failed attempts before blocking
-WINDOW_SEC = 300   # 5-minute window
-BLOCK_SEC = 600    # 10-minute block
+WINDOW_SEC = 300  # 5-minute window
+BLOCK_SEC = 600  # 10-minute block
 
 # State: ip -> {"failures": [(timestamp, ...)], "blocked_until": float}
 _tracker: dict[str, dict] = {}

@@ -1,4 +1,5 @@
 """E2E tests: Pause/Cancel button visibility and Auto-detect dropdown fix."""
+
 from playwright.sync_api import Page
 
 BASE_URL = "https://openlabs.club"

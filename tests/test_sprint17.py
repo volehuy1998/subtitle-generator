@@ -9,7 +9,6 @@ S17-6: SQLite analytics persistence
 S17-7: Integration tests
 """
 
-
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -44,6 +43,7 @@ def _cleanup_workers():
 
 
 # ── S17-1: Task Backend Abstraction ──
+
 
 class TestTaskBackend:
     def test_in_memory_backend_set_get(self):
@@ -100,6 +100,7 @@ class TestTaskBackend:
 
 # ── S17-2: Storage Adapter ──
 
+
 class TestStorageAdapter:
     def test_local_storage_save_output(self):
         storage = get_storage()
@@ -126,6 +127,7 @@ class TestStorageAdapter:
 
 
 # ── S17-3: Worker Health Monitoring ──
+
 
 class TestWorkerHealth:
     def setup_method(self):
@@ -172,6 +174,7 @@ class TestWorkerHealth:
 
     def test_cleanup_dead_workers(self):
         import time
+
         register_worker("dead-worker")
         # Manually set heartbeat to long ago
         _workers["dead-worker"]["last_heartbeat"] = time.time() - 999
@@ -180,6 +183,7 @@ class TestWorkerHealth:
 
 
 # ── S17-4: Load Balancer Health Check ──
+
 
 class TestLoadBalancerHealthCheck:
     def test_health_live_returns_200(self):
@@ -206,6 +210,7 @@ class TestLoadBalancerHealthCheck:
 
 
 # ── S17-5: Scale Info Endpoint ──
+
 
 class TestScaleInfo:
     def test_scale_info_endpoint(self):
@@ -234,6 +239,7 @@ class TestScaleInfo:
 
 
 # ── S17-6: SQLite Analytics Persistence ──
+
 
 class TestAnalyticsDB:
     def test_record_event(self):
@@ -267,6 +273,7 @@ class TestAnalyticsDB:
 
 # ── S17-7: Integration Tests ──
 
+
 class TestScaleIntegration:
     def test_health_live_in_openapi(self):
         res = client.get("/openapi.json")
@@ -280,21 +287,25 @@ class TestScaleIntegration:
 
     def test_task_backend_importable(self):
         from app.services.task_backend import TaskBackend, InMemoryTaskBackend
+
         assert TaskBackend is not None
         assert InMemoryTaskBackend is not None
 
     def test_storage_importable(self):
         from app.services.storage import StorageAdapter
+
         assert StorageAdapter is not None
         assert LocalStorageAdapter is not None
 
     def test_worker_health_importable(self):
         from app.services.worker_health import register_worker, get_worker_status
+
         assert callable(register_worker)
         assert callable(get_worker_status)
 
     def test_analytics_db_importable(self):
         from app.services.analytics_db import record_event, get_daily_stats
+
         assert callable(record_event)
         assert callable(get_daily_stats)
 

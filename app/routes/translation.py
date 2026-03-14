@@ -50,6 +50,5 @@ async def install_language(source: str = "en", target: str = ""):
     else:
         raise HTTPException(
             404,
-            f"Could not install language pair {source} -> {target}. "
-            f"The pair may not be available in argos-translate.",
+            f"Could not install language pair {source} -> {target}. The pair may not be available in argos-translate.",
         )

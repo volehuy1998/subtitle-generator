@@ -19,6 +19,12 @@ env/
 .env
 *.env.local
 
+# TLS certificates and private keys
+*.pem
+*.key
+*.crt
+*.p12
+
 # Databases
 *.db
 *.sqlite3

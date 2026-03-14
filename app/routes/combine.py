@@ -11,13 +11,19 @@ from fastapi.responses import FileResponse
 
 from app import state
 from app.config import (
-    UPLOAD_DIR, OUTPUT_DIR, MAX_FILE_SIZE, MIN_FILE_SIZE,
-    ALLOWED_SUBTITLE_EXTENSIONS, MAX_SUBTITLE_SIZE,
+    UPLOAD_DIR,
+    OUTPUT_DIR,
+    MAX_FILE_SIZE,
+    MIN_FILE_SIZE,
+    ALLOWED_SUBTITLE_EXTENSIONS,
+    MAX_SUBTITLE_SIZE,
 )
 from app.logging_setup import log_task_event
 from app.services.subtitle_embed import (
-    soft_embed_subtitles, hard_burn_subtitles,
-    SubtitleStyle, STYLE_PRESETS,
+    soft_embed_subtitles,
+    hard_burn_subtitles,
+    SubtitleStyle,
+    STYLE_PRESETS,
 )
 from app.services.sse import create_event_queue, emit_event
 from app.utils.security import validate_file_extension, validate_magic_bytes
@@ -105,6 +111,7 @@ async def combine_video_subtitle(
     No transcription needed - bring your own subtitles.
     """
     from app.config import FFMPEG_AVAILABLE
+
     if not FFMPEG_AVAILABLE:
         raise HTTPException(503, "FFmpeg is not installed. The combine feature is unavailable.")
 
@@ -122,6 +129,7 @@ async def combine_video_subtitle(
     # Check concurrent task limit
     active = sum(1 for t in state.tasks.values() if t.get("status") in ("combining", "transcribing", "extracting"))
     from app.config import MAX_CONCURRENT_TASKS
+
     if active >= MAX_CONCURRENT_TASKS:
         raise HTTPException(429, "Too many active tasks. Please wait for current tasks to finish.")
 
@@ -181,6 +189,7 @@ async def combine_video_subtitle(
 
     # Initialize task state
     from datetime import datetime, timezone
+
     state.tasks[task_id] = {
         "status": "combining",
         "percent": 0,
@@ -207,6 +216,7 @@ async def combine_video_subtitle(
             if _translate_to:
                 from app.utils.srt import parse_srt, parse_vtt, segments_to_srt
                 from app.services.translation import translate_segments
+
                 sub_content = sub_path.read_text(encoding="utf-8")
                 if sub_path.suffix.lower() == ".vtt":
                     segments = parse_vtt(sub_content)
@@ -219,10 +229,14 @@ async def combine_video_subtitle(
                 translated_path.write_text(translated_srt, encoding="utf-8")
                 effective_sub = translated_path
 
-            emit_event(task_id, "combine_progress", {
-                "message": f"Combining video and subtitles ({mode} mode)...",
-                "percent": 50,
-            })
+            emit_event(
+                task_id,
+                "combine_progress",
+                {
+                    "message": f"Combining video and subtitles ({mode} mode)...",
+                    "percent": 50,
+                },
+            )
             state.tasks[task_id]["percent"] = 50
             state.tasks[task_id]["message"] = f"Combining ({mode} mode)..."
 
@@ -237,12 +251,16 @@ async def combine_video_subtitle(
             state.tasks[task_id]["combined_video"] = str(output_path.name)
             log_task_event(task_id, "combine_complete", mode=mode, output=output_path.name)
 
-            emit_event(task_id, "combine_done", {
-                "message": f"Video and subtitles combined ({mode} mode)!",
-                "download_url": f"/combine/download/{task_id}",
-                "output": output_path.name,
-                "mode": mode,
-            })
+            emit_event(
+                task_id,
+                "combine_done",
+                {
+                    "message": f"Video and subtitles combined ({mode} mode)!",
+                    "download_url": f"/combine/download/{task_id}",
+                    "output": output_path.name,
+                    "mode": mode,
+                },
+            )
         except Exception as e:
             logger.error(f"COMBINE [{task_id[:8]}] Failed: {e}")
             state.tasks[task_id]["status"] = "error"

@@ -31,11 +31,11 @@ FIXTURES = Path(__file__).parent
 
 def mp4_ftyp() -> bytes:
     """24-byte ISO MP4 file-type box."""
-    size    = struct.pack(">I", 24)
-    box     = b"ftyp"
-    brand   = b"mp42"
+    size = struct.pack(">I", 24)
+    box = b"ftyp"
+    brand = b"mp42"
     version = struct.pack(">I", 0)
-    compat  = b"mp42" + b"isom"
+    compat = b"mp42" + b"isom"
     return size + box + brand + version + compat
 
 
@@ -46,6 +46,7 @@ def write(name: str, data: bytes) -> None:
 
 
 # ── Fixtures ────────────────────────────────────────────────────────────────
+
 
 def polyglot_mp4_html() -> bytes:
     """MP4 magic bytes + HTML/JS payload — tests XSS reflection prevention."""
@@ -59,12 +60,7 @@ def polyglot_mp4_html() -> bytes:
 
 def wrong_ext_html() -> bytes:
     """Pure HTML, .mp4 extension — tests magic-byte vs extension mismatch."""
-    return (
-        b"<!DOCTYPE html>"
-        b"<html><body>"
-        b"<script>alert('xss')</script>"
-        b"</body></html>"
-    )
+    return b"<!DOCTYPE html><html><body><script>alert('xss')</script></body></html>"
 
 
 def eicar_mp4() -> bytes:
@@ -117,19 +113,19 @@ MANIFEST = """{
 
 def main() -> None:
     print("Generating security test fixtures...")
-    write("valid_minimal.mp4",     valid_minimal())
+    write("valid_minimal.mp4", valid_minimal())
     write("polyglot_mp4_html.mp4", polyglot_mp4_html())
-    write("wrong_ext_html.mp4",    wrong_ext_html())
-    write("eicar_mp4.mp4",         eicar_mp4())
-    write("null_bytes.mp4",        null_bytes_mp4())
-    write("oversized_stub.mp4",    oversized_stub())
+    write("wrong_ext_html.mp4", wrong_ext_html())
+    write("eicar_mp4.mp4", eicar_mp4())
+    write("null_bytes.mp4", null_bytes_mp4())
+    write("oversized_stub.mp4", oversized_stub())
 
     # Files whose attack vector is the *filename*, not content — same safe body
     safe_body = mp4_ftyp() + b"safe content for filename-vector tests"
-    write("path_traversal.mp4",  safe_body)
+    write("path_traversal.mp4", safe_body)
     write("shell_injection.mp4", safe_body)
-    write("sql_injection.mp4",   safe_body)
-    write("xss_filename.mp4",    safe_body)
+    write("sql_injection.mp4", safe_body)
+    write("xss_filename.mp4", safe_body)
 
     (FIXTURES / "manifest.json").write_text(MANIFEST)
     print("  wrote manifest.json")

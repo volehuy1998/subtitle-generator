@@ -38,7 +38,8 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install ruff
-      - run: ruff check . --select E,F,W --ignore E501
+      - run: ruff check .
+      - run: ruff format --check --diff .
 
       # Frontend lint + type check
       - uses: actions/setup-node@v4

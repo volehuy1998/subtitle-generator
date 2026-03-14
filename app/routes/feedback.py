@@ -30,8 +30,7 @@ async def submit_feedback(req: FeedbackRequest):
     """Submit user feedback (1-5 star rating + optional comment)."""
     # Write to JSONL first (guaranteed local persistence)
     try:
-        entry = {"timestamp": time.time(), "task_id": req.task_id,
-                 "rating": req.rating, "comment": req.comment.strip()}
+        entry = {"timestamp": time.time(), "task_id": req.task_id, "rating": req.rating, "comment": req.comment.strip()}
         with open(FEEDBACK_FILE, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
     except Exception as e:
@@ -75,8 +74,7 @@ async def feedback_summary():
 
             # Distribution by rating
             dist_result = await session.execute(
-                select(Feedback.rating, func.count(Feedback.id))
-                .group_by(Feedback.rating)
+                select(Feedback.rating, func.count(Feedback.id)).group_by(Feedback.rating)
             )
             ratings = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
             for r, count in dist_result.all():

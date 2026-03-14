@@ -12,7 +12,9 @@ from io import BytesIO
 from app.main import app
 from app import state
 from app.services.translation import (
-    get_whisper_translate_options, translate_segments, is_translation_available,
+    get_whisper_translate_options,
+    translate_segments,
+    is_translation_available,
 )
 from app.services.transcription import get_optimal_transcribe_options
 from app.middleware.session import SESSION_COOKIE
@@ -22,6 +24,7 @@ client = TestClient(app, base_url="https://testserver")
 
 
 # ── S6-2: Performance Monitoring Dashboard ──
+
 
 class TestDashboard:
     def test_dashboard_returns_html(self):
@@ -63,6 +66,7 @@ class TestDashboard:
 
 
 # ── S6-3: Subtitle Translation ──
+
 
 class TestTranslation:
     def test_whisper_translate_options(self):
@@ -113,6 +117,7 @@ class TestTranslation:
 
 # ── S6-4: WebSocket Endpoint ──
 
+
 class TestWebSocket:
     def test_websocket_endpoint_exists(self):
         """WebSocket route should be registered."""
@@ -134,6 +139,7 @@ class TestWebSocket:
 
 
 # ── S6-5: Session Management ──
+
 
 class TestSessionManagement:
     def test_session_cookie_set(self):
@@ -157,7 +163,9 @@ class TestSessionManagement:
         """Tasks should track session_id for ownership."""
         original = state.tasks.copy()
         state.tasks["test-session-001"] = {
-            "status": "done", "session_id": "abc123", "filename": "test.mp4",
+            "status": "done",
+            "session_id": "abc123",
+            "filename": "test.mp4",
         }
         try:
             res = client.get("/tasks")
@@ -172,6 +180,7 @@ class TestSessionManagement:
 
 
 # ── Integration: New Routes Registered ──
+
 
 class TestRoutesRegistered:
     def test_dashboard_route(self):

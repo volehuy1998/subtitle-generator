@@ -1,7 +1,9 @@
 """E2E tests: health panel indicator and DB status."""
+
 from playwright.sync_api import Page
 
 BASE_URL = "https://openlabs.club"
+
 
 def test_health_panel_opens(page: Page):
     page.goto(BASE_URL, wait_until="domcontentloaded", timeout=15000)
@@ -15,6 +17,7 @@ def test_health_panel_opens(page: Page):
         # Panel should appear with "All systems operational" or similar
         content = page.content()
         assert any(w in content for w in ["operational", "Operational", "degraded", "error", "Database"])
+
 
 def test_health_shows_db_connected(page: Page):
     page.goto(BASE_URL, wait_until="domcontentloaded", timeout=15000)

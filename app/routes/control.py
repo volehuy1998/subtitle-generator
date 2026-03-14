@@ -43,6 +43,7 @@ async def cancel(task_id: str, request: Request):
     if thread_id is not None:
         try:
             from app.exceptions import CancelledError
+
             res = ctypes.pythonapi.PyThreadState_SetAsyncExc(
                 ctypes.c_ulong(thread_id),
                 ctypes.py_object(CancelledError),

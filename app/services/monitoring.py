@@ -107,10 +107,12 @@ def _notify_webhook(alert: dict):
     if not url:
         return
     try:
-        body = json.dumps({
-            "text": f"🚨 *SubForge Alert* [{alert.get('severity', '?').upper()}] {alert.get('alert', '')} — {alert.get('message', '')}",
-            "alert": alert,
-        }).encode()
+        body = json.dumps(
+            {
+                "text": f"🚨 *SubForge Alert* [{alert.get('severity', '?').upper()}] {alert.get('alert', '')} — {alert.get('message', '')}",
+                "alert": alert,
+            }
+        ).encode()
         req = Request(url, data=body, headers={"Content-Type": "application/json"}, method="POST")
         urlopen(req, timeout=5)
     except Exception:
@@ -149,38 +151,45 @@ def check_alerts() -> list[dict]:
     if total > 0:
         error_rate = (metrics["failures_per_hour"] / total) * 100
         if error_rate > _alert_thresholds["error_rate_pct"]:
-            alerts.append({
-                "alert": "high_error_rate",
-                "severity": "warning",
-                "value": round(error_rate, 1),
-                "threshold": _alert_thresholds["error_rate_pct"],
-                "message": f"Error rate {error_rate:.1f}% exceeds threshold {_alert_thresholds['error_rate_pct']}%",
-            })
+            alerts.append(
+                {
+                    "alert": "high_error_rate",
+                    "severity": "warning",
+                    "value": round(error_rate, 1),
+                    "threshold": _alert_thresholds["error_rate_pct"],
+                    "message": f"Error rate {error_rate:.1f}% exceeds threshold {_alert_thresholds['error_rate_pct']}%",
+                }
+            )
 
     # Processing latency
     if metrics["p95_processing_sec"] > _alert_thresholds["latency_max_sec"]:
-        alerts.append({
-            "alert": "high_latency",
-            "severity": "warning",
-            "value": metrics["p95_processing_sec"],
-            "threshold": _alert_thresholds["latency_max_sec"],
-            "message": f"P95 processing time {metrics['p95_processing_sec']}s exceeds {_alert_thresholds['latency_max_sec']}s",
-        })
+        alerts.append(
+            {
+                "alert": "high_latency",
+                "severity": "warning",
+                "value": metrics["p95_processing_sec"],
+                "threshold": _alert_thresholds["latency_max_sec"],
+                "message": f"P95 processing time {metrics['p95_processing_sec']}s exceeds {_alert_thresholds['latency_max_sec']}s",
+            }
+        )
 
     # Disk space
     try:
         import shutil
         from app.config import OUTPUT_DIR
+
         usage = shutil.disk_usage(OUTPUT_DIR)
         free_gb = usage.free / (1024**3)
         if free_gb < _alert_thresholds["disk_free_min_gb"]:
-            alerts.append({
-                "alert": "disk_low",
-                "severity": "critical",
-                "value": round(free_gb, 2),
-                "threshold": _alert_thresholds["disk_free_min_gb"],
-                "message": f"Disk free space {free_gb:.1f}GB below {_alert_thresholds['disk_free_min_gb']}GB",
-            })
+            alerts.append(
+                {
+                    "alert": "disk_low",
+                    "severity": "critical",
+                    "value": round(free_gb, 2),
+                    "threshold": _alert_thresholds["disk_free_min_gb"],
+                    "message": f"Disk free space {free_gb:.1f}GB below {_alert_thresholds['disk_free_min_gb']}GB",
+                }
+            )
     except Exception:
         pass
 
@@ -222,11 +231,13 @@ def record_timing(category: str, start: float, task_id: str = ""):
     """Record a timing measurement for a processing stage."""
     duration = time.time() - start
     with _profile_lock:
-        _profile_data[category].append({
-            "duration_sec": round(duration, 4),
-            "task_id": task_id,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        })
+        _profile_data[category].append(
+            {
+                "duration_sec": round(duration, 4),
+                "task_id": task_id,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+        )
 
 
 def get_performance_profile() -> dict:
@@ -241,13 +252,16 @@ def get_performance_profile() -> dict:
                     "avg_sec": round(sum(durations) / len(durations), 4),
                     "min_sec": round(min(durations), 4),
                     "max_sec": round(max(durations), 4),
-                    "p95_sec": round(sorted(durations)[int(len(durations) * 0.95)], 4) if len(durations) > 1 else round(durations[0], 4),
+                    "p95_sec": round(sorted(durations)[int(len(durations) * 0.95)], 4)
+                    if len(durations) > 1
+                    else round(durations[0], 4),
                     "last": timings[-1] if timings else None,
                 }
     return result
 
 
 # ── Health Aggregation ──
+
 
 def get_health_dashboard() -> dict:
     """Get comprehensive health dashboard data (Grafana-compatible)."""

@@ -75,14 +75,15 @@ class DatabaseTaskBackend(TaskBackend):
                 pass
             # Parse formatted strings like "2m 16s", "1h 5m 30s"
             import re
+
             total = 0.0
-            parts = re.findall(r'(\d+(?:\.\d+)?)\s*([hms])', raw.lower())
+            parts = re.findall(r"(\d+(?:\.\d+)?)\s*([hms])", raw.lower())
             for val, unit in parts:
-                if unit == 'h':
+                if unit == "h":
                     total += float(val) * 3600
-                elif unit == 'm':
+                elif unit == "m":
                     total += float(val) * 60
-                elif unit == 's':
+                elif unit == "s":
                     total += float(val)
             return total if total > 0 else None
         return None
@@ -124,8 +125,7 @@ class DatabaseTaskBackend(TaskBackend):
         except Exception as e:
             logger.error(f"DB persist_task failed for {task_id}: {e}")
 
-    async def persist_session(self, session_id: str, ip: str | None = None,
-                              user_agent: str | None = None) -> None:
+    async def persist_session(self, session_id: str, ip: str | None = None, user_agent: str | None = None) -> None:
         """Upsert a session record."""
         try:
             async with get_session() as session:
@@ -151,9 +151,10 @@ class DatabaseTaskBackend(TaskBackend):
         try:
             async with get_session() as session:
                 result = await session.execute(
-                    select(TaskRecord).where(
-                        TaskRecord.status.in_(["done", "error", "cancelled"])
-                    ).order_by(TaskRecord.created_at.desc()).limit(100)
+                    select(TaskRecord)
+                    .where(TaskRecord.status.in_(["done", "error", "cancelled"]))
+                    .order_by(TaskRecord.created_at.desc())
+                    .limit(100)
                 )
                 records = result.scalars().all()
                 count = 0
@@ -171,8 +172,7 @@ class DatabaseTaskBackend(TaskBackend):
         try:
             async with get_session() as session:
                 result = await session.execute(
-                    select(TaskRecord.status, func.count(TaskRecord.id))
-                    .group_by(TaskRecord.status)
+                    select(TaskRecord.status, func.count(TaskRecord.id)).group_by(TaskRecord.status)
                 )
                 return dict(result.all())
         except Exception as e:
@@ -182,6 +182,7 @@ class DatabaseTaskBackend(TaskBackend):
     def schedule_persist(self, task_id: str, data: dict) -> None:
         """Fire-and-forget persist from sync context (pipeline threads)."""
         from app import state
+
         loop = state.main_event_loop
         if loop is not None and not loop.is_closed():
             asyncio.run_coroutine_threadsafe(self.persist_task(task_id, data), loop)

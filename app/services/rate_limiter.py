@@ -29,7 +29,7 @@ _user_tasks: dict[str, int] = defaultdict(int)
 # ── Configuration ──
 DEFAULT_RATE_LIMIT = 60  # requests per window
 DEFAULT_WINDOW_SEC = 60  # 1-minute window
-UPLOAD_RATE_LIMIT = 5    # uploads per minute
+UPLOAD_RATE_LIMIT = 5  # uploads per minute
 PER_USER_MAX_TASKS = int(__import__("os").environ.get("PER_USER_MAX_TASKS", str(MAX_CONCURRENT_TASKS)))
 
 
@@ -78,6 +78,7 @@ def get_rate_limit_headers(info: dict) -> dict:
 
 # ── IP allowlist/blocklist ──
 
+
 def add_to_allowlist(ip: str):
     with _lock:
         _ip_allowlist.add(ip)
@@ -121,6 +122,7 @@ def get_ip_lists() -> dict:
 
 
 # ── Per-user task quota ──
+
 
 def check_user_task_quota(user_id: str) -> bool:
     """Check if user can start a new task (within quota)."""

@@ -14,12 +14,14 @@ from datetime import datetime, timezone
 
 # ── CSP Nonce ──
 
+
 def generate_csp_nonce() -> str:
     """Generate a cryptographically random CSP nonce (base64, 16 bytes)."""
     return base64.b64encode(secrets.token_bytes(16)).decode("ascii")
 
 
 # ── SRI Hash ──
+
 
 def compute_sri_hash(content: str | bytes, algorithm: str = "sha384") -> str:
     """Compute Subresource Integrity hash for a script/style resource."""

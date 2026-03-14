@@ -16,7 +16,8 @@ from unittest.mock import patch
 from app.main import app
 from app import state
 from app.middleware.auth import (
-    is_auth_enabled, validate_api_key,
+    is_auth_enabled,
+    validate_api_key,
     PUBLIC_PATHS,
 )
 from fastapi.testclient import TestClient
@@ -27,6 +28,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 
 
 # ── S5-1: Docker Files ──
+
 
 class TestDockerFiles:
     def test_dockerfile_exists(self):
@@ -61,6 +63,7 @@ class TestDockerFiles:
 
 # ── S5-2: CI/CD Pipeline ──
 
+
 class TestCICD:
     def test_ci_workflow_exists(self):
         assert (PROJECT_ROOT / ".github" / "workflows" / "ci.yml").exists()
@@ -80,39 +83,46 @@ class TestCICD:
 
 # ── S5-3: API Key Authentication ──
 
+
 class TestApiKeyAuth:
     def setup_method(self):
         """Reset cached keys before each test."""
         import app.middleware.auth as auth_mod
+
         auth_mod._api_keys = None
 
     def test_auth_disabled_by_default(self):
         with patch.dict(os.environ, {"API_KEYS": ""}, clear=False):
             import app.middleware.auth as auth_mod
+
             auth_mod._api_keys = None
             assert not is_auth_enabled()
 
     def test_auth_enabled_with_keys(self):
         with patch.dict(os.environ, {"API_KEYS": "key1,key2"}, clear=False):
             import app.middleware.auth as auth_mod
+
             auth_mod._api_keys = None
             assert is_auth_enabled()
 
     def test_validate_correct_key(self):
         with patch.dict(os.environ, {"API_KEYS": "test-key-123"}, clear=False):
             import app.middleware.auth as auth_mod
+
             auth_mod._api_keys = None
             assert validate_api_key("test-key-123")
 
     def test_validate_wrong_key(self):
         with patch.dict(os.environ, {"API_KEYS": "test-key-123"}, clear=False):
             import app.middleware.auth as auth_mod
+
             auth_mod._api_keys = None
             assert not validate_api_key("wrong-key")
 
     def test_validate_when_disabled(self):
         with patch.dict(os.environ, {"API_KEYS": ""}, clear=False):
             import app.middleware.auth as auth_mod
+
             auth_mod._api_keys = None
             assert validate_api_key("any-key")
 
@@ -134,6 +144,7 @@ class TestApiKeyAuth:
 
 
 # ── S5-5: Prometheus Metrics ──
+
 
 class TestPrometheusMetrics:
     def test_metrics_endpoint_returns_200(self):
@@ -183,6 +194,7 @@ class TestPrometheusMetrics:
 
 # ── S5-6: Graceful Shutdown ──
 
+
 class TestGracefulShutdown:
     def test_shutting_down_flag(self):
         assert state.shutting_down is False
@@ -207,6 +219,7 @@ class TestGracefulShutdown:
 
 
 # ── S5-7: Load Testing ──
+
 
 class TestLoadTesting:
     def test_loadtest_script_exists(self):

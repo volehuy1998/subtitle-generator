@@ -21,16 +21,17 @@ class Base(DeclarativeBase):
 
 class StatusBase(DeclarativeBase):
     """Separate declarative base for status page models (stored in local SQLite)."""
+
     pass
 
 
 class TaskRecord(Base):
     """Persistent task record — replaces task_history.json and in-memory tasks dict."""
+
     __tablename__ = "tasks"
 
     id = Column(String(36), primary_key=True)  # UUID
-    status = Column(String(20), nullable=False, default="queued",
-                    index=True)
+    status = Column(String(20), nullable=False, default="queued", index=True)
     filename = Column(String(512), nullable=False)
     language_requested = Column(String(10), nullable=True)
     language = Column(String(10), nullable=True)  # detected
@@ -52,15 +53,16 @@ class TaskRecord(Base):
     speakers = Column(Integer, nullable=True)
 
     # Session link
-    session_id = Column(String(36), ForeignKey("sessions.id"), nullable=True,
-                        index=True)
+    session_id = Column(String(36), ForeignKey("sessions.id"), nullable=True, index=True)
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc),
-                        nullable=False)
-    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc),
-                        onupdate=lambda: datetime.now(timezone.utc),
-                        nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
 
     # Relationships
     session = relationship("SessionRecord", back_populates="tasks")
@@ -73,6 +75,7 @@ class TaskRecord(Base):
     def to_dict(self) -> dict:
         """Convert to dict matching the legacy state.tasks format."""
         import json
+
         d = {
             "status": self.status,
             "percent": self.percent or 0.0,
@@ -105,6 +108,7 @@ class TaskRecord(Base):
     def from_dict(cls, task_id: str, data: dict) -> "TaskRecord":
         """Create a TaskRecord from a legacy state dict."""
         import json
+
         segments = data.get("segments")
         if isinstance(segments, (list, dict)):
             segments = json.dumps(segments, default=str)
@@ -116,14 +120,15 @@ class TaskRecord(Base):
             except ValueError:
                 # Parse formatted strings like "2m 16s", "1h 5m 30s"
                 import re
+
                 total = 0.0
-                parts = re.findall(r'(\d+(?:\.\d+)?)\s*([hms])', raw_dur.lower())
+                parts = re.findall(r"(\d+(?:\.\d+)?)\s*([hms])", raw_dur.lower())
                 for val, unit in parts:
-                    if unit == 'h':
+                    if unit == "h":
                         total += float(val) * 3600
-                    elif unit == 'm':
+                    elif unit == "m":
                         total += float(val) * 60
-                    elif unit == 's':
+                    elif unit == "s":
                         total += float(val)
                 raw_dur = total if total > 0 else None
 
@@ -151,26 +156,24 @@ class TaskRecord(Base):
 
 class SessionRecord(Base):
     """Client session tracking — replaces cookie-only sessions."""
+
     __tablename__ = "sessions"
 
     id = Column(String(36), primary_key=True)  # UUID from cookie
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc),
-                        nullable=False)
-    last_seen = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc),
-                       nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    last_seen = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     ip = Column(String(45), nullable=True)  # IPv4 or IPv6
     user_agent = Column(String(512), nullable=True)
 
     # Relationships
     tasks = relationship("TaskRecord", back_populates="session")
 
-    __table_args__ = (
-        Index("ix_sessions_last_seen", "last_seen"),
-    )
+    __table_args__ = (Index("ix_sessions_last_seen", "last_seen"),)
 
 
 class AnalyticsEvent(Base):
     """Individual analytics events (replaces SQLite analytics_events)."""
+
     __tablename__ = "analytics_events"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -186,6 +189,7 @@ class AnalyticsEvent(Base):
 
 class AnalyticsDaily(Base):
     """Daily aggregated analytics (replaces SQLite analytics_daily)."""
+
     __tablename__ = "analytics_daily"
 
     date = Column(String(10), primary_key=True)  # YYYY-MM-DD
@@ -200,6 +204,7 @@ class AnalyticsDaily(Base):
 
 class AnalyticsTimeseries(Base):
     """Minute-resolution time-series (replaces in-memory ring buffer)."""
+
     __tablename__ = "analytics_timeseries"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -211,13 +216,12 @@ class AnalyticsTimeseries(Base):
     total_processing_sec = Column(Float, default=0.0)
     task_count = Column(Integer, default=0)
 
-    __table_args__ = (
-        Index("ix_analytics_ts_timestamp", "timestamp"),
-    )
+    __table_args__ = (Index("ix_analytics_ts_timestamp", "timestamp"),)
 
 
 class AuditLog(Base):
     """Security audit log (replaces audit.jsonl)."""
+
     __tablename__ = "audit_log"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -235,6 +239,7 @@ class AuditLog(Base):
 
 class Feedback(Base):
     """User feedback (replaces feedback.jsonl)."""
+
     __tablename__ = "feedback"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -251,6 +256,7 @@ class Feedback(Base):
 
 class UserRecord(Base):
     """User accounts for authentication and authorization."""
+
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -263,13 +269,12 @@ class UserRecord(Base):
     # Relationships
     api_keys = relationship("ApiKeyRecord", back_populates="owner")
 
-    __table_args__ = (
-        Index("ix_users_username", "username"),
-    )
+    __table_args__ = (Index("ix_users_username", "username"),)
 
 
 class ApiKeyRecord(Base):
     """Persistent API keys with ownership and expiration."""
+
     __tablename__ = "api_keys"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -292,15 +297,16 @@ class ApiKeyRecord(Base):
 
 class UIEvent(Base):
     """Frontend user interaction events for UX tracking."""
+
     __tablename__ = "ui_events"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     timestamp = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     session_id = Column(String(36), nullable=True)
     event_type = Column(String(50), nullable=False)  # click, view, error, flow
-    target = Column(String(100), nullable=True)       # button id, panel name, feature
+    target = Column(String(100), nullable=True)  # button id, panel name, feature
     task_id = Column(String(36), nullable=True)
-    extra = Column(Text, nullable=True)                # JSON extra data
+    extra = Column(Text, nullable=True)  # JSON extra data
 
     __table_args__ = (
         Index("ix_ui_events_session", "session_id"),
@@ -312,6 +318,7 @@ class UIEvent(Base):
 
 class BruteForceEvent(Base):
     """Persistent brute force event tracking."""
+
     __tablename__ = "brute_force_events"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -328,18 +335,22 @@ class BruteForceEvent(Base):
 
 class StatusIncident(StatusBase):
     """Service incidents for public status page (stored in local SQLite, not PostgreSQL)."""
+
     __tablename__ = "status_incidents"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String(300), nullable=False)
     severity = Column(String(20), nullable=False, default="minor")  # minor, major, critical, maintenance
     component = Column(String(100), nullable=False)  # transcription, combine, api, database, storage
-    status = Column(String(20), nullable=False, default="investigating")  # investigating, identified, monitoring, resolved
+    status = Column(
+        String(20), nullable=False, default="investigating"
+    )  # investigating, identified, monitoring, resolved
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     resolved_at = Column(DateTime(timezone=True), nullable=True)
 
-    updates = relationship("StatusIncidentUpdate", back_populates="incident",
-                           order_by="StatusIncidentUpdate.created_at")
+    updates = relationship(
+        "StatusIncidentUpdate", back_populates="incident", order_by="StatusIncidentUpdate.created_at"
+    )
 
     __table_args__ = (
         Index("ix_status_incidents_created", "created_at"),
@@ -349,6 +360,7 @@ class StatusIncident(StatusBase):
 
 class StatusIncidentUpdate(StatusBase):
     """Timeline updates for a status incident (stored in local SQLite, not PostgreSQL)."""
+
     __tablename__ = "status_incident_updates"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -359,13 +371,12 @@ class StatusIncidentUpdate(StatusBase):
 
     incident = relationship("StatusIncident", back_populates="updates")
 
-    __table_args__ = (
-        Index("ix_status_updates_incident", "incident_id"),
-    )
+    __table_args__ = (Index("ix_status_updates_incident", "incident_id"),)
 
 
 class IpListEntry(Base):
     """IP allowlist/blocklist entries."""
+
     __tablename__ = "ip_lists"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

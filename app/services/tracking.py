@@ -27,8 +27,9 @@ _BUFFER_MAX = 50
 _TRACKING_FILE = LOG_DIR / "ui_events.jsonl"
 
 
-def _write_event_to_file(event_type: str, target: str = "", session_id: str = "",
-                         task_id: str = "", metadata: dict = None):
+def _write_event_to_file(
+    event_type: str, target: str = "", session_id: str = "", task_id: str = "", metadata: dict = None
+):
     """Write a UI event to JSONL file as fallback when DB is down."""
     try:
         entry = {
@@ -85,8 +86,11 @@ async def record_ui_events_batch(events: list[dict], session_id: str = ""):
         logger.error(f"TRACKING Failed to persist batch ({len(events)} events): {e}")
         for evt in events:
             _write_event_to_file(
-                evt.get("event", "unknown"), evt.get("target", ""),
-                session_id, evt.get("task_id", ""), evt.get("metadata"),
+                evt.get("event", "unknown"),
+                evt.get("target", ""),
+                session_id,
+                evt.get("task_id", ""),
+                evt.get("metadata"),
             )
 
 
@@ -113,15 +117,33 @@ async def get_flow_funnel(hours: int = 24) -> dict:
         cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
         async with get_session() as session:
             stages = {}
-            for stage in ["upload_start", "upload_complete", "transcription_done", "download_click", "embed_start", "embed_done"]:
+            for stage in [
+                "upload_start",
+                "upload_complete",
+                "transcription_done",
+                "download_click",
+                "embed_start",
+                "embed_done",
+            ]:
                 result = await session.execute(
-                    select(func.count(func.distinct(UIEvent.session_id)))
-                    .where(and_(UIEvent.target == stage, UIEvent.timestamp >= cutoff))
+                    select(func.count(func.distinct(UIEvent.session_id))).where(
+                        and_(UIEvent.target == stage, UIEvent.timestamp >= cutoff)
+                    )
                 )
                 stages[stage] = result.scalar() or 0
             return stages
     except Exception:
-        return {s: 0 for s in ["upload_start", "upload_complete", "transcription_done", "download_click", "embed_start", "embed_done"]}
+        return {
+            s: 0
+            for s in [
+                "upload_start",
+                "upload_complete",
+                "transcription_done",
+                "download_click",
+                "embed_start",
+                "embed_done",
+            ]
+        }
 
 
 async def get_error_events(hours: int = 24, limit: int = 50) -> list[dict]:
@@ -136,12 +158,15 @@ async def get_error_events(hours: int = 24, limit: int = 50) -> list[dict]:
                 .limit(limit)
             )
             events = result.scalars().all()
-            return [{
-                "timestamp": e.timestamp.isoformat(),
-                "session_id": e.session_id,
-                "target": e.target,
-                "metadata": json.loads(e.extra) if e.extra else None,
-            } for e in events]
+            return [
+                {
+                    "timestamp": e.timestamp.isoformat(),
+                    "session_id": e.session_id,
+                    "target": e.target,
+                    "metadata": json.loads(e.extra) if e.extra else None,
+                }
+                for e in events
+            ]
     except Exception:
         return []
 
@@ -151,18 +176,18 @@ async def get_session_activity(session_id: str, limit: int = 100) -> list[dict]:
     try:
         async with get_session() as ses:
             result = await ses.execute(
-                select(UIEvent)
-                .where(UIEvent.session_id == session_id)
-                .order_by(UIEvent.timestamp.desc())
-                .limit(limit)
+                select(UIEvent).where(UIEvent.session_id == session_id).order_by(UIEvent.timestamp.desc()).limit(limit)
             )
             events = result.scalars().all()
-            return [{
-                "timestamp": e.timestamp.isoformat(),
-                "event": e.event_type,
-                "target": e.target,
-                "task_id": e.task_id,
-            } for e in events]
+            return [
+                {
+                    "timestamp": e.timestamp.isoformat(),
+                    "event": e.event_type,
+                    "target": e.target,
+                    "task_id": e.task_id,
+                }
+                for e in events
+            ]
     except Exception:
         return []
 
@@ -173,9 +198,7 @@ async def get_activity_summary(hours: int = 24) -> dict:
         cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
         async with get_session() as session:
             # Total events
-            total = await session.execute(
-                select(func.count(UIEvent.id)).where(UIEvent.timestamp >= cutoff)
-            )
+            total = await session.execute(select(func.count(UIEvent.id)).where(UIEvent.timestamp >= cutoff))
             total_count = total.scalar() or 0
 
             # Unique sessions
@@ -208,9 +231,7 @@ async def cleanup_old_events(retention_days: int = 90):
     try:
         cutoff = datetime.now(timezone.utc) - timedelta(days=retention_days)
         async with get_session() as session:
-            await session.execute(
-                UIEvent.__table__.delete().where(UIEvent.timestamp < cutoff)
-            )
+            await session.execute(UIEvent.__table__.delete().where(UIEvent.timestamp < cutoff))
             logger.info(f"TRACKING Cleaned up events older than {retention_days} days")
     except Exception as e:
         logger.error(f"TRACKING Cleanup failed: {e}")

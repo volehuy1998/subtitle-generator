@@ -48,7 +48,9 @@ class RequestLogMiddleware(BaseHTTPMiddleware):
         response.headers["X-Request-ID"] = req_id
 
         if not is_quiet:
-            logger.debug(f"RESP {request.method} {request.url.path} -> {response.status_code} ({elapsed_ms:.1f}ms) [{req_id}]")
+            logger.debug(
+                f"RESP {request.method} {request.url.path} -> {response.status_code} ({elapsed_ms:.1f}ms) [{req_id}]"
+            )
         elif response.status_code >= 400:
             logger.warning(
                 f"RESP {request.method} {request.url.path} -> {response.status_code} ({elapsed_ms:.1f}ms) [{req_id}]"

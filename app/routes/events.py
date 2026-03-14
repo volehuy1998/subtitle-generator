@@ -25,6 +25,7 @@ def _get_task_data(task_id: str) -> dict | None:
     if REDIS_URL:
         try:
             from app.services.task_backend import get_task_backend
+
             backend = get_task_backend()
             return backend.get(task_id)
         except Exception:
@@ -33,8 +34,7 @@ def _get_task_data(task_id: str) -> dict | None:
 
 
 def _filter_task(data: dict) -> dict:
-    return {k: v for k, v in data.items()
-            if k not in ("pause_event", "transcription_profiler")}
+    return {k: v for k, v in data.items() if k not in ("pause_event", "transcription_profiler")}
 
 
 @router.get("/events/{task_id}")
@@ -58,6 +58,7 @@ async def task_events_sse(task_id: str, request: Request):
         if REDIS_URL:
             # Multi-server: subscribe to Redis Pub/Sub
             from app.services.pubsub import subscribe_events
+
             async for event in subscribe_events(task_id):
                 etype = event.get("type", "update")
                 if etype == "heartbeat":

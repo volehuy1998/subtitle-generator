@@ -28,11 +28,13 @@ def run_async(coro):
 
 # ── Query Service Tests ──
 
+
 class TestQueryService:
     """Test query layer service functions."""
 
     def test_module_imports(self):
         from app.services import query_layer
+
         assert hasattr(query_layer, "search_tasks")
         assert hasattr(query_layer, "get_analytics_rollup")
         assert hasattr(query_layer, "enforce_retention")
@@ -42,36 +44,57 @@ class TestQueryService:
 
     def test_search_tasks_is_async(self):
         from app.services.query_layer import search_tasks
+
         assert asyncio.iscoroutinefunction(search_tasks)
 
     def test_analytics_rollup_is_async(self):
         from app.services.query_layer import get_analytics_rollup
+
         assert asyncio.iscoroutinefunction(get_analytics_rollup)
 
     def test_enforce_retention_is_async(self):
         from app.services.query_layer import enforce_retention
+
         assert asyncio.iscoroutinefunction(enforce_retention)
 
     def test_check_db_health_is_async(self):
         from app.services.query_layer import check_db_health
+
         assert asyncio.iscoroutinefunction(check_db_health)
 
     def test_default_retention_days(self):
         from app.services.query_layer import DEFAULT_RETENTION_DAYS
+
         assert isinstance(DEFAULT_RETENTION_DAYS, int)
         assert DEFAULT_RETENTION_DAYS > 0
 
 
 # ── Aggregation Helper Tests ──
 
+
 class TestAggregationHelpers:
     """Test weekly/monthly aggregation helpers."""
 
     def test_weekly_aggregation(self):
         from app.services.query_layer import _aggregate_by_week
+
         daily = [
-            {"date": "2026-03-09", "uploads": 5, "completed": 3, "failed": 1, "cancelled": 0, "total_processing_sec": 100.0},
-            {"date": "2026-03-10", "uploads": 3, "completed": 2, "failed": 0, "cancelled": 1, "total_processing_sec": 50.0},
+            {
+                "date": "2026-03-09",
+                "uploads": 5,
+                "completed": 3,
+                "failed": 1,
+                "cancelled": 0,
+                "total_processing_sec": 100.0,
+            },
+            {
+                "date": "2026-03-10",
+                "uploads": 3,
+                "completed": 2,
+                "failed": 0,
+                "cancelled": 1,
+                "total_processing_sec": 50.0,
+            },
         ]
         result = _aggregate_by_week(daily)
         assert isinstance(result, list)
@@ -81,9 +104,24 @@ class TestAggregationHelpers:
 
     def test_monthly_aggregation(self):
         from app.services.query_layer import _aggregate_by_month
+
         daily = [
-            {"date": "2026-03-01", "uploads": 10, "completed": 8, "failed": 1, "cancelled": 1, "total_processing_sec": 200.0},
-            {"date": "2026-03-15", "uploads": 5, "completed": 5, "failed": 0, "cancelled": 0, "total_processing_sec": 100.0},
+            {
+                "date": "2026-03-01",
+                "uploads": 10,
+                "completed": 8,
+                "failed": 1,
+                "cancelled": 1,
+                "total_processing_sec": 200.0,
+            },
+            {
+                "date": "2026-03-15",
+                "uploads": 5,
+                "completed": 5,
+                "failed": 0,
+                "cancelled": 0,
+                "total_processing_sec": 100.0,
+            },
         ]
         result = _aggregate_by_month(daily)
         assert isinstance(result, list)
@@ -93,11 +131,13 @@ class TestAggregationHelpers:
 
     def test_empty_aggregation(self):
         from app.services.query_layer import _aggregate_by_week, _aggregate_by_month
+
         assert _aggregate_by_week([]) == []
         assert _aggregate_by_month([]) == []
 
 
 # ── Task Search Endpoint Tests ──
+
 
 class TestTaskSearchEndpoint:
     """Test GET /tasks/search endpoint."""
@@ -137,6 +177,7 @@ class TestTaskSearchEndpoint:
 
 # ── Analytics Rollup Endpoint Tests ──
 
+
 class TestAnalyticsRollupEndpoint:
     """Test GET /analytics/rollup endpoint."""
 
@@ -165,6 +206,7 @@ class TestAnalyticsRollupEndpoint:
 
 # ── Data Retention Endpoint Tests ──
 
+
 class TestRetentionEndpoint:
     """Test POST /admin/retention endpoint."""
 
@@ -182,6 +224,7 @@ class TestRetentionEndpoint:
 
 
 # ── Export Endpoint Tests ──
+
 
 class TestExportEndpoint:
     """Test GET /admin/export/tasks endpoint."""
@@ -209,6 +252,7 @@ class TestExportEndpoint:
 
 
 # ── DB Health Endpoint Tests ──
+
 
 class TestDbHealthEndpoint:
     """Test GET /health/db endpoint."""

@@ -7,7 +7,6 @@ S15-4: Share link info
 S15-5: Integration tests
 """
 
-
 from app.main import app
 from app import state
 from app.config import OUTPUT_DIR
@@ -29,15 +28,22 @@ def _setup_done_tasks():
     """Create done tasks with actual subtitle files."""
     OUTPUT_DIR.mkdir(exist_ok=True)
     state.tasks["exp-task-1"] = {
-        "status": "done", "filename": "lecture.mp4", "language": "en",
-        "segments": 10, "session_id": "test-session",
+        "status": "done",
+        "filename": "lecture.mp4",
+        "language": "en",
+        "segments": 10,
+        "session_id": "test-session",
     }
     state.tasks["exp-task-2"] = {
-        "status": "done", "filename": "interview.mp4", "language": "ja",
-        "segments": 20, "session_id": "test-session",
+        "status": "done",
+        "filename": "interview.mp4",
+        "language": "ja",
+        "segments": 20,
+        "session_id": "test-session",
     }
     state.tasks["exp-task-pending"] = {
-        "status": "transcribing", "filename": "pending.mp4",
+        "status": "transcribing",
+        "filename": "pending.mp4",
         "session_id": "test-session",
     }
 
@@ -48,6 +54,7 @@ def _setup_done_tasks():
 
 
 # ── S15-1: Bulk Export ──
+
 
 class TestBulkExport:
     def setup_method(self):
@@ -77,6 +84,7 @@ class TestBulkExport:
 
 
 # ── S15-2: Share Link Creation ──
+
 
 class TestShareLinks:
     def setup_method(self):
@@ -109,6 +117,7 @@ class TestShareLinks:
 
 # ── S15-3: Share Link Download ──
 
+
 class TestShareDownload:
     def setup_method(self):
         _cleanup()
@@ -137,6 +146,7 @@ class TestShareDownload:
 
 # ── S15-4: Share Link Info ──
 
+
 class TestShareInfo:
     def setup_method(self):
         _cleanup()
@@ -159,6 +169,7 @@ class TestShareInfo:
 
 # ── S15-5: Integration ──
 
+
 class TestIntegration:
     def test_export_route_registered(self):
         res = client.get("/openapi.json")
@@ -174,4 +185,5 @@ class TestIntegration:
 
     def test_active_shares_function(self):
         from app.routes.export import get_active_shares
+
         assert isinstance(get_active_shares(), int)

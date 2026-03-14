@@ -27,15 +27,18 @@ def get_engine():
             "echo": False,
         }
         if not is_sqlite:
-            kwargs.update({
-                "pool_size": DB_POOL_SIZE,
-                "max_overflow": DB_MAX_OVERFLOW,
-                "pool_recycle": DB_POOL_RECYCLE,
-                "pool_pre_ping": True,
-            })
+            kwargs.update(
+                {
+                    "pool_size": DB_POOL_SIZE,
+                    "max_overflow": DB_MAX_OVERFLOW,
+                    "pool_recycle": DB_POOL_RECYCLE,
+                    "pool_pre_ping": True,
+                }
+            )
         _engine = create_async_engine(DATABASE_URL, **kwargs)
         logger.info(f"DB Engine created: {DATABASE_URL.split('://')[0]}")
         from app.middleware.slow_query import register_slow_query_logging
+
         register_slow_query_logging(_engine)
     return _engine
 
@@ -68,6 +71,7 @@ async def get_session():
 async def init_db():
     """Create all tables. Used at startup."""
     from app.db.models import Base
+
     engine = get_engine()
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

@@ -44,8 +44,7 @@ _TIMESERIES_MAX = 1440  # 24 hours of minute-resolution data
 
 
 class _TimeSeriesPoint:
-    __slots__ = ("timestamp", "uploads", "completed", "failed", "cancelled",
-                 "total_processing_sec", "task_count")
+    __slots__ = ("timestamp", "uploads", "completed", "failed", "cancelled", "total_processing_sec", "task_count")
 
     def __init__(self, timestamp: int):
         self.timestamp = timestamp  # unix epoch (floored to minute)
@@ -85,6 +84,7 @@ _start_time = time.time()
 def _schedule_db_write(coro):
     """Schedule an async DB write from sync context (thread-safe)."""
     from app import state
+
     loop = state.main_event_loop
     if loop is not None and not loop.is_closed():
         asyncio.run_coroutine_threadsafe(coro, loop)
@@ -106,8 +106,8 @@ def _get_or_create_point(minute_ts: int) -> _TimeSeriesPoint:
 
 # ── Public API ──
 
-def record_upload(language: str = "auto", model: str = "medium",
-                  device: str = "cpu", file_size: int = 0):
+
+def record_upload(language: str = "auto", model: str = "medium", device: str = "cpu", file_size: int = 0):
     """Record a new upload event."""
     with _lock:
         _counters["uploads_total"] += 1
@@ -120,12 +120,21 @@ def record_upload(language: str = "auto", model: str = "medium",
         point.uploads += 1
     # Persist to PostgreSQL
     from app.services import analytics_pg
+
     minute_dt = datetime.fromtimestamp(_current_minute(), tz=timezone.utc)
     _schedule_db_write(analytics_pg.update_daily_stats(uploads=1, file_size=file_size))
     _schedule_db_write(analytics_pg.upsert_timeseries_point(minute_dt, uploads=1))
-    _schedule_db_write(analytics_pg.record_event("upload", {
-        "language": language, "model": model, "device": device, "file_size": file_size,
-    }))
+    _schedule_db_write(
+        analytics_pg.record_event(
+            "upload",
+            {
+                "language": language,
+                "model": model,
+                "device": device,
+                "file_size": file_size,
+            },
+        )
+    )
 
 
 def record_completion(processing_time_sec: float, model: str = "medium"):
@@ -140,16 +149,31 @@ def record_completion(processing_time_sec: float, model: str = "medium"):
         point.task_count += 1
     # Persist to PostgreSQL
     from app.services import analytics_pg
+
     minute_dt = datetime.fromtimestamp(_current_minute(), tz=timezone.utc)
-    _schedule_db_write(analytics_pg.update_daily_stats(
-        completed=1, processing_sec=processing_time_sec,
-    ))
-    _schedule_db_write(analytics_pg.upsert_timeseries_point(
-        minute_dt, completed=1, processing_sec=processing_time_sec, task_count=1,
-    ))
-    _schedule_db_write(analytics_pg.record_event("completion", {
-        "processing_time_sec": round(processing_time_sec, 2), "model": model,
-    }))
+    _schedule_db_write(
+        analytics_pg.update_daily_stats(
+            completed=1,
+            processing_sec=processing_time_sec,
+        )
+    )
+    _schedule_db_write(
+        analytics_pg.upsert_timeseries_point(
+            minute_dt,
+            completed=1,
+            processing_sec=processing_time_sec,
+            task_count=1,
+        )
+    )
+    _schedule_db_write(
+        analytics_pg.record_event(
+            "completion",
+            {
+                "processing_time_sec": round(processing_time_sec, 2),
+                "model": model,
+            },
+        )
+    )
 
 
 def record_failure():
@@ -160,6 +184,7 @@ def record_failure():
         point.failed += 1
     # Persist to PostgreSQL
     from app.services import analytics_pg
+
     minute_dt = datetime.fromtimestamp(_current_minute(), tz=timezone.utc)
     _schedule_db_write(analytics_pg.update_daily_stats(failed=1))
     _schedule_db_write(analytics_pg.upsert_timeseries_point(minute_dt, failed=1))
@@ -173,6 +198,7 @@ def record_cancellation():
         point.cancelled += 1
     # Persist to PostgreSQL
     from app.services import analytics_pg
+
     minute_dt = datetime.fromtimestamp(_current_minute(), tz=timezone.utc)
     _schedule_db_write(analytics_pg.update_daily_stats(cancelled=1))
     _schedule_db_write(analytics_pg.upsert_timeseries_point(minute_dt, cancelled=1))
@@ -229,7 +255,11 @@ def get_summary() -> dict:
 
         # Processing time stats
         avg_processing = (sum(_processing_times) / len(_processing_times)) if _processing_times else 0
-        p95_processing = sorted(_processing_times)[int(len(_processing_times) * 0.95)] if len(_processing_times) >= 20 else avg_processing
+        p95_processing = (
+            sorted(_processing_times)[int(len(_processing_times) * 0.95)]
+            if len(_processing_times) >= 20
+            else avg_processing
+        )
 
         # Per-model averages
         model_avg = {}
@@ -291,7 +321,9 @@ def export_analytics_csv() -> str:
     points = get_timeseries(minutes=1440)
     lines = ["timestamp,uploads,completed,failed,cancelled,avg_processing_sec"]
     for p in points:
-        lines.append(f"{p['time']},{p['uploads']},{p['completed']},{p['failed']},{p['cancelled']},{p['avg_processing_sec']}")
+        lines.append(
+            f"{p['time']},{p['uploads']},{p['completed']},{p['failed']},{p['cancelled']},{p['avg_processing_sec']}"
+        )
     return "\n".join(lines)
 
 
@@ -315,6 +347,7 @@ async def load_analytics_from_db():
     """Load analytics counters from PostgreSQL on startup."""
     try:
         from app.services import analytics_pg
+
         summary = await analytics_pg.get_summary_from_db()
         if summary:
             with _lock:

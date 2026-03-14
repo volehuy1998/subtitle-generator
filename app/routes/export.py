@@ -55,6 +55,7 @@ async def bulk_export(
     zip_buffer.seek(0)
 
     from fastapi.responses import StreamingResponse
+
     return StreamingResponse(
         zip_buffer,
         media_type="application/zip",
@@ -107,6 +108,7 @@ async def download_shared(
         raise HTTPException(403, "Access denied")
 
     from fastapi.responses import FileResponse
+
     original_stem = Path(link["filename"]).stem
     media_types = {"srt": "text/plain", "vtt": "text/vtt", "json": "application/json"}
     return FileResponse(

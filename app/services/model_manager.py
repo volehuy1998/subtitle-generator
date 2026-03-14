@@ -41,7 +41,9 @@ def get_model(model_size: str, device: str) -> WhisperModel:
                     cpu_threads=CPU_COUNT if device == "cpu" else 4,
                 )
                 load_time = time.time() - t0
-                logger.info(f"MODEL Loaded '{model_size}' on {device.upper()} in {load_time:.1f}s (compute_type={compute_type})")
+                logger.info(
+                    f"MODEL Loaded '{model_size}' on {device.upper()} in {load_time:.1f}s (compute_type={compute_type})"
+                )
                 if device == "cuda":
                     gpu_mem = get_gpu_memory_usage()
                     logger.info(f"MODEL GPU memory after load: {gpu_mem}")

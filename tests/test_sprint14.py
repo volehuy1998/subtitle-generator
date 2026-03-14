@@ -29,6 +29,7 @@ def _cleanup():
 
 # ── S14-1: OpenAPI Tags ──
 
+
 class TestOpenAPITags:
     def test_openapi_has_tags(self):
         res = client.get("/openapi.json")
@@ -66,6 +67,7 @@ class TestOpenAPITags:
 
 # ── S14-2: Enhanced Swagger UI ──
 
+
 class TestSwaggerUI:
     def test_docs_page_available(self):
         res = client.get("/docs")
@@ -88,6 +90,7 @@ class TestSwaggerUI:
 
 # ── S14-3: Rich API Description ──
 
+
 class TestAPIDescription:
     def test_openapi_has_rich_description(self):
         res = client.get("/openapi.json")
@@ -109,6 +112,7 @@ class TestAPIDescription:
 
 # ── S14-4: Webhook Callbacks ──
 
+
 class TestWebhooks:
     def setup_method(self):
         _cleanup()
@@ -119,26 +123,35 @@ class TestWebhooks:
         _cleanup()
 
     def test_register_webhook(self):
-        res = client.post("/webhooks/register", json={
-            "task_id": "wh-task-1",
-            "url": "https://example.com/callback",
-        })
+        res = client.post(
+            "/webhooks/register",
+            json={
+                "task_id": "wh-task-1",
+                "url": "https://example.com/callback",
+            },
+        )
         assert res.status_code == 200
         data = res.json()
         assert data["task_id"] == "wh-task-1"
 
     def test_register_webhook_unknown_task(self):
-        res = client.post("/webhooks/register", json={
-            "task_id": "nonexistent",
-            "url": "https://example.com/callback",
-        })
+        res = client.post(
+            "/webhooks/register",
+            json={
+                "task_id": "nonexistent",
+                "url": "https://example.com/callback",
+            },
+        )
         assert res.status_code == 404
 
     def test_register_webhook_completed_task(self):
-        res = client.post("/webhooks/register", json={
-            "task_id": "wh-task-done",
-            "url": "https://example.com/callback",
-        })
+        res = client.post(
+            "/webhooks/register",
+            json={
+                "task_id": "wh-task-done",
+                "url": "https://example.com/callback",
+            },
+        )
         assert res.status_code == 400
 
     def test_get_webhook(self):
@@ -159,16 +172,19 @@ class TestWebhooks:
 
     def test_webhook_module_has_fire_function(self):
         from app.routes.webhooks import fire_webhook
+
         assert callable(fire_webhook)
 
     def test_webhook_pending_list(self):
         from app.routes.webhooks import get_pending_webhooks
+
         _webhooks["wh-task-1"] = "https://example.com/cb"
         pending = get_pending_webhooks()
         assert "wh-task-1" in pending
 
 
 # ── S14-5: API Version ──
+
 
 class TestAPIVersion:
     def test_api_version_2(self):
@@ -177,6 +193,7 @@ class TestAPIVersion:
 
 
 # ── S14-6: Tag Descriptions ──
+
 
 class TestTagDescriptions:
     def test_tags_have_descriptions(self):
@@ -193,6 +210,7 @@ class TestTagDescriptions:
 
 # ── S14-7: Integration ──
 
+
 class TestIntegration:
     def test_openapi_json_valid(self):
         res = client.get("/openapi.json")
@@ -205,8 +223,7 @@ class TestIntegration:
     def test_all_key_endpoints_in_openapi(self):
         res = client.get("/openapi.json")
         paths = list(res.json()["paths"].keys())
-        required = ["/upload", "/health", "/ready", "/metrics",
-                    "/analytics/summary", "/tasks", "/feedback"]
+        required = ["/upload", "/health", "/ready", "/metrics", "/analytics/summary", "/tasks", "/feedback"]
         for ep in required:
             assert ep in paths, f"{ep} not in OpenAPI paths"
 

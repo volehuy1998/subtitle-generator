@@ -53,8 +53,7 @@ async def prometheus_metrics():
         lines.append(f'subtitle_generator_tasks_total{{status="{s}"}} {count}')
 
     # Active tasks
-    active = sum(1 for t in state.tasks.values()
-                 if t.get("status") not in ("done", "error", "cancelled"))
+    active = sum(1 for t in state.tasks.values() if t.get("status") not in ("done", "error", "cancelled"))
     lines.append("# HELP subtitle_generator_active_tasks Currently processing tasks")
     lines.append("# TYPE subtitle_generator_active_tasks gauge")
     lines.append(f"subtitle_generator_active_tasks {active}")
@@ -88,6 +87,7 @@ async def prometheus_metrics():
     # System metrics (if psutil available)
     try:
         import psutil
+
         lines.append("# HELP subtitle_generator_cpu_percent CPU usage percentage")
         lines.append("# TYPE subtitle_generator_cpu_percent gauge")
         lines.append(f"subtitle_generator_cpu_percent {psutil.cpu_percent()}")

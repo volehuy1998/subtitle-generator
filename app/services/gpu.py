@@ -7,6 +7,7 @@ from app.config import MODEL_VRAM_GB
 
 def get_system_info() -> dict:
     from app.services.gpu import auto_select_model
+
     info = {
         "cuda_available": torch.cuda.is_available(),
         "gpu_name": None,

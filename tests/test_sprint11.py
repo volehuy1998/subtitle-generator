@@ -24,11 +24,13 @@ PROJECT_ROOT = Path(__file__).parent.parent
 
 # ── S11-1: Model Preloading ──
 
+
 class TestModelPreloading:
     def test_preload_config_exists(self):
         """PRELOAD_MODEL config should exist."""
         from app import config
-        assert hasattr(config, 'PRELOAD_MODEL')
+
+        assert hasattr(config, "PRELOAD_MODEL")
 
     def test_preload_empty_by_default(self):
         """Model preloading disabled by default."""
@@ -43,10 +45,12 @@ class TestModelPreloading:
     def test_model_cache_is_singleton(self):
         """Model cache should reuse loaded models."""
         from app import state
+
         assert isinstance(state.loaded_models, dict)
 
 
 # ── S11-3: Response Compression ──
+
 
 class TestCompression:
     def test_compression_config_exists(self):
@@ -69,10 +73,12 @@ class TestCompression:
 
     def test_compression_module_exists(self):
         from app.middleware.compression import GZipMiddleware
+
         assert GZipMiddleware is not None
 
 
 # ── S11-4: Static Asset Caching ──
+
 
 class TestCaching:
     def test_languages_has_cache_header(self):
@@ -100,6 +106,7 @@ class TestCaching:
 
 # ── S11-5: CSP Updated for CDN ──
 
+
 class TestCSPUpdate:
     def test_csp_allows_chart_js_cdn(self):
         res = client.get("/analytics")
@@ -113,6 +120,7 @@ class TestCSPUpdate:
 
 
 # ── S11-7: Benchmark Regression Tests ──
+
 
 class TestBenchmarkRegression:
     def test_health_under_50ms(self):
@@ -174,10 +182,10 @@ class TestBenchmarkRegression:
 
 # ── S11-8: Integration ──
 
+
 class TestIntegration:
     def test_all_pages_still_load(self):
-        pages = ["/", "/health", "/ready", "/metrics", "/analytics",
-                 "/dashboard", "/docs", "/openapi.json"]
+        pages = ["/", "/health", "/ready", "/metrics", "/analytics", "/dashboard", "/docs", "/openapi.json"]
         for page in pages:
             res = client.get(page)
             expected = (200, 503) if page == "/ready" else (200,)

@@ -1,20 +1,24 @@
 #!/usr/bin/env python3
 """Automated interface check using Playwright headless browser."""
+
 import sys
 
-sys.stdout.reconfigure(encoding='utf-8')
+sys.stdout.reconfigure(encoding="utf-8")
 
 BASE_URL = "https://openlabs.club"
 results = []
 
+
 def log(msg):
     print(msg, flush=True)
+
 
 def record(name, passed, detail=""):
     status = "PASS" if passed else "FAIL"
     results.append((name, passed, detail))
     mark = "[OK]" if passed else "[!!]"
     log(f"  {mark} {name}: {status}" + (f" -- {detail}" if detail else ""))
+
 
 log("=" * 62)
 log("  SUBTITLE GENERATOR - AUTOMATED INTERFACE CHECK")
@@ -67,8 +71,11 @@ with sync_playwright() as pw:
 
     # JS errors on homepage
     log("\n[4] JavaScript errors...")
-    record("No JS errors (homepage)", len(js_errors) == 0,
-           f"{len(js_errors)} errors: {js_errors[:2]}" if js_errors else "clean")
+    record(
+        "No JS errors (homepage)",
+        len(js_errors) == 0,
+        f"{len(js_errors)} errors: {js_errors[:2]}" if js_errors else "clean",
+    )
     js_errors.clear()
 
     # Static assets
@@ -76,11 +83,13 @@ with sync_playwright() as pw:
     try:
         import urllib.request
         import ssl
+
         ctx = ssl.create_default_context()
         req = urllib.request.Request(BASE_URL, headers={"User-Agent": "check/1.0"})
         with urllib.request.urlopen(req, context=ctx, timeout=10) as r:
             html = r.read().decode()
         import re
+
         js_src = re.findall(r'src=["\']([^"\']*\.js[^"\']*)["\']', html)
         css_src = re.findall(r'href=["\']([^"\']*\.css[^"\']*)["\']', html)
         record("JS assets referenced", len(js_src) > 0, f"{len(js_src)} JS file(s)")
@@ -100,12 +109,12 @@ with sync_playwright() as pw:
         record("Status React root mounted", len(root2) > 50)
     except Exception as e:
         record("/status page", False, str(e))
-    record("No JS errors (/status)", len(js_errors) == 0,
-           f"{len(js_errors)} errors" if js_errors else "clean")
+    record("No JS errors (/status)", len(js_errors) == 0, f"{len(js_errors)} errors" if js_errors else "clean")
 
     # API endpoints
     log("\n[7] API endpoints...")
     import json
+
     api_endpoints = [
         ("GET /health", "GET", "/health", 200),
         ("GET /health/live", "GET", "/health/live", 200),
@@ -128,14 +137,14 @@ with sync_playwright() as pw:
     try:
         import socket
         import http.client
+
         conn = http.client.HTTPConnection("openlabs.club", 80, timeout=10)
         conn.request("GET", "/", headers={"Host": "openlabs.club", "User-Agent": "check/1.0"})
         r = conn.getresponse()
         location = r.getheader("location", "")
         is_redirect = r.status in (301, 302, 307, 308)
         goes_https = location.startswith("https://")
-        record("HTTP->HTTPS redirect", is_redirect and goes_https,
-               f"HTTP {r.status}, Location: {location}")
+        record("HTTP->HTTPS redirect", is_redirect and goes_https, f"HTTP {r.status}, Location: {location}")
         conn.close()
     except Exception as e:
         record("HTTP->HTTPS redirect", False, str(e))
@@ -145,6 +154,7 @@ with sync_playwright() as pw:
     try:
         import ssl
         import socket
+
         ctx2 = ssl.create_default_context()
         with socket.create_connection(("openlabs.club", 443), timeout=10) as sock:
             with ctx2.wrap_socket(sock, server_hostname="openlabs.club") as ssock:
@@ -152,7 +162,11 @@ with sync_playwright() as pw:
                 subject = dict(x[0] for x in cert.get("subject", []))
                 issuer = dict(x[0] for x in cert.get("issuer", []))
                 not_after = cert.get("notAfter", "?")
-                record("TLS cert valid (no errors)", True, f"Issuer: {issuer.get('organizationName','?')}, Expires: {not_after}")
+                record(
+                    "TLS cert valid (no errors)",
+                    True,
+                    f"Issuer: {issuer.get('organizationName', '?')}, Expires: {not_after}",
+                )
     except ssl.SSLCertVerificationError as e:
         record("TLS cert valid", False, str(e))
     except Exception as e:
@@ -165,46 +179,61 @@ log("\n[10] Upload flow test...")
 try:
     import struct
     import io as _io
+
     # Create minimal valid WAV: 44100Hz, 16-bit, mono, 2 seconds of silence
     sr, dur = 16000, 2
     samples = bytes(sr * dur * 2)  # 16-bit = 2 bytes/sample
     buf = _io.BytesIO()
     data_size = len(samples)
-    buf.write(b'RIFF')
-    buf.write(struct.pack('<I', 36 + data_size))
-    buf.write(b'WAVEfmt ')
-    buf.write(struct.pack('<IHHIIHH', 16, 1, 1, sr, sr*2, 2, 16))
-    buf.write(b'data')
-    buf.write(struct.pack('<I', data_size))
+    buf.write(b"RIFF")
+    buf.write(struct.pack("<I", 36 + data_size))
+    buf.write(b"WAVEfmt ")
+    buf.write(struct.pack("<IHHIIHH", 16, 1, 1, sr, sr * 2, 2, 16))
+    buf.write(b"data")
+    buf.write(struct.pack("<I", data_size))
     buf.write(samples)
     wav_data = buf.getvalue()
 
-    boundary = b'TestBoundary7f3a'
-    body = (b'--' + boundary + b'\r\nContent-Disposition: form-data; name="file"; filename="smoke_test.wav"\r\nContent-Type: audio/wav\r\n\r\n' + wav_data +
-            b'\r\n--' + boundary + b'\r\nContent-Disposition: form-data; name="model_size"\r\n\r\ntiny\r\n' +
-            b'--' + boundary + b'--\r\n')
+    boundary = b"TestBoundary7f3a"
+    body = (
+        b"--"
+        + boundary
+        + b'\r\nContent-Disposition: form-data; name="file"; filename="smoke_test.wav"\r\nContent-Type: audio/wav\r\n\r\n'
+        + wav_data
+        + b"\r\n--"
+        + boundary
+        + b'\r\nContent-Disposition: form-data; name="model_size"\r\n\r\ntiny\r\n'
+        + b"--"
+        + boundary
+        + b"--\r\n"
+    )
 
     import urllib.request as _req
-    req = _req.Request(f"{BASE_URL}/upload", data=body,
-        headers={'Content-Type': f'multipart/form-data; boundary={boundary.decode()}'},
-        method='POST')
+
+    req = _req.Request(
+        f"{BASE_URL}/upload",
+        data=body,
+        headers={"Content-Type": f"multipart/form-data; boundary={boundary.decode()}"},
+        method="POST",
+    )
     with _req.urlopen(req, context=ssl.create_default_context(), timeout=15) as r:
         result = json.loads(r.read())
-    task_id = result.get('task_id')
+    task_id = result.get("task_id")
     record("Upload accepted", bool(task_id), f"task_id={task_id}")
 
     if task_id:
         # Poll up to 15s
         import time as _time
+
         final_status = None
         for _ in range(15):
             _time.sleep(1)
             with _req.urlopen(f"{BASE_URL}/progress/{task_id}", context=ssl.create_default_context(), timeout=5) as r:
                 p = json.loads(r.read())
-                if p['status'] in ('done', 'error', 'cancelled'):
-                    final_status = p['status']
+                if p["status"] in ("done", "error", "cancelled"):
+                    final_status = p["status"]
                     break
-        record("Task completes (done or error)", final_status in ('done', 'error'), f"status={final_status}")
+        record("Task completes (done or error)", final_status in ("done", "error"), f"status={final_status}")
 except Exception as e:
     record("Upload flow", False, str(e))
 

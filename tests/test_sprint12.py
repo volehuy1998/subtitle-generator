@@ -13,8 +13,14 @@ from pathlib import Path
 
 from app.main import app
 from app.services.analytics import (
-    record_request, record_error_category, get_user_stats,
-    export_analytics_csv, _client_ips, _user_agents, _error_categories, _lock,
+    record_request,
+    record_error_category,
+    get_user_stats,
+    export_analytics_csv,
+    _client_ips,
+    _user_agents,
+    _error_categories,
+    _lock,
 )
 from fastapi.testclient import TestClient
 
@@ -29,6 +35,7 @@ def _reset_user_tracking():
 
 
 # ── S12-1: Request Tracking ──
+
 
 class TestRequestTracking:
     def setup_method(self):
@@ -61,6 +68,7 @@ class TestRequestTracking:
 
 
 # ── S12-2: User Traffic Stats ──
+
 
 class TestUserTrafficStats:
     def setup_method(self):
@@ -97,6 +105,7 @@ class TestUserTrafficStats:
 
 # ── S12-3: Error Categorization ──
 
+
 class TestErrorCategorization:
     def setup_method(self):
         _reset_user_tracking()
@@ -126,6 +135,7 @@ class TestErrorCategorization:
 
 # ── S12-4: Analytics Users Endpoint ──
 
+
 class TestUsersEndpoint:
     def test_users_endpoint_available(self):
         res = client.get("/analytics/users")
@@ -142,10 +152,12 @@ class TestUsersEndpoint:
 
     def test_users_endpoint_in_public_paths(self):
         from app.middleware.auth import PUBLIC_PATHS
+
         assert "/analytics/users" in PUBLIC_PATHS
 
 
 # ── S12-5: Analytics Export ──
+
 
 class TestAnalyticsExport:
     def test_export_csv_endpoint(self):
@@ -179,10 +191,12 @@ class TestAnalyticsExport:
 
     def test_export_in_public_paths(self):
         from app.middleware.auth import PUBLIC_PATHS
+
         assert "/analytics/export" in PUBLIC_PATHS
 
 
 # ── S12-6: Middleware Integration ──
+
 
 class TestMiddlewareIntegration:
     def test_request_log_middleware_tracks_requests(self):
@@ -201,6 +215,7 @@ class TestMiddlewareIntegration:
 
 
 # ── S12-7: Integration ──
+
 
 class TestIntegration:
     def test_all_analytics_endpoints(self):

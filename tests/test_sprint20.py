@@ -26,6 +26,7 @@ def _html():
 
 # ── UI Element Existence ──
 
+
 @pytest.mark.skip(reason="Frontend migrated to React")
 class TestUIElements:
     """Verify all buttons and interactive elements exist."""
@@ -59,6 +60,7 @@ class TestUIElements:
 
 
 # ── Embed Panel Redesign ──
+
 
 @pytest.mark.skip(reason="Frontend migrated to React")
 class TestEmbedPanel:
@@ -120,10 +122,11 @@ class TestEmbedPanel:
 
     def test_embed_card_toggle(self):
         """Embed card should have a collapsible header."""
-        assert 'toggleEmbedCard()' in _html()
+        assert "toggleEmbedCard()" in _html()
 
 
 # ── Video Preview ──
+
 
 @pytest.mark.skip(reason="Frontend migrated to React")
 class TestVideoPreview:
@@ -155,6 +158,7 @@ class TestVideoPreview:
 
 # ── CSP for Video ──
 
+
 class TestCSPVideoSupport:
     """Test that CSP allows blob: URLs for video preview."""
 
@@ -166,6 +170,7 @@ class TestCSPVideoSupport:
 
 
 # ── Auto-Embed Feature ──
+
 
 @pytest.mark.skip(reason="Frontend migrated to React")
 class TestAutoEmbed:
@@ -196,17 +201,20 @@ class TestAutoEmbed:
     def test_pipeline_auto_embed_function(self):
         """Pipeline should have _auto_embed_subtitles function."""
         from app.services import pipeline
-        assert hasattr(pipeline, '_auto_embed_subtitles')
+
+        assert hasattr(pipeline, "_auto_embed_subtitles")
 
     def test_process_video_accepts_auto_embed(self):
         """process_video should accept auto_embed parameter."""
         import inspect
         from app.services.pipeline import process_video
+
         sig = inspect.signature(process_video)
-        assert 'auto_embed' in sig.parameters
+        assert "auto_embed" in sig.parameters
 
 
 # ── Reset UI Completeness ──
+
 
 @pytest.mark.skip(reason="Frontend migrated to React")
 class TestResetUI:
@@ -235,6 +243,7 @@ class TestResetUI:
 
 # ── Mobile Responsive ──
 
+
 @pytest.mark.skip(reason="Frontend migrated to React")
 class TestMobileResponsive:
     """Test mobile responsive CSS exists."""
@@ -258,6 +267,7 @@ class TestMobileResponsive:
 
 # ── Error States ──
 
+
 class TestErrorStates:
     """Test error handling in UI."""
 
@@ -276,6 +286,7 @@ class TestErrorStates:
 
 # ── Embed Route Color Conversion ──
 
+
 class TestEmbedColorConversion:
     """Test hex to ASS color conversion in embed route."""
 
@@ -287,6 +298,7 @@ class TestEmbedColorConversion:
 
 
 # ── Editor ──
+
 
 @pytest.mark.skip(reason="Frontend migrated to React")
 class TestEditor:
@@ -309,6 +321,7 @@ class TestEditor:
 
 
 # ── SSE Reconnection ──
+
 
 @pytest.mark.skip(reason="Frontend migrated to React")
 class TestSSEReconnection:
@@ -333,6 +346,7 @@ class TestSSEReconnection:
 
 
 # ── Presets Endpoint ──
+
 
 class TestPresetsEndpoint:
     """Test embed presets API."""

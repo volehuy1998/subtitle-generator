@@ -20,6 +20,7 @@ SAMPLE_SEGMENTS = [
 
 # ── S2-1: Subtitle Editor API ──
 
+
 class TestSubtitlesGet:
     def test_unknown_task_404(self):
         assert client.get("/subtitles/nonexistent").status_code == 404
@@ -119,6 +120,7 @@ class TestSrtParser:
 
 # ── S2-6: Task Queue API ──
 
+
 class TestTasksEndpoint:
     def test_returns_tasks_list(self):
         res = client.get("/tasks")
@@ -130,9 +132,14 @@ class TestTasksEndpoint:
     def test_includes_task_fields(self):
         original = state.tasks.copy()
         state.tasks["test-queue-001"] = {
-            "status": "done", "percent": 100, "filename": "video.mp4",
-            "message": "Done!", "model_size": "large", "device": "CUDA",
-            "language": "en", "segments": 10,
+            "status": "done",
+            "percent": 100,
+            "filename": "video.mp4",
+            "message": "Done!",
+            "model_size": "large",
+            "device": "CUDA",
+            "language": "en",
+            "segments": 10,
         }
         try:
             res = client.get("/tasks")
@@ -158,6 +165,7 @@ class TestTasksEndpoint:
 
 # ── S2-4: Mobile Responsive (template check) ──
 
+
 class TestResponsiveTemplate:
     def test_template_contains_viewport_meta(self):
         res = client.get("/")
@@ -178,6 +186,7 @@ class TestResponsiveTemplate:
 
 # ── S2-5: Drag-and-Drop ──
 
+
 @pytest.mark.skip(reason="Frontend migrated to React")
 class TestDragDropFeedback:
     def test_template_has_drag_counter(self):
@@ -190,6 +199,7 @@ class TestDragDropFeedback:
 
 
 # ── S2-1: Editor in template ──
+
 
 @pytest.mark.skip(reason="Frontend migrated to React")
 class TestEditorTemplate:
@@ -204,6 +214,7 @@ class TestEditorTemplate:
 
 
 # ── S2-2: Video preview in template ──
+
 
 @pytest.mark.skip(reason="Frontend migrated to React")
 class TestVideoPreviewTemplate:

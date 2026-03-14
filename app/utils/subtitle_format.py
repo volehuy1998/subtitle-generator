@@ -1,7 +1,5 @@
 """Subtitle formatting utilities: line-breaking, CPS validation, word-level rendering."""
 
-
-
 # Default constraints
 DEFAULT_MAX_CHARS_PER_LINE = 42
 DEFAULT_MAX_LINES = 2
@@ -10,8 +8,7 @@ DEFAULT_MIN_DURATION = 0.7  # Minimum subtitle display duration in seconds
 DEFAULT_MAX_DURATION = 7.0  # Maximum subtitle display duration in seconds
 
 
-def break_line(text: str, max_chars: int = DEFAULT_MAX_CHARS_PER_LINE,
-               max_lines: int = DEFAULT_MAX_LINES) -> str:
+def break_line(text: str, max_chars: int = DEFAULT_MAX_CHARS_PER_LINE, max_lines: int = DEFAULT_MAX_LINES) -> str:
     """Break a subtitle line according to rules.
 
     Rules:
@@ -31,8 +28,8 @@ def break_line(text: str, max_chars: int = DEFAULT_MAX_CHARS_PER_LINE,
     for sep in [". ", "! ", "? ", "; "]:
         idx = text.find(sep)
         if 0 < idx < len(text) - 2:
-            line1 = text[:idx + 1].strip()
-            line2 = text[idx + 1:].strip()
+            line1 = text[: idx + 1].strip()
+            line2 = text[idx + 1 :].strip()
             if len(line1) <= max_chars and len(line2) <= max_chars:
                 return f"{line1}\n{line2}"
 
@@ -40,8 +37,8 @@ def break_line(text: str, max_chars: int = DEFAULT_MAX_CHARS_PER_LINE,
     for sep in [", ", ": ", " - "]:
         idx = text.find(sep)
         if 0 < idx < len(text) - 2:
-            line1 = text[:idx + len(sep) - 1].strip()
-            line2 = text[idx + len(sep) - 1:].strip()
+            line1 = text[: idx + len(sep) - 1].strip()
+            line2 = text[idx + len(sep) - 1 :].strip()
             if len(line1) <= max_chars and len(line2) <= max_chars:
                 return f"{line1}\n{line2}"
 
@@ -78,10 +75,14 @@ def calculate_cps(text: str, duration: float) -> float:
     return len(clean) / duration
 
 
-def validate_timing(start: float, end: float, text: str,
-                    max_cps: float = DEFAULT_MAX_CPS,
-                    min_duration: float = DEFAULT_MIN_DURATION,
-                    max_duration: float = DEFAULT_MAX_DURATION) -> dict:
+def validate_timing(
+    start: float,
+    end: float,
+    text: str,
+    max_cps: float = DEFAULT_MAX_CPS,
+    min_duration: float = DEFAULT_MIN_DURATION,
+    max_duration: float = DEFAULT_MAX_DURATION,
+) -> dict:
     """Validate subtitle timing and return diagnostics."""
     duration = end - start
     cps = calculate_cps(text, duration)
@@ -105,9 +106,9 @@ def validate_timing(start: float, end: float, text: str,
     }
 
 
-def format_segments_with_linebreaks(segments: list,
-                                     max_chars: int = DEFAULT_MAX_CHARS_PER_LINE,
-                                     max_lines: int = DEFAULT_MAX_LINES) -> list:
+def format_segments_with_linebreaks(
+    segments: list, max_chars: int = DEFAULT_MAX_CHARS_PER_LINE, max_lines: int = DEFAULT_MAX_LINES
+) -> list:
     """Apply line-breaking rules to all segments."""
     result = []
     for seg in segments:
@@ -117,8 +118,9 @@ def format_segments_with_linebreaks(segments: list,
     return result
 
 
-def words_to_segments(words: list, max_chars: int = DEFAULT_MAX_CHARS_PER_LINE,
-                      max_gap: float = 1.5, max_segment_duration: float = 7.0) -> list:
+def words_to_segments(
+    words: list, max_chars: int = DEFAULT_MAX_CHARS_PER_LINE, max_gap: float = 1.5, max_segment_duration: float = 7.0
+) -> list:
     """Group word-level timestamps into subtitle segments.
 
     Args:
@@ -155,12 +157,14 @@ def words_to_segments(words: list, max_chars: int = DEFAULT_MAX_CHARS_PER_LINE,
                 force_split = True
 
         if force_split and current_words:
-            segments.append({
-                "start": seg_start,
-                "end": current_words[-1]["end"],
-                "text": break_line(current_text, max_chars),
-                "words": list(current_words),
-            })
+            segments.append(
+                {
+                    "start": seg_start,
+                    "end": current_words[-1]["end"],
+                    "text": break_line(current_text, max_chars),
+                    "words": list(current_words),
+                }
+            )
             current_words = []
             current_text = ""
             seg_start = w["start"]
@@ -170,11 +174,13 @@ def words_to_segments(words: list, max_chars: int = DEFAULT_MAX_CHARS_PER_LINE,
 
     # Flush remaining
     if current_words:
-        segments.append({
-            "start": seg_start,
-            "end": current_words[-1]["end"],
-            "text": break_line(current_text, max_chars),
-            "words": list(current_words),
-        })
+        segments.append(
+            {
+                "start": seg_start,
+                "end": current_words[-1]["end"],
+                "text": break_line(current_text, max_chars),
+                "words": list(current_words),
+            }
+        )
 
     return segments

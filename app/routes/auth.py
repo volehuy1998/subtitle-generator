@@ -125,6 +125,7 @@ async def get_me(request: Request):
 
 # ── API Key Management ──
 
+
 @router.post("/auth/api-keys")
 async def create_key(body: ApiKeyCreateRequest, request: Request):
     """Create a new API key (authenticated users only)."""

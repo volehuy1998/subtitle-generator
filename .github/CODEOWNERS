@@ -1,0 +1,26 @@
+# CODEOWNERS — automatic reviewer assignment for PRs
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything
+* @volehuy1998
+
+# Core pipeline (transcription, model loading, translation)
+app/services/pipeline.py    @volehuy1998
+app/services/transcription.py @volehuy1998
+app/services/translation.py @volehuy1998
+app/services/model_manager.py @volehuy1998
+
+# API routes
+app/routes/ @volehuy1998
+
+# Infrastructure & deployment
+Dockerfile              @volehuy1998
+docker-compose.yml      @volehuy1998
+.github/workflows/      @volehuy1998
+
+# Frontend
+frontend/src/           @volehuy1998
+
+# Security-sensitive
+app/middleware/          @volehuy1998
+app/utils/security.py   @volehuy1998

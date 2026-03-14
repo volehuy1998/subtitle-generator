@@ -8,7 +8,6 @@ S13-5: Task deduplication check
 S13-6: Integration tests
 """
 
-
 from app.main import app
 from app import state
 from fastapi.testclient import TestClient
@@ -34,6 +33,7 @@ def _cleanup_test_tasks():
 
 # ── S13-1: Queue Position Estimation ──
 
+
 class TestQueuePosition:
     def setup_method(self):
         _cleanup_test_tasks()
@@ -44,26 +44,31 @@ class TestQueuePosition:
 
     def test_queued_task_has_position(self):
         from app.routes.tasks import _estimate_queue_position
+
         pos = _estimate_queue_position("q-task-2")
         assert pos["position"] >= 0
 
     def test_non_queued_task_position_zero(self):
         from app.routes.tasks import _estimate_queue_position
+
         pos = _estimate_queue_position("q-task-1")  # transcribing
         assert pos["position"] == 0
 
     def test_unknown_task_position_negative(self):
         from app.routes.tasks import _estimate_queue_position
+
         pos = _estimate_queue_position("nonexistent")
         assert pos["position"] == -1
 
     def test_estimated_wait_positive_for_queued(self):
         from app.routes.tasks import _estimate_queue_position
+
         pos = _estimate_queue_position("q-task-3")
         assert pos["estimated_wait_sec"] >= 0
 
 
 # ── S13-2: Queue Position Endpoint ──
+
 
 class TestQueuePositionEndpoint:
     def setup_method(self):
@@ -90,6 +95,7 @@ class TestQueuePositionEndpoint:
 
 # ── S13-3: Tasks List with Queue Info ──
 
+
 class TestTasksListQueue:
     def setup_method(self):
         _cleanup_test_tasks()
@@ -114,20 +120,32 @@ class TestTasksListQueue:
 
 # ── S13-4: Retry Failed Tasks ──
 
+
 class TestRetryTask:
     def setup_method(self):
         _cleanup_test_tasks()
         state.tasks["err-task"] = {
-            "status": "error", "percent": 0, "filename": "bad_video.mp4",
-            "message": "Failed", "language_requested": "en", "session_id": "test",
+            "status": "error",
+            "percent": 0,
+            "filename": "bad_video.mp4",
+            "message": "Failed",
+            "language_requested": "en",
+            "session_id": "test",
         }
         state.tasks["cancel-task"] = {
-            "status": "cancelled", "percent": 0, "filename": "cancelled_video.mp4",
-            "message": "Cancelled", "language_requested": "auto", "session_id": "test",
+            "status": "cancelled",
+            "percent": 0,
+            "filename": "cancelled_video.mp4",
+            "message": "Cancelled",
+            "language_requested": "auto",
+            "session_id": "test",
         }
         state.tasks["done-task"] = {
-            "status": "done", "percent": 100, "filename": "good_video.mp4",
-            "message": "Done", "session_id": "test",
+            "status": "done",
+            "percent": 100,
+            "filename": "good_video.mp4",
+            "message": "Done",
+            "session_id": "test",
         }
 
     def teardown_method(self):
@@ -166,12 +184,16 @@ class TestRetryTask:
 
 # ── S13-5: Task Deduplication ──
 
+
 class TestDeduplication:
     def setup_method(self):
         _cleanup_test_tasks()
         state.tasks["dup-task"] = {
-            "status": "done", "filename": "lecture.mp4",
-            "file_size": 50000000, "language": "en", "segments": 42,
+            "status": "done",
+            "filename": "lecture.mp4",
+            "file_size": 50000000,
+            "language": "en",
+            "segments": 42,
             "model_size": "medium",
         }
 
@@ -206,6 +228,7 @@ class TestDeduplication:
 
 
 # ── S13-6: Integration ──
+
 
 class TestIntegration:
     def test_tasks_endpoint_accessible(self):

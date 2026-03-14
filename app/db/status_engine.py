@@ -61,6 +61,7 @@ async def get_status_session():
 async def init_status_db():
     """Create status tables. Called at startup."""
     from app.db.models import StatusBase
+
     engine = get_status_engine()
     async with engine.begin() as conn:
         await conn.run_sync(StatusBase.metadata.create_all)

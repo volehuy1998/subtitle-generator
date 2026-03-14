@@ -29,12 +29,12 @@ TEST_FILE = ROOT / "tests" / "test_security_injection.py"
 
 # Map assertion id → pytest class name in test_security_injection.py
 CATEGORY_CLASS = {
-    "file_upload":    "TestFileUploadSecurity",
+    "file_upload": "TestFileUploadSecurity",
     "path_traversal": "TestPathTraversal",
-    "injection":      "TestInjection",
-    "sec_headers":    "TestSecurityHeaders",
-    "idor":           "TestIDOR",
-    "broken_auth":    "TestBrokenAuth",
+    "injection": "TestInjection",
+    "sec_headers": "TestSecurityHeaders",
+    "idor": "TestIDOR",
+    "broken_auth": "TestBrokenAuth",
 }
 
 # Categories with no dedicated injection tests — keep existing status unless forced
@@ -52,8 +52,8 @@ def run_tests(test_class: str) -> tuple[int, int]:
     )
     passed = result.stdout.count(" PASSED")
     failed = result.stdout.count(" FAILED")
-    error  = result.stdout.count(" ERROR")
-    total  = passed + failed + error
+    error = result.stdout.count(" ERROR")
+    total = passed + failed + error
     return passed, total
 
 
@@ -82,9 +82,7 @@ def main():
     commit = args.commit_hash
     if not commit:
         try:
-            commit = subprocess.check_output(
-                ["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, text=True
-            ).strip()
+            commit = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, text=True).strip()
         except Exception:
             commit = "unknown"
 
@@ -135,9 +133,10 @@ def main():
 def _run_rate_limit_tests() -> tuple[int, int]:
     """Run rate-limit related tests across the test suite."""
     result = subprocess.run(
-        [sys.executable, "-m", "pytest", "-k", "rate_limit or brute_force or throttle",
-         "--tb=no", "-q"],
-        capture_output=True, text=True, cwd=ROOT,
+        [sys.executable, "-m", "pytest", "-k", "rate_limit or brute_force or throttle", "--tb=no", "-q"],
+        capture_output=True,
+        text=True,
+        cwd=ROOT,
     )
     # Simple: count PASSED/FAILED markers
     passed = result.stdout.count(" PASSED")
@@ -148,9 +147,10 @@ def _run_rate_limit_tests() -> tuple[int, int]:
 def _run_secrets_tests() -> tuple[int, int]:
     """Run secrets/env var tests."""
     result = subprocess.run(
-        [sys.executable, "-m", "pytest", "-k", "secret or env_var or api_key or jwt",
-         "--tb=no", "-q"],
-        capture_output=True, text=True, cwd=ROOT,
+        [sys.executable, "-m", "pytest", "-k", "secret or env_var or api_key or jwt", "--tb=no", "-q"],
+        capture_output=True,
+        text=True,
+        cwd=ROOT,
     )
     passed = result.stdout.count(" PASSED")
     failed = result.stdout.count(" FAILED")

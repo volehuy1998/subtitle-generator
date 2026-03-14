@@ -44,12 +44,16 @@ async def security_page(request: Request):
     if _USE_REACT:
         return _react_index()
     from app.routes.security import load_security_assertions
+
     assertions_data = load_security_assertions()
-    return templates.TemplateResponse("security.html", {
-        "request": request,
-        "active_page": "security",
-        "assertions": assertions_data,
-    })
+    return templates.TemplateResponse(
+        "security.html",
+        {
+            "request": request,
+            "active_page": "security",
+            "assertions": assertions_data,
+        },
+    )
 
 
 @router.get("/about", response_class=HTMLResponse)
@@ -71,7 +75,10 @@ async def manifest():
     f = _REACT_DIST / "manifest.json"
     if f.exists():
         return FileResponse(str(f), media_type="application/manifest+json")
-    return FileResponse(str(Path(__file__).parent.parent.parent / "frontend" / "public" / "manifest.json"), media_type="application/manifest+json")
+    return FileResponse(
+        str(Path(__file__).parent.parent.parent / "frontend" / "public" / "manifest.json"),
+        media_type="application/manifest+json",
+    )
 
 
 @router.get("/logo.svg")
@@ -79,7 +86,9 @@ async def logo_svg():
     f = _REACT_DIST / "logo.svg"
     if f.exists():
         return FileResponse(str(f), media_type="image/svg+xml")
-    return FileResponse(str(Path(__file__).parent.parent.parent / "frontend" / "public" / "logo.svg"), media_type="image/svg+xml")
+    return FileResponse(
+        str(Path(__file__).parent.parent.parent / "frontend" / "public" / "logo.svg"), media_type="image/svg+xml"
+    )
 
 
 @router.get("/favicon.svg")
@@ -87,4 +96,6 @@ async def favicon_svg():
     f = _REACT_DIST / "favicon.svg"
     if f.exists():
         return FileResponse(str(f), media_type="image/svg+xml")
-    return FileResponse(str(Path(__file__).parent.parent.parent / "frontend" / "public" / "favicon.svg"), media_type="image/svg+xml")
+    return FileResponse(
+        str(Path(__file__).parent.parent.parent / "frontend" / "public" / "favicon.svg"), media_type="image/svg+xml"
+    )

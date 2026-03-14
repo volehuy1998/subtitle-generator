@@ -35,25 +35,29 @@ async def dashboard_data():
     active_tasks = []
     for tid, t in state.tasks.items():
         if t.get("status") not in ("done", "error", "cancelled"):
-            active_tasks.append({
-                "id": tid[:8],
-                "status": t.get("status", "unknown"),
-                "percent": t.get("percent", 0),
-                "message": t.get("message", ""),
-                "filename": t.get("filename", ""),
-            })
+            active_tasks.append(
+                {
+                    "id": tid[:8],
+                    "status": t.get("status", "unknown"),
+                    "percent": t.get("percent", 0),
+                    "message": t.get("message", ""),
+                    "filename": t.get("filename", ""),
+                }
+            )
 
     recent_tasks = []
     for tid, t in list(state.tasks.items())[-20:]:
-        recent_tasks.append({
-            "id": tid[:8],
-            "status": t.get("status", "unknown"),
-            "filename": t.get("filename", ""),
-            "language": t.get("language", ""),
-            "segments": t.get("segments", 0),
-            "device": t.get("device", ""),
-            "model": t.get("model_size", ""),
-        })
+        recent_tasks.append(
+            {
+                "id": tid[:8],
+                "status": t.get("status", "unknown"),
+                "filename": t.get("filename", ""),
+                "language": t.get("language", ""),
+                "segments": t.get("segments", 0),
+                "device": t.get("device", ""),
+                "model": t.get("model_size", ""),
+            }
+        )
 
     # System stats
     cpu_percent = psutil.cpu_percent()

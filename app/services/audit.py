@@ -48,12 +48,12 @@ def log_audit_event(event_type: str, **kwargs):
 
     # Persist to PostgreSQL (fire-and-forget)
     from app import state
+
     loop = state.main_event_loop
     if loop is not None and not loop.is_closed():
         from app.services import audit_pg
-        asyncio.run_coroutine_threadsafe(
-            audit_pg.persist_audit_event(event_type, **kwargs), loop
-        )
+
+        asyncio.run_coroutine_threadsafe(audit_pg.persist_audit_event(event_type, **kwargs), loop)
 
 
 def get_recent_audit_events(limit: int = 50) -> list[dict]:

@@ -24,6 +24,7 @@ def _html():
 
 # ── Phase 1: Stage Timing Display ──
 
+
 @pytest.mark.skip(reason="Frontend migrated to React")
 class TestStageTimingUI:
     """Verify step timing elements and JS logic exist in the frontend."""
@@ -93,18 +94,20 @@ class TestStageTimingUI:
 
 # ── Phase 2: Live Health SSE Stream ──
 
+
 class TestHealthSSEEndpoint:
     """Verify the /health/stream SSE endpoint exists and is properly configured."""
 
     def test_health_stream_route_registered(self):
         """Verify /health/stream route is registered in the app."""
-        routes = [r.path for r in app.routes if hasattr(r, 'path')]
+        routes = [r.path for r in app.routes if hasattr(r, "path")]
         assert "/health/stream" in routes
 
     def test_health_stream_returns_streaming_response(self):
         """Verify the endpoint handler returns a StreamingResponse."""
         from app.routes.health import health_stream
         import inspect
+
         source = inspect.getsource(health_stream)
         assert "StreamingResponse" in source
         assert "text/event-stream" in source
@@ -113,14 +116,16 @@ class TestHealthSSEEndpoint:
         """Verify the SSE generator produces valid JSON data lines."""
         from app.routes.health import health_stream
         import inspect
+
         source = inspect.getsource(health_stream)
         assert "json.dumps" in source
-        assert 'data: ' in source
+        assert "data: " in source
 
     def test_health_stream_has_keepalive_headers(self):
         """Verify SSE response includes proper caching/connection headers."""
         from app.routes.health import health_stream
         import inspect
+
         source = inspect.getsource(health_stream)
         assert "Cache-Control" in source
         assert "no-cache" in source
@@ -212,14 +217,17 @@ class TestHealthRateLimitExempt:
 
     def test_health_stream_exempt(self):
         from app.middleware.rate_limit import _EXEMPT_PATHS
+
         assert "/health/stream" in _EXEMPT_PATHS
 
     def test_health_stream_auth_public(self):
         from app.middleware.auth import PUBLIC_PATHS
+
         assert "/health/stream" in PUBLIC_PATHS
 
 
 # ── Phase 3: Quick Embed (No Re-Upload) ──
+
 
 @pytest.mark.skip(reason="Frontend migrated to React")
 class TestQuickEmbedUI:
@@ -283,6 +291,7 @@ class TestQuickEmbedEndpoint:
 
     def test_quick_embed_400_no_preserved_video(self):
         from app import state
+
         task_id = "test-quick-embed-no-video"
         state.tasks[task_id] = {"status": "done", "filename": "test.mp4"}
         try:
@@ -294,6 +303,7 @@ class TestQuickEmbedEndpoint:
 
     def test_quick_embed_400_not_done(self):
         from app import state
+
         task_id = "test-quick-embed-not-done"
         state.tasks[task_id] = {"status": "transcribing", "filename": "test.mp4"}
         try:
@@ -352,6 +362,7 @@ class TestPipelineStepTimingEvents:
         """Verify step_timing dict structure exists in pipeline code."""
         import inspect
         from app.services import pipeline
+
         source = inspect.getsource(pipeline.process_video)
         assert '"upload"' in source or "'upload'" in source
         assert '"extract"' in source or "'extract'" in source
@@ -362,6 +373,7 @@ class TestPipelineStepTimingEvents:
         """Verify the done event emits is_video flag."""
         import inspect
         from app.services import pipeline
+
         source = inspect.getsource(pipeline.process_video)
         assert '"is_video"' in source or "'is_video'" in source
 
@@ -369,12 +381,14 @@ class TestPipelineStepTimingEvents:
         """Verify step_started_at is sent with step_change events."""
         import inspect
         from app.services import pipeline
+
         source = inspect.getsource(pipeline.process_video)
         assert "step_started_at" in source
 
 
 # ── Health Status State-Accuracy Tests ──
 # Tests every combination of conditions and verifies the status output is correct.
+
 
 class TestHealthStatusAccuracy:
     """Verify /api/status accurately reflects system state in ALL cases.
@@ -388,6 +402,7 @@ class TestHealthStatusAccuracy:
     def _get_status(self):
         """Fetch fresh status (bust cache first)."""
         from app.routes.health import _status_cache
+
         _status_cache["data"] = None
         _status_cache["expires"] = 0.0
         return client.get("/api/status").json()
@@ -396,10 +411,15 @@ class TestHealthStatusAccuracy:
 
     def test_healthy_when_all_ok(self):
         """Status is 'healthy' when DB, disk, ffmpeg, and alerts are all OK."""
-        with patch("app.routes.health.shutil.disk_usage") as mock_disk, \
-             patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"), \
-             patch("app.services.query_layer.check_db_health", return_value={"status": "healthy", "latency_ms": 5.0, "ok": True}), \
-             patch("app.services.monitoring.check_alerts", return_value=[]):
+        with (
+            patch("app.routes.health.shutil.disk_usage") as mock_disk,
+            patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"),
+            patch(
+                "app.services.query_layer.check_db_health",
+                return_value={"status": "healthy", "latency_ms": 5.0, "ok": True},
+            ),
+            patch("app.services.monitoring.check_alerts", return_value=[]),
+        ):
             mock_disk.return_value = MagicMock(free=10 * 1024**3)  # 10GB free
             data = self._get_status()
             assert data["status"] == "healthy"
@@ -412,10 +432,15 @@ class TestHealthStatusAccuracy:
 
     def test_critical_when_db_down(self):
         """Status is 'critical' when database connection fails."""
-        with patch("app.routes.health.shutil.disk_usage") as mock_disk, \
-             patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"), \
-             patch("app.services.query_layer.check_db_health", return_value={"status": "unhealthy", "ok": False, "error": "connection refused"}), \
-             patch("app.services.monitoring.check_alerts", return_value=[]):
+        with (
+            patch("app.routes.health.shutil.disk_usage") as mock_disk,
+            patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"),
+            patch(
+                "app.services.query_layer.check_db_health",
+                return_value={"status": "unhealthy", "ok": False, "error": "connection refused"},
+            ),
+            patch("app.services.monitoring.check_alerts", return_value=[]),
+        ):
             mock_disk.return_value = MagicMock(free=10 * 1024**3)
             data = self._get_status()
             assert data["status"] == "critical"
@@ -424,10 +449,12 @@ class TestHealthStatusAccuracy:
 
     def test_critical_when_db_raises_exception(self):
         """Status is 'critical' when DB health check throws an exception."""
-        with patch("app.routes.health.shutil.disk_usage") as mock_disk, \
-             patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"), \
-             patch("app.services.query_layer.check_db_health", side_effect=Exception("connection timeout")), \
-             patch("app.services.monitoring.check_alerts", return_value=[]):
+        with (
+            patch("app.routes.health.shutil.disk_usage") as mock_disk,
+            patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"),
+            patch("app.services.query_layer.check_db_health", side_effect=Exception("connection timeout")),
+            patch("app.services.monitoring.check_alerts", return_value=[]),
+        ):
             mock_disk.return_value = MagicMock(free=10 * 1024**3)
             data = self._get_status()
             assert data["status"] == "critical"
@@ -437,10 +464,15 @@ class TestHealthStatusAccuracy:
 
     def test_critical_when_disk_low(self):
         """Status is 'critical' when disk free space < 1GB."""
-        with patch("app.routes.health.shutil.disk_usage") as mock_disk, \
-             patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"), \
-             patch("app.services.query_layer.check_db_health", return_value={"status": "healthy", "latency_ms": 3.0, "ok": True}), \
-             patch("app.services.monitoring.check_alerts", return_value=[]):
+        with (
+            patch("app.routes.health.shutil.disk_usage") as mock_disk,
+            patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"),
+            patch(
+                "app.services.query_layer.check_db_health",
+                return_value={"status": "healthy", "latency_ms": 3.0, "ok": True},
+            ),
+            patch("app.services.monitoring.check_alerts", return_value=[]),
+        ):
             mock_disk.return_value = MagicMock(free=500 * 1024**2)  # 500MB
             data = self._get_status()
             assert data["status"] == "critical"
@@ -449,10 +481,15 @@ class TestHealthStatusAccuracy:
 
     def test_critical_when_disk_read_fails(self):
         """Status is 'critical' when disk usage cannot be read."""
-        with patch("app.routes.health.shutil.disk_usage", side_effect=OSError("permission denied")), \
-             patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"), \
-             patch("app.services.query_layer.check_db_health", return_value={"status": "healthy", "latency_ms": 3.0, "ok": True}), \
-             patch("app.services.monitoring.check_alerts", return_value=[]):
+        with (
+            patch("app.routes.health.shutil.disk_usage", side_effect=OSError("permission denied")),
+            patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"),
+            patch(
+                "app.services.query_layer.check_db_health",
+                return_value={"status": "healthy", "latency_ms": 3.0, "ok": True},
+            ),
+            patch("app.services.monitoring.check_alerts", return_value=[]),
+        ):
             data = self._get_status()
             assert data["status"] == "critical"
             assert data["disk_ok"] is False
@@ -462,10 +499,15 @@ class TestHealthStatusAccuracy:
 
     def test_warning_when_ffmpeg_missing(self):
         """Status is 'warning' when ffmpeg is not available."""
-        with patch("app.routes.health.shutil.disk_usage") as mock_disk, \
-             patch("app.routes.health.shutil.which", return_value=None), \
-             patch("app.services.query_layer.check_db_health", return_value={"status": "healthy", "latency_ms": 3.0, "ok": True}), \
-             patch("app.services.monitoring.check_alerts", return_value=[]):
+        with (
+            patch("app.routes.health.shutil.disk_usage") as mock_disk,
+            patch("app.routes.health.shutil.which", return_value=None),
+            patch(
+                "app.services.query_layer.check_db_health",
+                return_value={"status": "healthy", "latency_ms": 3.0, "ok": True},
+            ),
+            patch("app.services.monitoring.check_alerts", return_value=[]),
+        ):
             mock_disk.return_value = MagicMock(free=10 * 1024**3)
             data = self._get_status()
             assert data["status"] == "warning"
@@ -476,10 +518,15 @@ class TestHealthStatusAccuracy:
     def test_warning_when_warning_alert(self):
         """Status is 'warning' when a warning-level alert is active."""
         warning_alert = [{"alert": "high_error_rate", "severity": "warning", "message": "Error rate 10%"}]
-        with patch("app.routes.health.shutil.disk_usage") as mock_disk, \
-             patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"), \
-             patch("app.services.query_layer.check_db_health", return_value={"status": "healthy", "latency_ms": 3.0, "ok": True}), \
-             patch("app.services.monitoring.check_alerts", return_value=warning_alert):
+        with (
+            patch("app.routes.health.shutil.disk_usage") as mock_disk,
+            patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"),
+            patch(
+                "app.services.query_layer.check_db_health",
+                return_value={"status": "healthy", "latency_ms": 3.0, "ok": True},
+            ),
+            patch("app.services.monitoring.check_alerts", return_value=warning_alert),
+        ):
             mock_disk.return_value = MagicMock(free=10 * 1024**3)
             data = self._get_status()
             assert data["status"] == "warning"
@@ -489,10 +536,15 @@ class TestHealthStatusAccuracy:
     def test_critical_when_critical_alert(self):
         """Status is 'critical' when a critical-level alert is active."""
         critical_alert = [{"alert": "disk_low", "severity": "critical", "message": "Disk space critical"}]
-        with patch("app.routes.health.shutil.disk_usage") as mock_disk, \
-             patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"), \
-             patch("app.services.query_layer.check_db_health", return_value={"status": "healthy", "latency_ms": 3.0, "ok": True}), \
-             patch("app.services.monitoring.check_alerts", return_value=critical_alert):
+        with (
+            patch("app.routes.health.shutil.disk_usage") as mock_disk,
+            patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"),
+            patch(
+                "app.services.query_layer.check_db_health",
+                return_value={"status": "healthy", "latency_ms": 3.0, "ok": True},
+            ),
+            patch("app.services.monitoring.check_alerts", return_value=critical_alert),
+        ):
             mock_disk.return_value = MagicMock(free=10 * 1024**3)
             data = self._get_status()
             assert data["status"] == "critical"
@@ -504,10 +556,15 @@ class TestHealthStatusAccuracy:
             {"alert": "high_error_rate", "severity": "warning", "message": "Error rate high"},
             {"alert": "disk_low", "severity": "critical", "message": "Disk critical"},
         ]
-        with patch("app.routes.health.shutil.disk_usage") as mock_disk, \
-             patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"), \
-             patch("app.services.query_layer.check_db_health", return_value={"status": "healthy", "latency_ms": 3.0, "ok": True}), \
-             patch("app.services.monitoring.check_alerts", return_value=mixed_alerts):
+        with (
+            patch("app.routes.health.shutil.disk_usage") as mock_disk,
+            patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"),
+            patch(
+                "app.services.query_layer.check_db_health",
+                return_value={"status": "healthy", "latency_ms": 3.0, "ok": True},
+            ),
+            patch("app.services.monitoring.check_alerts", return_value=mixed_alerts),
+        ):
             mock_disk.return_value = MagicMock(free=10 * 1024**3)
             data = self._get_status()
             assert data["status"] == "critical"
@@ -517,10 +574,12 @@ class TestHealthStatusAccuracy:
 
     def test_critical_with_db_and_disk_both_down(self):
         """Status is 'critical' when both DB and disk are failing."""
-        with patch("app.routes.health.shutil.disk_usage") as mock_disk, \
-             patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"), \
-             patch("app.services.query_layer.check_db_health", return_value={"status": "unhealthy", "ok": False}), \
-             patch("app.services.monitoring.check_alerts", return_value=[]):
+        with (
+            patch("app.routes.health.shutil.disk_usage") as mock_disk,
+            patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"),
+            patch("app.services.query_layer.check_db_health", return_value={"status": "unhealthy", "ok": False}),
+            patch("app.services.monitoring.check_alerts", return_value=[]),
+        ):
             mock_disk.return_value = MagicMock(free=200 * 1024**2)  # 200MB
             data = self._get_status()
             assert data["status"] == "critical"
@@ -530,10 +589,12 @@ class TestHealthStatusAccuracy:
     def test_critical_with_everything_down(self):
         """Status is 'critical' when DB, disk, ffmpeg all fail + critical alert."""
         critical_alert = [{"alert": "disk_low", "severity": "critical", "message": "Disk critical"}]
-        with patch("app.routes.health.shutil.disk_usage", side_effect=OSError("fail")), \
-             patch("app.routes.health.shutil.which", return_value=None), \
-             patch("app.services.query_layer.check_db_health", side_effect=Exception("db down")), \
-             patch("app.services.monitoring.check_alerts", return_value=critical_alert):
+        with (
+            patch("app.routes.health.shutil.disk_usage", side_effect=OSError("fail")),
+            patch("app.routes.health.shutil.which", return_value=None),
+            patch("app.services.query_layer.check_db_health", side_effect=Exception("db down")),
+            patch("app.services.monitoring.check_alerts", return_value=critical_alert),
+        ):
             data = self._get_status()
             assert data["status"] == "critical"
             assert data["db_ok"] is False
@@ -545,6 +606,7 @@ class TestHealthStatusAccuracy:
     def test_active_tasks_counted_correctly(self):
         """Active tasks count excludes done/error/cancelled tasks."""
         from app import state
+
         saved = dict(state.tasks)
         try:
             state.tasks.clear()
@@ -563,6 +625,7 @@ class TestHealthStatusAccuracy:
     def test_zero_active_tasks_when_all_finished(self):
         """Active tasks is 0 when all tasks are done/error/cancelled."""
         from app import state
+
         saved = dict(state.tasks)
         try:
             state.tasks.clear()
@@ -579,6 +642,7 @@ class TestHealthStatusAccuracy:
     def test_shutting_down_flag(self):
         """Verify shutting_down is reflected in status."""
         from app import state
+
         original = state.shutting_down
         try:
             state.shutting_down = True
@@ -591,17 +655,22 @@ class TestHealthStatusAccuracy:
 
     def test_db_latency_reported_when_healthy(self):
         """DB latency is a number when database is healthy."""
-        with patch("app.services.query_layer.check_db_health", return_value={"status": "healthy", "latency_ms": 12.5, "ok": True}):
+        with patch(
+            "app.services.query_layer.check_db_health",
+            return_value={"status": "healthy", "latency_ms": 12.5, "ok": True},
+        ):
             data = self._get_status()
             if data["db_ok"]:
                 assert isinstance(data["db_latency_ms"], (int, float))
 
     def test_db_latency_null_when_down(self):
         """DB latency is null when database is unreachable."""
-        with patch("app.routes.health.shutil.disk_usage") as mock_disk, \
-             patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"), \
-             patch("app.services.query_layer.check_db_health", side_effect=Exception("refused")), \
-             patch("app.services.monitoring.check_alerts", return_value=[]):
+        with (
+            patch("app.routes.health.shutil.disk_usage") as mock_disk,
+            patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"),
+            patch("app.services.query_layer.check_db_health", side_effect=Exception("refused")),
+            patch("app.services.monitoring.check_alerts", return_value=[]),
+        ):
             mock_disk.return_value = MagicMock(free=10 * 1024**3)
             data = self._get_status()
             assert data["db_ok"] is False
@@ -617,19 +686,27 @@ class TestHealthStatusAccuracy:
 
     def test_cpu_memory_when_psutil_fails(self):
         """CPU/memory are None if psutil fails."""
-        with patch("app.routes.health.shutil.disk_usage") as mock_disk, \
-             patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"), \
-             patch("app.services.query_layer.check_db_health", return_value={"status": "healthy", "latency_ms": 3.0, "ok": True}), \
-             patch("app.services.monitoring.check_alerts", return_value=[]), \
-             patch.dict("sys.modules", {"psutil": None}):
+        with (
+            patch("app.routes.health.shutil.disk_usage") as mock_disk,
+            patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"),
+            patch(
+                "app.services.query_layer.check_db_health",
+                return_value={"status": "healthy", "latency_ms": 3.0, "ok": True},
+            ),
+            patch("app.services.monitoring.check_alerts", return_value=[]),
+            patch.dict("sys.modules", {"psutil": None}),
+        ):
             mock_disk.return_value = MagicMock(free=10 * 1024**3)
             # Force re-import failure by patching import inside the function
             import builtins
+
             real_import = builtins.__import__
+
             def mock_import(name, *args, **kwargs):
                 if name == "psutil":
                     raise ImportError("mocked")
                 return real_import(name, *args, **kwargs)
+
             with patch("builtins.__import__", side_effect=mock_import):
                 data = self._get_status()
                 assert data["cpu_percent"] is None
@@ -640,6 +717,7 @@ class TestHealthStatusAccuracy:
     def test_cache_ttl_is_1_second(self):
         """Verify status cache expires after 3 seconds for real-time updates."""
         from app.routes.health import _status_cache
+
         _status_cache["data"] = None
         _status_cache["expires"] = 0.0
 
@@ -648,6 +726,7 @@ class TestHealthStatusAccuracy:
         assert _status_cache["data"] is not None
         # Cache should expire within 3 seconds
         import time
+
         assert _status_cache["expires"] <= time.time() + 3.1
 
     # ── Case 12: SSE interval is 3 seconds ──
@@ -656,6 +735,7 @@ class TestHealthStatusAccuracy:
         """Verify SSE pushes every 3 seconds."""
         from app.routes.health import health_stream
         import inspect
+
         source = inspect.getsource(health_stream)
         assert "asyncio.sleep(3)" in source
 
@@ -667,10 +747,15 @@ class TestHealthStatusAccuracy:
             {"alert": "high_error_rate", "severity": "warning", "message": "Error rate 15%"},
             {"alert": "disk_low", "severity": "critical", "message": "Disk at 0.5GB"},
         ]
-        with patch("app.routes.health.shutil.disk_usage") as mock_disk, \
-             patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"), \
-             patch("app.services.query_layer.check_db_health", return_value={"status": "healthy", "latency_ms": 3.0, "ok": True}), \
-             patch("app.services.monitoring.check_alerts", return_value=alerts):
+        with (
+            patch("app.routes.health.shutil.disk_usage") as mock_disk,
+            patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"),
+            patch(
+                "app.services.query_layer.check_db_health",
+                return_value={"status": "healthy", "latency_ms": 3.0, "ok": True},
+            ),
+            patch("app.services.monitoring.check_alerts", return_value=alerts),
+        ):
             mock_disk.return_value = MagicMock(free=10 * 1024**3)
             data = self._get_status()
             assert data["alert_count"] == 2
@@ -684,19 +769,26 @@ class TestHealthStatusAccuracy:
     def test_healthy_after_db_recovery(self):
         """Status returns to 'healthy' after DB comes back online."""
         # First: DB down
-        with patch("app.routes.health.shutil.disk_usage") as mock_disk, \
-             patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"), \
-             patch("app.services.query_layer.check_db_health", return_value={"status": "unhealthy", "ok": False}), \
-             patch("app.services.monitoring.check_alerts", return_value=[]):
+        with (
+            patch("app.routes.health.shutil.disk_usage") as mock_disk,
+            patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"),
+            patch("app.services.query_layer.check_db_health", return_value={"status": "unhealthy", "ok": False}),
+            patch("app.services.monitoring.check_alerts", return_value=[]),
+        ):
             mock_disk.return_value = MagicMock(free=10 * 1024**3)
             data = self._get_status()
             assert data["status"] == "critical"
 
         # Then: DB recovered
-        with patch("app.routes.health.shutil.disk_usage") as mock_disk, \
-             patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"), \
-             patch("app.services.query_layer.check_db_health", return_value={"status": "healthy", "latency_ms": 5.0, "ok": True}), \
-             patch("app.services.monitoring.check_alerts", return_value=[]):
+        with (
+            patch("app.routes.health.shutil.disk_usage") as mock_disk,
+            patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"),
+            patch(
+                "app.services.query_layer.check_db_health",
+                return_value={"status": "healthy", "latency_ms": 5.0, "ok": True},
+            ),
+            patch("app.services.monitoring.check_alerts", return_value=[]),
+        ):
             mock_disk.return_value = MagicMock(free=10 * 1024**3)
             data = self._get_status()
             assert data["status"] == "healthy"
@@ -705,19 +797,25 @@ class TestHealthStatusAccuracy:
 
 # ── DB-Required: Upload Rejection & Service Availability ──
 
+
 class TestUploadRequiresDB:
     """Verify uploads are rejected when system is in critical state (e.g. DB down)."""
 
     def test_upload_rejected_when_db_down(self):
         """Upload returns 503 when system is in critical state."""
         from app import state
+
         old_critical, old_reasons = state.system_critical, state.system_critical_reasons
         try:
             state.system_critical = True
             state.system_critical_reasons = ["Database connection lost"]
             import io
-            res = client.post("/upload", data={"device": "cpu", "model_size": "tiny", "language": "auto"},
-                              files={"file": ("test.mp4", io.BytesIO(b"\x00" * 1024), "video/mp4")})
+
+            res = client.post(
+                "/upload",
+                data={"device": "cpu", "model_size": "tiny", "language": "auto"},
+                files={"file": ("test.mp4", io.BytesIO(b"\x00" * 1024), "video/mp4")},
+            )
             assert res.status_code == 503
             body = res.json()
             assert "critical" in body.get("detail", "").lower() or body.get("critical") is True
@@ -727,13 +825,18 @@ class TestUploadRequiresDB:
     def test_upload_rejected_when_critical_state(self):
         """Upload returns 503 for any critical reason (not just DB)."""
         from app import state
+
         old_critical, old_reasons = state.system_critical, state.system_critical_reasons
         try:
             state.system_critical = True
             state.system_critical_reasons = ["Disk space critically low"]
             import io
-            res = client.post("/upload", data={"device": "cpu", "model_size": "tiny", "language": "auto"},
-                              files={"file": ("test.mp4", io.BytesIO(b"\x00" * 1024), "video/mp4")})
+
+            res = client.post(
+                "/upload",
+                data={"device": "cpu", "model_size": "tiny", "language": "auto"},
+                files={"file": ("test.mp4", io.BytesIO(b"\x00" * 1024), "video/mp4")},
+            )
             assert res.status_code == 503
         finally:
             state.system_critical, state.system_critical_reasons = old_critical, old_reasons
@@ -741,13 +844,18 @@ class TestUploadRequiresDB:
     def test_upload_accepted_when_db_healthy(self):
         """Upload proceeds normally when system is not critical (file validation may fail, but not 503)."""
         from app import state
+
         old_critical, old_reasons = state.system_critical, state.system_critical_reasons
         try:
             state.system_critical = False
             state.system_critical_reasons = []
             import io
-            res = client.post("/upload", data={"device": "cpu", "model_size": "tiny", "language": "auto"},
-                              files={"file": ("test.mp4", io.BytesIO(b"\x00" * 100), "video/mp4")})
+
+            res = client.post(
+                "/upload",
+                data={"device": "cpu", "model_size": "tiny", "language": "auto"},
+                files={"file": ("test.mp4", io.BytesIO(b"\x00" * 100), "video/mp4")},
+            )
             # May fail on file validation (too small, bad magic bytes) but NOT 503
             assert res.status_code != 503
         finally:
@@ -759,9 +867,11 @@ class TestReadinessRequiresDB:
 
     def test_ready_fails_when_db_down(self):
         """Readiness probe returns 503 when DB is unreachable."""
-        with patch("app.routes.health.shutil.disk_usage") as mock_disk, \
-             patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"), \
-             patch("app.services.query_layer.check_db_health", return_value={"status": "unhealthy", "ok": False}):
+        with (
+            patch("app.routes.health.shutil.disk_usage") as mock_disk,
+            patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"),
+            patch("app.services.query_layer.check_db_health", return_value={"status": "unhealthy", "ok": False}),
+        ):
             mock_disk.return_value = MagicMock(free=10 * 1024**3)
             res = client.get("/ready")
             assert res.status_code == 503
@@ -771,9 +881,14 @@ class TestReadinessRequiresDB:
 
     def test_ready_succeeds_when_db_healthy(self):
         """Readiness probe returns 200 when DB is healthy."""
-        with patch("app.routes.health.shutil.disk_usage") as mock_disk, \
-             patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"), \
-             patch("app.services.query_layer.check_db_health", return_value={"status": "healthy", "ok": True, "latency_ms": 3.0}):
+        with (
+            patch("app.routes.health.shutil.disk_usage") as mock_disk,
+            patch("app.routes.health.shutil.which", return_value="/usr/bin/ffmpeg"),
+            patch(
+                "app.services.query_layer.check_db_health",
+                return_value={"status": "healthy", "ok": True, "latency_ms": 3.0},
+            ),
+        ):
             mock_disk.return_value = MagicMock(free=10 * 1024**3)
             res = client.get("/ready")
             assert res.status_code == 200
