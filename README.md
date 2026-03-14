@@ -180,7 +180,7 @@ frontend/
 | `--profile gpu` | Single-node, NVIDIA GPU |
 | `--profile distributed` | API + Celery workers + Redis + nginx |
 
-See [DEPLOY.md](DEPLOY.md) for full production deployment instructions (TLS, firewall, auto-renew certs).
+See [docs/DEPLOY.md](docs/DEPLOY.md) for full production deployment instructions (TLS, firewall, auto-renew certs).
 
 ## Testing
 

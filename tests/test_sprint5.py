@@ -224,9 +224,9 @@ class TestGracefulShutdown:
 
 class TestLoadTesting:
     def test_loadtest_script_exists(self):
-        assert (PROJECT_ROOT / "loadtest.py").exists()
+        assert (PROJECT_ROOT / "scripts" / "loadtest.py").exists()
 
     def test_loadtest_has_main(self):
-        content = (PROJECT_ROOT / "loadtest.py").read_text()
+        content = (PROJECT_ROOT / "scripts" / "loadtest.py").read_text()
         assert "def main()" in content
         assert "argparse" in content

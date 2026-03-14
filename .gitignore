@@ -25,9 +25,11 @@ env/
 *.crt
 *.p12
 
-# Databases
+# Databases (runtime)
 *.db
+*.sqlite
 *.sqlite3
+!alembic/**
 
 # Uploads & outputs (user data)
 uploads/
@@ -40,6 +42,9 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+
+# Profiler output
+*.prof
 
 # Claude Code
 .claude/

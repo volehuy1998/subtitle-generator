@@ -807,8 +807,12 @@ lifespan shutdown
 subtitle-generator/
 ├── main.py                          # Entry point (uvicorn)
 ├── CLAUDE.md                        # AI assistant instructions
-├── ARCHITECTURE.md                  # This document
-├── ROADMAP.md                       # Sprint history
+├── docs/
+│   ├── ARCHITECTURE.md              # This document
+│   ├── ROADMAP.md                   # Sprint history
+│   ├── DEPLOY.md                    # Production deployment guide
+│   ├── PRODUCT_STRATEGY.md          # Product strategy
+│   └── CODING_STANDARDS.md          # Coding standards and frontend architecture
 ├── docker-compose.yml               # Docker orchestration
 ├── Dockerfile                       # Container build
 ├── requirements.txt                 # Python dependencies

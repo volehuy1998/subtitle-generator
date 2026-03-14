@@ -1,45 +1,17 @@
-# Scripts
+# Utility Scripts
 
-Operational scripts for the subtitle-generator service.
-
-## Certbot Auto-Renewal Hook
-
-`renew-certs.sh` is called by certbot after a successful certificate renewal. It copies the new
-certificates into the project directory and restarts the Docker container.
-
-**To activate certbot auto-renewal:**
-
-```bash
-sudo ln -sf /home/claude-user/subtitle-generator/scripts/renew-certs.sh \
-    /etc/letsencrypt/renewal-hooks/deploy/
-```
-
-Certbot will then call this script automatically after each successful renewal.
+| Script | Purpose | Usage |
+|--------|---------|-------|
+| deploy.sh | Production deployment automation | `bash scripts/deploy.sh` |
+| analyze.py | Log analysis and diagnostics | `python scripts/analyze.py` |
+| benchmark.py | Performance benchmarking | `python scripts/benchmark.py` |
+| loadtest.py | Concurrent load testing | `python scripts/loadtest.py` |
+| check_interface.py | Playwright UI verification | `python scripts/check_interface.py` |
+| renew-certs.sh | TLS certificate renewal | `bash scripts/renew-certs.sh` |
+| setup-cron.sh | Cron job setup for cert renewal | `bash scripts/setup-cron.sh` |
+| update_security_assertions.py | Update security tracking data | Called by post-commit hook |
 
 ## Fail2ban Configuration
 
-The `fail2ban/` directory contains a filter definition and two jail configs that protect the
-service against brute-force and abuse.
-
-| File | Purpose |
-|------|---------|
-| `fail2ban/filter.d/subtitle-generator.conf` | Regex rules matching auth failures and HTTP error bursts |
-| `fail2ban/jail.d/subtitle-generator.conf` | Two jails: auth failures (ban 1 h) and HTTP flood (ban 10 min) |
-
-**To install:**
-
-```bash
-# Copy filter and jail configs into fail2ban's config directories
-sudo cp fail2ban/filter.d/subtitle-generator.conf /etc/fail2ban/filter.d/
-sudo cp fail2ban/jail.d/subtitle-generator.conf   /etc/fail2ban/jail.d/
-
-# Reload fail2ban to pick up the new rules
-sudo fail2ban-client reload
-```
-
-Verify the jails are active:
-
-```bash
-sudo fail2ban-client status subtitle-generator-auth
-sudo fail2ban-client status subtitle-generator-http
-```
+The `fail2ban/` subdirectory contains filter and jail configs for protecting the service
+against brute-force and abuse. See inline comments in those files for installation steps.

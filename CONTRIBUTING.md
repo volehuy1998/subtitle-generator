@@ -2,7 +2,7 @@
 
 Thank you for your interest in contributing. This guide covers everything you need to get started.
 
-For detailed architecture and module layout, see [`CLAUDE.md`](./CLAUDE.md). For frontend architecture and test plans, see [`class.md`](./class.md).
+For detailed architecture and module layout, see [`CLAUDE.md`](./CLAUDE.md). For frontend architecture and test plans, see [`docs/CODING_STANDARDS.md`](./docs/CODING_STANDARDS.md).
 
 ---
 
@@ -278,7 +278,7 @@ cd frontend && npm run build
 The project is a FastAPI backend with a React SPA frontend. Key documents:
 
 - **[`CLAUDE.md`](./CLAUDE.md)** -- Full architecture reference: module layout, pipeline flow, concurrency model, state management, deployment modes, environment variables.
-- **[`class.md`](./class.md)** -- Frontend architecture review, component tree, bug reports, test plans, and project standards (Section 5).
+- **[`docs/CODING_STANDARDS.md`](./docs/CODING_STANDARDS.md)** -- Frontend architecture review, component tree, bug reports, test plans, and project standards (Section 5).
 
 ### Quick summary
 

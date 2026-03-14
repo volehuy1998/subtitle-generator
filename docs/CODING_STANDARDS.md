@@ -1302,7 +1302,7 @@ Current version: `2.0.0` (from `app/main.py` FastAPI version).
 ### 5.3 Implementation Steps
 
 **Phase 1 — Immediate (this session):**
-1. ~~Document standards in class.md~~ (done)
+1. ~~Document standards in CODING_STANDARDS.md~~ (done)
 2. Add commitlint config for Conventional Commits enforcement
 3. Add PR template to `.github/PULL_REQUEST_TEMPLATE.md`
 
