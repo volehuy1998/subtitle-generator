@@ -1,0 +1,355 @@
+name: Memory Backup Validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.sentinel/**'
+      - '.meridian/**'
+  push:
+    branches: [main]
+    paths:
+      - '.sentinel/**'
+      - '.meridian/**'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-sentinel:
+    name: Validate .sentinel/ backup
+    runs-on: ubuntu-latest
+    if: |
+      contains(join(github.event.commits.*.modified, ','), '.sentinel/') ||
+      contains(join(github.event.commits.*.added, ','), '.sentinel/') ||
+      github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate .sentinel/ integrity
+        run: |
+          set -euo pipefail
+          ERRORS=()
+          DIR=".sentinel"
+
+          echo "============================================"
+          echo "  .sentinel/ Backup Integrity Check"
+          echo "============================================"
+
+          # 1. MEMORY.md index must exist
+          if [ ! -f "$DIR/MEMORY.md" ]; then
+            ERRORS+=("MEMORY.md index file missing from $DIR/")
+          else
+            # 2. Every .md file referenced in MEMORY.md must exist
+            echo ""
+            echo "Checking index references..."
+            REFERENCED=$(grep -oP '\[([a-zA-Z0-9_.-]+\.md)\]' "$DIR/MEMORY.md" | tr -d '[]' | sort -u)
+            for ref in $REFERENCED; do
+              if [ ! -f "$DIR/$ref" ]; then
+                ERRORS+=("Index references $ref but file not found in $DIR/")
+              else
+                echo "  [ok] $ref"
+              fi
+            done
+
+            # 3. Every .md file in directory (except MEMORY.md, README.md) should be in index
+            echo ""
+            echo "Checking for unindexed files..."
+            for file in "$DIR"/*.md; do
+              basename=$(basename "$file")
+              if [ "$basename" = "MEMORY.md" ] || [ "$basename" = "README.md" ]; then
+                continue
+              fi
+              if ! grep -q "$basename" "$DIR/MEMORY.md"; then
+                ERRORS+=("File $basename exists in $DIR/ but is NOT listed in MEMORY.md index")
+              else
+                echo "  [ok] $basename indexed"
+              fi
+            done
+          fi
+
+          # 4. Check for sensitive data patterns
+          echo ""
+          echo "Scanning for sensitive data leaks..."
+          SENSITIVE_FOUND=false
+
+          # Public IP addresses (skip RFC 5737 test-net, loopback, link-local)
+          if grep -rPn '\b(?!127\.0\.0\.)\b(?!10\.)\b(?!172\.(1[6-9]|2[0-9]|3[01])\.)\b(?!192\.168\.)\b(?!192\.0\.2\.)\b(?!198\.51\.100\.)\b(?!203\.0\.113\.)\b(?!0\.0\.0\.0)\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b' "$DIR"/*.md 2>/dev/null | grep -v 'README\|MEMORY\.md' | head -20; then
+            ERRORS+=("Possible public IP address found in $DIR/ files — review required")
+            SENSITIVE_FOUND=true
+          fi
+
+          # Port bindings
+          if grep -rn '0\.0\.0\.0:' "$DIR"/*.md 2>/dev/null | grep -v 'README' | head -5; then
+            ERRORS+=("Port binding (0.0.0.0:) found in $DIR/ files")
+            SENSITIVE_FOUND=true
+          fi
+
+          # Sensitive paths
+          if grep -rn '/opt/subtitle\|/etc/letsencrypt\|/etc/nginx' "$DIR"/*.md 2>/dev/null | grep -v 'README' | head -5; then
+            ERRORS+=("Sensitive server paths found in $DIR/ files")
+            SENSITIVE_FOUND=true
+          fi
+
+          # Private keys / credentials
+          if grep -rn 'BEGIN.*PRIVATE KEY\|password\s*=\s*["\x27][^"\x27]\|api_key\s*=\s*["\x27][^"\x27]' "$DIR"/*.md 2>/dev/null | head -5; then
+            ERRORS+=("Possible credentials or private keys found in $DIR/ files")
+            SENSITIVE_FOUND=true
+          fi
+
+          if [ "$SENSITIVE_FOUND" = false ]; then
+            echo "  [ok] No sensitive data detected"
+          fi
+
+          # 5. Check frontmatter on memory files
+          echo ""
+          echo "Validating memory file frontmatter..."
+          for file in "$DIR"/*.md; do
+            basename=$(basename "$file")
+            if [ "$basename" = "MEMORY.md" ] || [ "$basename" = "README.md" ]; then
+              continue
+            fi
+            if ! head -1 "$file" | grep -q '^---$'; then
+              ERRORS+=("$basename missing YAML frontmatter (must start with ---)")
+            else
+              # Check required fields
+              FRONT=$(sed -n '1,/^---$/p' "$file" | tail -n +2 | head -n -1)
+              for field in name description type; do
+                if ! echo "$FRONT" | grep -q "^${field}:"; then
+                  ERRORS+=("$basename missing required frontmatter field: $field")
+                fi
+              done
+            fi
+          done
+
+          # Report
+          echo ""
+          echo "============================================"
+          if [ ${#ERRORS[@]} -eq 0 ]; then
+            echo "  .sentinel/ backup: ALL CHECKS PASSED"
+            echo "============================================"
+          else
+            echo "  .sentinel/ backup: ${#ERRORS[@]} ISSUE(S) FOUND"
+            echo "============================================"
+            for err in "${ERRORS[@]}"; do
+              echo "  - $err"
+            done
+            exit 1
+          fi
+
+  validate-meridian:
+    name: Validate .meridian/ backup
+    runs-on: ubuntu-latest
+    if: |
+      contains(join(github.event.commits.*.modified, ','), '.meridian/') ||
+      contains(join(github.event.commits.*.added, ','), '.meridian/') ||
+      github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate .meridian/ integrity + Vault security scan
+        run: |
+          set -euo pipefail
+          ERRORS=()
+          DIR=".meridian"
+
+          echo "============================================"
+          echo "  .meridian/ Backup Integrity Check"
+          echo "  (includes automated Vault security scan)"
+          echo "============================================"
+
+          # 1. MEMORY.md index must exist
+          if [ ! -f "$DIR/MEMORY.md" ]; then
+            ERRORS+=("MEMORY.md index file missing from $DIR/")
+          else
+            # 2. Every .md file referenced in MEMORY.md must exist
+            echo ""
+            echo "Checking index references..."
+            REFERENCED=$(grep -oP '\[([a-zA-Z0-9_.-]+\.md)\]' "$DIR/MEMORY.md" | tr -d '[]' | sort -u)
+            for ref in $REFERENCED; do
+              if [ ! -f "$DIR/$ref" ]; then
+                ERRORS+=("Index references $ref but file not found in $DIR/")
+              else
+                echo "  [ok] $ref"
+              fi
+            done
+
+            # 3. Every .md file in directory (except MEMORY.md, README.md) should be in index
+            echo ""
+            echo "Checking for unindexed files..."
+            for file in "$DIR"/*.md; do
+              basename=$(basename "$file")
+              if [ "$basename" = "MEMORY.md" ] || [ "$basename" = "README.md" ]; then
+                continue
+              fi
+              if ! grep -q "$basename" "$DIR/MEMORY.md"; then
+                ERRORS+=("File $basename exists in $DIR/ but is NOT listed in MEMORY.md index")
+              else
+                echo "  [ok] $basename indexed"
+              fi
+            done
+          fi
+
+          # 4. VAULT SECURITY SCAN — mandatory for .meridian/
+          #    (per feedback_vault_review_before_push.md)
+          echo ""
+          echo "============================================"
+          echo "  Vault Security Scan (automated)"
+          echo "============================================"
+          SENSITIVE_FOUND=false
+
+          # 4a. Public IP addresses (critical — leaked 3 times before)
+          echo ""
+          echo "Scanning for public IP addresses..."
+          if grep -rPn '\b(?!127\.0\.0\.)\b(?!10\.)\b(?!172\.(1[6-9]|2[0-9]|3[01])\.)\b(?!192\.168\.)\b(?!192\.0\.2\.)\b(?!198\.51\.100\.)\b(?!203\.0\.113\.)\b(?!0\.0\.0\.0)\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b' "$DIR"/*.md 2>/dev/null | grep -v 'README\|MEMORY\.md' | head -20; then
+            ERRORS+=("PUBLIC IP ADDRESS DETECTED — this was the exact leak from PR #85. Remove or redact before merging.")
+            SENSITIVE_FOUND=true
+          else
+            echo "  [ok] No public IPs found"
+          fi
+
+          # 4b. Port bindings (0.0.0.0:PORT)
+          echo ""
+          echo "Scanning for port bindings..."
+          if grep -rn '0\.0\.0\.0:' "$DIR"/*.md 2>/dev/null | grep -v 'README' | head -5; then
+            ERRORS+=("Port binding (0.0.0.0:PORT) found — reveals server configuration. Redact before merging.")
+            SENSITIVE_FOUND=true
+          else
+            echo "  [ok] No port bindings found"
+          fi
+
+          # 4c. Sensitive server paths
+          echo ""
+          echo "Scanning for sensitive paths..."
+          if grep -rn '/opt/subtitle\|/etc/letsencrypt\|/etc/nginx\|/home/[a-z]' "$DIR"/*.md 2>/dev/null | grep -v 'README' | head -5; then
+            ERRORS+=("Sensitive server path found — reveals infrastructure details. Redact before merging.")
+            SENSITIVE_FOUND=true
+          else
+            echo "  [ok] No sensitive paths found"
+          fi
+
+          # 4d. Private keys / credentials
+          echo ""
+          echo "Scanning for credentials..."
+          if grep -rn 'BEGIN.*PRIVATE KEY\|password\s*=\s*["\x27][^"\x27]\|api_key\s*=\s*["\x27][^"\x27]' "$DIR"/*.md 2>/dev/null | head -5; then
+            ERRORS+=("Possible credentials or private keys found. Remove before merging.")
+            SENSITIVE_FOUND=true
+          else
+            echo "  [ok] No credentials found"
+          fi
+
+          # 4e. Hostnames / domain names (custom server domains)
+          echo ""
+          echo "Scanning for server hostnames..."
+          if grep -rPn 'sub-(ctrl|api|data|worker)[^\s]*\.(com|net|org|io|dev)' "$DIR"/*.md 2>/dev/null | grep -v 'README' | head -5; then
+            ERRORS+=("Server hostname/domain found — reveals infrastructure. Redact before merging.")
+            SENSITIVE_FOUND=true
+          else
+            echo "  [ok] No server hostnames found"
+          fi
+
+          if [ "$SENSITIVE_FOUND" = false ]; then
+            echo ""
+            echo "  Vault scan: CLEAN — no sensitive data detected"
+          fi
+
+          # 5. Check frontmatter on memory files
+          echo ""
+          echo "Validating memory file frontmatter..."
+          for file in "$DIR"/*.md; do
+            basename=$(basename "$file")
+            if [ "$basename" = "MEMORY.md" ] || [ "$basename" = "README.md" ]; then
+              continue
+            fi
+            if ! head -1 "$file" | grep -q '^---$'; then
+              ERRORS+=("$basename missing YAML frontmatter (must start with ---)")
+            else
+              FRONT=$(sed -n '1,/^---$/p' "$file" | tail -n +2 | head -n -1)
+              for field in name description type; do
+                if ! echo "$FRONT" | grep -q "^${field}:"; then
+                  ERRORS+=("$basename missing required frontmatter field: $field")
+                fi
+              done
+            fi
+          done
+
+          # Report
+          echo ""
+          echo "============================================"
+          if [ ${#ERRORS[@]} -eq 0 ]; then
+            echo "  .meridian/ backup: ALL CHECKS PASSED"
+            echo "  Vault (automated): APPROVED"
+            echo "============================================"
+          else
+            echo "  .meridian/ backup: ${#ERRORS[@]} ISSUE(S) FOUND"
+            echo "============================================"
+            for err in "${ERRORS[@]}"; do
+              echo "  - $err"
+            done
+            echo ""
+            echo "  Vault security policy requires ALL sensitive data"
+            echo "  to be removed before .meridian/ files can be pushed."
+            echo "  See: .meridian/feedback_vault_review_before_push.md"
+            exit 1
+          fi
+
+  sync-reminder:
+    name: Memory sync reminder
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if memory-relevant files changed without backup sync
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          echo "============================================"
+          echo "  Memory Backup Sync Reminder"
+          echo "============================================"
+
+          # Get list of changed files in this PR
+          CHANGED=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" 2>/dev/null || echo "")
+
+          WARNINGS=()
+
+          # Check: if app/ or frontend/ files changed, remind about .sentinel/ sync
+          APP_CHANGES=$(echo "$CHANGED" | grep -c '^app/\|^frontend/\|^scripts/\|^\.github/' || true)
+          SENTINEL_CHANGES=$(echo "$CHANGED" | grep -c '^\.sentinel/' || true)
+
+          if [ "$APP_CHANGES" -gt 0 ] && [ "$SENTINEL_CHANGES" -eq 0 ]; then
+            WARNINGS+=("Code changes detected but no .sentinel/ sync — if you updated Sentinel memory during this work, remember to sync before merging")
+          fi
+
+          # Check: if deployment files changed, remind about .meridian/ sync
+          DEPLOY_CHANGES=$(echo "$CHANGED" | grep -c 'docker-compose\|Dockerfile\|deploy\|nginx\|\.env' || true)
+          MERIDIAN_CHANGES=$(echo "$CHANGED" | grep -c '^\.meridian/' || true)
+
+          if [ "$DEPLOY_CHANGES" -gt 0 ] && [ "$MERIDIAN_CHANGES" -eq 0 ]; then
+            WARNINGS+=("Deployment-related files changed but no .meridian/ sync — if Meridian updated their memory during review, remind them to sync before merging")
+          fi
+
+          if [ ${#WARNINGS[@]} -gt 0 ]; then
+            echo ""
+            echo "  REMINDERS:"
+            for warn in "${WARNINGS[@]}"; do
+              echo "  - $warn"
+            done
+            echo ""
+            echo "  This is informational only — not blocking merge."
+            echo "============================================"
+            # Exit 0 — this is a reminder, not a blocker
+            exit 0
+          else
+            echo "  No sync reminders needed."
+            echo "============================================"
+          fi
