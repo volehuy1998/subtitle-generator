@@ -63,16 +63,15 @@ _IPV4_PATTERN = re.compile(
 )
 
 # IPv6: global unicast (2000::/3) and unique local (fc00::/7).
-# Excludes ::1 (loopback), fe80:: (link-local), :: (unspecified).
+# Strategy: require at least one non-decimal hex letter (a-f) so that
+# pure-decimal timestamps like 10:30:45 are not flagged. CIDR notation
+# (/N suffix) is excluded by the negative lookahead. Compressed (::) and
+# full (8-group) forms are both covered by the flexible repetition.
 _IPV6_PATTERN = re.compile(
-    r"(?<![:\w])"  # not preceded by colon or word char (avoids URLs)
-    r"("
-    r"(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}"  # full 8-group
-    r"|(?:[0-9a-fA-F]{1,4}:){1,7}:"  # compressed trailing
-    r"|:(?::[0-9a-fA-F]{1,4}){1,7}"  # compressed leading
-    r"|(?:[0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}"  # mixed
-    r")"
-    r"(?![:\w])"
+    r"(?<![:\w])"
+    r"(?=[0-9a-fA-F:]*[a-fA-F])"  # must contain at least one hex letter
+    r"([0-9a-fA-F]{0,4}(?::[0-9a-fA-F]{0,4}){3,7})"
+    r"(?![:\w/])"  # exclude /N CIDR suffix
 )
 
 _PRIVATE_IPV6 = re.compile(
