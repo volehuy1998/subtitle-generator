@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "95af9c9",
-    "sha_full": "95af9c9dcdc24f80c27070552a59989fe4361353",
-    "datetime": "2026-03-15T01:32:26+07:00",
-    "message": "fix(middleware): add Secure flag to session cookie and explicit CORS allow_headers"
+    "sha": "3606519",
+    "sha_full": "3606519438b1cdbec481f6fb6616b5569b4dff16",
+    "datetime": "2026-03-15T02:53:05+07:00",
+    "message": "chore(memory): sync Sentinel memory backup \u2014 author disclosure + delegation rules"
   },
   "assertions": [
     {
