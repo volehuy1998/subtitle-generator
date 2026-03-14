@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "9f14501",
-    "sha_full": "9f14501d81437e15058cf008f745f126c60a92cb",
-    "datetime": "2026-03-15T04:51:04+07:00",
-    "message": "security: fix 3 remaining CodeQL annotations on PR #86"
+    "sha": "5cea7e6",
+    "sha_full": "5cea7e6b5986f704275abf48808c81a400c02b99",
+    "datetime": "2026-03-15T05:16:32+07:00",
+    "message": "ci(deploy): add automated PR attribute validation workflow"
   },
   "assertions": [
     {
