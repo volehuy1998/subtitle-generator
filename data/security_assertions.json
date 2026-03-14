@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "357b4a5",
-    "sha_full": "357b4a50b455c6008204cf0c10a64235d01cd563",
-    "datetime": "2026-03-15T05:53:08+07:00",
-    "message": "chore: sync .sentinel/ \u2014 latest repo state, redact sensitive data"
+    "sha": "003cc48",
+    "sha_full": "003cc48e24db59381e7286592a765163b4c93f67",
+    "datetime": "2026-03-15T05:59:57+07:00",
+    "message": "fix(ci): scan only changed files in memory backup validation"
   },
   "assertions": [
     {
