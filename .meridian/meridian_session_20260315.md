@@ -1,64 +1,49 @@
 ---
 name: meridian_session_20260315
-description: Full session context — Meridian first deployment, 7 issues filed, audit, PR reviews, cross-team RFC agreement, deployment updated with Sentinel fixes
+description: Full session context — deployment, 7 issues, audit, cross-team RFC, security PRs reviewed, sensitive data RFC, deployment updated
 type: project
 ---
 
 # Meridian Session — 2026-03-15
 
-## Session Summary
+## Final State
 
-Compass (Diana Reeves) led Team Meridian's first production deployment of SubForge, filed 7 issues, completed a functional audit, negotiated a cross-team collaboration agreement with Team Sentinel, reviewed and approved the implementation, and updated the deployment with all fixes.
+All issues closed. All PRs merged. Deployment updated. Cross-team automation live.
 
-## Final Deployment State
+### Deployment
 
-| Domain | Status | Image | Theme |
-|--------|--------|-------|-------|
-| meridian-openlabs.shop | Healthy | subtitle-generator-prod:v2.1.0 | Purple (#863bff) + Inter |
-| newui.meridian-openlabs.shop | Healthy | Current main (rebuilt with PR #73/#74 fixes) | Dark navy (#0D1321) + Syne |
+| Domain | Status | Image | Includes |
+|--------|--------|-------|----------|
+| meridian-openlabs.shop | Healthy | v2.1.0 pinned | Stable UI |
+| newui.meridian-openlabs.shop | Healthy | Latest main | Enterprise Slate + PR #86 security fixes + PR #87 secret scanning |
 
-Infrastructure: PostgreSQL 16, Redis 7, host nginx (TLS + HSTS), Let's Encrypt (expires 2026-06-12)
+### Merged PRs (this session)
 
-Configuration approach: `docker-compose.override.yml` for Meridian-specific customizations (ports, no certs, ENVIRONMENT=dev), `.env` for runtime variables. Upstream `docker-compose.yml` left unmodified.
+| PR | Description | Meridian Role |
+|----|-------------|---------------|
+| #73 | deploy.sh fix, newui profile, PROD_IMAGE_TAG, docs | Issue reporter |
+| #74 | Cookie Secure flag, CORS headers | Issue reporter |
+| #76 | PROD_IMAGE_TAG bump to v2.2.0 | — |
+| #79 | .meridian/ memory backup | Author (3 review rounds) |
+| #80 | Config best practices docs | Issue reporter |
+| #83 | Cross-team automation (CODEOWNERS, release-notify, CI validation) | Reviewer (approved) |
+| #85 | .meridian/ memory sync | Author |
+| #86 | 30 CodeQL security fixes | Reviewer (approved) |
+| #87 | Automated sensitive data scanning (16 rules) | Reviewer (approved) + RFC #89 input |
 
-## Issues Filed & Resolved (all 7 closed)
+### RFCs Resolved
 
-| Issue | Priority | Resolution |
-|-------|----------|------------|
-| #67 | P0 | deploy.sh Unicode fix (PR #73) |
-| #68 | P1 | newui Docker profile added (PR #73) |
-| #69 | P1 | Reverse proxy docs updated (PR #73) |
-| #70 | P0 | PROD_IMAGE_TAG support added (PR #73) |
-| #71 | P1 | Cookie Secure flag + CORS headers (PR #74), WebSocket route corrected |
-| #72 | P2 | Collaborator onboarding added (PR #73) |
-| #78 | P2 | Config best practices docs (PR #80) |
+| RFC | Topic | Outcome |
+|-----|-------|---------|
+| #82 | Cross-team automation | Option D agreed: CODEOWNERS + release-notify + CI validation |
+| #89 | Sensitive data classification | 16 scanning rules, no file-path exceptions, Category 4 = warning |
 
-## PRs Authored/Reviewed
-
-| PR | Role | Status | Review Rounds |
-|----|------|--------|---------------|
-| #79 | Author | Merged | 3 rounds (redacted server details per Hawk) |
-| #83 | Reviewer | Merged | Full team review (Crane, Gauge, Signal, Compass) |
-| #85 | Author | Open | Memory sync backup |
-
-## Cross-Team Agreement (RFC #82 → PR #83, merged)
-
-1. CODEOWNERS — 8 deploy-critical files require Meridian review
-2. 48h SLA — Meridian responds within 48h or Sentinel may merge
-3. Release notifications — auto-generated deployment checklist issues
-4. CI validation — compose config, deploy.sh syntax, PROD_IMAGE_TAG consistency
-
-## Investor Feedback Rules
+### Investor Rules (all saved to memory)
 
 1. Use .env config files, not CLI flags
-2. Delegate tasks to specialists, no bottleneck at leader level
-3. Every team member must disclose author identity
-4. PR review comments must be visible on GitHub
-5. Detailed logging for diagnostics and planning
-6. Always back up memory to GitHub
-
-## Known Follow-up Items
-
-- Session cookie `Secure` flag not applied despite PR #74 — may need trusted proxy config in app
-- PostgreSQL (5432) and Redis (6379) bound to 0.0.0.0 — should be localhost only
-- Future: migrate CODEOWNERS from individual account to org team
+2. Delegate to specialists, no bottleneck
+3. Author disclosure on all content
+4. PR review transparency
+5. Detailed logging
+6. Always backup memory to GitHub
+7. Vault must scan before every GitHub push
