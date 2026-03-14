@@ -1,0 +1,36 @@
+name: CI/CD Pipeline
+
+# Mirror trigger of main CI but ONLY for docs-only changes.
+# Provides the required "Lint" and "Test" check names so branch protection
+# allows merging docs PRs without running the full pipeline.
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+  pull_request:
+    branches: [main]
+    paths:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Docs-only change — lint skipped."
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Docs-only change — tests skipped."
