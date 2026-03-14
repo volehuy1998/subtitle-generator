@@ -13,22 +13,26 @@ function FilePicker({
   accept,
   filename,
   onFile,
+  ariaLabel,
 }: {
   label: string
   accept: string
   filename: string | null
   onFile: (f: File) => void
+  ariaLabel: string
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const inputId = `file-picker-${label.toLowerCase().replace(/\s+/g, '-')}`
 
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-xs font-medium" style={{ color: 'var(--color-text-2)' }}>
+      <label htmlFor={inputId} className="text-xs font-medium" style={{ color: 'var(--color-text-2)' }}>
         {label}
-      </span>
+      </label>
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
+        aria-label={ariaLabel}
         className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg border-2 border-dashed text-sm transition-all text-left"
         style={{
           background: filename ? 'var(--color-surface-2)' : 'var(--color-surface)',
@@ -52,8 +56,10 @@ function FilePicker({
       </button>
       <input
         ref={inputRef}
+        id={inputId}
         type="file"
         accept={accept}
+        aria-label={ariaLabel}
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0]
@@ -173,12 +179,14 @@ export function EmbedTab() {
         accept="video/*"
         filename={videoFile?.name ?? null}
         onFile={setVideoFile}
+        ariaLabel="Select video file"
       />
       <FilePicker
         label="Subtitle file"
         accept=".srt,.vtt"
         filename={subtitleFile?.name ?? null}
         onFile={setSubtitleFile}
+        ariaLabel="Select subtitle file"
       />
 
       {/* Mode selector */}
@@ -317,7 +325,7 @@ export function EmbedTab() {
           type="button"
           onClick={handleEmbed}
           disabled={!canEmbed}
-          className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg text-sm font-medium transition-all"
+          className="btn-interactive flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg text-sm font-medium transition-all"
           style={{
             background: !canEmbed ? 'var(--color-border)' : 'var(--color-success)',
             color: !canEmbed ? 'var(--color-text-3)' : 'white',

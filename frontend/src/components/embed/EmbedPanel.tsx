@@ -192,7 +192,7 @@ export function EmbedPanel({ taskId, alreadyTranslated }: Props) {
         type="button"
         onClick={handleEmbed}
         disabled={embedState === 'processing'}
-        className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg text-sm font-semibold transition-all"
+        className="btn-interactive flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg text-sm font-semibold transition-all"
         style={{
           background: embedState === 'processing' ? 'var(--color-border)' : 'var(--color-primary)',
           color: embedState === 'processing' ? 'var(--color-text-3)' : 'white',

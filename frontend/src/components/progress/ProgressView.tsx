@@ -100,7 +100,39 @@ export function ProgressView({ taskId }: Props) {
     : 0
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 animate-fade-in">
+      {/* Success celebration banner */}
+      {isComplete && (
+        <div
+          className="animate-success-fade-in flex items-start gap-3 px-4 py-3 rounded-lg"
+          style={{
+            background: 'var(--color-success-light)',
+            border: '1px solid var(--color-success-border)',
+          }}
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" className="flex-shrink-0 mt-0.5">
+            <circle cx="10" cy="10" r="9" stroke="var(--color-success)" strokeWidth="1.5" fill="none" />
+            <path d="M6 10l3 3 5-6" stroke="var(--color-success)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <div className="flex flex-col gap-1">
+            <span className="text-sm font-semibold" style={{ color: 'var(--color-success)' }}>
+              Transcription complete!
+            </span>
+            <div className="flex items-center gap-2 flex-wrap text-xs" style={{ color: 'var(--color-text-2)' }}>
+              {liveSegments.length > 0 && (
+                <span>{liveSegments.length} segment{liveSegments.length !== 1 ? 's' : ''}</span>
+              )}
+              {totalSec && totalSec > 0 && (
+                <span>{formatTimestamp(totalSec)} total</span>
+              )}
+              {store.language && (
+                <span>{store.language}</span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* File info row */}
       <div
         className="flex items-center gap-3 px-3 py-2.5 rounded-lg"
@@ -223,17 +255,15 @@ export function ProgressView({ taskId }: Props) {
             )}
 
             {/* ETA */}
-            {eta && eta !== '-' && eta !== '0:00' && (
-              <div className="flex items-center gap-1" title="Estimated Time of Arrival — approximate time until transcription completes, based on current processing speed.">
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
-                  <path d="M5 2v3h3" stroke="var(--color-text-3)" strokeWidth="1" strokeLinecap="round" />
-                  <circle cx="5" cy="5" r="4" stroke="var(--color-text-3)" strokeWidth="1" fill="none" />
-                </svg>
-                <span className="text-xs tabular-nums" style={{ color: 'var(--color-text-2)', cursor: 'help' }}>
-                  ~{eta} remaining
-                </span>
-              </div>
-            )}
+            <div className="flex items-center gap-1" title="Estimated Time of Arrival — approximate time until transcription completes, based on current processing speed.">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+                <path d="M5 2v3h3" stroke="var(--color-text-3)" strokeWidth="1" strokeLinecap="round" />
+                <circle cx="5" cy="5" r="4" stroke="var(--color-text-3)" strokeWidth="1" fill="none" />
+              </svg>
+              <span className="text-xs tabular-nums" style={{ color: 'var(--color-text-2)', cursor: 'help' }}>
+                {!eta || eta === '-' || eta === '0:00' ? 'Calculating...' : `~${eta} remaining`}
+              </span>
+            </div>
 
             {/* Elapsed */}
             {elapsed && elapsed !== '0:00' && (
@@ -322,7 +352,7 @@ export function ProgressView({ taskId }: Props) {
             type="button"
             onClick={handlePauseResume}
             disabled={anyRequesting}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-all"
+            className="btn-interactive flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border"
             style={{
               background: 'var(--color-surface)',
               borderColor: isPaused ? 'var(--color-success)' : isPauseRequesting ? 'var(--color-warning)' : 'var(--color-border)',
@@ -348,7 +378,7 @@ export function ProgressView({ taskId }: Props) {
             type="button"
             onClick={handleCancel}
             disabled={isCancelRequesting}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-all"
+            className="btn-interactive flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border"
             style={{
               background: 'var(--color-surface)',
               borderColor: isCancelRequesting ? 'var(--color-danger)' : 'var(--color-border)',
@@ -361,6 +391,39 @@ export function ProgressView({ taskId }: Props) {
               <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
             {isCancelRequesting ? 'Cancelling...' : 'Cancel'}
+          </button>
+        </div>
+      )}
+
+      {/* Error view */}
+      {status === 'error' && (
+        <div className="flex flex-col gap-3 py-4">
+          <div
+            className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg"
+            style={{
+              background: 'var(--color-danger-light)',
+              border: '1px solid var(--color-danger)',
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="flex-shrink-0 mt-0.5">
+              <circle cx="8" cy="8" r="7" stroke="var(--color-danger)" strokeWidth="1.5" fill="none" />
+              <path d="M8 4.5v4M8 10.5v1" stroke="var(--color-danger)" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            <span className="text-xs font-medium" style={{ color: 'var(--color-danger)' }}>
+              {store.error ?? 'An error occurred during processing.'}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => { store.reset(); setAppMode('transcribe') }}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border transition-all"
+            style={{
+              background: 'var(--color-surface)',
+              borderColor: 'var(--color-border)',
+              color: 'var(--color-text)',
+            }}
+          >
+            Start Over
           </button>
         </div>
       )}
@@ -381,7 +444,7 @@ export function ProgressView({ taskId }: Props) {
               color: 'var(--color-text)',
             }}
           >
-            Try Again
+            Start Over
           </button>
         </div>
       )}
@@ -394,7 +457,7 @@ export function ProgressView({ taskId }: Props) {
             store.reset()
             setAppMode('transcribe')
           }}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border transition-all"
+          className="btn-interactive btn-process-next flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border"
           style={{
             background: 'var(--color-surface)',
             borderColor: 'var(--color-border)',

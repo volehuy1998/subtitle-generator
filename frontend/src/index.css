@@ -71,6 +71,66 @@ html { overflow-y: scroll; scrollbar-width: thin; scrollbar-color: var(--color-b
   border-radius: var(--radius-xs);
 }
 
+/* Interactive button lift effect */
+.btn-interactive {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.btn-interactive:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.btn-interactive:active {
+  transform: translateY(0);
+}
+
+/* Download button primary style */
+.btn-download {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.btn-download:hover {
+  background: var(--color-primary-hover);
+  box-shadow: 0 2px 8px rgba(124,58,237,0.25);
+}
+
+/* Process next file button hover */
+.btn-process-next {
+  transition: border-color 0.15s ease, color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+.btn-process-next:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Success celebration fade-in */
+@keyframes successFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-success-fade-in {
+  animation: successFadeIn 0.3s ease-out;
+}
+
+/* Gentle float animation for empty state */
+@keyframes gentleFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.animate-gentle-float {
+  animation: gentleFloat 3s ease-in-out infinite;
+}
+
 /* Responsive model table: hide middle columns on narrow screens */
 @media (max-width: 639px) {
   .model-grid { grid-template-columns: 1fr 60px !important; }

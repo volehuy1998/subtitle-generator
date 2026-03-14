@@ -139,7 +139,7 @@ export function App() {
       )}
 
       {/* Main layout */}
-      <main className="max-w-5xl mx-auto px-4 py-6 lg:py-8 flex flex-col lg:flex-row gap-5 lg:gap-6 items-start">
+      <main className="max-w-6xl mx-auto px-4 py-6 lg:py-8 flex flex-col lg:flex-row gap-5 lg:gap-6 items-start">
         {/* Left column: input */}
         <div className="flex-1 min-w-0 w-full">
           <div
@@ -153,6 +153,8 @@ export function App() {
             {/* Tab header */}
             <div
               className="flex items-center gap-0 px-1 pt-1"
+              role="tablist"
+              aria-label="Main sections"
               style={{ borderBottom: '1px solid var(--color-border)' }}
             >
               {tabs.map((tab) => {
@@ -161,6 +163,10 @@ export function App() {
                   <button
                     key={tab.id}
                     type="button"
+                    role="tab"
+                    id={`tab-${tab.id}`}
+                    aria-selected={isActive}
+                    aria-controls={`tabpanel-${tab.id}`}
                     onClick={() => setAppMode(tab.id)}
                     className="relative flex flex-col px-4 py-2.5 rounded-t-lg transition-colors"
                     style={{
@@ -188,7 +194,7 @@ export function App() {
             </div>
 
             {/* Tab content */}
-            <div className="p-4 md:p-5">
+            <div className="p-4 md:p-5" role="tabpanel" id={`tabpanel-${appMode}`} aria-labelledby={`tab-${appMode}`}>
               {appMode === 'transcribe' ? (
                 isProcessing && activeTaskId ? (
                   <ProgressView taskId={activeTaskId} />
