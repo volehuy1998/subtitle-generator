@@ -42,7 +42,7 @@ jobs:
       - run: ruff format --check --diff .
 
       # Frontend lint + type check
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "20"
       - name: Install frontend dependencies
@@ -82,7 +82,7 @@ jobs:
           path: coverage.xml
 
       # Frontend tests
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "20"
       - name: Install frontend dependencies
