@@ -148,13 +148,29 @@ _PATTERNS = [
         "Hardcoded password assignment",
         re.compile(r'(?:password|passwd|pwd)\s*=\s*["\'][^"\']{6,}["\']', re.IGNORECASE),
     ),
+    (
+        "cloudflare-token",
+        "Cloudflare API token",
+        re.compile(r"\b[0-9A-Za-z_-]{40}\b(?=.*(?:cloudflare|CF_API))", re.IGNORECASE),
+    ),
+    (
+        "hetzner-token",
+        "Hetzner Cloud API token",
+        re.compile(r"\bHETZNER_(?:API_)?(?:TOKEN|KEY)\s*=\s*[\"']?[0-9A-Za-z]{32,}"),
+    ),
+    (
+        "vultr-api-key",
+        "Vultr API key",
+        re.compile(r"\bVULTR_API_KEY\s*=\s*[\"']?[0-9A-Za-z-]{36,}"),
+    ),
     # --- Category 3 ---
     (
         "env-credential",
         "Env var with embedded credential value",
         re.compile(
             r"^(?:export\s+)?(?:DATABASE_URL|SECRET_KEY|WEBHOOK_SECRET|API_SECRET"
-            r"|JWT_SECRET|SIGNING_KEY|ENCRYPTION_KEY)\s*=\s*[\"']?[^\s\"'#]{8,}",
+            r"|JWT_SECRET|SIGNING_KEY|ENCRYPTION_KEY"
+            r"|DOCKER_PASSWORD|REGISTRY_PASSWORD)\s*=\s*[\"']?[^\s\"'#]{8,}",
             re.MULTILINE,
         ),
     ),
