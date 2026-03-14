@@ -12,11 +12,15 @@ If starting fresh on a new system:
 
 ```bash
 # After installing Claude Code and cloning the repo:
-mkdir -p ~/.claude/projects/-home-claude-user-subtitle-generator/memory/
-cp .sentinel/*.md ~/.claude/projects/-home-claude-user-subtitle-generator/memory/
+# The memory path is derived from your working directory, with slashes replaced by dashes.
+# For /root/subtitle-generator the path is:
+mkdir -p ~/.claude/projects/-root-subtitle-generator/memory/
+cp .sentinel/*.md ~/.claude/projects/-root-subtitle-generator/memory/
 ```
 
-Adjust the path if your working directory differs from `/home/claude-user/subtitle-generator/`.
+The memory path pattern is `~/.claude/projects/<working-dir-with-dashes>/memory/`, where the working directory's `/` separators are replaced with `-`. For example:
+- `/root/subtitle-generator` → `-root-subtitle-generator`
+- `/home/claude-user/subtitle-generator` → `-home-claude-user-subtitle-generator`
 
 ## Contents
 
@@ -42,7 +46,7 @@ Adjust the path if your working directory differs from `/home/claude-user/subtit
 When memory files are updated in `.claude/`, copy them here and commit:
 
 ```bash
-cp ~/.claude/projects/-home-claude-user-subtitle-generator/memory/*.md .sentinel/
+cp ~/.claude/projects/-root-subtitle-generator/memory/*.md .sentinel/
 git add .sentinel/ && git commit -m "chore: sync .sentinel/ backup with latest memory"
 ```
 
