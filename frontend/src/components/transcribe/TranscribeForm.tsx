@@ -516,6 +516,12 @@ export function TranscribeForm({ onUpload }: Props) {
           >
             MP4 · MKV · MOV · AVI · MP3 · WAV · M4A · up to 500 MB
           </span>
+          <span
+            className="text-xs mt-1"
+            style={{ color: 'var(--color-text-3)', fontStyle: 'italic' }}
+          >
+            Tip: Default settings work great for most files — just drop and go!
+          </span>
         </div>
       </div>
     </div>

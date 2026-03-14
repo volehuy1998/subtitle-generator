@@ -7,7 +7,7 @@ function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center gap-4 py-12 px-4 text-center">
       {/* Telescope SVG */}
-      <svg width="48" height="48" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <svg width="64" height="64" viewBox="0 0 48 48" fill="none" aria-label="No results yet" className="animate-gentle-float">
         <circle cx="24" cy="24" r="23" stroke="var(--color-border)" strokeWidth="1.5" fill="none" />
         <path
           d="M14 30l6-12 14-4-12 18-8-2z"
@@ -80,7 +80,7 @@ export function OutputPanel() {
         {!showResults ? (
           <EmptyState />
         ) : (
-          <>
+          <div className="animate-fade-in flex flex-col gap-4">
             {/* Filename + metadata */}
             <div className="flex flex-col gap-1.5">
               <h3
@@ -133,20 +133,12 @@ export function OutputPanel() {
             <button
               type="button"
               onClick={() => store.reset()}
-              className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium border transition-all"
+              className="btn-process-next btn-interactive flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium border"
               style={{
                 background: 'var(--color-surface)',
                 borderColor: 'var(--color-border)',
                 color: 'var(--color-text-2)',
                 cursor: 'pointer',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'var(--color-primary)'
-                e.currentTarget.style.color = 'var(--color-primary)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'var(--color-border)'
-                e.currentTarget.style.color = 'var(--color-text-2)'
               }}
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
@@ -173,7 +165,7 @@ export function OutputPanel() {
 
             {/* Timing breakdown */}
             <TimingBreakdown timings={stepTimings} />
-          </>
+          </div>
         )}
       </div>
     </div>

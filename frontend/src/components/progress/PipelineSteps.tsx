@@ -30,8 +30,18 @@ export function PipelineSteps({ activeStep, stepTimings, isPaused, isUploading, 
     ? [...BASE_STEPS, TRANSLATE_STEP, DONE_STEP]
     : [...BASE_STEPS, DONE_STEP]
 
+  // Count completed steps for progressbar
+  const effectiveStepForCount = isUploading ? 0 : activeStep
+  const completedSteps = Math.min(effectiveStepForCount, STEPS.length)
+
   return (
-    <div className="flex items-start w-full">
+    <div
+      className="flex items-start w-full"
+      role="progressbar"
+      aria-valuenow={completedSteps}
+      aria-valuemax={STEPS.length}
+      aria-label="Pipeline progress"
+    >
       {STEPS.map((step, index) => {
         // During upload phase, show Upload step (index 0) as active
         const effectiveStep = isUploading ? 0 : activeStep
@@ -66,6 +76,7 @@ export function PipelineSteps({ activeStep, stepTimings, isPaused, isUploading, 
               {/* Circle */}
               <div
                 className="flex items-center justify-center w-7 h-7 rounded-full border-2 transition-all duration-300"
+                aria-label={`Step ${index + 1}: ${step.label} — ${isDone ? 'complete' : isActive ? 'in progress' : 'pending'}`}
                 style={{
                   background: circleColor,
                   borderColor: circleBorder,

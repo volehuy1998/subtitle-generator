@@ -16,29 +16,16 @@ function DownloadButton({ href, ext, label }: DownloadButtonProps) {
     <a
       href={href}
       download
-      className="flex items-center gap-3 w-full px-4 py-3 rounded-lg border text-sm font-medium transition-all group"
+      className="btn-download btn-interactive flex items-center gap-3 w-full px-4 py-2.5 rounded-lg border text-sm font-medium group"
       style={{
-        background: 'var(--color-surface)',
-        borderColor: 'var(--color-border)',
-        color: 'var(--color-text)',
         textDecoration: 'none',
-      }}
-      onMouseEnter={(e) => {
-        const el = e.currentTarget
-        el.style.borderColor = 'var(--color-primary)'
-        el.style.background = 'var(--color-primary-light)'
-      }}
-      onMouseLeave={(e) => {
-        const el = e.currentTarget
-        el.style.borderColor = 'var(--color-border)'
-        el.style.background = 'var(--color-surface)'
       }}
     >
       {/* Arrow down icon */}
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
         <path
           d="M8 3v8M4 8l4 4 4-4"
-          stroke="var(--color-primary)"
+          stroke="currentColor"
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -51,8 +38,8 @@ function DownloadButton({ href, ext, label }: DownloadButtonProps) {
       <span
         className="px-1.5 py-0.5 rounded text-xs font-semibold"
         style={{
-          background: 'var(--color-primary-light)',
-          color: 'var(--color-primary)',
+          background: 'rgba(255,255,255,0.2)',
+          color: 'white',
           fontSize: '11px',
           letterSpacing: '0.04em',
         }}
