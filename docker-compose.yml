@@ -57,6 +57,7 @@ services:
   # Usage: docker compose --profile cpu up -d
 
   subtitle-generator:
+    image: subtitle-generator-prod:${PROD_IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: Dockerfile
@@ -91,6 +92,42 @@ services:
     restart: unless-stopped
     profiles:
       - cpu
+
+  # ── Preview subdomain (newui) ──────────────────────────────────────────────
+  # Usage: docker compose --profile newui up -d --build
+  # Serves current main build on 127.0.0.1:8001 for nginx reverse proxy
+
+  subtitle-generator-newui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:8001:8000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./outputs:/app/outputs
+      - ./logs:/app/logs
+    environment:
+      - ENVIRONMENT=dev
+      - ROLE=standalone
+      - DATABASE_URL=postgresql+asyncpg://subtitle:subtitle@postgres:5432/subtitle_generator
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - API_KEYS=${API_KEYS:-}
+      - HF_TOKEN=${HF_TOKEN:-}
+      - PRELOAD_MODEL=${PRELOAD_MODEL:-}
+      - MAX_CONCURRENT_TASKS=${MAX_CONCURRENT_TASKS:-}
+      - FILE_RETENTION_HOURS=${FILE_RETENTION_HOURS:-24}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - CORS_ORIGINS=https://newui.${DOMAIN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    profiles:
+      - newui
 
   # ── Single-server (GPU) ─────────────────────────────────────────────────────
   # Usage: docker compose --profile gpu up -d

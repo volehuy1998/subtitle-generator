@@ -330,7 +330,75 @@ The project is a FastAPI backend with a React SPA frontend. Key documents:
 - **Real-time**: SSE (`/events/{task_id}`), WebSocket (`/ws`), polling (`/progress/{task_id}`).
 - **Deployment**: Standalone (default), or multi-server with Redis + PostgreSQL + S3.
 
-## 9. Security
+## 9. Collaborator Onboarding
+
+This section is for external contributors who have been invited as repository collaborators (e.g., Team Meridian and other deployment partners).
+
+### How access is granted
+
+The repo owner sends a GitHub collaborator invitation via **Settings → Collaborators and teams → Add people**. Enter the GitHub username or email address of the person to invite.
+
+### Accepting the invitation
+
+The invited user must accept the invitation in one of two ways:
+
+- Click the **Accept invitation** link in the notification email, or
+- Visit `https://github.com/volehuy1998/subtitle-generator/invitations` while logged in to GitHub.
+
+Invitations expire after 7 days. If the link has expired, ask the repo owner to resend it.
+
+### Verifying access
+
+Once the invitation is accepted, verify collaborator access with:
+
+```bash
+# List all collaborators (requires repo scope on your token)
+gh api repos/volehuy1998/subtitle-generator/collaborators --jq '.[].login'
+```
+
+As a quick smoke test, try setting a label on an existing issue:
+
+```bash
+gh issue edit <id> --add-label "bug"
+```
+
+If the command succeeds without a permission error, write access is confirmed.
+
+### Permission level
+
+Collaborators are granted **Write** access by default. This allows:
+
+- Push branches and force-push non-protected branches
+- Create and merge pull requests
+- Add labels and set milestones on issues and PRs
+- Manage issues (open, close, comment, assign)
+
+Write access does **not** allow:
+
+- Changing repository settings
+- Managing other collaborators or teams
+- Deleting the repository
+
+### Required token scopes
+
+| Token type | Required scopes |
+|---|---|
+| Classic personal access token | `repo` (full repo access) |
+| Fine-grained personal access token | `contents: write`, `issues: write`, `pull_requests: write` |
+
+### Known gotcha: `gh issue create --label` silently drops labels
+
+If your token lacks sufficient permissions, `gh issue create --label <name>` will create the issue but silently ignore the `--label` flag — no error is shown. Always verify labels were applied:
+
+```bash
+gh issue view <id> --json labels
+```
+
+If labels are missing, check your token scopes and confirm collaborator access is active (not pending).
+
+---
+
+## 10. Security
 
 ### Reporting vulnerabilities
 

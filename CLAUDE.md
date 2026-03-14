@@ -71,7 +71,7 @@ Each upload spawns a background thread via `asyncio.to_thread()`. Concurrent tas
 ### Real-Time Updates
 Three transport options, all delivering the same pipeline events:
 - SSE: `GET /events/{task_id}`
-- WebSocket: `WS /ws`
+- WebSocket: `WS /ws/{task_id}`
 - Polling: `GET /progress/{task_id}`
 
 ### Translation

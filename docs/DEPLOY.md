@@ -344,6 +344,14 @@ curl -s http://127.0.0.1:8001/api/health | head -c 100
 
 ### Host nginx config (two-domain setup)
 
+> **⚠ Reverse proxy note:** When nginx terminates TLS and proxies plain HTTP to the Docker container, **set `ENVIRONMENT=dev` inside the container** — not `ENVIRONMENT=prod`. Setting `prod` causes the app to issue 301 HTTPS redirects internally, which nginx then receives as new HTTP requests, creating an infinite redirect loop.
+>
+> Concretely:
+> 1. **`ENVIRONMENT=dev`** in the container — the app serves plain HTTP; nginx owns all TLS and redirect logic.
+> 2. **Remove cert volume mounts** from the container — nginx holds the certificates, not the app.
+> 3. **`proxy_pass http://127.0.0.1:<port>`** — always plain HTTP from nginx to the container (never `https://`).
+> 4. **HSTS at the nginx level** — add `add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;` in the nginx `server` block, not in the app.
+
 A minimal nginx config that routes both the production domain and the preview subdomain:
 
 ```nginx
@@ -364,9 +372,11 @@ server {
     ssl_certificate     /etc/letsencrypt/live/example.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
 
+    # HSTS is configured here at the nginx level (not in the app container)
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
     location / {
-        proxy_pass         https://127.0.0.1:8000;
-        proxy_ssl_verify   off;
+        proxy_pass         http://127.0.0.1:8000;
         proxy_set_header   Host $host;
         proxy_set_header   X-Real-IP $remote_addr;
         proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;

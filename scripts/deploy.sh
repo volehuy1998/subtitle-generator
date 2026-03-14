@@ -274,7 +274,7 @@ if [[ -d "$INSTALL_DIR/.git" ]]; then
   git -C "$INSTALL_DIR" reset --hard "origin/$BRANCH"
   ok "Repository updated to $(git -C "$INSTALL_DIR" log -1 --format='%h %s')"
 else
-  info "Cloning repository to $INSTALL_DIR…"
+  info "Cloning repository to ${INSTALL_DIR}…"
   git clone --quiet --branch "$BRANCH" "$REPO_URL" "$INSTALL_DIR"
   ok "Repository cloned"
 fi
@@ -310,7 +310,7 @@ if [[ "$MODE" == "prod" ]]; then
       | sed 's/notAfter=//' || echo "unknown")
     ok "Existing certificate found for $DOMAIN (expires: $EXPIRY)"
   else
-    info "Obtaining Let's Encrypt certificate for $DOMAIN…"
+    info "Obtaining Let's Encrypt certificate for ${DOMAIN}…"
     info "Port 80 must be free for the ACME challenge"
 
     # Temporarily stop any service using port 80
