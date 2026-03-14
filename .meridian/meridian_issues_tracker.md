@@ -1,32 +1,42 @@
 ---
 name: meridian_issues_tracker
-description: Team Meridian filed issues tracker — all 7 deployment issues resolved by Sentinel, cross-team RFC agreed
+description: Team Meridian — all 7 issues resolved, 3 PRs authored, 3 PRs reviewed, 2 RFCs resolved
 type: project
 ---
 
-# Meridian Issues Tracker
+# Meridian Activity Tracker
 
-## Filed Issues — All Resolved
+## Issues Filed — All 7 Resolved
 
 | Issue | Title | Priority | Specialist | Resolution |
 |-------|-------|----------|-----------|------------|
-| [#67](https://github.com/volehuy1998/subtitle-generator/issues/67) | deploy.sh Unicode crash | P0-critical | Dockhand | PR #73 merged |
-| [#68](https://github.com/volehuy1998/subtitle-generator/issues/68) | Missing newui Docker profile | P1-high | Dockhand | PR #73 merged |
-| [#69](https://github.com/volehuy1998/subtitle-generator/issues/69) | ENVIRONMENT=prod redirect loop | P1-high | Crane | PR #73 merged |
-| [#70](https://github.com/volehuy1998/subtitle-generator/issues/70) | PROD_IMAGE_TAG not used | P0-critical | Dockhand | PR #73 merged |
-| [#71](https://github.com/volehuy1998/subtitle-generator/issues/71) | CLAUDE.md routes, WebSocket, cookie/CORS | P1-high | Signal + Vault | PR #73 + #74 merged |
-| [#72](https://github.com/volehuy1998/subtitle-generator/issues/72) | Missing collaborator onboarding | P2-medium | Compass | PR #73 merged |
-| [#78](https://github.com/volehuy1998/subtitle-generator/issues/78) | Config file best-practice docs | P2-medium | Compass | PR #80 merged |
+| #67 | deploy.sh Unicode crash | P0 | Dockhand | PR #73 |
+| #68 | Missing newui Docker profile | P1 | Dockhand | PR #73 |
+| #69 | ENVIRONMENT=prod redirect loop | P1 | Crane | PR #73 |
+| #70 | PROD_IMAGE_TAG not used | P0 | Dockhand | PR #73 |
+| #71 | CLAUDE.md routes, WebSocket, cookie/CORS | P1 | Signal+Vault | PR #73+#74 |
+| #72 | Missing collaborator onboarding | P2 | Compass | PR #73 |
+| #78 | Config best-practice docs | P2 | Compass | PR #80 |
 
-## PRs Authored/Reviewed
+## PRs Authored
 
-| PR | Title | Role | Status |
-|----|-------|------|--------|
-| #79 | .meridian/ memory backup | Author | Merged (3 review rounds) |
-| #83 | Cross-team automation | Reviewer | Merged |
+| PR | Title | Status |
+|----|-------|--------|
+| #79 | .meridian/ memory backup | Merged (3 review rounds) |
+| #85 | Memory sync (session complete) | Merged |
+| #91 | Final session sync | Open |
 
-## Cross-Team RFC
+## PRs Reviewed
 
-| RFC | Title | Status |
+| PR | Title | Specialists |
+|----|-------|-------------|
+| #83 | Cross-team automation | Crane, Gauge, Signal, Compass |
+| #86 | 30 CodeQL security fixes | Vault, Signal, Compass |
+| #87 | Automated sensitive data scanning | Vault, Compass |
+
+## RFCs Participated In
+
+| RFC | Topic | Status |
 |-----|-------|--------|
-| #82 | Automated cross-team collaboration | Agreed + Implemented (PR #83 merged) |
+| #82 | Cross-team automation | Agreed — PR #83 merged |
+| #89 | Sensitive data classification | Agreed — PR #87 updated |
