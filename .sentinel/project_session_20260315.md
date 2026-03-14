@@ -1,43 +1,37 @@
 ---
 name: project_session_20260315
-description: Session on 2026-03-15 — CI/CD fixes, ESLint mask removed, subdomain UI evaluation, PR attribute standards enforced
+description: Session 2026-03-15 summary — cross-team automation, PR closures, all issues resolved
 type: project
 ---
 
-# Session Summary — 2026-03-15
+## Session summary — 2026-03-15
 
-## What Was Done
+### Completed
 
-### CI/CD Fixes (PRs #63, #65)
+1. **PR #65** — ESLint fix (eslint-disable-next-line on wrong line in StatusPage.tsx)
+2. **Meridian Issues #67–#72** — all resolved: deploy.sh syntax, docker-compose newui profile, nginx proxy_pass docs, session cookie Secure flag, CORS explicit headers, CONTRIBUTING.md onboarding
+3. **v2.2.0 release** — PR #64 merged (CHANGELOG + version bump), Docker image published, PR #76 merged (.env.example PROD_IMAGE_TAG)
+4. **PR #80 merged** — Configuration Best Practices in DEPLOY.md (resolves Meridian issue #78)
+5. **RFC #82** — Proposed automated cross-team collaboration; Team Meridian agreed on Option D
+6. **PR #83 merged** — CODEOWNERS + release-notify.yml + deploy-validate CI job + CONTRIBUTING.md §10. Joint approval from Sentinel (Bolt, Forge, Scout, Atlas) and Meridian (Compass, Crane, Gauge, Signal).
+7. **PR #79 merged** — Team Meridian .meridian/ memory backup. Three security review rounds; IP/port redaction required and completed.
 
-**PR #63 — release-please fix (merged)**
-- `release-please-action@v4` was failing: `package-name` input is v3 syntax, invalid in v4
-- `default_workflow_permissions` was `read` — blocked PR creation by release-please
-- Fix: removed `package-name` from `.github/workflows/release.yml`, set permissions to `write` via API
-- First green Release workflow run achieved
+### Key agreements with Team Meridian
 
-**PR #65 — ESLint mask removed + 5 errors fixed (merged)**
-- `|| true` in CI ESLint step was silently swallowing all linting failures
-- 5 real ESLint errors uncovered and fixed:
-  1. `react-refresh/only-export-components` → extracted `Router` into `src/Router.tsx`
-  2. `react-hooks/static-components` → direct conditional returns in `Router.tsx`
-  3. TDZ circular reference in `useSSE.ts` → added `connectRef` ref
-  4. `@typescript-eslint/no-unused-expressions` in `StatusPage.tsx toggleCommit` → if/else
-  5. `react-hooks/set-state-in-effect` in `StatusPage.tsx useEffect` → moved disable comment to correct line
-- Issue #66 created to track the ESLint mask bug
+- 48h review SLA for CODEOWNERS-triggered reviews
+- 8 deploy-critical files require Meridian co-review
+- Joint deployment checklist issue auto-created on every release
+- CI validates compose profiles, bash syntax, tag consistency on every PR
 
-### Subdomain UI Evaluation (Enterprise Slate)
-- Playwright screenshots of all 5 pages at `newui.openlabs.club`
-- Found and fixed: Google Fonts blocked (CSP `connect-src` → `font-src`), GPU badge on all pages, outdated About stack, wrong security commit SHA
-- PRs #57–61 merged; Docker image rebuilt on port 8001; re-verified clean
+### Infrastructure added
 
-### PR Attribute Standards Enforced
-- All PRs must have 6 GitHub attributes: Reviewers, Assignees, Labels, Projects, Milestone, Development
-- **Reviewer limitation**: GitHub prevents author from reviewing their own PR; `volehuy1998` is the only collaborator — this is a solo repo constraint
-- Projects linked to "SubForge Roadmap" (PVT_kwHOAi6TKc4BRufS)
-- Milestone: v2.2.0 — UI & Developer Experience (ID 1) or v3.0.0 — Distributed System & Scale (ID 2)
+- .github/workflows/release-notify.yml — release deployment notifications
+- .github/CODEOWNERS — Meridian co-review for deploy-critical files
+- .meridian/ — Team Meridian memory backup directory
+- Labels: deployment, sentinel, meridian
+- CONTRIBUTING.md §10 — cross-team review protocol
 
-## Open Items (carried forward)
-- Distributed system deployment (5-server Ansible)
-- Team Meridian issue #37 (production deployment docs)
-- process_video() refactor, SLOs, mypy/pyright
+### How to apply
+
+When working on deploy-critical files, expect Meridian review to be required.
+On every release, a joint checklist issue will be auto-created.
