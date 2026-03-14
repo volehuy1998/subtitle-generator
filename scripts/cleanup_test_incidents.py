@@ -10,6 +10,7 @@ actual latency reports) are preserved.
 Safe to run multiple times — uses DELETE WHERE title IN (...) so it is
 idempotent if the rows are already gone.
 """
+
 import sqlite3
 from pathlib import Path
 
@@ -21,6 +22,7 @@ TEST_TITLES = {
     "test",
     "Hello, test !!",
 }
+
 
 def main():
     if not DB_PATH.exists():
@@ -61,6 +63,7 @@ def main():
         print(f"Deleted {incidents_deleted} incident(s) and {updates_deleted} update(s).")
     finally:
         conn.close()
+
 
 if __name__ == "__main__":
     main()
