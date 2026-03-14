@@ -2,7 +2,6 @@
 
 - [access_privileges.md](access_privileges.md) — Confirmed privileges: full GitHub access (all scopes), full server access, Docker, TLS, CI/CD — granted by investor on 2026-03-14
 - [team_structure.md](team_structure.md) — SubForge engineering team: 11 members (Atlas, Forge, Bolt, Pixel, Prism, Scout, Stress, Harbor, Anchor, Shield, Quill, Hawk) with Google SWE checklists and agent prompt templates
-- [team_meridian.md](team_meridian.md) — Team Meridian: external deployment team (8 members — Compass, Crane, Vault, Gauge, Rudder, Signal, Ballast, Dockhand) who found SubForge on GitHub and file issues about missing production deployment docs
 - [feedback_pr_review_process.md](feedback_pr_review_process.md) — Every PR must have engineer comments (approve/reject/feedback) visible on GitHub before merging. Investor wants transparency.
 - [feedback_pr_attributes_mandatory.md](feedback_pr_attributes_mandatory.md) — ALL 6 PR attributes mandatory: labels (type+priority+team), assignees, milestone, project, reviewers, linked issue. Use REST API (gh api) — gh pr edit fails on this repo due to Projects classic deprecation.
 - [feedback_delegation.md](feedback_delegation.md) — Each Sentinel engineer must independently evaluate and comment in their domain. Atlas must not consolidate everything solo — investor explicitly asked why engineers weren't participating.
@@ -17,6 +16,6 @@
 - [project_session_20260314.md](project_session_20260314.md) — Major session: UI overhaul, Google SWE standards, Team Sentinel, 17 issues resolved, 10 PRs merged, CodeQL enabled
 - [project_ci_failures.md](project_ci_failures.md) — CI fully green as of 2026-03-15; ESLint mask removed (PR #65), all errors fixed
 - [project_pending_work.md](project_pending_work.md) — All PRs cleared as of session 4. Remaining: API key migration blocker, distributed deploy, SLOs, mypy, CodeQL residual annotations
-- [project_session_20260315.md](project_session_20260315.md) — Session 2026-03-15 (full day): ESLint fix, Meridian issues #67–72, v2.2.0 release, cross-team automation (PRs #79/#80/#83), all resolved
+- [project_session_20260315.md](project_session_20260315.md) — Session 2026-03-15 (full day): ESLint fix, deployment issues #67–72, v2.2.0 release, cross-team automation (PRs #79/#80/#83), all resolved
 - [project_security_20260315.md](project_security_20260315.md) — 30 CodeQL fixes (PR #86) + automated secret scanning / public IP detection (PR #87)
 - [project_session4_20260315.md](project_session4_20260315.md) — Session 4: PR attribute enforcement (PR #93), retroactive tagging of PRs #86-90, all PRs merged, v2.3.0 released

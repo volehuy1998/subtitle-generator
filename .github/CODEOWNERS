@@ -13,16 +13,15 @@ app/services/model_manager.py @volehuy1998
 # API routes
 app/routes/ @volehuy1998
 
-# Infrastructure & deployment (Sentinel + Meridian co-review)
-# Meridian SLA: respond within 48h or Sentinel may merge with post-merge review note
-Dockerfile              @volehuy1998 @volehuy15061998
-Dockerfile.gpu          @volehuy1998 @volehuy15061998
-docker-compose.yml      @volehuy1998 @volehuy15061998
-scripts/deploy.sh       @volehuy1998 @volehuy15061998
-docs/DEPLOY.md          @volehuy1998 @volehuy15061998
-.env.example            @volehuy1998 @volehuy15061998
-nginx.conf              @volehuy1998 @volehuy15061998
-entrypoint.sh           @volehuy1998 @volehuy15061998
+# Infrastructure & deployment
+Dockerfile              @volehuy1998
+Dockerfile.gpu          @volehuy1998
+docker-compose.yml      @volehuy1998
+scripts/deploy.sh       @volehuy1998
+docs/DEPLOY.md          @volehuy1998
+.env.example            @volehuy1998
+nginx.conf              @volehuy1998
+entrypoint.sh           @volehuy1998
 .github/workflows/      @volehuy1998
 
 # Frontend

@@ -11,7 +11,7 @@ Before opening ANY pull request, ALL 6 GitHub attributes must be set (CONTRIBUTI
 3. **Labels** — type label + priority label (+ team label if applicable):
    - Type: `bug`, `enhancement`, `documentation`, `deployment`
    - Priority: `P0-critical`, `P1-high`, `P2-medium`, `P3-low`
-   - Team: `sentinel`, `meridian`
+   - Team: `sentinel`
 4. **Projects** — linked to SubForge Roadmap (node `PVT_kwHOAi6TKc4BRufS`)
 5. **Milestone** — appropriate release milestone (currently `1` = v2.2.0)
 6. **Development** — at least one issue linked via `Closes #N` in PR body

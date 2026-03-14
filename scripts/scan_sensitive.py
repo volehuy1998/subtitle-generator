@@ -2,7 +2,7 @@
 """Sensitive data scanner for CI.
 
 Scans changed files for patterns that should not be committed. Covers the
-sensitive information categories agreed in issue #89 (Sentinel x Meridian RFC):
+sensitive information categories agreed in issue #89 (security RFC):
 
   Category 1 — Network & Infrastructure (HIGH)
     - Public IPv4 addresses (private/reserved ranges excluded)

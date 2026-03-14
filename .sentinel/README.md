@@ -29,7 +29,6 @@ The memory path pattern is `~/.claude/projects/<working-dir-with-dashes>/memory/
 | `MEMORY.md` | Index of all memory files |
 | `access_privileges.md` | Investor-granted permissions (GitHub + server) |
 | `team_structure.md` | 11 engineers, roles, Google SWE checklists, agent prompts |
-| `team_meridian.md` | External deployment team |
 | `feedback_pr_review_process.md` | PR review transparency rule |
 | `feedback_detailed_logging.md` | Logging preferences |
 | `reference_repo.md` | GitHub repo reference |

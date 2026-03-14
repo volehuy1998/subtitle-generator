@@ -15,11 +15,11 @@ type: project
 - **PR #87 MERGED** — Automated sensitive data scanning
 - **PR #88 MERGED** — .sentinel/ memory sync (session 2)
 - **PR #90 MERGED** — .sentinel/ memory sync (session 3)
-- **PR #91 MERGED** — .meridian/ final session state
+- **PR #91 MERGED** — deployment docs sync
 - **PR #93 MERGED** — PR attribute validation CI workflow
 - **PR #95 MERGED** — .sentinel/ memory sync (session 4)
 - **PR #98 MERGED** — .sentinel/ memory sync (session 4 final)
-- **PR #101 MERGED** — Automated memory backup validation (.sentinel/ + .meridian/)
+- **PR #101 MERGED** — Automated memory backup validation (.sentinel/)
 
 ## Production deployment blocker
 
@@ -41,7 +41,7 @@ type: project
 - codeql.yml: CodeQL analysis (actions, JS/TS, Python)
 - secret-scan.yml: TruffleHog + 16-pattern custom scanner
 - pr-attributes.yml: 6-attribute PR validation (session 4)
-- memory-backup.yml: .sentinel/ + .meridian/ integrity + Vault scan + sync reminder (session 4)
+- memory-backup.yml: .sentinel/ backup integrity + sensitive data scan (session 4)
 - deploy-validate: compose config, bash syntax, PROD_IMAGE_TAG
-- release-notify.yml: joint deployment checklist on release
-- CODEOWNERS: Meridian co-review for 8 deploy-critical files
+- release-notify.yml: deployment checklist on release
+- CODEOWNERS: co-review for 8 deploy-critical files
