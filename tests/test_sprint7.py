@@ -118,10 +118,10 @@ class TestRelease:
         assert "### Security" in content
 
     def test_roadmap_exists(self):
-        assert (PROJECT_ROOT / "ROADMAP.md").exists()
+        assert (PROJECT_ROOT / "docs" / "ROADMAP.md").exists()
 
     def test_architecture_exists(self):
-        assert (PROJECT_ROOT / "ARCHITECTURE.md").exists()
+        assert (PROJECT_ROOT / "docs" / "ARCHITECTURE.md").exists()
 
 
 # ── S7-5: Performance Benchmarks ──
@@ -129,10 +129,10 @@ class TestRelease:
 
 class TestBenchmarks:
     def test_benchmark_script_exists(self):
-        assert (PROJECT_ROOT / "benchmark.py").exists()
+        assert (PROJECT_ROOT / "scripts" / "benchmark.py").exists()
 
     def test_loadtest_script_exists(self):
-        assert (PROJECT_ROOT / "loadtest.py").exists()
+        assert (PROJECT_ROOT / "scripts" / "loadtest.py").exists()
 
     def test_health_endpoint_fast(self):
         """Health endpoint should respond in under 100ms."""

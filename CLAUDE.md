@@ -147,4 +147,4 @@ When adding tests, follow the existing sprint pattern or add to the relevant dom
 - **Branching**: GitHub Flow. Create branch from `main` (`feat/...`, `fix/...`), open PR, squash merge.
 - **PR template**: `.github/PULL_REQUEST_TEMPLATE.md`
 - **Versioning**: Semver tags (`v2.1.0`). Version in `app/main.py` FastAPI version field.
-- **Full standards**: See `class.md` Section 5.
+- **Full standards**: See `docs/CODING_STANDARDS.md` Section 5.
