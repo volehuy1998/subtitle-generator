@@ -197,7 +197,49 @@ BREAKING CHANGE: upload response now returns `task_id` instead of `id`
 5. **Fill out the PR template** at [`.github/PULL_REQUEST_TEMPLATE.md`](./.github/PULL_REQUEST_TEMPLATE.md) -- summary, type, changes, test plan.
 6. **CI must pass** -- lint, tests, and build.
 7. **Request review** -- at least 1 approval required.
-8. **Squash merge** to `main`. Delete the branch after merge.
+8. **All 6 GitHub attributes must be set** before requesting review (see PR Checklist in the template):
+   - **Reviewers** — at least one Sentinel engineer
+   - **Assignees** — PR author
+   - **Labels** — type label + priority label
+   - **Projects** — linked to *SubForge Roadmap*
+   - **Milestone** — appropriate release milestone
+   - **Development** — at least one issue linked via `Closes #N`
+9. **Squash merge** to `main`. Delete the branch after merge.
+
+## 6a. UI / Frontend Design Review Process
+
+Any change to the **visual design, theme, or UI layout** of the frontend **must** go through the subdomain-first review process before being applied to the main production domain.
+
+### Rule: preview first, production second
+
+```
+1. Deploy to preview subdomain (newui.openlabs.club)
+2. Sentinel engineering team reviews via GitHub Issue + PR
+3. Investor approval
+4. Only then → update PROD_IMAGE_TAG in .env to promote to main domain
+```
+
+**Never** rebuild or restart the `cpu` Docker profile with `--build` when a new design is on `main` but has not yet been investor-approved. The `cpu` profile is pinned to a specific image tag (`PROD_IMAGE_TAG` in `.env`).
+
+### How the two-container preview works
+
+| Container | Profile | Port | Domain | Purpose |
+|-----------|---------|------|--------|---------|
+| `subtitle-generator` | `cpu` | 8000 | `openlabs.club` | Production — pinned image tag |
+| `subtitle-newui` | `newui` | 8001 | `newui.openlabs.club` | Preview — current build |
+
+The host nginx reverse proxy routes each domain to the correct container. See `docs/DEPLOY.md` for nginx config details.
+
+### Promotion checklist
+
+Before changing `PROD_IMAGE_TAG` to promote a new design to production:
+
+- [ ] Preview has been live on `newui.openlabs.club` for at least 24 hours
+- [ ] All Sentinel engineers have commented on the review issue
+- [ ] Investor has explicitly approved the design in writing (issue comment or message)
+- [ ] New Docker image has been built and tagged (e.g. `docker build -t subtitle-generator-prod:v2.2.0 .`)
+- [ ] `PROD_IMAGE_TAG` updated in `.env` (not hardcoded in docker-compose.yml)
+- [ ] Production container restarted: `docker compose --profile cpu up -d`
 
 ### Code review checklist
 

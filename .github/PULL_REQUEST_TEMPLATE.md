@@ -27,3 +27,17 @@
 
 ## Screenshots
 <!-- If UI changes, add before/after screenshots -->
+
+---
+
+## PR Checklist
+> **All 6 GitHub attributes must be set before requesting review.**
+
+- [ ] **Reviewers** — at least one Sentinel engineer assigned as reviewer
+- [ ] **Assignees** — PR author assigned as assignee
+- [ ] **Labels** — type label (feat/fix/docs/etc.) + priority label (P0/P1/P2) applied
+- [ ] **Projects** — linked to *SubForge Roadmap* project board
+- [ ] **Milestone** — milestone set (e.g. `v2.2.0 — UI & Developer Experience`)
+- [ ] **Development** — one or more issues linked via `Closes #N` in this description
+
+<!-- Link issues below using "Closes #N" to populate the Development field -->
