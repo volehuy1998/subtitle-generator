@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0](https://github.com/volehuy1998/subtitle-generator/compare/v2.2.0...v2.3.0) (2026-03-14)
+
+
+### Features
+
+* **ci:** automated cross-team collaboration — CODEOWNERS + release notify + deploy validation ([#83](https://github.com/volehuy1998/subtitle-generator/issues/83)) ([7b3020a](https://github.com/volehuy1998/subtitle-generator/commit/7b3020a3ebfc76dad7d3cf0ef51a74a2c3501bad))
+* **ci:** automated sensitive data scanning to prevent information leaks ([#87](https://github.com/volehuy1998/subtitle-generator/issues/87)) ([90f5f82](https://github.com/volehuy1998/subtitle-generator/commit/90f5f82f5c04926a3a5dff97c59374fab01c3b72))
+
+
+### Bug Fixes
+
+* **config:** bump PROD_IMAGE_TAG to v2.2.0 in .env.example ([#76](https://github.com/volehuy1998/subtitle-generator/issues/76)) ([b904090](https://github.com/volehuy1998/subtitle-generator/commit/b904090739a0e6022b3284b433d32f686f9dbc2b))
+
+
+### Documentation
+
+* **deploy:** add Configuration Best Practices section ([#80](https://github.com/volehuy1998/subtitle-generator/issues/80)) ([aac31b7](https://github.com/volehuy1998/subtitle-generator/commit/aac31b7a83ea895963474eff5bb727f3c4428beb))
+
 ## [2.2.0](https://github.com/volehuy1998/subtitle-generator/compare/v2.1.0...v2.2.0) (2026-03-14)
 
 ### Features
