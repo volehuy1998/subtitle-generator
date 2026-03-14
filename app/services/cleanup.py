@@ -9,7 +9,7 @@ import logging
 import time
 from pathlib import Path
 
-from app.config import UPLOAD_DIR, OUTPUT_DIR
+from app.config import OUTPUT_DIR, UPLOAD_DIR
 from app.logging_setup import log_task_event
 
 logger = logging.getLogger("subtitle-generator")

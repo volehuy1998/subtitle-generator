@@ -176,6 +176,7 @@ def check_alerts() -> list[dict]:
     # Disk space
     try:
         import shutil
+
         from app.config import OUTPUT_DIR
 
         usage = shutil.disk_usage(OUTPUT_DIR)

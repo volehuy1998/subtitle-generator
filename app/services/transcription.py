@@ -4,7 +4,7 @@ import logging
 import time
 
 from app import state
-from app.config import SECONDS_PER_MEL_FRAME, MEL_SAMPLE_RATE
+from app.config import MEL_SAMPLE_RATE, SECONDS_PER_MEL_FRAME
 from app.exceptions import CancelledError, CriticalAbortError
 from app.services.gpu import check_vram_for_model
 from app.services.sse import emit_event

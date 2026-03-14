@@ -11,8 +11,8 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 
 from app.config import OUTPUT_DIR
-from app.db.status_engine import get_status_session
 from app.db.models import StatusIncident, StatusIncidentUpdate
+from app.db.status_engine import get_status_session
 
 logger = logging.getLogger("subtitle-generator")
 

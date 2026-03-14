@@ -14,10 +14,10 @@ import time
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from sqlalchemy import select, and_
+from sqlalchemy import and_, select
 
 from app.db.engine import get_session
-from app.db.models import UserRecord, ApiKeyRecord
+from app.db.models import ApiKeyRecord, UserRecord
 
 logger = logging.getLogger("subtitle-generator")
 

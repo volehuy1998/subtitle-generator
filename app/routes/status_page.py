@@ -6,19 +6,19 @@ import logging
 import os
 import shutil
 import time
-from datetime import datetime, timedelta, timezone
 from collections import defaultdict
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 
 from app import state
 from app.config import OUTPUT_DIR
 from app.db.engine import get_session
-from app.db.status_engine import get_status_session
 from app.db.models import StatusIncident, StatusIncidentUpdate, TaskRecord
+from app.db.status_engine import get_status_session
 
 logger = logging.getLogger("subtitle-generator")
 router = APIRouter(tags=["Status"])

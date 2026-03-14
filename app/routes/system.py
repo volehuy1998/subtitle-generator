@@ -3,9 +3,9 @@
 from fastapi import APIRouter
 
 from app.config import SUPPORTED_LANGUAGES
-from app.services.gpu import get_system_info
+from app.schemas import LanguagesResponse, SystemInfoResponse
 from app.services.diarization import is_diarization_available
-from app.schemas import SystemInfoResponse, LanguagesResponse
+from app.services.gpu import get_system_info
 
 router = APIRouter(tags=["System"])
 

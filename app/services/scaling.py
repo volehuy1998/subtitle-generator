@@ -6,8 +6,8 @@ connection pool configuration, and task queue abstractions.
 
 import logging
 import os
-import time
 import threading
+import time
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
@@ -160,7 +160,7 @@ def cleanup_dead_workers(timeout_sec: int = 120) -> int:
 
 def get_pool_config() -> dict:
     """Get database connection pool configuration from environment."""
-    from app.config import DB_POOL_SIZE, DB_MAX_OVERFLOW, DB_POOL_RECYCLE
+    from app.config import DB_MAX_OVERFLOW, DB_POOL_RECYCLE, DB_POOL_SIZE
 
     return {
         "pool_size": DB_POOL_SIZE,

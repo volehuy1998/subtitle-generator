@@ -13,14 +13,15 @@ import os
 from pathlib import Path
 from unittest.mock import patch
 
-from app.main import app
+from fastapi.testclient import TestClient
+
 from app import state
+from app.main import app
 from app.middleware.auth import (
+    PUBLIC_PATHS,
     is_auth_enabled,
     validate_api_key,
-    PUBLIC_PATHS,
 )
-from fastapi.testclient import TestClient
 
 client = TestClient(app, base_url="https://testserver")
 

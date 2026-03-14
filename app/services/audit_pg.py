@@ -6,9 +6,9 @@ Keeps in-memory deque for fast recent-event access; DB for persistence.
 
 import json
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select, func, text
+from sqlalchemy import func, select, text
 
 from app.db.engine import get_session
 from app.db.models import AuditLog

@@ -19,7 +19,7 @@ import threading
 import uuid
 from datetime import datetime, timezone
 
-from app.config import LOG_DIR, LOG_OUTPUT, LOG_JSON_ONLY, LOG_LEVEL, LOG_WEBHOOK_URL, LOG_SYSLOG_HOST
+from app.config import LOG_DIR, LOG_JSON_ONLY, LOG_LEVEL, LOG_OUTPUT, LOG_SYSLOG_HOST, LOG_WEBHOOK_URL
 
 logger = logging.getLogger("subtitle-generator")
 task_log_path = LOG_DIR / "tasks.jsonl"

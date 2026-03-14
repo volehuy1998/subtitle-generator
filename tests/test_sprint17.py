@@ -12,27 +12,27 @@ S17-7: Integration tests
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.services.task_backend import (
-    InMemoryTaskBackend,
-    get_task_backend,
-    get_backend_info,
-)
-from app.services.storage import LocalStorageAdapter, get_storage
-from app.services.worker_health import (
-    _workers,
-    register_worker,
-    heartbeat,
-    record_task_processed,
-    get_worker_status,
-    get_healthy_worker_count,
-    cleanup_dead_workers,
-)
 from app.services.analytics_db import (
+    get_daily_stats,
+    get_db_info,
+    get_event_count,
     record_event,
     update_daily_stats,
-    get_daily_stats,
-    get_event_count,
-    get_db_info,
+)
+from app.services.storage import LocalStorageAdapter, get_storage
+from app.services.task_backend import (
+    InMemoryTaskBackend,
+    get_backend_info,
+    get_task_backend,
+)
+from app.services.worker_health import (
+    _workers,
+    cleanup_dead_workers,
+    get_healthy_worker_count,
+    get_worker_status,
+    heartbeat,
+    record_task_processed,
+    register_worker,
 )
 
 client = TestClient(app, base_url="https://testserver")
@@ -286,7 +286,7 @@ class TestScaleIntegration:
         assert "/scale/info" in paths
 
     def test_task_backend_importable(self):
-        from app.services.task_backend import TaskBackend, InMemoryTaskBackend
+        from app.services.task_backend import InMemoryTaskBackend, TaskBackend
 
         assert TaskBackend is not None
         assert InMemoryTaskBackend is not None
@@ -298,13 +298,13 @@ class TestScaleIntegration:
         assert LocalStorageAdapter is not None
 
     def test_worker_health_importable(self):
-        from app.services.worker_health import register_worker, get_worker_status
+        from app.services.worker_health import get_worker_status, register_worker
 
         assert callable(register_worker)
         assert callable(get_worker_status)
 
     def test_analytics_db_importable(self):
-        from app.services.analytics_db import record_event, get_daily_stats
+        from app.services.analytics_db import get_daily_stats, record_event
 
         assert callable(record_event)
         assert callable(get_daily_stats)

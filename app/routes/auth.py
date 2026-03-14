@@ -10,15 +10,15 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from app.services.auth import (
-    register_user,
     authenticate_user,
     create_access_token,
+    create_api_key,
     create_refresh_token,
     decode_jwt,
-    create_api_key,
-    list_api_keys,
-    revoke_api_key,
     get_user_by_id,
+    list_api_keys,
+    register_user,
+    revoke_api_key,
 )
 
 logger = logging.getLogger("subtitle-generator")

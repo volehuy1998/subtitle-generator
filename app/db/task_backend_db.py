@@ -10,10 +10,10 @@ import json
 import logging
 from datetime import datetime, timezone
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 
 from app.db.engine import get_session
-from app.db.models import TaskRecord, SessionRecord
+from app.db.models import SessionRecord, TaskRecord
 from app.services.task_backend import TaskBackend
 
 logger = logging.getLogger("subtitle-generator")

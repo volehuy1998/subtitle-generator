@@ -6,8 +6,8 @@ from fastapi import APIRouter, HTTPException
 
 from app.services.translation import (
     get_available_languages,
-    is_translation_available,
     install_translation_package,
+    is_translation_available,
 )
 
 logger = logging.getLogger("subtitle-generator")

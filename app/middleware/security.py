@@ -4,7 +4,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
-from app.config import HTTPS_REDIRECT, HSTS_ENABLED
+from app.config import HSTS_ENABLED, HTTPS_REDIRECT
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):

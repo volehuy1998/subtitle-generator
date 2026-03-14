@@ -7,11 +7,12 @@ S15-4: Share link info
 S15-5: Integration tests
 """
 
-from app.main import app
+from fastapi.testclient import TestClient
+
 from app import state
 from app.config import OUTPUT_DIR
+from app.main import app
 from app.routes.export import _share_links
-from fastapi.testclient import TestClient
 
 client = TestClient(app, base_url="https://testserver")
 

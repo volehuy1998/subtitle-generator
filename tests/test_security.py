@@ -1,6 +1,6 @@
 """Tests for app.utils.security - file validation and sanitization."""
 
-from app.utils.security import validate_file_extension, sanitize_filename
+from app.utils.security import sanitize_filename, validate_file_extension
 
 
 class TestValidateFileExtension:

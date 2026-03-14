@@ -11,7 +11,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from sqlalchemy import func, select, and_
+from sqlalchemy import and_, func, select
 
 from app.config import LOG_DIR
 from app.db.engine import get_session

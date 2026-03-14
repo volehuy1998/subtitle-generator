@@ -1,18 +1,19 @@
 """Tests for the profiler module."""
 
+import sys
 import time
 from unittest.mock import MagicMock
+
 from profiler import (
-    snapshot_system,
-    snapshot_gpu,
-    format_snapshot_short,
-    StepTimer,
-    TranscriptionProfiler,
     PipelineSummary,
     ResourceMonitor,
+    StepTimer,
+    TranscriptionProfiler,
     format_bytes_simple,
+    format_snapshot_short,
+    snapshot_gpu,
+    snapshot_system,
 )
-import sys
 
 
 class TestSnapshotSystem:

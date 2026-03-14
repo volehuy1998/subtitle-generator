@@ -6,11 +6,11 @@ from sqlalchemy import (
     Column,
     DateTime,
     Float,
+    ForeignKey,
+    Index,
     Integer,
     String,
     Text,
-    ForeignKey,
-    Index,
 )
 from sqlalchemy.orm import DeclarativeBase, relationship
 

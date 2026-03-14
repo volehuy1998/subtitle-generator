@@ -1,11 +1,12 @@
 import { StrictMode, useState, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import MainApp from './pages/App'
-import StatusPage from './pages/StatusPage'
-import SecurityPage from './pages/SecurityPage'
-import AboutPage from './pages/AboutPage'
-import ContactPage from './pages/ContactPage'
+import { App as MainApp } from './pages/App'
+import { StatusPage } from './pages/StatusPage'
+import { SecurityPage } from './pages/SecurityPage'
+import { AboutPage } from './pages/AboutPage'
+import { ContactPage } from './pages/ContactPage'
+import { ErrorBoundary } from './components/system/ErrorBoundary'
 import { useHealthStream } from './hooks/useHealthStream'
 
 function getPage(path: string) {
@@ -45,7 +46,9 @@ async function bootstrap() {
 
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <Router />
+      <ErrorBoundary>
+        <Router />
+      </ErrorBoundary>
     </StrictMode>,
   )
 }

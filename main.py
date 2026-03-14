@@ -6,6 +6,7 @@ from app.main import app  # noqa: F401
 
 if __name__ == "__main__":
     import asyncio
+
     import uvicorn
 
     environment = os.environ.get("ENVIRONMENT", "dev")

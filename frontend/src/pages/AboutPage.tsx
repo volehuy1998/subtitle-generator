@@ -76,7 +76,7 @@ const STACK = [
   ['Deployment',      [['Docker', 'Redis', 'Celery'], 'distributed workers, S3-compatible storage']],
 ] as const
 
-export default function AboutPage() {
+export function AboutPage() {
   return (
     <StaticPageLayout>
       {/* Hero */}

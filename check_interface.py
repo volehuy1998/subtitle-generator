@@ -81,8 +81,8 @@ with sync_playwright() as pw:
     # Static assets
     log("\n[5] Static assets...")
     try:
-        import urllib.request
         import ssl
+        import urllib.request
 
         ctx = ssl.create_default_context()
         req = urllib.request.Request(BASE_URL, headers={"User-Agent": "check/1.0"})
@@ -135,8 +135,8 @@ with sync_playwright() as pw:
     # HTTP -> HTTPS redirect
     log("\n[8] HTTP redirect check...")
     try:
-        import socket
         import http.client
+        import socket
 
         conn = http.client.HTTPConnection("openlabs.club", 80, timeout=10)
         conn.request("GET", "/", headers={"Host": "openlabs.club", "User-Agent": "check/1.0"})
@@ -152,8 +152,8 @@ with sync_playwright() as pw:
     # TLS certificate
     log("\n[9] TLS certificate...")
     try:
-        import ssl
         import socket
+        import ssl
 
         ctx2 = ssl.create_default_context()
         with socket.create_connection(("openlabs.club", 443), timeout=10) as sock:
@@ -177,8 +177,8 @@ with sync_playwright() as pw:
 # Upload flow test
 log("\n[10] Upload flow test...")
 try:
-    import struct
     import io as _io
+    import struct
 
     # Create minimal valid WAV: 44100Hz, 16-bit, mono, 2 seconds of silence
     sr, dur = 16000, 2

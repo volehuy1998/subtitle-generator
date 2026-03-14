@@ -52,6 +52,13 @@ export interface TaskState {
 
   // Warning
   warning: string | null
+
+  // SSE transcription progress fields (populated by applyProgressData)
+  processed_sec?: number
+  total_sec?: number
+  speed_x?: number
+  eta?: string
+  elapsed?: string
 }
 
 interface TaskActions {
@@ -83,6 +90,7 @@ const initial: TaskState = {
   liveSegments: [],
   downloadReady: false, embedDownloadUrl: null,
   warning: null,
+  processed_sec: undefined, total_sec: undefined, speed_x: undefined, eta: undefined, elapsed: undefined,
 }
 
 export const useTaskStore = create<TaskState & TaskActions>((set) => ({

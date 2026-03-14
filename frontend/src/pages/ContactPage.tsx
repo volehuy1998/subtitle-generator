@@ -53,7 +53,7 @@ const RT_ITEMS = [
   { label: 'Pull requests', value: 'Reviewed weekly' },
 ]
 
-export default function ContactPage() {
+export function ContactPage() {
   return (
     <StaticPageLayout>
       {/* Hero */}

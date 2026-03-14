@@ -12,9 +12,9 @@ Tests cover:
 """
 
 import pytest
+from fastapi.testclient import TestClient
 
 from app.main import app
-from fastapi.testclient import TestClient
 
 client = TestClient(app, base_url="https://testserver")
 
@@ -207,6 +207,7 @@ class TestAutoEmbed:
     def test_process_video_accepts_auto_embed(self):
         """process_video should accept auto_embed parameter."""
         import inspect
+
         from app.services.pipeline import process_video
 
         sig = inspect.signature(process_video)

@@ -11,10 +11,11 @@ S14-7: Integration tests
 
 from pathlib import Path
 
-from app.main import app
-from app import state
-from app.routes.webhooks import _webhooks
 from fastapi.testclient import TestClient
+
+from app import state
+from app.main import app
+from app.routes.webhooks import _webhooks
 
 client = TestClient(app, base_url="https://testserver")
 

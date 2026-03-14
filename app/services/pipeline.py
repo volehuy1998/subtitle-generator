@@ -7,22 +7,22 @@ import traceback
 from pathlib import Path
 
 from app import state
-from app.config import OUTPUT_DIR, MAX_AUDIO_DURATION
+from app.config import MAX_AUDIO_DURATION, OUTPUT_DIR
 from app.exceptions import CancelledError, CriticalAbortError
 from app.logging_setup import log_task_event
+from app.routes.metrics import inc
+from app.services.analytics import record_cancellation, record_completion, record_error_category, record_failure
+from app.services.diarization import assign_speakers_to_segments, diarize_audio, is_diarization_available
 from app.services.gpu import check_vram_for_model
-from app.services.model_manager import get_model, get_compute_type
+from app.services.model_manager import get_compute_type, get_model
 from app.services.sse import emit_event
+from app.services.task_backend import get_task_backend
 from app.services.transcription import transcribe_with_progress
 from app.utils.formatting import format_bytes, format_time_display
-from app.utils.media import get_audio_duration, get_file_size, extract_audio
-from app.utils.srt import segments_to_srt, segments_to_vtt, segments_to_json
+from app.utils.media import extract_audio, get_audio_duration, get_file_size
+from app.utils.srt import segments_to_json, segments_to_srt, segments_to_vtt
 from app.utils.subtitle_format import format_segments_with_linebreaks, validate_timing
-from app.services.diarization import is_diarization_available, diarize_audio, assign_speakers_to_segments
-from app.services.analytics import record_completion, record_failure, record_cancellation, record_error_category
-from app.routes.metrics import inc
-from profiler import StepTimer, PipelineSummary, ResourceMonitor
-from app.services.task_backend import get_task_backend
+from profiler import PipelineSummary, ResourceMonitor, StepTimer
 
 logger = logging.getLogger("subtitle-generator")
 
@@ -53,7 +53,8 @@ def _retry_pending_persists():
             backend.schedule_persist(task_id, task_data)
             succeeded.append((task_id, task_data))
             logger.info(f"TASK [{task_id[:8]}] DB persist retry succeeded")
-        except Exception:
+        except Exception as e:
+            logger.debug("DB persist retry failed, will try again later: %s", e)
             break  # DB probably still down
 
     if succeeded:
@@ -72,7 +73,7 @@ def _check_critical(task_id: str):
 
 def _auto_embed_subtitles(task_id: str, video_path: Path, mode: str, language: str):
     """Auto-embed subtitles into the original video after transcription."""
-    from app.services.subtitle_embed import soft_embed_subtitles, hard_burn_subtitles, SubtitleStyle, STYLE_PRESETS
+    from app.services.subtitle_embed import STYLE_PRESETS, SubtitleStyle, hard_burn_subtitles, soft_embed_subtitles
 
     srt_path = OUTPUT_DIR / f"{task_id}.srt"
     if not srt_path.exists():
@@ -120,7 +121,7 @@ def _persist_task(task_id: str, task: dict):
             backend.schedule_persist(task_id, task)
             return
     except ImportError:
-        pass
+        logger.debug("DatabaseTaskBackend not available, using JSON fallback")
     except Exception as e:
         logger.error(f"TASK [{task_id[:8]}] DB persist failed, queued for retry: {e}")
         with _pending_lock:
@@ -143,7 +144,7 @@ def process_video(
     translate_to_english: bool = False,
     auto_embed: str = "",
     translate_to: str = "",
-):
+) -> None:
     """Main processing pipeline. Runs in a background thread."""
     # Acquire concurrency semaphore
     sem = state.get_task_semaphore()

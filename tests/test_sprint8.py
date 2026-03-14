@@ -14,25 +14,25 @@ S8-9: Integration tests
 from pathlib import Path
 
 import pytest
+from fastapi.testclient import TestClient
 
 from app.main import app
 from app.services.analytics import (
-    record_upload,
-    record_completion,
-    record_failure,
-    record_cancellation,
-    get_timeseries,
-    save_analytics_snapshot,
-    load_analytics_snapshot,
     _counters,
-    _language_counts,
-    _model_counts,
     _device_counts,
+    _language_counts,
+    _lock,
+    _model_counts,
     _processing_times,
     _timeseries,
-    _lock,
+    get_timeseries,
+    load_analytics_snapshot,
+    record_cancellation,
+    record_completion,
+    record_failure,
+    record_upload,
+    save_analytics_snapshot,
 )
-from fastapi.testclient import TestClient
 
 client = TestClient(app, base_url="https://testserver")
 
@@ -342,8 +342,8 @@ class TestAnalyticsPersistence:
         _reset_analytics()
 
     def test_save_and_load_snapshot(self, tmp_path):
-        import app.services.analytics as analytics_mod
         import app.config as config_mod
+        import app.services.analytics as analytics_mod
 
         original_log_dir = config_mod.LOG_DIR
 

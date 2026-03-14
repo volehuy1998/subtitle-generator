@@ -7,12 +7,12 @@ Tests cover:
 """
 
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
+from fastapi.testclient import TestClient
 
 from app.main import app
-from fastapi.testclient import TestClient
 
 client = TestClient(app, base_url="https://testserver")
 
@@ -105,8 +105,9 @@ class TestHealthSSEEndpoint:
 
     def test_health_stream_returns_streaming_response(self):
         """Verify the endpoint handler returns a StreamingResponse."""
-        from app.routes.health import health_stream
         import inspect
+
+        from app.routes.health import health_stream
 
         source = inspect.getsource(health_stream)
         assert "StreamingResponse" in source
@@ -114,8 +115,9 @@ class TestHealthSSEEndpoint:
 
     def test_health_stream_generator_emits_json(self):
         """Verify the SSE generator produces valid JSON data lines."""
-        from app.routes.health import health_stream
         import inspect
+
+        from app.routes.health import health_stream
 
         source = inspect.getsource(health_stream)
         assert "json.dumps" in source
@@ -123,8 +125,9 @@ class TestHealthSSEEndpoint:
 
     def test_health_stream_has_keepalive_headers(self):
         """Verify SSE response includes proper caching/connection headers."""
-        from app.routes.health import health_stream
         import inspect
+
+        from app.routes.health import health_stream
 
         source = inspect.getsource(health_stream)
         assert "Cache-Control" in source
@@ -361,6 +364,7 @@ class TestPipelineStepTimingEvents:
     def test_step_timing_in_task_state(self):
         """Verify step_timing dict structure exists in pipeline code."""
         import inspect
+
         from app.services import pipeline
 
         source = inspect.getsource(pipeline.process_video)
@@ -372,6 +376,7 @@ class TestPipelineStepTimingEvents:
     def test_done_event_includes_is_video(self):
         """Verify the done event emits is_video flag."""
         import inspect
+
         from app.services import pipeline
 
         source = inspect.getsource(pipeline.process_video)
@@ -380,6 +385,7 @@ class TestPipelineStepTimingEvents:
     def test_step_started_at_emitted(self):
         """Verify step_started_at is sent with step_change events."""
         import inspect
+
         from app.services import pipeline
 
         source = inspect.getsource(pipeline.process_video)
@@ -733,8 +739,9 @@ class TestHealthStatusAccuracy:
 
     def test_sse_interval_is_1_second(self):
         """Verify SSE pushes every 3 seconds."""
-        from app.routes.health import health_stream
         import inspect
+
+        from app.routes.health import health_stream
 
         source = inspect.getsource(health_stream)
         assert "asyncio.sleep(3)" in source

@@ -8,9 +8,10 @@ S13-5: Task deduplication check
 S13-6: Integration tests
 """
 
-from app.main import app
-from app import state
 from fastapi.testclient import TestClient
+
+from app import state
+from app.main import app
 
 client = TestClient(app, base_url="https://testserver")
 

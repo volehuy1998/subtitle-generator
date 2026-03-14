@@ -13,19 +13,20 @@ S9-9: Integration tests
 
 from pathlib import Path
 
+from fastapi.testclient import TestClient
+
 from app.main import app
 from app.services.analytics import (
-    record_upload,
-    record_completion,
-    record_failure,
-    get_summary,
-    get_timeseries,
     _counters,
     _language_counts,
-    _timeseries,
     _lock,
+    _timeseries,
+    get_summary,
+    get_timeseries,
+    record_completion,
+    record_failure,
+    record_upload,
 )
-from fastapi.testclient import TestClient
 
 client = TestClient(app, base_url="https://testserver")
 
@@ -34,7 +35,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 
 def _reset_analytics():
     """Reset analytics state for isolated tests."""
-    from app.services.analytics import _model_counts, _device_counts, _processing_times
+    from app.services.analytics import _device_counts, _model_counts, _processing_times
 
     with _lock:
         for k in _counters:

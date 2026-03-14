@@ -13,9 +13,9 @@ Tests cover:
 import asyncio
 import json
 
+from fastapi.testclient import TestClient
 
 from app.main import app
-from fastapi.testclient import TestClient
 
 client = TestClient(app, base_url="https://testserver")
 
@@ -199,28 +199,28 @@ class TestAnalyticsDbWriteThrough:
     """Test that analytics recording still works and triggers DB writes."""
 
     def test_record_upload_still_updates_memory(self):
-        from app.services.analytics import record_upload, _counters
+        from app.services.analytics import _counters, record_upload
 
         before = _counters["uploads_total"]
         record_upload(language="en", model="small", device="cpu", file_size=1000)
         assert _counters["uploads_total"] == before + 1
 
     def test_record_completion_still_updates_memory(self):
-        from app.services.analytics import record_completion, _counters
+        from app.services.analytics import _counters, record_completion
 
         before = _counters["completed_total"]
         record_completion(5.0, model="small")
         assert _counters["completed_total"] == before + 1
 
     def test_record_failure_still_updates_memory(self):
-        from app.services.analytics import record_failure, _counters
+        from app.services.analytics import _counters, record_failure
 
         before = _counters["failed_total"]
         record_failure()
         assert _counters["failed_total"] == before + 1
 
     def test_record_cancellation_still_updates_memory(self):
-        from app.services.analytics import record_cancellation, _counters
+        from app.services.analytics import _counters, record_cancellation
 
         before = _counters["cancelled_total"]
         record_cancellation()
@@ -253,14 +253,14 @@ class TestAuditDbWriteThrough:
     """Test that audit logging still works and triggers DB writes."""
 
     def test_log_audit_event_still_updates_memory(self):
-        from app.services.audit import log_audit_event, _audit_entries
+        from app.services.audit import _audit_entries, log_audit_event
 
         before = len(_audit_entries)
         log_audit_event("test_event", ip="127.0.0.1")
         assert len(_audit_entries) == before + 1
 
     def test_log_audit_event_entry_format(self):
-        from app.services.audit import log_audit_event, _audit_entries
+        from app.services.audit import _audit_entries, log_audit_event
 
         log_audit_event("test_format", ip="10.0.0.1", path="/test")
         entry = _audit_entries[-1]

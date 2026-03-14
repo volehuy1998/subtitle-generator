@@ -11,7 +11,6 @@ import logging
 import threading
 from abc import ABC, abstractmethod
 
-
 logger = logging.getLogger("subtitle-generator")
 
 

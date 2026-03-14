@@ -2,11 +2,12 @@
 
 from io import BytesIO
 
+from fastapi.testclient import TestClient
+
+from app import state
 from app.config import SUPPORTED_LANGUAGES
 from app.main import app
-from app.utils.srt import segments_to_vtt, _format_vtt_timestamp, segments_to_srt
-from app import state
-from fastapi.testclient import TestClient
+from app.utils.srt import _format_vtt_timestamp, segments_to_srt, segments_to_vtt
 
 client = TestClient(app, base_url="https://testserver")
 

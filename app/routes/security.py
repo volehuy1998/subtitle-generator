@@ -7,8 +7,8 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException, Query, Request
 
 from app.middleware.auth import is_auth_enabled, validate_api_key
-from app.services.audit import get_recent_audit_events, get_audit_stats, log_audit_event
 from app.middleware.brute_force import get_brute_force_stats
+from app.services.audit import get_audit_stats, get_recent_audit_events, log_audit_event
 
 logger = logging.getLogger("subtitle-generator")
 router = APIRouter(tags=["System"])

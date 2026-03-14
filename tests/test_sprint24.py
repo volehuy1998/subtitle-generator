@@ -12,6 +12,7 @@ Tests cover:
 import time
 
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 client = TestClient(app, base_url="https://testserver")
@@ -112,11 +113,11 @@ class TestIpLists:
 
     def test_blocklist_takes_priority(self):
         from app.services.rate_limiter import (
-            add_to_blocklist,
             add_to_allowlist,
+            add_to_blocklist,
             is_ip_allowed,
-            remove_from_blocklist,
             remove_from_allowlist,
+            remove_from_blocklist,
         )
 
         test_ip = "172.16.0.99"
@@ -140,7 +141,7 @@ class TestUserTaskQuota:
         assert check_user_task_quota("new_user_123") is True
 
     def test_quota_increment_decrement(self):
-        from app.services.rate_limiter import increment_user_tasks, decrement_user_tasks, get_user_task_count
+        from app.services.rate_limiter import decrement_user_tasks, get_user_task_count, increment_user_tasks
 
         user = f"quota_test_{time.time()}"
         increment_user_tasks(user)
@@ -149,7 +150,7 @@ class TestUserTaskQuota:
         assert get_user_task_count(user) == 0
 
     def test_quota_enforcement(self):
-        from app.services.rate_limiter import check_user_task_quota, increment_user_tasks, PER_USER_MAX_TASKS
+        from app.services.rate_limiter import PER_USER_MAX_TASKS, check_user_task_quota, increment_user_tasks
 
         user = f"quota_enforce_{time.time()}"
         for _ in range(PER_USER_MAX_TASKS):
