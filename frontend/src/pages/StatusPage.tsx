@@ -458,17 +458,18 @@ export function StatusPage() {
   }, [])
 
   useEffect(() => {
-    loadStatus()
-    loadCommits()
-    const si = setInterval(loadStatus, 30000)
-    const ci = setInterval(loadCommits, 60000)
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async fetch-then-setState is intentional; no external data source to subscribe to
+    void loadStatus()
+    void loadCommits()
+    const si = setInterval(() => { void loadStatus() }, 30000)
+    const ci = setInterval(() => { void loadCommits() }, 60000)
     return () => { clearInterval(si); clearInterval(ci) }
   }, [loadStatus, loadCommits])
 
   const toggleCommit = (idx: number) => {
     setExpandedCommits((prev) => {
       const next = new Set(prev)
-      next.has(idx) ? next.delete(idx) : next.add(idx)
+      if (next.has(idx)) { next.delete(idx) } else { next.add(idx) }
       return next
     })
   }

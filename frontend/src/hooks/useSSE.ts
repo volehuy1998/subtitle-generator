@@ -12,6 +12,8 @@ export function useSSE(taskId: string | null) {
   const lastEventTime = useRef(0)
   const watchdog = useRef<ReturnType<typeof setInterval> | null>(null)
   const closed = useRef(false)
+  // Stable ref to connect — avoids TDZ issue with const referencing itself in onerror
+  const connectRef = useRef<() => void>(() => {})
 
   const store = useTaskStore()
 
@@ -132,12 +134,12 @@ export function useSSE(taskId: string | null) {
         if (data.status === 'error') { store.setError(data.error ?? 'Task failed'); close(); return }
         retryTimer.current = setTimeout(() => {
           retryDelay.current = Math.min(retryDelay.current * 2, MAX_RETRY)
-          connect()
+          connectRef.current()
         }, retryDelay.current)
       }).catch(() => {
         retryTimer.current = setTimeout(() => {
           retryDelay.current = Math.min(retryDelay.current * 2, MAX_RETRY)
-          connect()
+          connectRef.current()
         }, retryDelay.current)
       })
     }
@@ -152,6 +154,9 @@ export function useSSE(taskId: string | null) {
       }
     }, 5000)
   }, [taskId, close, store])
+
+  // Keep the ref in sync so recursive onerror retries always call the current closure
+  useEffect(() => { connectRef.current = connect }, [connect])
 
   useEffect(() => {
     if (!taskId || taskId === 'uploading') return
