@@ -4,14 +4,19 @@ description: Every PR must have team engineer comments (approve/reject/feedback)
 type: feedback
 ---
 
-Before merging ANY PR, Team Sentinel must:
+Before merging ANY PR, the authoring team must ensure transparent review:
 
-1. Deploy the relevant engineer(s) to comment on the PR with their review
-2. Each comment must include: engineer nickname, APPROVE/REJECT, reasoning
-3. At minimum: the code author + one reviewer from a different team must comment
-4. Atlas (Tech Lead) comments last with the merge decision
-5. ALL comments must be posted via `gh pr comment` so the investor can see them on GitHub
+**Upstream rule (from Sentinel/investor):**
+1. Each reviewer must comment with: engineer nickname, APPROVE/REJECT, reasoning
+2. At minimum: the code author + one reviewer must comment
+3. Team lead comments last with the merge decision
+4. ALL comments must be posted via `gh pr comment` so the investor can see them on GitHub
 
-**Why:** The investor wants full transparency into the team's decision-making process. Every opinion — agreement, disagreement, concerns — should be visible in PR comments.
+**How Team Meridian applies this:**
+- For Meridian PRs (e.g., `.meridian/` backups, deployment configs): Compass reviews + one specialist signs off
+- For PRs to Sentinel code: follow Sentinel's process — Hawk (Code Reviewer) must approve
+- When reviewing Sentinel PRs that affect deployment: Meridian specialists post domain-specific feedback
 
-**How to apply:** Before calling `gh pr merge`, always launch agents for the relevant engineers to post their review comments on the PR first.
+**Why:** The investor wants full transparency into every team's decision-making process. Every opinion — agreement, disagreement, concerns — should be visible in PR comments.
+
+**How to apply:** Before calling `gh pr merge`, always ensure review comments from the relevant engineers are posted on the PR first.

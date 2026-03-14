@@ -12,18 +12,20 @@ If starting fresh on a new system:
 
 ```bash
 # After installing Claude Code and cloning the repo:
-# The memory path is derived from your working directory.
-# For /root/subtitle-generator:
 mkdir -p ~/.claude/projects/-root-subtitle-generator/memory/
 cp .meridian/*.md ~/.claude/projects/-root-subtitle-generator/memory/
 ```
+
+The memory path pattern is `~/.claude/projects/<working-dir-with-dashes>/memory/`, where the working directory's `/` separators are replaced with `-`. For example:
+- `/root/subtitle-generator` → `-root-subtitle-generator`
+- `/home/deploy/subtitle-generator` → `-home-deploy-subtitle-generator`
 
 ## Contents
 
 | File | Purpose |
 |------|---------|
 | `MEMORY.md` | Index of all memory files (shared with Sentinel) |
-| `meridian_server.md` | Server details: IP, OS, domains, TLS, container layout, paths |
+| `meridian_server.md` | Server details: OS, hardware, domains, container layout (sensitive details redacted) |
 | `meridian_deployment_20260315.md` | First deployment session: workarounds, issues filed |
 | `meridian_issues_tracker.md` | All filed issues with priority, specialist assignments |
 | `feedback_config_over_cli.md` | Investor preference: .env files over CLI flags |

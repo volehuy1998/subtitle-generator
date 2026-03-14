@@ -1,16 +1,18 @@
 ---
 name: meridian_server
-description: Team Meridian server details — IP, OS, hardware, domains, container layout, nginx config paths
+description: Team Meridian server details — OS, hardware, domains, container layout (sensitive details redacted for public repo)
 type: reference
 ---
 
 # Meridian Server Reference
 
+> **Note:** Sensitive infrastructure details (IP addresses, port bindings, absolute paths) are redacted in this public backup. The unredacted version is maintained in the local `.claude/projects/` memory only, accessible on the deployment server.
+
 ## Server
 
 | Attribute | Value |
 |-----------|-------|
-| Public IP | 124.197.31.140 |
+| Public IP | `<server-ip>` |
 | OS | Ubuntu 22.04.5 LTS |
 | CPUs | 8 |
 | RAM | 15.6 GB |
@@ -19,36 +21,21 @@ type: reference
 
 ## Domains
 
-| Domain | DNS | Purpose |
-|--------|-----|---------|
-| meridian-openlabs.shop | A → 124.197.31.140 | Production (stable v2.1.0 UI) |
-| newui.meridian-openlabs.shop | A → 124.197.31.140 | Preview (current main build) |
+| Domain | Purpose |
+|--------|---------|
+| meridian-openlabs.shop | Production (stable v2.1.0 UI) |
+| newui.meridian-openlabs.shop | Preview (current main build) |
 
 ## TLS Certificates
 
-| Domain | Path | Expires |
-|--------|------|---------|
-| meridian-openlabs.shop | /etc/letsencrypt/live/meridian-openlabs.shop/ | 2026-06-12 |
-| newui.meridian-openlabs.shop | /etc/letsencrypt/live/newui.meridian-openlabs.shop/ | 2026-06-12 |
-
-Auto-renewal via certbot.timer. Renewal hook at `/etc/letsencrypt/renewal-hooks/deploy/subforge-reload.sh` reloads nginx.
-
-## Key Paths
-
-| Path | Purpose |
-|------|---------|
-| /opt/subtitle-generator/ | Deployment install directory |
-| /opt/subtitle-generator/.env | Docker Compose environment config |
-| /opt/subtitle-generator/docker-compose.yml | Container orchestration (modified for two-domain setup) |
-| /etc/nginx/sites-available/subforge | nginx reverse proxy config |
-| /root/subtitle-generator/ | Source repo clone (for building images) |
+Both domains use Let's Encrypt certificates, auto-renewed via `certbot.timer`. A renewal hook reloads nginx after each renewal. Certificates expire 2026-06-12.
 
 ## Container Layout
 
-| Container | Image | Ports | Profile |
-|-----------|-------|-------|---------|
-| postgres | postgres:16-alpine | 0.0.0.0:5432 | (always) |
-| redis | redis:7-alpine | 0.0.0.0:6379 | (always) |
+| Container | Image | Binding | Profile |
+|-----------|-------|---------|---------|
+| postgres | postgres:16-alpine | localhost only | (always) |
+| redis | redis:7-alpine | localhost only | (always) |
 | subtitle-generator | subtitle-generator-prod:v2.1.0 | 127.0.0.1:8000 | cpu |
 | subtitle-generator-newui | built from current main | 127.0.0.1:8001 | newui |
 
@@ -56,16 +43,16 @@ Auto-renewal via certbot.timer. Renewal hook at `/etc/letsencrypt/renewal-hooks/
 
 ```bash
 # Logs
-docker compose -f /opt/subtitle-generator/docker-compose.yml --profile cpu --profile newui logs -f
+docker compose --profile cpu --profile newui logs -f
 
 # Restart production
-docker compose -f /opt/subtitle-generator/docker-compose.yml --profile cpu restart
+docker compose --profile cpu restart
 
 # Restart preview
-docker compose -f /opt/subtitle-generator/docker-compose.yml --profile newui restart
+docker compose --profile newui restart
 
 # Rebuild preview from latest code
-cd /opt/subtitle-generator && git pull && docker compose --profile newui up -d --build
+git pull && docker compose --profile newui up -d --build
 
 # Test cert renewal
 sudo certbot renew --dry-run
