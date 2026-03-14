@@ -17,8 +17,8 @@
   --color-text-2:    #6B7280;
   --color-text-3:    #9CA3AF;
 
-  --color-primary:         #863bff;
-  --color-primary-hover:   #7326f0;
+  --color-primary:         #7c3aed;
+  --color-primary-hover:   #6d28d9;
   --color-primary-light:   #f3eeff;
   --color-primary-border:  #ddd6fe;
 
@@ -26,10 +26,10 @@
   --color-success-light:   #ECFDF5;
   --color-success-border:  #A7F3D0;
 
-  --color-warning:         #F59E0B;
+  --color-warning:         #b45309;
   --color-warning-light:   #FFFBEB;
 
-  --color-danger:          #EF4444;
+  --color-danger:          #b91c1c;
   --color-danger-light:    #FEF2F2;
 
   /* Radius */

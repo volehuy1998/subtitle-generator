@@ -163,10 +163,12 @@ export function TranscribeForm({ onUpload }: Props) {
             <Skeleton className="h-7 w-14" />
           </div>
         ) : (
-          <div className="flex gap-2">
+          <div className="flex gap-2" role="radiogroup" aria-label="Select device">
             {systemInfo?.cuda_available && (
               <button
                 type="button"
+                role="radio"
+                aria-checked={device === 'cuda'}
                 onClick={() => setDevice('cuda')}
                 className={chipBase}
                 style={{
@@ -188,6 +190,8 @@ export function TranscribeForm({ onUpload }: Props) {
             )}
             <button
               type="button"
+              role="radio"
+              aria-checked={device === 'cpu'}
               onClick={() => setDevice('cpu')}
               className={chipBase}
               style={{
@@ -221,7 +225,7 @@ export function TranscribeForm({ onUpload }: Props) {
         {loading ? (
           <Skeleton className="h-48 w-full" />
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2" role="radiogroup" aria-label="Select transcription model">
             {MODELS.map((m) => {
               const info = MODEL_INFO[m]
               const isActive = model === m
@@ -237,6 +241,8 @@ export function TranscribeForm({ onUpload }: Props) {
                 <button
                   key={m}
                   type="button"
+                  role="radio"
+                  aria-checked={isActive}
                   onClick={() => setModel(m)}
                   className="w-full text-left rounded-lg border transition-all"
                   style={{
@@ -445,11 +451,13 @@ export function TranscribeForm({ onUpload }: Props) {
         >
           FORMAT
         </label>
-        <div className="flex gap-2">
+        <div className="flex gap-2" role="radiogroup" aria-label="Select output format">
           {FORMAT_OPTIONS.map((opt) => (
             <button
               key={opt.value}
               type="button"
+              role="radio"
+              aria-checked={format === opt.value}
               onClick={() => setFormat(opt.value)}
               className={chipBase}
               style={{
