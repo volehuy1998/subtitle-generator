@@ -6,7 +6,7 @@
 
 ## Team Meridian (Deployment)
 - [team_meridian.md](team_meridian.md) — Team Meridian: external deployment team (8 members — Compass, Crane, Vault, Gauge, Rudder, Signal, Ballast, Dockhand)
-- [meridian_server.md](meridian_server.md) — Meridian server: hardware specs, domains, TLS, container layout (sensitive details redacted)
+- [meridian_server.md](meridian_server.md) — Meridian server: 124.197.31.140, Ubuntu 22.04, 8 CPU, 15GB RAM, domains/TLS/container layout/paths
 - [meridian_deployment_20260315.md](meridian_deployment_20260315.md) — First deployment session: two-domain setup, 7 workarounds, 7 issues filed
 - [meridian_session_20260315.md](meridian_session_20260315.md) — Full session context: deployment, audit, investor feedback, memory system, next steps per specialist
 - [meridian_issues_tracker.md](meridian_issues_tracker.md) — All filed issues (#67-#72, #78) with priority, specialist assignment, and status
