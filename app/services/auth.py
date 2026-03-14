@@ -29,14 +29,24 @@ JWT_REFRESH_TOKEN_EXPIRE_DAYS = int(os.environ.get("JWT_REFRESH_EXPIRE_DAYS", "7
 
 
 def _hash_password(password: str) -> str:
-    """Hash password using SHA-256 with salt (lightweight, no bcrypt dependency)."""
+    """Hash password using PBKDF2-HMAC-SHA256 with random salt."""
     salt = secrets.token_hex(16)
-    h = hashlib.sha256(f"{salt}:{password}".encode()).hexdigest()
-    return f"{salt}:{h}"
+    dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 260_000)
+    h = dk.hex()
+    return f"pbkdf2:{salt}:{h}"
 
 
 def _verify_password(password: str, stored: str) -> bool:
-    """Verify password against stored hash."""
+    """Verify password against stored hash.
+
+    Supports both legacy SHA-256 format (``salt:hex``) and current
+    PBKDF2-HMAC-SHA256 format (``pbkdf2:salt:hex``).
+    """
+    if stored.startswith("pbkdf2:"):
+        _, salt, expected = stored.split(":", 2)
+        dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 260_000)
+        return hmac.compare_digest(dk.hex(), expected)
+    # Legacy SHA-256 path (backward compat — existing stored hashes)
     if ":" not in stored:
         return False
     salt, expected = stored.split(":", 1)
@@ -97,8 +107,8 @@ def create_refresh_token(user_id: int) -> str:
 
 
 def hash_api_key(key: str) -> str:
-    """Hash an API key using SHA-256."""
-    return hashlib.sha256(key.encode()).hexdigest()
+    """Hash an API key using HMAC-SHA256 keyed with the server JWT secret."""
+    return hmac.new(JWT_SECRET.encode(), key.encode(), hashlib.sha256).hexdigest()
 
 
 async def register_user(username: str, password: str, role: str = "user") -> Optional[dict]:

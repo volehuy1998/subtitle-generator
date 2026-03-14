@@ -78,8 +78,8 @@ async def export_logs(
                 break
 
     except Exception as e:
-        logger.error(f"Failed to read log file: {e}")
-        return {"entries": [], "total": 0, "error": str(e)}
+        logger.error(f"Failed to read log file: {e}", exc_info=True)
+        return {"entries": [], "total": 0}
 
     # Apply offset
     paginated = entries[offset : offset + limit]

@@ -52,10 +52,10 @@ class S3StorageAdapter(StorageAdapter):
         logger.info(f"S3 Storage initialized: bucket={self._bucket}")
 
     def _upload_key(self, filename: str) -> str:
-        return f"uploads/{filename}"
+        return f"uploads/{Path(filename).name}"
 
     def _output_key(self, filename: str) -> str:
-        return f"outputs/{filename}"
+        return f"outputs/{Path(filename).name}"
 
     def save_upload(self, filename: str, data: bytes) -> str:
         key = self._upload_key(filename)

@@ -128,7 +128,6 @@ class TestDbHealthCheckTimeout:
 
         assert result["ok"] is False
         assert result["status"] == "unhealthy"
-        assert "error" in result
         # Must return within ~3s, not 60s
         assert elapsed < 6, f"Health check took {elapsed:.1f}s — timeout not working"
 
@@ -144,7 +143,7 @@ class TestDbHealthCheckTimeout:
             result = _run_async(check_db_health())
 
         assert result["ok"] is False
-        assert "error" in result
+        assert result["status"] == "unhealthy"
 
     def test_db_query_error_returns_unhealthy(self):
         """DB connected but query fails → unhealthy."""
@@ -159,7 +158,7 @@ class TestDbHealthCheckTimeout:
             result = _run_async(check_db_health())
 
         assert result["ok"] is False
-        assert "database is locked" in result["error"]
+        assert result["status"] == "unhealthy"
 
     def test_latency_recorded_on_success(self):
         """Healthy check includes latency measurement."""

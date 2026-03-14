@@ -19,6 +19,7 @@ from app.services.subtitle_embed import (
     soft_embed_subtitles,
 )
 from app.utils.security import validate_file_extension, validate_magic_bytes
+from app.utils.validation import safe_path
 
 logger = logging.getLogger("subtitle-generator")
 router = APIRouter(tags=["Embedding"])
@@ -74,13 +75,13 @@ async def embed_subtitles(
         raise HTTPException(400, "Please upload a video file (MP4, MKV, AVI, WebM, MOV)")
 
     # Determine subtitle file path
-    srt_path = OUTPUT_DIR / f"{task_id}.srt"
+    srt_path = safe_path(OUTPUT_DIR / f"{task_id}.srt", allowed_dir=OUTPUT_DIR)
     if not srt_path.exists():
         raise HTTPException(404, "Subtitle file not found")
 
     # Save uploaded video
     embed_id = str(uuid.uuid4())[:12]
-    video_path = UPLOAD_DIR / f"embed_{embed_id}{ext}"
+    video_path = safe_path(UPLOAD_DIR / f"embed_{embed_id}{ext}", allowed_dir=UPLOAD_DIR)
 
     size = 0
     with open(video_path, "wb") as f:
@@ -132,7 +133,7 @@ async def embed_subtitles(
 
     # Output path
     out_ext = ".mkv" if mode == "soft" and ext == ".mkv" else ".mp4"
-    output_path = OUTPUT_DIR / f"embed_{task_id}_{embed_id}{out_ext}"
+    output_path = safe_path(OUTPUT_DIR / f"embed_{task_id}_{embed_id}{out_ext}", allowed_dir=OUTPUT_DIR)
 
     # Run embedding in background
     _translate_to = translate_to
@@ -264,7 +265,7 @@ async def quick_embed(
         style.background_opacity = max(0, min(1, background_opacity))
 
     out_ext = ".mkv" if mode == "soft" and ext == ".mkv" else ".mp4"
-    output_path = OUTPUT_DIR / f"embed_{task_id}{out_ext}"
+    output_path = safe_path(OUTPUT_DIR / f"embed_{task_id}{out_ext}", allowed_dir=OUTPUT_DIR)
 
     task["embed_in_progress"] = True
     _translate_to = translate_to

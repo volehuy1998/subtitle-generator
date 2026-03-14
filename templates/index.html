@@ -1039,7 +1039,10 @@
                 const info = await res.json();
                 modelRecommendations = info.model_recommendations || {};
                 if (info.cuda_available) {
-                    gpuInfo.innerHTML = `<span class="gpu-badge">${info.gpu_name} (${info.gpu_vram} GB)</span>`;
+                    const gpuBadge = document.createElement('span');
+                    gpuBadge.className = 'gpu-badge';
+                    gpuBadge.textContent = `${info.gpu_name} (${info.gpu_vram} GB)`;
+                    gpuInfo.replaceChildren(gpuBadge);
                     selectedDevice = 'cuda';
                     if (info.auto_model) {
                         autoModelName = info.auto_model;
@@ -1614,7 +1617,10 @@
                 setStep(2); startStepTimer(2);
                 const dev = data.device || selectedDevice.toUpperCase();
                 const mdl = data.model_size || selectedModel;
-                progressLabel.innerHTML = `Transcribing <span class="device-badge ${dev === 'CUDA' ? 'gpu' : 'cpu'}">${dev} | ${mdl}</span>`;
+                const devSpan = document.createElement('span');
+                devSpan.className = `device-badge ${dev === 'CUDA' ? 'gpu' : 'cpu'}`;
+                devSpan.textContent = `${dev} | ${mdl}`;
+                progressLabel.replaceChildren(document.createTextNode('Transcribing '), devSpan);
                 controls.style.display = 'flex'; pauseBtn.style.display = 'inline-block';
                 if (!isPaused) {
                     pauseBtn.textContent = 'Pause'; pauseBtn.className = 'ctrl-btn btn-pause';

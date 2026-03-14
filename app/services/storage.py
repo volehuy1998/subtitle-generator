@@ -58,32 +58,32 @@ class LocalStorageAdapter(StorageAdapter):
         OUTPUT_DIR.mkdir(exist_ok=True)
 
     def save_upload(self, filename: str, data: bytes) -> str:
-        path = UPLOAD_DIR / filename
+        path = UPLOAD_DIR / Path(filename).name
         path.write_bytes(data)
         return str(path)
 
     def get_upload_path(self, filename: str) -> Path | None:
-        path = UPLOAD_DIR / filename
+        path = UPLOAD_DIR / Path(filename).name
         return path if path.exists() else None
 
     def save_output(self, filename: str, data: bytes) -> str:
-        path = OUTPUT_DIR / filename
+        path = OUTPUT_DIR / Path(filename).name
         path.write_bytes(data)
         return str(path)
 
     def get_output_path(self, filename: str) -> Path | None:
-        path = OUTPUT_DIR / filename
+        path = OUTPUT_DIR / Path(filename).name
         return path if path.exists() else None
 
     def delete_upload(self, filename: str) -> bool:
-        path = UPLOAD_DIR / filename
+        path = UPLOAD_DIR / Path(filename).name
         if path.exists():
             path.unlink()
             return True
         return False
 
     def delete_output(self, filename: str) -> bool:
-        path = OUTPUT_DIR / filename
+        path = OUTPUT_DIR / Path(filename).name
         if path.exists():
             path.unlink()
             return True
