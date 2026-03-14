@@ -16,8 +16,8 @@ type: project
 6. **PR #83 merged** — CODEOWNERS + release-notify.yml + deploy-validate CI job + CONTRIBUTING.md §10. Joint approval from Sentinel (Bolt, Forge, Scout, Atlas) and Meridian (Compass, Crane, Gauge, Signal).
 7. **PR #79 merged** — Team Meridian .meridian/ memory backup. Three security review rounds; IP/port redaction required and completed.
 8. **PR #85 merged** — Team Meridian .meridian/ sync update (project_cross_team_agreement, feedback_vault_review)
-9. **PR #86 queued** — 30 CodeQL security alert fixes: path injection, stack trace exposure, weak password hashing, XSS, bad tag filter, insecure TLS, workflow permissions, URL sanitization
-10. **PR #87 queued** — Automated sensitive data scanning: TruffleHog + custom IP/credential scanner
+9. **PR #86 MERGED** — 30 CodeQL security alert fixes: path injection, stack trace exposure, weak password hashing, XSS, bad tag filter, insecure TLS, workflow permissions, URL sanitization
+10. **PR #87 MERGED** — Automated sensitive data scanning: TruffleHog + custom IP/credential scanner
 
 ### Key agreements with Team Meridian
 
