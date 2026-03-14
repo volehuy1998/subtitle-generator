@@ -5,32 +5,34 @@
   --spacing: 0.25rem;
 
   /* Typography */
-  --font-family-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-family-sans:    'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-family-display: 'Syne', 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-family-mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
 
-  /* Colors — semantic design tokens */
-  --color-bg:        #F9FAFB;
-  --color-surface:   #FFFFFF;
-  --color-surface-2: #F3F4F6;
-  --color-border:    #E5E7EB;
-  --color-border-2:  #D1D5DB;
-  --color-text:      #111827;
-  --color-text-2:    #6B7280;
-  --color-text-3:    #9CA3AF;
+  /* Colors — Enterprise Slate dark theme */
+  --color-bg:        #080C14;
+  --color-surface:   #0D1321;
+  --color-surface-2: #131D2E;
+  --color-border:    #1E2A3D;
+  --color-border-2:  #2A3A55;
+  --color-text:      #E2E8F0;
+  --color-text-2:    #94A3B8;
+  --color-text-3:    #64748B;
 
-  --color-primary:         #7c3aed;
-  --color-primary-hover:   #6d28d9;
-  --color-primary-light:   #f3eeff;
-  --color-primary-border:  #ddd6fe;
+  --color-primary:         #3B82F6;
+  --color-primary-hover:   #60A5FA;
+  --color-primary-light:   rgba(59,130,246,0.10);
+  --color-primary-border:  rgba(59,130,246,0.25);
 
-  --color-success:         #10B981;
-  --color-success-light:   #ECFDF5;
-  --color-success-border:  #A7F3D0;
+  --color-success:         #34D399;
+  --color-success-light:   rgba(52,211,153,0.10);
+  --color-success-border:  rgba(52,211,153,0.25);
 
-  --color-warning:         #b45309;
-  --color-warning-light:   #FFFBEB;
+  --color-warning:         #FBBF24;
+  --color-warning-light:   rgba(251,191,36,0.10);
 
-  --color-danger:          #b91c1c;
-  --color-danger-light:    #FEF2F2;
+  --color-danger:          #F87171;
+  --color-danger-light:    rgba(248,113,113,0.10);
 
   /* Radius */
   --radius-xs: 6px;
@@ -38,10 +40,10 @@
   --radius:    10px;
   --radius-lg: 12px;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+  /* Shadows — calibrated for dark surfaces */
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 12px rgb(0 0 0 / 0.3), 0 1px 3px rgb(0 0 0 / 0.2);
+  --shadow-lg: 0 20px 40px rgb(0 0 0 / 0.4), 0 8px 16px rgb(0 0 0 / 0.2);
 }
 
 /* Base */
@@ -53,8 +55,25 @@ body {
   font-size: 14px;
   line-height: 1.5;
   color: var(--color-text);
-  background: var(--color-bg);
+  background-color: var(--color-bg);
+  /* Subtle dot-grid texture */
+  background-image: radial-gradient(circle, rgba(59,130,246,0.07) 1px, transparent 1px);
+  background-size: 28px 28px;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Top ambient glow */
+body::before {
+  content: '';
+  position: fixed;
+  top: -160px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 900px;
+  height: 400px;
+  background: radial-gradient(ellipse at center, rgba(59,130,246,0.09) 0%, transparent 68%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* Scrollbar — always-visible track prevents layout shift when switching tabs */
@@ -71,13 +90,23 @@ html { overflow-y: scroll; scrollbar-width: thin; scrollbar-color: var(--color-b
   border-radius: var(--radius-xs);
 }
 
+/* Monospace class — used for timestamps, task IDs, technical data */
+.font-mono {
+  font-family: var(--font-family-mono);
+}
+
+/* Display font class — used for headings and wordmark */
+.font-display {
+  font-family: var(--font-family-display);
+}
+
 /* Interactive button lift effect */
 .btn-interactive {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .btn-interactive:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 16px rgba(59,130,246,0.20);
 }
 .btn-interactive:active {
   transform: translateY(0);
@@ -92,7 +121,7 @@ html { overflow-y: scroll; scrollbar-width: thin; scrollbar-color: var(--color-b
 }
 .btn-download:hover {
   background: var(--color-primary-hover);
-  box-shadow: 0 2px 8px rgba(124,58,237,0.25);
+  box-shadow: 0 4px 20px rgba(59,130,246,0.35);
 }
 
 /* Process next file button hover */

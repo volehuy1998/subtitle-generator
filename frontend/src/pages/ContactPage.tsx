@@ -1,13 +1,13 @@
 import { StaticPageLayout } from '@/components/layout/StaticPageLayout'
 
 const C = {
-  text: '#0F172A', text2: '#475569', text3: '#94A3B8',
-  border: '#E2E8F0', border2: '#CBD5E1',
-  surface: '#FFFFFF', surface2: '#F8FAFC',
-  primary: '#863bff', primaryLight: '#f3eeff',
-  success: '#10B981', successLight: '#ECFDF5', successBorder: '#A7F3D0',
-  warning: '#F59E0B', warningLight: '#FFFBEB',
-  blue: '#2563EB', blueLight: '#EFF6FF',
+  text: 'var(--color-text)', text2: 'var(--color-text-2)', text3: 'var(--color-text-3)',
+  border: 'var(--color-border)', border2: 'var(--color-border-2)',
+  surface: 'var(--color-surface)', surface2: 'var(--color-surface-2)',
+  primary: 'var(--color-primary)', primaryLight: 'var(--color-primary-light)',
+  success: 'var(--color-success)', successLight: 'var(--color-success-light)', successBorder: 'var(--color-success-border)',
+  warning: 'var(--color-warning)', warningLight: 'var(--color-warning-light)',
+  blue: 'var(--color-primary)', blueLight: 'var(--color-primary-light)',
 }
 
 function SectionLabel({ children }: { children: string }) {
@@ -33,7 +33,7 @@ const CHANNELS = [
     bg: C.primaryLight, color: C.primary,
     icon: <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>,
     title: 'Feature Request',
-    badge: { label: 'GitHub Issues', style: { background: C.blueLight, color: '#1E40AF', border: '1px solid #BFDBFE' } },
+    badge: { label: 'GitHub Issues', style: { background: 'var(--color-primary-light)', color: 'var(--color-primary)', border: '1px solid var(--color-primary-border)' } },
     desc: 'Have an idea to improve SubForge? Describe the use case and the problem it solves. We prioritize requests with clear motivation.',
   },
   {
@@ -140,7 +140,7 @@ export function ContactPage() {
       </div>
 
       {/* Note */}
-      <div style={{ background: C.warningLight, border: '1px solid #FDE68A', borderRadius: '16px', padding: '18px 20px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+      <div style={{ background: 'var(--color-warning-light)', border: '1px solid var(--color-border-2)', borderRadius: '16px', padding: '18px 20px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, color: C.warning, marginTop: '1px' }}>
           <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>
           <path d="M12 9v4M12 17h.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
