@@ -1,21 +1,22 @@
 ---
 name: project_pending_work
-description: Current project status — uncommitted multi-model preload changes, distributed deployment in progress
+description: Open work items as of 2026-03-15
 type: project
 ---
 
-As of 2026-03-14, CI is fully green. Translation feature committed and pushed.
+As of 2026-03-15, CI is fully green. All known ESLint errors resolved.
 
-## Uncommitted changes (in progress)
-- **PRELOAD_MODEL enhancement**: Now supports `"all"`, comma-separated lists (e.g. `"tiny,base,large"`), in addition to single model. Changed in `app/config.py` and `app/main.py`.
-- Next step: user wants Ansible playbooks for deploying to 5 servers (see project_distributed_system.md)
+## Recently completed (2026-03-15)
 
-## Recently committed (2026-03-14)
-- Translation support: Argos Translate (any-to-any) + Whisper translate (any->English)
-- Translation route, service, frontend UI, pipeline integration with progress events
-- Enhanced embed panel with style options
-- Translation and control test suites, e2e tests
-- Updated CLAUDE.md with full current architecture (29 routes, 32 services, 12 middleware, 1326 tests)
-- cert.pem and privkey.pem excluded from git (should be in .gitignore)
+- **release-please automation** — PR #63 merged: removed invalid `package-name` input (v4 syntax), fixed repo `default_workflow_permissions` to `write`
+- **ESLint mask removed** — PR #65 merged: removed `|| true` from CI ESLint step; fixed all 5 hidden ESLint errors; extracted `Router.tsx` from `main.tsx`; added `connectRef` in `useSSE.ts` for TDZ-safe recursive reconnect
+- **Issue #66 created and closed** — tracking issue for the ESLint mask bug
 
-## No known outstanding issues
+## Open items
+
+- **Distributed system deployment** — 5-server plan (sub-ctrl, sub-api-1/2, sub-data, sub-worker-1) not yet started; Ansible playbooks not yet written
+- **process_video() refactoring** — 514 lines → step functions, deferred
+- **StatusPage / TranscribeForm component splitting** — deferred
+- **SLOs** — not yet defined
+- **mypy/pyright** — not yet in CI
+- **Team Meridian (#37)** — external deployment team waiting for response on production deployment docs
