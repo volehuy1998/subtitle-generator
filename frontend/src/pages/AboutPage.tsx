@@ -70,7 +70,7 @@ const FEATURES = [
 const STACK = [
   ['Transcription',    [['faster-whisper', 'CTranslate2'], 'quantized Whisper models, 4× faster than reference']],
   ['Backend',         [['FastAPI', 'Python 3.12', 'asyncio'], 'async REST API with real-time SSE']],
-  ['Frontend',        [['React 18', 'TypeScript', 'Vite', 'Zustand'], 'single-page app']],
+  ['Frontend',        [['React 19', 'TypeScript', 'Vite 6', 'Zustand'], 'single-page app']],
   ['Database',        [['PostgreSQL', 'SQLite'], 'via SQLAlchemy async']],
   ['Media',           [['ffmpeg', 'ffprobe'], 'audio extraction and subtitle embedding']],
   ['Deployment',      [['Docker', 'Redis', 'Celery'], 'distributed workers, S3-compatible storage']],
