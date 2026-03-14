@@ -4,6 +4,7 @@
 - [team_structure.md](team_structure.md) — SubForge engineering team: 11 members (Atlas, Forge, Bolt, Pixel, Prism, Scout, Stress, Harbor, Anchor, Shield, Quill, Hawk) with Google SWE checklists and agent prompt templates
 - [team_meridian.md](team_meridian.md) — Team Meridian: external deployment team (8 members — Compass, Crane, Vault, Gauge, Rudder, Signal, Ballast, Dockhand) who found SubForge on GitHub and file issues about missing production deployment docs
 - [feedback_pr_review_process.md](feedback_pr_review_process.md) — Every PR must have engineer comments (approve/reject/feedback) visible on GitHub before merging. Investor wants transparency.
+- [feedback_pr_attributes_mandatory.md](feedback_pr_attributes_mandatory.md) — ALL 6 PR attributes mandatory: labels (type+priority+team), assignees, milestone, project, reviewers, linked issue. Use REST API (gh api) — gh pr edit fails on this repo due to Projects classic deprecation.
 - [feedback_delegation.md](feedback_delegation.md) — Each Sentinel engineer must independently evaluate and comment in their domain. Atlas must not consolidate everything solo — investor explicitly asked why engineers weren't participating.
 - [feedback_author_disclosure.md](feedback_author_disclosure.md) — Every engineer must disclose name and role in all artifacts: commits, PR descriptions, review comments, issues. Format: **[Name] ([Role]) — [verdict]**
 - [feedback_memory_cloud_backup.md](feedback_memory_cloud_backup.md) — Every memory update must be immediately synced to .sentinel/ and pushed to GitHub.
@@ -15,5 +16,6 @@
 - [project_status_page.md](project_status_page.md) — Public status page at /status with auto-incident detection
 - [project_session_20260314.md](project_session_20260314.md) — Major session: UI overhaul, Google SWE standards, Team Sentinel, 17 issues resolved, 10 PRs merged, CodeQL enabled
 - [project_ci_failures.md](project_ci_failures.md) — CI fully green as of 2026-03-15; ESLint mask removed (PR #65), all errors fixed
-- [project_pending_work.md](project_pending_work.md) — Open: PR #81 (release-please), distributed deploy, process_video refactor, SLOs, mypy
+- [project_pending_work.md](project_pending_work.md) — Open: PRs #86/#87/#88 queued, API key migration blocker, distributed deploy, SLOs, mypy
 - [project_session_20260315.md](project_session_20260315.md) — Session 2026-03-15 (full day): ESLint fix, Meridian issues #67–72, v2.2.0 release, cross-team automation (PRs #79/#80/#83), all resolved
+- [project_security_20260315.md](project_security_20260315.md) — 30 CodeQL fixes (PR #86) + automated secret scanning / public IP detection (PR #87)
