@@ -29,20 +29,24 @@ def run_async(coro):
 
 # ── Model Tests ──
 
+
 class TestUIEventModel:
     """Test UIEvent ORM model."""
 
     def test_model_exists(self):
         from app.db.models import UIEvent
+
         assert UIEvent.__tablename__ == "ui_events"
 
     def test_model_columns(self):
         from app.db.models import UIEvent
+
         cols = {c.name for c in UIEvent.__table__.columns}
         assert {"id", "timestamp", "session_id", "event_type", "target", "task_id", "extra"} <= cols
 
     def test_model_indexes(self):
         from app.db.models import UIEvent
+
         idx_names = {idx.name for idx in UIEvent.__table__.indexes}
         assert "ix_ui_events_session" in idx_names
         assert "ix_ui_events_type" in idx_names
@@ -52,11 +56,13 @@ class TestUIEventModel:
 
 # ── Tracking Service Tests ──
 
+
 class TestTrackingService:
     """Test tracking service functions exist and are async."""
 
     def test_module_imports(self):
         from app.services import tracking
+
         assert hasattr(tracking, "record_ui_event")
         assert hasattr(tracking, "record_ui_events_batch")
         assert hasattr(tracking, "get_feature_usage")
@@ -68,34 +74,42 @@ class TestTrackingService:
 
     def test_record_ui_event_is_async(self):
         from app.services.tracking import record_ui_event
+
         assert asyncio.iscoroutinefunction(record_ui_event)
 
     def test_record_batch_is_async(self):
         from app.services.tracking import record_ui_events_batch
+
         assert asyncio.iscoroutinefunction(record_ui_events_batch)
 
     def test_get_feature_usage_is_async(self):
         from app.services.tracking import get_feature_usage
+
         assert asyncio.iscoroutinefunction(get_feature_usage)
 
     def test_get_flow_funnel_is_async(self):
         from app.services.tracking import get_flow_funnel
+
         assert asyncio.iscoroutinefunction(get_flow_funnel)
 
     def test_get_error_events_is_async(self):
         from app.services.tracking import get_error_events
+
         assert asyncio.iscoroutinefunction(get_error_events)
 
     def test_get_activity_summary_is_async(self):
         from app.services.tracking import get_activity_summary
+
         assert asyncio.iscoroutinefunction(get_activity_summary)
 
     def test_cleanup_is_async(self):
         from app.services.tracking import cleanup_old_events
+
         assert asyncio.iscoroutinefunction(cleanup_old_events)
 
 
 # ── Track API Endpoints ──
+
 
 class TestTrackEndpoint:
     """Test POST /track endpoint."""
@@ -106,19 +120,11 @@ class TestTrackEndpoint:
         assert res.json()["ok"] is True
 
     def test_track_with_metadata(self):
-        res = client.post("/track", json={
-            "event": "flow",
-            "target": "upload_start",
-            "metadata": {"file_size": 1024}
-        })
+        res = client.post("/track", json={"event": "flow", "target": "upload_start", "metadata": {"file_size": 1024}})
         assert res.status_code == 200
 
     def test_track_with_task_id(self):
-        res = client.post("/track", json={
-            "event": "click",
-            "target": "downloadSrt",
-            "task_id": "abc-123"
-        })
+        res = client.post("/track", json={"event": "click", "target": "downloadSrt", "task_id": "abc-123"})
         assert res.status_code == 200
 
     def test_track_missing_event_fails(self):
@@ -136,13 +142,16 @@ class TestTrackBatchEndpoint:
     """Test POST /track/batch endpoint."""
 
     def test_batch_events(self):
-        res = client.post("/track/batch", json={
-            "events": [
-                {"event": "click", "target": "btn1"},
-                {"event": "click", "target": "btn2"},
-                {"event": "view", "target": "page_load"},
-            ]
-        })
+        res = client.post(
+            "/track/batch",
+            json={
+                "events": [
+                    {"event": "click", "target": "btn1"},
+                    {"event": "click", "target": "btn2"},
+                    {"event": "view", "target": "page_load"},
+                ]
+            },
+        )
         assert res.status_code == 200
         data = res.json()
         assert data["ok"] is True
@@ -154,15 +163,19 @@ class TestTrackBatchEndpoint:
         assert res.json()["count"] == 0
 
     def test_batch_with_metadata(self):
-        res = client.post("/track/batch", json={
-            "events": [
-                {"event": "error", "target": "js_error", "metadata": {"message": "test error"}},
-            ]
-        })
+        res = client.post(
+            "/track/batch",
+            json={
+                "events": [
+                    {"event": "error", "target": "js_error", "metadata": {"message": "test error"}},
+                ]
+            },
+        )
         assert res.status_code == 200
 
 
 # ── Analytics Endpoints ──
+
 
 class TestActivityEndpoint:
     """Test GET /analytics/activity."""
@@ -244,6 +257,7 @@ class TestSessionTimeline:
 
 # ── Frontend Tracker Tests ──
 
+
 @pytest.mark.skip(reason="Frontend migrated to React")
 class TestFrontendTracker:
     """Test frontend JS tracker exists in HTML."""
@@ -298,25 +312,30 @@ class TestFrontendTracker:
 
 # ── Migration Tests ──
 
+
 class TestMigration003:
     """Test Alembic migration file."""
 
     def test_migration_exists(self):
         from pathlib import Path
+
         assert Path("alembic/versions/003_ui_events.py").exists()
 
     def test_migration_has_upgrade(self):
         from pathlib import Path
+
         content = Path("alembic/versions/003_ui_events.py").read_text()
         assert "def upgrade" in content
         assert "ui_events" in content
 
     def test_migration_has_downgrade(self):
         from pathlib import Path
+
         content = Path("alembic/versions/003_ui_events.py").read_text()
         assert "def downgrade" in content
 
     def test_migration_chain(self):
         from pathlib import Path
+
         content = Path("alembic/versions/003_ui_events.py").read_text()
         assert '"002"' in content

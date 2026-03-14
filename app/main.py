@@ -35,8 +35,10 @@ async def lifespan(app: FastAPI):
 
     # Initialize databases
     from app.db.engine import init_db, close_db
+
     await init_db()
     from app.db.status_engine import init_status_db, close_status_db
+
     await init_status_db()
 
     # Capture main event loop for thread-safe async scheduling
@@ -53,6 +55,7 @@ async def lifespan(app: FastAPI):
     # Load task history from DB (with JSON file fallback)
     from app.services.task_backend import get_task_backend
     from app.db.task_backend_db import DatabaseTaskBackend
+
     backend = get_task_backend()
     if isinstance(backend, DatabaseTaskBackend):
         loaded = await backend.load_from_db()
@@ -74,22 +77,28 @@ async def lifespan(app: FastAPI):
 
     # Load analytics: try DB first, fallback to JSON snapshot
     from app.services.analytics import load_analytics_from_db
+
     db_loaded = await load_analytics_from_db()
     if not db_loaded:
         load_analytics_snapshot()
 
-    log_task_event("system", "startup", **{
-        "role": ROLE,
-        "platform": caps["platform"]["os"],
-        "cpu_cores": caps["cpu"]["logical_cores"],
-        "ram_gb": caps["memory"]["total_gb"],
-        "gpu": caps["gpu"]["devices"][0]["name"] if caps["gpu"]["devices"] else "none",
-        "tuning": caps["tuning"],
-        "redis": bool(REDIS_URL),
-    })
+    log_task_event(
+        "system",
+        "startup",
+        **{
+            "role": ROLE,
+            "platform": caps["platform"]["os"],
+            "cpu_cores": caps["cpu"]["logical_cores"],
+            "ram_gb": caps["memory"]["total_gb"],
+            "gpu": caps["gpu"]["devices"][0]["name"] if caps["gpu"]["devices"] else "none",
+            "tuning": caps["tuning"],
+            "redis": bool(REDIS_URL),
+        },
+    )
 
     # Register this worker for health monitoring
     from app.services.worker_health import register_worker
+
     worker_id = register_worker()
     app.state.worker_id = worker_id
 
@@ -98,6 +107,7 @@ async def lifespan(app: FastAPI):
     # Supports: "medium", "tiny,base,large", or "all"
     if ROLE != "web" and PRELOAD_MODEL:
         from app.config import VALID_MODELS
+
         if PRELOAD_MODEL.strip().lower() == "all":
             models_to_load = list(VALID_MODELS)
         else:
@@ -110,10 +120,12 @@ async def lifespan(app: FastAPI):
 
     # Load open incidents for status page
     from app.services.incident_logger import load_open_incidents
+
     await load_open_incidents()
 
     # Start background health monitor (sets/clears state.system_critical)
     from app.services.health_monitor import health_check_loop
+
     health_task = asyncio.create_task(health_check_loop())
 
     yield
@@ -142,6 +154,7 @@ async def lifespan(app: FastAPI):
     # Persist final task states to DB
     from app.services.task_backend import get_task_backend
     from app.db.task_backend_db import DatabaseTaskBackend
+
     backend = get_task_backend()
     if isinstance(backend, DatabaseTaskBackend):
         for tid, tdata in state.tasks.items():
@@ -155,6 +168,7 @@ async def lifespan(app: FastAPI):
     # Close legacy analytics SQLite (if still open)
     try:
         from app.services.analytics_db import close as close_analytics_db
+
         close_analytics_db()
     except Exception:
         pass
@@ -163,6 +177,7 @@ async def lifespan(app: FastAPI):
     if REDIS_URL:
         try:
             from app.services.redis_client import close_async_redis, close_sync_redis
+
             await close_async_redis()
             close_sync_redis()
         except Exception:
@@ -191,7 +206,9 @@ async def _preload_models_background(models_to_load: list[str]):
         "total": len(models_to_load),
         "error": None,
     }
-    logger.info(f"PRELOAD Loading {len(models_to_load)} model(s) on {device.upper()} in background: {', '.join(models_to_load)}")
+    logger.info(
+        f"PRELOAD Loading {len(models_to_load)} model(s) on {device.upper()} in background: {', '.join(models_to_load)}"
+    )
 
     for model_name in models_to_load:
         state.model_preload["current_model"] = model_name
@@ -199,7 +216,9 @@ async def _preload_models_background(models_to_load: list[str]):
         try:
             await asyncio.to_thread(get_model, model_name, device)
             state.model_preload["loaded"].append(model_name)
-            logger.info(f"PRELOAD Model '{model_name}' ready ({len(state.model_preload['loaded'])}/{len(models_to_load)})")
+            logger.info(
+                f"PRELOAD Model '{model_name}' ready ({len(state.model_preload['loaded'])}/{len(models_to_load)})"
+            )
         except Exception as e:
             logger.warning(f"PRELOAD Failed to load '{model_name}': {e}")
             state.model_preload["status"] = "error"
@@ -290,18 +309,21 @@ def create_app() -> FastAPI:
     # Critical state gate — blocks all user operations when system is unhealthy.
     # Placed early (runs before auth/session) so blocked requests skip all processing.
     from app.middleware.critical_state import CriticalStateMiddleware
+
     app.add_middleware(CriticalStateMiddleware)
 
     app.add_middleware(ApiKeyMiddleware)
 
     # Brute force protection (before auth, blocks repeat offenders)
     from app.middleware.brute_force import BruteForceMiddleware
+
     app.add_middleware(BruteForceMiddleware)
 
     app.add_middleware(SessionMiddleware)
 
     # Request body size limiting
     from app.middleware.body_limit import BodyLimitMiddleware
+
     app.add_middleware(BodyLimitMiddleware)
 
     app.add_middleware(SecurityHeadersMiddleware)
@@ -309,6 +331,7 @@ def create_app() -> FastAPI:
     # CORS
     from starlette.middleware.cors import CORSMiddleware
     from app.middleware.cors import get_cors_origins, CORS_ALLOW_METHODS, CORS_ALLOW_HEADERS
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=get_cors_origins(),
@@ -320,17 +343,21 @@ def create_app() -> FastAPI:
     # GZip compression (outermost, compresses all responses)
     if ENABLE_COMPRESSION:
         from app.middleware.compression import GZipMiddleware
+
         app.add_middleware(GZipMiddleware, minimum_size=500)
 
     # Global exception handler - prevents unhandled exceptions from crashing the service
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception):
         logger.error(f"UNHANDLED {request.method} {request.url.path}: {type(exc).__name__}: {exc}", exc_info=True)
-        log_task_event("system", "unhandled_exception",
-                       path=str(request.url.path),
-                       method=request.method,
-                       error_type=type(exc).__name__,
-                       error=str(exc))
+        log_task_event(
+            "system",
+            "unhandled_exception",
+            path=str(request.url.path),
+            method=request.method,
+            error_type=type(exc).__name__,
+            error=str(exc),
+        )
         return JSONResponse(
             status_code=500,
             content={"detail": "Internal server error. Please try again."},
@@ -342,6 +369,7 @@ def create_app() -> FastAPI:
     # Serve React build assets (JS/CSS bundles)
     from pathlib import Path
     from fastapi.staticfiles import StaticFiles
+
     _react_assets = Path(__file__).parent.parent / "frontend" / "dist" / "assets"
     if _react_assets.exists():
         app.mount("/assets", StaticFiles(directory=str(_react_assets)), name="react-assets")

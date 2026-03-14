@@ -28,6 +28,7 @@ def _get_task_data(task_id: str) -> dict | None:
     if REDIS_URL:
         try:
             from app.services.task_backend import get_task_backend
+
             backend = get_task_backend()
             return backend.get(task_id)
         except Exception:
@@ -72,6 +73,7 @@ async def task_websocket(websocket: WebSocket, task_id: str):
         if REDIS_URL:
             # Multi-server: subscribe to Redis Pub/Sub
             from app.services.pubsub import subscribe_events
+
             async for event in subscribe_events(task_id):
                 etype = event.get("type", "update")
                 if etype == "heartbeat":
@@ -83,6 +85,7 @@ async def task_websocket(websocket: WebSocket, task_id: str):
         else:
             # Standalone: each WS connection gets its own subscriber queue
             from app.services.sse import subscribe, unsubscribe
+
             q = subscribe(task_id)
             try:
                 while True:
@@ -98,8 +101,7 @@ async def task_websocket(websocket: WebSocket, task_id: str):
                         await websocket.send_json({"type": "heartbeat"})
                         status = state.tasks.get(task_id, {}).get("status")
                         if status in ("done", "error", "cancelled"):
-                            data = {k: v for k, v in state.tasks.get(task_id, {}).items()
-                                    if k not in _SKIP_FIELDS}
+                            data = {k: v for k, v in state.tasks.get(task_id, {}).items() if k not in _SKIP_FIELDS}
                             await websocket.send_json({"type": status, **data})
                             break
             finally:

@@ -1,7 +1,9 @@
 """E2E tests: homepage load, React mount, UI elements, no JS errors."""
+
 from playwright.sync_api import Page, expect
 
 BASE_URL = "https://openlabs.club"
+
 
 def test_homepage_loads(page: Page):
     """Page returns 200 and React root mounts."""
@@ -13,21 +15,25 @@ def test_homepage_loads(page: Page):
     assert len(root) > 100, "React root is empty — app failed to render"
     assert not errors, f"JS errors on homepage: {errors}"
 
+
 def test_transcribe_tab_visible(page: Page):
     page.goto(BASE_URL, wait_until="domcontentloaded", timeout=15000)
     btn = page.get_by_role("button", name="Transcribe")
     expect(btn).to_be_visible()
+
 
 def test_embed_tab_visible(page: Page):
     page.goto(BASE_URL, wait_until="domcontentloaded", timeout=15000)
     btn = page.get_by_role("button", name="Embed Subtitles")
     expect(btn).to_be_visible()
 
+
 def test_file_upload_dropzone_visible(page: Page):
     page.goto(BASE_URL, wait_until="domcontentloaded", timeout=15000)
     # File input should exist
     inp = page.locator("input[type='file']")
     assert inp.count() > 0, "No file input found"
+
 
 def test_health_indicator_visible(page: Page):
     page.goto(BASE_URL, wait_until="domcontentloaded", timeout=15000)
@@ -38,6 +44,7 @@ def test_health_indicator_visible(page: Page):
     expect(header).to_be_visible()
     # Should show "Healthy" or "Connecting"
     assert "Healthy" in page.content() or "Connecting" in page.content()
+
 
 def test_tab_switching(page: Page):
     page.goto(BASE_URL, wait_until="domcontentloaded", timeout=15000)
@@ -51,6 +58,7 @@ def test_tab_switching(page: Page):
     errors_after = []
     page.on("pageerror", lambda e: errors_after.append(str(e)))
     assert not errors_after
+
 
 def test_no_console_errors(page: Page):
     errors = []

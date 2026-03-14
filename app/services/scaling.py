@@ -72,6 +72,7 @@ class MemoryCache:
             if pattern == "*":
                 return list(self._store.keys())
             import fnmatch
+
             return [k for k in self._store.keys() if fnmatch.fnmatch(k, pattern)]
 
     def flush(self):
@@ -156,9 +157,11 @@ def cleanup_dead_workers(timeout_sec: int = 120) -> int:
 
 # ── Connection Pool Configuration ──
 
+
 def get_pool_config() -> dict:
     """Get database connection pool configuration from environment."""
     from app.config import DB_POOL_SIZE, DB_MAX_OVERFLOW, DB_POOL_RECYCLE
+
     return {
         "pool_size": DB_POOL_SIZE,
         "max_overflow": DB_MAX_OVERFLOW,
@@ -168,6 +171,7 @@ def get_pool_config() -> dict:
 
 
 # ── Task Queue Abstraction ──
+
 
 class InMemoryTaskQueue:
     """Simple in-memory task queue (replaced by Redis in production)."""
@@ -210,6 +214,7 @@ def get_task_queue() -> InMemoryTaskQueue:
 
 
 # ── Scale Info ──
+
 
 def get_scale_info() -> dict:
     """Get scaling/multi-instance status information."""

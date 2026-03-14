@@ -21,6 +21,7 @@ logger = logging.getLogger("subtitle-generator")
 
 class DatabaseUnavailableError(Exception):
     """Raised when a DB query fails due to connection issues."""
+
     pass
 
 
@@ -30,6 +31,7 @@ DEFAULT_RETENTION_DAYS = int(__import__("os").environ.get("DATA_RETENTION_DAYS",
 
 
 # ── Task Search & Filtering ──
+
 
 async def search_tasks(
     status: str = None,
@@ -102,19 +104,21 @@ async def search_tasks(
                     # This extra row tells us there's more
                     next_cursor = items[-1]["created_at"] if items else None
                     break
-                items.append({
-                    "id": task.id,
-                    "status": task.status,
-                    "filename": task.filename,
-                    "language": task.language,
-                    "language_requested": task.language_requested,
-                    "model_size": task.model_size,
-                    "device": task.device,
-                    "percent": task.percent,
-                    "duration": task.duration,
-                    "created_at": task.created_at.isoformat() if task.created_at else None,
-                    "session_id": task.session_id,
-                })
+                items.append(
+                    {
+                        "id": task.id,
+                        "status": task.status,
+                        "filename": task.filename,
+                        "language": task.language,
+                        "language_requested": task.language_requested,
+                        "model_size": task.model_size,
+                        "device": task.device,
+                        "percent": task.percent,
+                        "duration": task.duration,
+                        "created_at": task.created_at.isoformat() if task.created_at else None,
+                        "session_id": task.session_id,
+                    }
+                )
 
             return {"items": items, "next_cursor": next_cursor, "total": total, "limit": limit}
     except Exception as e:
@@ -123,6 +127,7 @@ async def search_tasks(
 
 
 # ── Analytics Rollup ──
+
 
 async def get_analytics_rollup(period: str = "daily", days: int = 30) -> list[dict]:
     """Get aggregated analytics for the given period.
@@ -133,20 +138,21 @@ async def get_analytics_rollup(period: str = "daily", days: int = 30) -> list[di
         async with get_session() as session:
             cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%d")
             result = await session.execute(
-                select(AnalyticsDaily)
-                .where(AnalyticsDaily.date >= cutoff)
-                .order_by(desc(AnalyticsDaily.date))
+                select(AnalyticsDaily).where(AnalyticsDaily.date >= cutoff).order_by(desc(AnalyticsDaily.date))
             )
             rows = result.scalars().all()
-            items = [{
-                "date": r.date,
-                "uploads": r.uploads,
-                "completed": r.completed,
-                "failed": r.failed,
-                "cancelled": r.cancelled,
-                "total_processing_sec": r.total_processing_sec,
-                "avg_file_size": r.avg_file_size,
-            } for r in rows]
+            items = [
+                {
+                    "date": r.date,
+                    "uploads": r.uploads,
+                    "completed": r.completed,
+                    "failed": r.failed,
+                    "cancelled": r.cancelled,
+                    "total_processing_sec": r.total_processing_sec,
+                    "avg_file_size": r.avg_file_size,
+                }
+                for r in rows
+            ]
 
             if period == "weekly":
                 return _aggregate_by_week(items)
@@ -161,7 +167,10 @@ async def get_analytics_rollup(period: str = "daily", days: int = 30) -> list[di
 def _aggregate_by_week(daily_items: list[dict]) -> list[dict]:
     """Aggregate daily data into weekly buckets."""
     from collections import defaultdict
-    weeks = defaultdict(lambda: {"uploads": 0, "completed": 0, "failed": 0, "cancelled": 0, "total_processing_sec": 0.0})
+
+    weeks = defaultdict(
+        lambda: {"uploads": 0, "completed": 0, "failed": 0, "cancelled": 0, "total_processing_sec": 0.0}
+    )
     for item in daily_items:
         try:
             dt = datetime.strptime(item["date"], "%Y-%m-%d")
@@ -178,7 +187,10 @@ def _aggregate_by_week(daily_items: list[dict]) -> list[dict]:
 def _aggregate_by_month(daily_items: list[dict]) -> list[dict]:
     """Aggregate daily data into monthly buckets."""
     from collections import defaultdict
-    months = defaultdict(lambda: {"uploads": 0, "completed": 0, "failed": 0, "cancelled": 0, "total_processing_sec": 0.0})
+
+    months = defaultdict(
+        lambda: {"uploads": 0, "completed": 0, "failed": 0, "cancelled": 0, "total_processing_sec": 0.0}
+    )
     for item in daily_items:
         try:
             month_key = item["date"][:7]  # YYYY-MM
@@ -193,6 +205,7 @@ def _aggregate_by_month(daily_items: list[dict]) -> list[dict]:
 
 # ── Data Retention ──
 
+
 async def enforce_retention(retention_days: int = None) -> dict:
     """Delete data older than retention period. Returns counts of deleted records."""
     days = retention_days or DEFAULT_RETENTION_DAYS
@@ -202,21 +215,15 @@ async def enforce_retention(retention_days: int = None) -> dict:
     try:
         async with get_session() as session:
             # Tasks
-            r = await session.execute(
-                TaskRecord.__table__.delete().where(TaskRecord.created_at < cutoff)
-            )
+            r = await session.execute(TaskRecord.__table__.delete().where(TaskRecord.created_at < cutoff))
             results["deleted"]["tasks"] = r.rowcount
 
             # Analytics events
-            r = await session.execute(
-                AnalyticsEvent.__table__.delete().where(AnalyticsEvent.timestamp < cutoff)
-            )
+            r = await session.execute(AnalyticsEvent.__table__.delete().where(AnalyticsEvent.timestamp < cutoff))
             results["deleted"]["analytics_events"] = r.rowcount
 
             # Audit logs
-            r = await session.execute(
-                AuditLog.__table__.delete().where(AuditLog.timestamp < cutoff)
-            )
+            r = await session.execute(AuditLog.__table__.delete().where(AuditLog.timestamp < cutoff))
             results["deleted"]["audit_logs"] = r.rowcount
 
         logger.info(f"RETENTION Enforced {days}d retention: {results['deleted']}")
@@ -228,6 +235,7 @@ async def enforce_retention(retention_days: int = None) -> dict:
 
 
 # ── Bulk Export ──
+
 
 async def export_tasks_csv(status: str = None, limit: int = 10000) -> str:
     """Export tasks as CSV string."""
@@ -241,9 +249,23 @@ async def export_tasks_csv(status: str = None, limit: int = 10000) -> str:
 
             output = io.StringIO()
             writer = csv.writer(output)
-            writer.writerow(["id", "status", "filename", "language", "model_size", "device", "percent", "duration", "created_at"])
+            writer.writerow(
+                ["id", "status", "filename", "language", "model_size", "device", "percent", "duration", "created_at"]
+            )
             for r in rows:
-                writer.writerow([r.id, r.status, r.filename, r.language, r.model_size, r.device, r.percent, r.duration, r.created_at])
+                writer.writerow(
+                    [
+                        r.id,
+                        r.status,
+                        r.filename,
+                        r.language,
+                        r.model_size,
+                        r.device,
+                        r.percent,
+                        r.duration,
+                        r.created_at,
+                    ]
+                )
             return output.getvalue()
     except Exception as e:
         logger.error(f"EXPORT tasks CSV error: {e}")
@@ -266,6 +288,7 @@ async def export_tasks_json(status: str = None, limit: int = 10000) -> list[dict
 
 
 # ── DB Health Check ──
+
 
 async def check_db_health() -> dict:
     """Check database health: pool status and query latency."""

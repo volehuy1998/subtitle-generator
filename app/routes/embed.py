@@ -12,8 +12,10 @@ from app import state
 from app.config import UPLOAD_DIR, OUTPUT_DIR, MAX_FILE_SIZE, MIN_FILE_SIZE
 from app.logging_setup import log_task_event
 from app.services.subtitle_embed import (
-    soft_embed_subtitles, hard_burn_subtitles,
-    SubtitleStyle, STYLE_PRESETS,
+    soft_embed_subtitles,
+    hard_burn_subtitles,
+    SubtitleStyle,
+    STYLE_PRESETS,
 )
 from app.services.sse import emit_event
 from app.utils.security import validate_file_extension, validate_magic_bytes
@@ -56,6 +58,7 @@ async def embed_subtitles(
     For hard mode, customize styling via preset or individual params.
     """
     from app.config import FFMPEG_AVAILABLE
+
     if not FFMPEG_AVAILABLE:
         raise HTTPException(503, "FFmpeg is not installed. Subtitle embedding is unavailable.")
 
@@ -145,6 +148,7 @@ async def embed_subtitles(
             if _translate_to:
                 from app.utils.srt import parse_srt, segments_to_srt
                 from app.services.translation import translate_segments
+
                 srt_content = srt_path.read_text(encoding="utf-8")
                 segments = parse_srt(srt_content)
                 source_lang = state.tasks[task_id].get("language", "en")
@@ -155,8 +159,13 @@ async def embed_subtitles(
                 effective_srt = translated_path
 
             if mode == "soft":
-                soft_embed_subtitles(video_path, effective_srt, output_path, task_id,
-                                     language=state.tasks[task_id].get("language", "eng"))
+                soft_embed_subtitles(
+                    video_path,
+                    effective_srt,
+                    output_path,
+                    task_id,
+                    language=state.tasks[task_id].get("language", "eng"),
+                )
             else:
                 hard_burn_subtitles(video_path, effective_srt, output_path, style, task_id)
 
@@ -197,6 +206,7 @@ async def quick_embed(
     This endpoint uses that preserved video, so the user doesn't need to re-upload.
     """
     from app.config import FFMPEG_AVAILABLE
+
     if not FFMPEG_AVAILABLE:
         raise HTTPException(503, "FFmpeg is not installed. Subtitle embedding is unavailable.")
 
@@ -270,6 +280,7 @@ async def quick_embed(
             if _translate_to:
                 from app.utils.srt import parse_srt, segments_to_srt
                 from app.services.translation import translate_segments
+
                 srt_content = srt_path.read_text(encoding="utf-8")
                 segments = parse_srt(srt_content)
                 source_lang = task.get("language", "en")
@@ -281,19 +292,24 @@ async def quick_embed(
 
             emit_event(task_id, "embed_progress", {"message": "Embedding subtitles...", "percent": 100})
             if mode == "soft":
-                soft_embed_subtitles(video_path, effective_srt, output_path, task_id,
-                                     language=task.get("language", "eng"))
+                soft_embed_subtitles(
+                    video_path, effective_srt, output_path, task_id, language=task.get("language", "eng")
+                )
             else:
                 hard_burn_subtitles(video_path, effective_srt, output_path, style, task_id)
 
             task["embedded_video"] = str(output_path.name)
             log_task_event(task_id, "quick_embed_complete", mode=mode, output=output_path.name)
-            emit_event(task_id, "embed_done", {
-                "message": f"Subtitles embedded ({mode} mode)",
-                "download_url": f"/embed/download/{task_id}",
-                "output": output_path.name,
-                "mode": mode,
-            })
+            emit_event(
+                task_id,
+                "embed_done",
+                {
+                    "message": f"Subtitles embedded ({mode} mode)",
+                    "download_url": f"/embed/download/{task_id}",
+                    "output": output_path.name,
+                    "mode": mode,
+                },
+            )
         except Exception as e:
             logger.error(f"EMBED [{task_id[:8]}] Quick embed failed: {e}")
             log_task_event(task_id, "embed_error", error=str(e))
@@ -329,6 +345,7 @@ async def download_embedded(task_id: str):
         raise HTTPException(403, "Access denied")
 
     from fastapi.responses import FileResponse
+
     original_stem = Path(state.tasks[task_id]["filename"]).stem
     out_name = f"{original_stem}_subtitled{path.suffix}"
     return FileResponse(path, filename=out_name, media_type="video/mp4")

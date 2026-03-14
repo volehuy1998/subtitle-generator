@@ -15,7 +15,15 @@ from pathlib import Path
 
 from app.main import app
 from app.services.analytics import (
-    record_upload, record_completion, record_failure, get_summary, get_timeseries, _counters, _language_counts, _timeseries, _lock,
+    record_upload,
+    record_completion,
+    record_failure,
+    get_summary,
+    get_timeseries,
+    _counters,
+    _language_counts,
+    _timeseries,
+    _lock,
 )
 from fastapi.testclient import TestClient
 
@@ -27,6 +35,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 def _reset_analytics():
     """Reset analytics state for isolated tests."""
     from app.services.analytics import _model_counts, _device_counts, _processing_times
+
     with _lock:
         for k in _counters:
             _counters[k] = 0
@@ -38,6 +47,7 @@ def _reset_analytics():
 
 
 # ── S9-1: Analytics Page ──
+
 
 class TestAnalyticsPage:
     def test_analytics_page_returns_200(self):
@@ -67,6 +77,7 @@ class TestAnalyticsPage:
 
 # ── S9-2: Processing Volume Chart ──
 
+
 class TestVolumeChart:
     def test_page_has_volume_chart(self):
         res = client.get("/analytics")
@@ -95,6 +106,7 @@ class TestVolumeChart:
 
 # ── S9-3: Success/Error Rate Chart ──
 
+
 class TestRateChart:
     def test_page_has_rate_chart(self):
         res = client.get("/analytics")
@@ -111,6 +123,7 @@ class TestRateChart:
 
 
 # ── S9-4: Language Distribution Chart ──
+
 
 class TestLanguageChart:
     def test_page_has_language_chart(self):
@@ -138,6 +151,7 @@ class TestLanguageChart:
 
 # ── S9-5: Processing Time by Model ──
 
+
 class TestModelChart:
     def test_page_has_model_chart(self):
         res = client.get("/analytics")
@@ -156,6 +170,7 @@ class TestModelChart:
 
 # ── S9-6: Device Distribution ──
 
+
 class TestDeviceChart:
     def test_page_has_device_chart(self):
         res = client.get("/analytics")
@@ -173,6 +188,7 @@ class TestDeviceChart:
 
 
 # ── S9-7: Real-Time KPI Counters ──
+
 
 class TestKPICounters:
     def test_page_has_kpi_section(self):
@@ -198,6 +214,7 @@ class TestKPICounters:
 
 
 # ── S9-8: Auto-Refresh ──
+
 
 class TestAutoRefresh:
     def test_page_has_refresh_selector(self):
@@ -226,6 +243,7 @@ class TestAutoRefresh:
 
 # ── S9-9: Route Registration ──
 
+
 class TestRouteRegistration:
     def test_analytics_page_registered(self):
         res = client.get("/analytics")
@@ -233,6 +251,7 @@ class TestRouteRegistration:
 
     def test_analytics_page_in_public_paths(self):
         from app.middleware.auth import PUBLIC_PATHS
+
         assert "/analytics" in PUBLIC_PATHS
 
     def test_analytics_api_endpoints_still_work(self):

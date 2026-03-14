@@ -17,10 +17,20 @@ import pytest
 
 from app.main import app
 from app.services.analytics import (
-    record_upload, record_completion, record_failure, record_cancellation,
-    get_timeseries, save_analytics_snapshot, load_analytics_snapshot,
-    _counters, _language_counts, _model_counts, _device_counts,
-    _processing_times, _timeseries, _lock,
+    record_upload,
+    record_completion,
+    record_failure,
+    record_cancellation,
+    get_timeseries,
+    save_analytics_snapshot,
+    load_analytics_snapshot,
+    _counters,
+    _language_counts,
+    _model_counts,
+    _device_counts,
+    _processing_times,
+    _timeseries,
+    _lock,
 )
 from fastapi.testclient import TestClient
 
@@ -42,6 +52,7 @@ def _reset_analytics():
 
 
 # ── S8-1: Analytics Service ──
+
 
 class TestAnalyticsService:
     def setup_method(self):
@@ -99,6 +110,7 @@ class TestAnalyticsService:
 
 # ── S8-2: Time-Series Ring Buffer ──
 
+
 class TestTimeSeries:
     def setup_method(self):
         _reset_analytics()
@@ -141,6 +153,7 @@ class TestTimeSeries:
 
 
 # ── S8-4: Analytics Summary Endpoint ──
+
 
 class TestAnalyticsSummaryEndpoint:
     def setup_method(self):
@@ -191,6 +204,7 @@ class TestAnalyticsSummaryEndpoint:
 
 # ── S8-5: Analytics Timeseries Endpoint ──
 
+
 class TestAnalyticsTimeseriesEndpoint:
     def setup_method(self):
         _reset_analytics()
@@ -228,6 +242,7 @@ class TestAnalyticsTimeseriesEndpoint:
 
 # ── S8-6: Session Reconnection ──
 
+
 class TestSessionReconnection:
     def test_progress_endpoint_returns_404_for_unknown(self):
         """Verify progress endpoint returns 404 for unknown task (frontend handles this)."""
@@ -237,6 +252,7 @@ class TestSessionReconnection:
     def test_progress_endpoint_returns_status_for_known_task(self):
         """Verify progress endpoint returns status for known task."""
         from app import state
+
         state.tasks["test-reconnect"] = {"status": "transcribing", "percent": 50, "message": "Working..."}
         res = client.get("/progress/test-reconnect")
         assert res.status_code == 200
@@ -254,6 +270,7 @@ class TestSessionReconnection:
 
 # ── S8-7: Metrics Wiring ──
 
+
 class TestMetricsWiring:
     def test_metrics_endpoint_has_counters(self):
         res = client.get("/metrics")
@@ -264,6 +281,7 @@ class TestMetricsWiring:
     def test_pipeline_imports_analytics(self):
         """Verify pipeline module imports analytics."""
         import app.services.pipeline as pipeline_mod
+
         source = Path(pipeline_mod.__file__).read_text()
         assert "record_completion" in source
         assert "record_failure" in source
@@ -272,11 +290,13 @@ class TestMetricsWiring:
     def test_upload_imports_analytics(self):
         """Verify upload route imports analytics."""
         import app.routes.upload as upload_mod
+
         source = Path(upload_mod.__file__).read_text()
         assert "record_upload" in source
 
 
 # ── S8-8: Frontend Advanced Options ──
+
 
 @pytest.mark.skip(reason="Advanced Options removed; frontend migrated to React")
 class TestFrontendAdvancedOptions:
@@ -316,6 +336,7 @@ class TestFrontendAdvancedOptions:
 
 # ── S8-9: Analytics Persistence ──
 
+
 class TestAnalyticsPersistence:
     def setup_method(self):
         _reset_analytics()
@@ -323,6 +344,7 @@ class TestAnalyticsPersistence:
     def test_save_and_load_snapshot(self, tmp_path):
         import app.services.analytics as analytics_mod
         import app.config as config_mod
+
         original_log_dir = config_mod.LOG_DIR
 
         # Temporarily change LOG_DIR
@@ -352,6 +374,7 @@ class TestAnalyticsPersistence:
 
 # ── S8: Route Registration ──
 
+
 class TestRouteRegistration:
     def test_analytics_summary_registered(self):
         res = client.get("/analytics/summary")
@@ -364,5 +387,6 @@ class TestRouteRegistration:
     def test_analytics_in_public_paths(self):
         """Analytics endpoints should be accessible without API key."""
         from app.middleware.auth import PUBLIC_PATHS
+
         assert "/analytics/summary" in PUBLIC_PATHS
         assert "/analytics/timeseries" in PUBLIC_PATHS

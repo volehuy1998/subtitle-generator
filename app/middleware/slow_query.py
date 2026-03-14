@@ -1,4 +1,5 @@
 """SQLAlchemy event-based slow query logger."""
+
 import logging
 import time
 
@@ -23,5 +24,5 @@ def register_slow_query_logging(engine):
             stmt_short = statement.strip().replace("\n", " ")[:200]
             logger.warning(
                 f"SLOW QUERY {total_ms:.1f}ms: {stmt_short}",
-                extra={"slow_query_ms": round(total_ms, 1), "query": stmt_short}
+                extra={"slow_query_ms": round(total_ms, 1), "query": stmt_short},
             )

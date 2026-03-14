@@ -19,6 +19,7 @@ from pydantic import BaseModel, ConfigDict
 
 # ── Upload ────────────────────────────────────────────────────────────────────
 
+
 class UploadResponse(BaseModel):
     task_id: str
     model_size: str
@@ -30,14 +31,25 @@ class UploadResponse(BaseModel):
 # ── Task progress (polling fallback) ─────────────────────────────────────────
 
 TaskStatusLiteral = Literal[
-    "queued", "uploading", "probing", "extracting", "loading_model",
-    "transcribing", "formatting", "writing", "done",
-    "error", "cancelled", "paused", "combining",
+    "queued",
+    "uploading",
+    "probing",
+    "extracting",
+    "loading_model",
+    "transcribing",
+    "formatting",
+    "writing",
+    "done",
+    "error",
+    "cancelled",
+    "paused",
+    "combining",
 ]
 
 
 class StepTimings(BaseModel):
     """Wall-clock seconds for each pipeline stage."""
+
     model_config = ConfigDict(extra="allow")
     upload: Optional[float] = None
     extract: Optional[float] = None
@@ -47,6 +59,7 @@ class StepTimings(BaseModel):
 
 class TaskProgressResponse(BaseModel):
     """Returned by GET /progress/{task_id}."""
+
     model_config = ConfigDict(extra="allow")
     task_id: Optional[str] = None
     status: str
@@ -70,8 +83,10 @@ class TaskProgressResponse(BaseModel):
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
+
 class HealthResponse(BaseModel):
     """Returned by GET /health — liveness only."""
+
     status: Literal["healthy"]
     uptime_sec: float
 
@@ -84,6 +99,7 @@ class AlertItem(BaseModel):
 
 class SystemStatusResponse(BaseModel):
     """Returned by GET /api/status — full health aggregate for the UI."""
+
     status: Literal["healthy", "warning", "critical"]
     uptime_sec: float
     active_tasks: int
@@ -111,12 +127,14 @@ class SystemStatusResponse(BaseModel):
 
 # ── System info ───────────────────────────────────────────────────────────────
 
+
 class DiarizationInfo(BaseModel):
     available: bool
 
 
 class SystemInfoResponse(BaseModel):
     """Returned by GET /system-info."""
+
     model_config = ConfigDict(extra="allow")
     cuda_available: bool
     gpu_name: Optional[str] = None
@@ -129,10 +147,12 @@ class SystemInfoResponse(BaseModel):
 
 class LanguagesResponse(BaseModel):
     """Returned by GET /languages."""
+
     languages: dict[str, str]
 
 
 # ── Tasks list ────────────────────────────────────────────────────────────────
+
 
 class TaskListItem(BaseModel):
     model_config = ConfigDict(extra="allow")

@@ -82,7 +82,7 @@ async def export_logs(
         return {"entries": [], "total": 0, "error": str(e)}
 
     # Apply offset
-    paginated = entries[offset:offset + limit]
+    paginated = entries[offset : offset + limit]
 
     return {
         "entries": paginated,

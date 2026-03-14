@@ -26,6 +26,7 @@ router = APIRouter(tags=["Tracking"])
 
 class TrackEvent(BaseModel):
     """Single UI event."""
+
     event: str = Field(..., max_length=50)
     target: str = Field("", max_length=100)
     task_id: str = Field("", max_length=36)
@@ -34,6 +35,7 @@ class TrackEvent(BaseModel):
 
 class TrackBatch(BaseModel):
     """Batch of UI events."""
+
     events: list[TrackEvent] = Field(..., max_length=100)
 
 

@@ -43,20 +43,22 @@ async def list_tasks(request: Request, session_only: bool = Query(False)):
         if session_only and t.get("session_id") != session_id:
             continue
         queue_info = _estimate_queue_position(tid) if t.get("status") == "queued" else {}
-        result.append({
-            "task_id": tid,
-            "status": t.get("status", "unknown"),
-            "percent": t.get("percent", 0),
-            "filename": t.get("filename", "unknown"),
-            "message": t.get("message", ""),
-            "model_size": t.get("model_size", ""),
-            "device": t.get("device", ""),
-            "language": t.get("language", ""),
-            "segments": t.get("segments", 0),
-            "created_at": t.get("created_at", ""),
-            "own": t.get("session_id", "") == getattr(request.state, "session_id", ""),
-            **queue_info,
-        })
+        result.append(
+            {
+                "task_id": tid,
+                "status": t.get("status", "unknown"),
+                "percent": t.get("percent", 0),
+                "filename": t.get("filename", "unknown"),
+                "message": t.get("message", ""),
+                "model_size": t.get("model_size", ""),
+                "device": t.get("device", ""),
+                "language": t.get("language", ""),
+                "segments": t.get("segments", 0),
+                "created_at": t.get("created_at", ""),
+                "own": t.get("session_id", "") == getattr(request.state, "session_id", ""),
+                **queue_info,
+            }
+        )
     # Sort newest first, limit to last 100
     result.sort(key=lambda x: x.get("created_at") or "", reverse=True)
     result = result[:100]
@@ -113,16 +115,20 @@ async def check_duplicates(filename: str = Query(...), file_size: int = Query(0)
     """
     matches = []
     for tid, t in state.tasks.items():
-        if (t.get("filename") == filename and
-            t.get("status") == "done" and
-            (file_size == 0 or t.get("file_size") == file_size)):
-            matches.append({
-                "task_id": tid,
-                "filename": t.get("filename"),
-                "language": t.get("language", ""),
-                "segments": t.get("segments", 0),
-                "model_size": t.get("model_size", ""),
-            })
+        if (
+            t.get("filename") == filename
+            and t.get("status") == "done"
+            and (file_size == 0 or t.get("file_size") == file_size)
+        ):
+            matches.append(
+                {
+                    "task_id": tid,
+                    "filename": t.get("filename"),
+                    "language": t.get("language", ""),
+                    "segments": t.get("segments", 0),
+                    "model_size": t.get("model_size", ""),
+                }
+            )
 
     return {
         "duplicates_found": len(matches) > 0,

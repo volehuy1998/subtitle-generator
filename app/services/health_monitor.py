@@ -29,6 +29,7 @@ async def _check_db() -> str | None:
     """Returns reason string if DB is unreachable, None if healthy."""
     try:
         from app.services.query_layer import check_db_health
+
         result = await check_db_health()
         if not result.get("ok"):
             return "Database connection lost"
@@ -81,6 +82,7 @@ async def health_check_loop():
             # Auto-detect incidents for status page (runs every cycle)
             try:
                 from app.services.incident_logger import auto_detect_incidents
+
                 await auto_detect_incidents()
             except Exception as e:
                 logger.debug(f"HEALTH_MONITOR incident detection error: {e}")

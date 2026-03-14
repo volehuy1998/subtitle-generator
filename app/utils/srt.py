@@ -88,7 +88,7 @@ def parse_srt(srt_content: str) -> list[dict]:
             continue
         start = _parse_srt_timestamp(ts_parts[0])
         end = _parse_srt_timestamp(ts_parts[1])
-        text = "\n".join(lines[ts_idx + 1:]).strip()
+        text = "\n".join(lines[ts_idx + 1 :]).strip()
         if text:
             segments.append({"start": start, "end": end, "text": text})
     return segments
@@ -106,7 +106,7 @@ def parse_vtt(vtt_content: str) -> list[dict]:
         # Skip header lines until first blank line
         idx = content.find("\n\n")
         if idx != -1:
-            content = content[idx + 2:]
+            content = content[idx + 2 :]
         else:
             return segments
 
@@ -127,7 +127,7 @@ def parse_vtt(vtt_content: str) -> list[dict]:
             continue
         start = _parse_vtt_timestamp(ts_parts[0])
         end = _parse_vtt_timestamp(ts_parts[1])
-        text = "\n".join(lines[ts_idx + 1:]).strip()
+        text = "\n".join(lines[ts_idx + 1 :]).strip()
         if text:
             segments.append({"start": start, "end": end, "text": text})
     return segments

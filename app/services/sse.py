@@ -64,11 +64,13 @@ def emit_event(task_id: str, event_type: str, data: dict = None):
     if REDIS_URL:
         # Multi-server: publish via Redis Pub/Sub
         from app.services.pubsub import publish_event
+
         publish_event(task_id, event_type, data)
 
         # Also update Redis task backend
         try:
             from app.services.task_backend_redis import RedisTaskBackend
+
             backend = RedisTaskBackend()
             task_data = state.tasks.get(task_id)
             if task_data:

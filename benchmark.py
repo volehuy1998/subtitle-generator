@@ -34,6 +34,7 @@ RESULTS_FILE = os.path.join(LOGS_DIR, "benchmark_results.json")
 
 # --- Multipart form data helper ---
 
+
 def build_multipart_formdata(fields, files):
     """
     Build a multipart/form-data body manually.
@@ -48,20 +49,13 @@ def build_multipart_formdata(fields, files):
 
     for name, value in fields.items():
         parts.append(("--%s" % boundary).encode())
-        parts.append(
-            ('Content-Disposition: form-data; name="%s"' % name).encode()
-        )
+        parts.append(('Content-Disposition: form-data; name="%s"' % name).encode())
         parts.append(b"")
         parts.append(value.encode() if isinstance(value, str) else value)
 
     for field_name, filename, file_bytes, content_type in files:
         parts.append(("--%s" % boundary).encode())
-        parts.append(
-            (
-                'Content-Disposition: form-data; name="%s"; filename="%s"'
-                % (field_name, filename)
-            ).encode()
-        )
+        parts.append(('Content-Disposition: form-data; name="%s"; filename="%s"' % (field_name, filename)).encode())
         parts.append(("Content-Type: %s" % content_type).encode())
         parts.append(b"")
         parts.append(file_bytes)
@@ -75,6 +69,7 @@ def build_multipart_formdata(fields, files):
 
 
 # --- HTTP helpers ---
+
 
 def http_get_json(url):
     """GET a URL and parse JSON response. Returns (data, error_string)."""
@@ -96,12 +91,14 @@ def http_post_upload(file_path, device, model_size):
         file_bytes = f.read()
 
     fields = {"device": device, "model_size": model_size}
-    files = [(
-        "file",
-        filename,
-        file_bytes,
-        "application/octet-stream",
-    )]
+    files = [
+        (
+            "file",
+            filename,
+            file_bytes,
+            "application/octet-stream",
+        )
+    ]
 
     body, content_type = build_multipart_formdata(fields, files)
 
@@ -170,6 +167,7 @@ def poll_until_done(task_id, timeout=TIMEOUT_SECONDS):
 
 # --- Profiling data from tasks.jsonl ---
 
+
 def load_profiling_data(task_ids):
     """
     Read logs/tasks.jsonl and collect pipeline_summary events for the given task IDs.
@@ -201,6 +199,7 @@ def load_profiling_data(task_ids):
 
 # --- Formatting helpers ---
 
+
 def fmt_time(seconds):
     """Format seconds to a human-readable string."""
     if seconds is None:
@@ -226,6 +225,7 @@ def fmt_mb(mb):
 
 
 # --- Table printing ---
+
 
 def print_table(headers, rows, col_widths=None):
     """
@@ -263,6 +263,7 @@ def print_table(headers, rows, col_widths=None):
 
 
 # --- Main benchmark ---
+
 
 def run_benchmark(sample_file):
     print("=" * 70)
@@ -363,8 +364,7 @@ def run_benchmark(sample_file):
                 print("  DONE in %s" % fmt_time(wall_elapsed))
                 if progress_data.get("segments"):
                     print(
-                        "  Segments: %s | Language: %s"
-                        % (progress_data.get("segments"), progress_data.get("language"))
+                        "  Segments: %s | Language: %s" % (progress_data.get("segments"), progress_data.get("language"))
                     )
 
             results.append(result)
@@ -464,18 +464,20 @@ def run_benchmark(sample_file):
         else:
             status_str = status[:6]
 
-        rows.append([
-            r["model"],
-            r["device"],
-            status_str,
-            total_str,
-            transcribe_str,
-            model_load_str,
-            speed_str,
-            seg_str,
-            ram_str,
-            gpu_str,
-        ])
+        rows.append(
+            [
+                r["model"],
+                r["device"],
+                status_str,
+                total_str,
+                transcribe_str,
+                model_load_str,
+                speed_str,
+                seg_str,
+                ram_str,
+                gpu_str,
+            ]
+        )
 
     print_table(headers, rows)
 

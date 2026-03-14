@@ -11,8 +11,12 @@ from app.schemas import UploadResponse
 
 from app import state
 from app.config import (
-    UPLOAD_DIR, MAX_FILE_SIZE, MIN_FILE_SIZE,
-    VALID_MODELS, MAX_CONCURRENT_TASKS, SUPPORTED_LANGUAGES,
+    UPLOAD_DIR,
+    MAX_FILE_SIZE,
+    MIN_FILE_SIZE,
+    VALID_MODELS,
+    MAX_CONCURRENT_TASKS,
+    SUPPORTED_LANGUAGES,
 )
 from app.logging_setup import log_task_event
 from app.services.gpu import auto_select_model
@@ -60,6 +64,7 @@ async def upload(
 
     # Reject video files when FFmpeg is not available
     from app.config import FFMPEG_AVAILABLE, VIDEO_EXTENSIONS
+
     if ext in VIDEO_EXTENSIONS and not FFMPEG_AVAILABLE:
         raise HTTPException(
             503,
@@ -93,6 +98,7 @@ async def upload(
     logger.info(f"UPLOAD [{task_id[:8]}] Starting: file='{safe_filename}' model={model_size} device={device}")
 
     import time
+
     t0 = time.time()
     size = 0
     with open(video_path, "wb") as f:
@@ -118,8 +124,9 @@ async def upload(
     # Validate magic bytes (actual file content, not just extension)
     if not validate_magic_bytes(video_path):
         client_ip = request.client.host if request.client else "unknown"
-        log_audit_event("suspicious_file", ip=client_ip, filename=safe_filename,
-                        size=size, reason="magic_bytes_mismatch")
+        log_audit_event(
+            "suspicious_file", ip=client_ip, filename=safe_filename, size=size, reason="magic_bytes_mismatch"
+        )
         quarantine_file(video_path, reason="magic_bytes_mismatch", ip=client_ip)
         logger.warning(f"UPLOAD [{task_id[:8]}] Rejected: magic bytes don't match a media file")
         raise HTTPException(400, "File content does not match a recognized media format.")
@@ -128,17 +135,24 @@ async def upload(
     client_ip = request.client.host if request.client else "unknown"
     av_result = scan_with_clamav(str(video_path))
     if not av_result["clean"]:
-        log_audit_event("virus_detected", ip=client_ip, filename=safe_filename,
-                        size=size, threat=av_result.get("threat"))
-        quarantine_file(video_path, reason="virus_detected", ip=client_ip,
-                        threat=av_result.get("threat"))
+        log_audit_event(
+            "virus_detected", ip=client_ip, filename=safe_filename, size=size, threat=av_result.get("threat")
+        )
+        quarantine_file(video_path, reason="virus_detected", ip=client_ip, threat=av_result.get("threat"))
         logger.warning(f"UPLOAD [{task_id[:8]}] Rejected: ClamAV detected threat '{av_result.get('threat')}'")
         raise HTTPException(400, "File rejected: virus or malware detected.")
 
     upload_time = time.time() - t0
     logger.info(f"UPLOAD [{task_id[:8]}] Saved: {format_bytes(size)} in {upload_time:.1f}s -> {video_path.name}")
-    log_task_event(task_id, "upload", filename=safe_filename, size=size,
-                   upload_time_sec=round(upload_time, 2), model=model_size, device=device)
+    log_task_event(
+        task_id,
+        "upload",
+        filename=safe_filename,
+        size=size,
+        upload_time_sec=round(upload_time, 2),
+        model=model_size,
+        device=device,
+    )
 
     # Truncate initial_prompt to prevent unbounded input
     if len(initial_prompt) > 500:
@@ -155,6 +169,7 @@ async def upload(
     inc("uploads_total")
 
     from datetime import datetime, timezone
+
     state.tasks[task_id] = {
         "status": "queued",
         "percent": 0,
@@ -167,10 +182,12 @@ async def upload(
 
     # Persist new task to DB
     from app.services.task_backend import get_task_backend
+
     backend = get_task_backend()
     backend.set(task_id, state.tasks[task_id])
     try:
         from app.db.task_backend_db import DatabaseTaskBackend
+
         if isinstance(backend, DatabaseTaskBackend):
             backend.schedule_persist(task_id, state.tasks[task_id])
     except ImportError:
@@ -192,30 +209,57 @@ async def upload(
 
     # Dispatch: Celery (multi-server) or local thread (standalone)
     from app.config import ROLE, STORAGE_BACKEND
+
     if ROLE == "web":
         # Multi-server: upload to S3 if configured, then dispatch via Celery
         if STORAGE_BACKEND == "s3":
             from app.services.storage import get_storage
+
             storage = get_storage()
             storage.save_upload_from_path(video_path.name, video_path)
 
         from app.tasks import transcribe_task
+
         transcribe_task.delay(
-            task_id, video_path.name, model_size, device, language,
-            word_timestamps=word_timestamps, initial_prompt=initial_prompt,
-            diarize=diarize, num_speakers=num_speakers, max_line_chars=max_line_chars,
-            translate_to_english=translate_to_english, auto_embed=auto_embed,
+            task_id,
+            video_path.name,
+            model_size,
+            device,
+            language,
+            word_timestamps=word_timestamps,
+            initial_prompt=initial_prompt,
+            diarize=diarize,
+            num_speakers=num_speakers,
+            max_line_chars=max_line_chars,
+            translate_to_english=translate_to_english,
+            auto_embed=auto_embed,
             translate_to=translate_to,
         )
     else:
         # Standalone: process locally in background thread
-        asyncio.create_task(asyncio.to_thread(
-            process_video, task_id, video_path, model_size, device, language,
-            word_timestamps=word_timestamps, initial_prompt=initial_prompt,
-            diarize=diarize, num_speakers=num_speakers, max_line_chars=max_line_chars,
-            translate_to_english=translate_to_english, auto_embed=auto_embed,
-            translate_to=translate_to,
-        ))
+        asyncio.create_task(
+            asyncio.to_thread(
+                process_video,
+                task_id,
+                video_path,
+                model_size,
+                device,
+                language,
+                word_timestamps=word_timestamps,
+                initial_prompt=initial_prompt,
+                diarize=diarize,
+                num_speakers=num_speakers,
+                max_line_chars=max_line_chars,
+                translate_to_english=translate_to_english,
+                auto_embed=auto_embed,
+                translate_to=translate_to,
+            )
+        )
 
-    return {"task_id": task_id, "model_size": model_size, "language": language,
-            "word_timestamps": word_timestamps, "diarize": diarize}
+    return {
+        "task_id": task_id,
+        "model_size": model_size,
+        "language": language,
+        "word_timestamps": word_timestamps,
+        "diarize": diarize,
+    }

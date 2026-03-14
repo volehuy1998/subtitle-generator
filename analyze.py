@@ -69,11 +69,12 @@ def find_latest_task_id() -> str | None:
 # Report formatting helpers
 # ─────────────────────────────────────────────────────────────────────
 
+
 def fmt_time(sec: float) -> str:
     if sec < 0:
         return "N/A"
     if sec < 1:
-        return f"{sec*1000:.0f}ms"
+        return f"{sec * 1000:.0f}ms"
     if sec < 60:
         return f"{sec:.2f}s"
     m = int(sec // 60)
@@ -85,11 +86,11 @@ def fmt_bytes(b: int) -> str:
     if b < 1024:
         return f"{b}B"
     elif b < 1024**2:
-        return f"{b/1024:.1f}KB"
+        return f"{b / 1024:.1f}KB"
     elif b < 1024**3:
-        return f"{b/1024**2:.1f}MB"
+        return f"{b / 1024**2:.1f}MB"
     else:
-        return f"{b/1024**3:.2f}GB"
+        return f"{b / 1024**3:.2f}GB"
 
 
 def bar_chart(value: float, total: float, width: int = 40) -> str:
@@ -114,6 +115,7 @@ def header(text: str, width=70):
 # ─────────────────────────────────────────────────────────────────────
 # Analysis: Single task
 # ─────────────────────────────────────────────────────────────────────
+
 
 def analyze_task(task_id: str):
     """Full analysis of a single task."""
@@ -179,7 +181,7 @@ def analyze_task(task_id: str):
         if len(step_events) >= 2:
             ram_start = step_events[0].get("ram_before_mb", 0)
             ram_end = step_events[-1].get("ram_after_mb", 0)
-            print(f"  RAM: {ram_start:.0f}MB -> {ram_end:.0f}MB (Delta {ram_end-ram_start:+.0f}MB)")
+            print(f"  RAM: {ram_start:.0f}MB -> {ram_end:.0f}MB (Delta {ram_end - ram_start:+.0f}MB)")
 
     # ── Transcription Profiling ──
     if tx_profile:
@@ -252,7 +254,7 @@ def analyze_task(task_id: str):
         overhead = total_time - step_timings.get("transcribe", 0)
         overhead_pct = overhead / total_time * 100
         print(f"\n  Pipeline overhead: {fmt_time(overhead)} ({overhead_pct:.1f}%)")
-        print(f"  Pure transcription: {fmt_time(step_timings.get('transcribe', 0))} ({100-overhead_pct:.1f}%)")
+        print(f"  Pure transcription: {fmt_time(step_timings.get('transcribe', 0))} ({100 - overhead_pct:.1f}%)")
 
     # ── Per-Segment Details ──
     # Load segment info from app.log SEG lines
@@ -262,7 +264,9 @@ def analyze_task(task_id: str):
         print(f"\n  {'#':<4} {'Time Range':<22} {'Duration':>8} {'Chars':>6}  {'Text (preview)'}")
         separator()
         for seg in segments_from_log:
-            print(f"  {seg['index']:<4} [{seg['start']} -> {seg['end']}] {seg['duration']:>7.1f}s {seg['chars']:>5}  {seg['text'][:50]}")
+            print(
+                f"  {seg['index']:<4} [{seg['start']} -> {seg['end']}] {seg['duration']:>7.1f}s {seg['chars']:>5}  {seg['text'][:50]}"
+            )
         separator()
         print(f"  Total: {len(segments_from_log)} segments")
 
@@ -275,6 +279,7 @@ def load_segments_from_applog(short_id: str) -> list[dict]:
         return []
     segments = []
     import re
+
     seg_pattern = re.compile(
         rf"SEG \[{re.escape(short_id)}\] #(\d+) "
         rf"\[(.+?) -> (.+?)\] dur=([\d.]+)s chars=(\d+) .+?\| \"(.+?)\""
@@ -283,20 +288,23 @@ def load_segments_from_applog(short_id: str) -> list[dict]:
         for line in f:
             m = seg_pattern.search(line)
             if m:
-                segments.append({
-                    "index": int(m.group(1)),
-                    "start": m.group(2),
-                    "end": m.group(3),
-                    "duration": float(m.group(4)),
-                    "chars": int(m.group(5)),
-                    "text": m.group(6),
-                })
+                segments.append(
+                    {
+                        "index": int(m.group(1)),
+                        "start": m.group(2),
+                        "end": m.group(3),
+                        "duration": float(m.group(4)),
+                        "chars": int(m.group(5)),
+                        "text": m.group(6),
+                    }
+                )
     return segments
 
 
 # ─────────────────────────────────────────────────────────────────────
 # Analysis: All tasks summary
 # ─────────────────────────────────────────────────────────────────────
+
 
 def analyze_all():
     """Summary table of all tasks."""
@@ -306,7 +314,9 @@ def analyze_all():
         return
 
     header(f"ALL TASKS SUMMARY ({len(all_ids)} tasks)")
-    print(f"\n  {'ID':<10} {'File':<25} {'Model':<8} {'Device':<6} {'Status':<10} {'Time':>8} {'Audio':>8} {'Speed':>7}")
+    print(
+        f"\n  {'ID':<10} {'File':<25} {'Model':<8} {'Device':<6} {'Status':<10} {'Time':>8} {'Audio':>8} {'Speed':>7}"
+    )
     separator("-", 100)
 
     for tid in all_ids:
@@ -338,6 +348,7 @@ def analyze_all():
 # Export to JSON
 # ─────────────────────────────────────────────────────────────────────
 
+
 def export_task(task_id: str):
     """Export all events for a task as a structured JSON report."""
     events = load_task_events(task_id)
@@ -363,6 +374,7 @@ def export_task(task_id: str):
 # ─────────────────────────────────────────────────────────────────────
 # Main
 # ─────────────────────────────────────────────────────────────────────
+
 
 def main():
     args = sys.argv[1:]

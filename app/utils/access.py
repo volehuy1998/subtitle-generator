@@ -20,10 +20,12 @@ from fastapi import HTTPException, Request
 # Extend via TRUSTED_PROXIES env var (comma-separated CIDR or IPs).
 _DEFAULT_TRUSTED = {"127.0.0.1", "::1", "172.17.0.1"}  # localhost + docker bridge
 
+
 def _load_trusted_proxies() -> frozenset[str]:
     raw = os.environ.get("TRUSTED_PROXIES", "")
     extra = {s.strip() for s in raw.split(",") if s.strip()}
     return frozenset(_DEFAULT_TRUSTED | extra)
+
 
 _TRUSTED_PROXIES = _load_trusted_proxies()
 
@@ -44,6 +46,7 @@ def get_client_ip(request: Request) -> str:
 
 # ── Task ownership ─────────────────────────────────────────────────────────────
 
+
 def check_task_access(task: dict, request: Request) -> None:
     """Raise HTTP 403 if the requester does not own this task.
 
@@ -53,6 +56,7 @@ def check_task_access(task: dict, request: Request) -> None:
       - The task pre-dates this feature (no session_id stored)
     """
     from app.middleware.auth import is_auth_enabled
+
     if is_auth_enabled():
         return  # API-key auth → caller is trusted
 

@@ -32,6 +32,7 @@ client = TestClient(app, base_url="https://testserver")
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _fixture(name: str) -> bytes:
     p = FIXTURES / name
     if p.exists():
@@ -43,17 +44,18 @@ def _fixture(name: str) -> bytes:
 def _mp4_ftyp() -> bytes:
     """Minimal 24-byte ISO MP4 file-type box."""
     return (
-        struct.pack(">I", 24)   # box size
-        + b"ftyp"               # box type
-        + b"mp42"               # major brand
+        struct.pack(">I", 24)  # box size
+        + b"ftyp"  # box type
+        + b"mp42"  # major brand
         + struct.pack(">I", 0)  # minor version
-        + b"mp42isom"           # compatible brands
+        + b"mp42isom"  # compatible brands
     )
 
 
 # ---------------------------------------------------------------------------
 # CATEGORY: file_upload
 # ---------------------------------------------------------------------------
+
 
 class TestFileUploadSecurity:
     """owasp:file_upload — extension / magic-byte validation."""
@@ -102,6 +104,7 @@ class TestFileUploadSecurity:
 # CATEGORY: path_traversal
 # ---------------------------------------------------------------------------
 
+
 class TestPathTraversal:
     """owasp:path_traversal — filename sanitization."""
 
@@ -140,6 +143,7 @@ class TestPathTraversal:
 # CATEGORY: injection
 # ---------------------------------------------------------------------------
 
+
 class TestInjection:
     """owasp:injection — shell and SQL injection in filenames."""
 
@@ -172,6 +176,7 @@ class TestInjection:
 # ---------------------------------------------------------------------------
 # CATEGORY: sec_headers
 # ---------------------------------------------------------------------------
+
 
 class TestSecurityHeaders:
     """owasp:sec_headers — HTTP security headers on every response."""
@@ -210,6 +215,7 @@ class TestSecurityHeaders:
 # CATEGORY: idor
 # ---------------------------------------------------------------------------
 
+
 class TestIDOR:
     """owasp:idor — task ownership enforcement."""
 
@@ -234,6 +240,7 @@ class TestIDOR:
 # ---------------------------------------------------------------------------
 # CATEGORY: broken_auth
 # ---------------------------------------------------------------------------
+
 
 class TestBrokenAuth:
     """owasp:broken_auth — API key enforcement and public route access."""

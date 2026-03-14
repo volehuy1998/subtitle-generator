@@ -16,6 +16,7 @@ client = TestClient(app, base_url="https://testserver")
 
 # ── System Capability Detection ──
 
+
 class TestSystemCapability:
     def test_detect_returns_all_sections(self):
         caps = detect_system_capabilities()
@@ -92,6 +93,7 @@ class TestSystemCapability:
 
 # ── Structured Logging ──
 
+
 class TestStructuredLogging:
     def test_request_id_tracking(self):
         set_request_id("test123")
@@ -99,10 +101,13 @@ class TestStructuredLogging:
 
     def test_request_id_default(self):
         import threading
+
         # New thread should have "system" as default
         result = [None]
+
         def check():
             result[0] = get_request_id()
+
         t = threading.Thread(target=check)
         t.start()
         t.join()
@@ -111,8 +116,13 @@ class TestStructuredLogging:
     def test_json_formatter_produces_valid_json(self):
         formatter = JsonFormatter()
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="test.py",
-            lineno=1, msg="Test message", args=(), exc_info=None,
+            name="test",
+            level=logging.INFO,
+            pathname="test.py",
+            lineno=1,
+            msg="Test message",
+            args=(),
+            exc_info=None,
         )
         output = formatter.format(record)
         data = json.loads(output)
@@ -126,9 +136,15 @@ class TestStructuredLogging:
             raise ValueError("test error")
         except ValueError:
             import sys
+
             record = logging.LogRecord(
-                name="test", level=logging.ERROR, pathname="test.py",
-                lineno=1, msg="Error", args=(), exc_info=sys.exc_info(),
+                name="test",
+                level=logging.ERROR,
+                pathname="test.py",
+                lineno=1,
+                msg="Error",
+                args=(),
+                exc_info=sys.exc_info(),
             )
         output = formatter.format(record)
         data = json.loads(output)
@@ -137,6 +153,7 @@ class TestStructuredLogging:
 
 
 # ── Health Check Endpoints ──
+
 
 class TestHealthEndpoints:
     def test_health_returns_200(self):
@@ -163,6 +180,7 @@ class TestHealthEndpoints:
 
 # ── Global Exception Handler ──
 
+
 class TestGlobalExceptionHandler:
     def test_500_returns_json(self):
         # The global handler should catch unexpected errors
@@ -172,6 +190,7 @@ class TestGlobalExceptionHandler:
 
 
 # ── Subtitle Embedding ──
+
 
 class TestSubtitleStyle:
     def test_default_style(self):
@@ -228,6 +247,7 @@ class TestEmbedEndpoints:
 
     def test_embed_unknown_task_404(self):
         from io import BytesIO
+
         res = client.post(
             "/embed/nonexistent",
             files={"video": ("test.mp4", BytesIO(b"x" * 2048), "video/mp4")},
@@ -237,6 +257,7 @@ class TestEmbedEndpoints:
 
     def test_embed_not_done_400(self):
         from io import BytesIO
+
         original = state.tasks.copy()
         state.tasks["test-embed-001"] = {"status": "transcribing"}
         try:
@@ -252,6 +273,7 @@ class TestEmbedEndpoints:
 
 
 # ── Request ID in Response Headers ──
+
 
 class TestRequestIdHeader:
     def test_response_has_request_id(self):

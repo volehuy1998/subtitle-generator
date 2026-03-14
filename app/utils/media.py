@@ -15,10 +15,7 @@ FFMPEG_TIMEOUT = 300  # 5 minutes max for ffmpeg operations
 
 
 def get_audio_duration(file_path: Path) -> float:
-    cmd = [
-        "ffprobe", "-v", "quiet", "-print_format", "json",
-        "-show_format", "-show_streams", str(file_path)
-    ]
+    cmd = ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", str(file_path)]
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
         if result.returncode == 0:
@@ -61,14 +58,23 @@ def extract_audio(video_path: Path, audio_path: Path, threads: int = 0, task_id:
     """
     cmd = [
         "ffmpeg",
-        "-protocol_whitelist", FFMPEG_PROTOCOL_WHITELIST,
+        "-protocol_whitelist",
+        FFMPEG_PROTOCOL_WHITELIST,
     ]
     if threads > 0:
         cmd += ["-threads", str(threads)]
     cmd += [
-        "-i", str(video_path),
-        "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1",
-        "-y", str(audio_path),
+        "-i",
+        str(video_path),
+        "-vn",
+        "-acodec",
+        "pcm_s16le",
+        "-ar",
+        "16000",
+        "-ac",
+        "1",
+        "-y",
+        str(audio_path),
     ]
     logger.debug(f"FFMPEG Running: {' '.join(cmd)}")
     t0 = time.time()
@@ -77,6 +83,7 @@ def extract_audio(video_path: Path, audio_path: Path, threads: int = 0, task_id:
     # Store process ref for force-kill
     if task_id:
         from app import state
+
         task = state.tasks.get(task_id)
         if task:
             task["_subprocess"] = proc
@@ -91,6 +98,7 @@ def extract_audio(video_path: Path, audio_path: Path, threads: int = 0, task_id:
         # Clear subprocess ref
         if task_id:
             from app import state
+
             task = state.tasks.get(task_id)
             if task:
                 task.pop("_subprocess", None)
@@ -100,9 +108,11 @@ def extract_audio(video_path: Path, audio_path: Path, threads: int = 0, task_id:
         # Check if killed by critical state
         if task_id:
             from app import state
+
             task = state.tasks.get(task_id)
             if task and task.get("cancel_requested"):
                 from app.exceptions import CriticalAbortError
+
                 if state.system_critical:
                     reasons = "; ".join(state.system_critical_reasons) if state.system_critical_reasons else "Unknown"
                     raise CriticalAbortError(f"ffmpeg killed — system critical: {reasons}")
@@ -120,10 +130,7 @@ def get_file_size(file_path: Path) -> int:
 
 def has_audio_stream(file_path: Path) -> bool:
     """Check if a file contains an audio stream (validates it's real media)."""
-    cmd = [
-        "ffprobe", "-v", "quiet", "-print_format", "json",
-        "-show_streams", "-select_streams", "a", str(file_path)
-    ]
+    cmd = ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_streams", "-select_streams", "a", str(file_path)]
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
         if result.returncode == 0:

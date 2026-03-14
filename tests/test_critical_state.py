@@ -20,6 +20,7 @@ import pytest
 
 # ── Helpers ──
 
+
 def _save_critical_state():
     """Snapshot current critical state for cleanup."""
     return state.system_critical, list(state.system_critical_reasons)
@@ -67,6 +68,7 @@ async def _run_health_loop_once(**patches):
     or infinite loop — just the check/set/clear logic.
     """
     from app.services.health_monitor import _check_db, _check_disk
+
     check_db = patches.get("check_db", _check_db)
     check_disk = patches.get("check_disk", _check_disk)
 
@@ -87,6 +89,7 @@ async def _run_health_loop_once(**patches):
 # ═══════════════════════════════════════════════════════════════════
 # 1. check_db_health() timeout
 # ═══════════════════════════════════════════════════════════════════
+
 
 class TestDbHealthCheckTimeout:
     """Verify check_db_health() does not hang when DB is unreachable."""
@@ -180,6 +183,7 @@ class TestDbHealthCheckTimeout:
 # 2. Health monitor — check logic sets/clears critical state
 # ═══════════════════════════════════════════════════════════════════
 
+
 class TestHealthMonitorCheckLogic:
     """Verify the health monitor's check logic correctly sets/clears
     critical state based on DB and disk check results."""
@@ -197,10 +201,12 @@ class TestHealthMonitorCheckLogic:
         async def failing_db():
             return "Database connection lost"
 
-        _run_async(_run_health_loop_once(
-            check_db=failing_db,
-            check_disk=lambda: None,
-        ))
+        _run_async(
+            _run_health_loop_once(
+                check_db=failing_db,
+                check_disk=lambda: None,
+            )
+        )
 
         assert state.system_critical is True
         assert "Database connection lost" in state.system_critical_reasons
@@ -212,10 +218,12 @@ class TestHealthMonitorCheckLogic:
         async def healthy_db():
             return None
 
-        _run_async(_run_health_loop_once(
-            check_db=healthy_db,
-            check_disk=lambda: "Disk space critically low (100 MB free)",
-        ))
+        _run_async(
+            _run_health_loop_once(
+                check_db=healthy_db,
+                check_disk=lambda: "Disk space critically low (100 MB free)",
+            )
+        )
 
         assert state.system_critical is True
         assert any("Disk" in r for r in state.system_critical_reasons)
@@ -227,10 +235,12 @@ class TestHealthMonitorCheckLogic:
         async def healthy_db():
             return None
 
-        _run_async(_run_health_loop_once(
-            check_db=healthy_db,
-            check_disk=lambda: None,
-        ))
+        _run_async(
+            _run_health_loop_once(
+                check_db=healthy_db,
+                check_disk=lambda: None,
+            )
+        )
 
         assert state.system_critical is False
         assert state.system_critical_reasons == []
@@ -242,10 +252,12 @@ class TestHealthMonitorCheckLogic:
         async def failing_db():
             return "Database connection lost"
 
-        _run_async(_run_health_loop_once(
-            check_db=failing_db,
-            check_disk=lambda: "Disk space critically low",
-        ))
+        _run_async(
+            _run_health_loop_once(
+                check_db=failing_db,
+                check_disk=lambda: "Disk space critically low",
+            )
+        )
 
         assert state.system_critical is True
         assert "Database connection lost" in state.system_critical_reasons
@@ -259,20 +271,24 @@ class TestHealthMonitorCheckLogic:
         async def failing_db():
             return "Database connection lost"
 
-        _run_async(_run_health_loop_once(
-            check_db=failing_db,
-            check_disk=lambda: None,
-        ))
+        _run_async(
+            _run_health_loop_once(
+                check_db=failing_db,
+                check_disk=lambda: None,
+            )
+        )
         assert state.system_critical is True
 
         # Then: DB recovers
         async def healthy_db():
             return None
 
-        _run_async(_run_health_loop_once(
-            check_db=healthy_db,
-            check_disk=lambda: None,
-        ))
+        _run_async(
+            _run_health_loop_once(
+                check_db=healthy_db,
+                check_disk=lambda: None,
+            )
+        )
         assert state.system_critical is False
 
 
@@ -324,6 +340,7 @@ class TestHealthMonitorExceptionHandling:
 # 3. Transcription segment loop — critical state abort
 # ═══════════════════════════════════════════════════════════════════
 
+
 class TestTranscriptionCriticalAbort:
     """Verify that the transcription segment loop checks system_critical
     and raises CriticalAbortError when the system enters critical state."""
@@ -347,15 +364,14 @@ class TestTranscriptionCriticalAbort:
         mock_info.language = "en"
         mock_model.transcribe.return_value = (iter(segments), mock_info)
 
-        with patch("app.services.transcription.emit_event"), \
-             patch("app.services.transcription.check_vram_for_model", return_value={"fits": True}):
+        with (
+            patch("app.services.transcription.emit_event"),
+            patch("app.services.transcription.check_vram_for_model", return_value={"fits": True}),
+        ):
             from app.services.transcription import transcribe_with_progress
 
             with pytest.raises(CriticalAbortError, match="Database connection lost"):
-                transcribe_with_progress(
-                    mock_model, "/fake/audio.wav", "test1234",
-                    "cpu", "tiny", 10.0
-                )
+                transcribe_with_progress(mock_model, "/fake/audio.wav", "test1234", "cpu", "tiny", 10.0)
 
     def test_abort_on_critical_mid_transcription(self):
         """Critical state set after some segments → abort at next segment."""
@@ -382,15 +398,14 @@ class TestTranscriptionCriticalAbort:
         mock_info.language = "en"
         mock_model.transcribe.return_value = (segments_with_critical_trigger(), mock_info)
 
-        with patch("app.services.transcription.emit_event"), \
-             patch("app.services.transcription.check_vram_for_model", return_value={"fits": True}):
+        with (
+            patch("app.services.transcription.emit_event"),
+            patch("app.services.transcription.check_vram_for_model", return_value={"fits": True}),
+        ):
             from app.services.transcription import transcribe_with_progress
 
             with pytest.raises(CriticalAbortError, match="Disk space critically low"):
-                transcribe_with_progress(
-                    mock_model, "/fake/audio.wav", "test1234",
-                    "cpu", "tiny", 10.0
-                )
+                transcribe_with_progress(mock_model, "/fake/audio.wav", "test1234", "cpu", "tiny", 10.0)
 
         # Only first segment should have been processed (critical set during yield of 2nd)
         assert len(task["segments_preview"]) == 1
@@ -410,14 +425,13 @@ class TestTranscriptionCriticalAbort:
         mock_info.language = "en"
         mock_model.transcribe.return_value = (iter(segments), mock_info)
 
-        with patch("app.services.transcription.emit_event"), \
-             patch("app.services.transcription.check_vram_for_model", return_value={"fits": True}):
+        with (
+            patch("app.services.transcription.emit_event"),
+            patch("app.services.transcription.check_vram_for_model", return_value={"fits": True}),
+        ):
             from app.services.transcription import transcribe_with_progress
 
-            result = transcribe_with_progress(
-                mock_model, "/fake/audio.wav", "test1234",
-                "cpu", "tiny", 10.0
-            )
+            result = transcribe_with_progress(mock_model, "/fake/audio.wav", "test1234", "cpu", "tiny", 10.0)
 
         assert len(result["segments"]) == 3
         assert result["language"] == "en"
@@ -435,16 +449,15 @@ class TestTranscriptionCriticalAbort:
         mock_info.language = "en"
         mock_model.transcribe.return_value = (iter(segments), mock_info)
 
-        with patch("app.services.transcription.emit_event"), \
-             patch("app.services.transcription.check_vram_for_model", return_value={"fits": True}):
+        with (
+            patch("app.services.transcription.emit_event"),
+            patch("app.services.transcription.check_vram_for_model", return_value={"fits": True}),
+        ):
             from app.services.transcription import transcribe_with_progress
 
             # CriticalAbortError, not CancelledError
             with pytest.raises(CriticalAbortError):
-                transcribe_with_progress(
-                    mock_model, "/fake/audio.wav", "test1234",
-                    "cpu", "tiny", 10.0
-                )
+                transcribe_with_progress(mock_model, "/fake/audio.wav", "test1234", "cpu", "tiny", 10.0)
 
     def test_critical_with_multiple_reasons(self):
         """Multiple critical reasons are joined in the error message."""
@@ -457,15 +470,14 @@ class TestTranscriptionCriticalAbort:
         mock_info.language = "en"
         mock_model.transcribe.return_value = (iter(segments), mock_info)
 
-        with patch("app.services.transcription.emit_event"), \
-             patch("app.services.transcription.check_vram_for_model", return_value={"fits": True}):
+        with (
+            patch("app.services.transcription.emit_event"),
+            patch("app.services.transcription.check_vram_for_model", return_value={"fits": True}),
+        ):
             from app.services.transcription import transcribe_with_progress
 
             with pytest.raises(CriticalAbortError) as exc_info:
-                transcribe_with_progress(
-                    mock_model, "/fake/audio.wav", "test1234",
-                    "cpu", "tiny", 10.0
-                )
+                transcribe_with_progress(mock_model, "/fake/audio.wav", "test1234", "cpu", "tiny", 10.0)
 
             assert "Database connection lost" in str(exc_info.value)
             assert "Disk space critically low" in str(exc_info.value)
@@ -492,15 +504,14 @@ class TestTranscriptionCriticalAbort:
         mock_info.language = "en"
         mock_model.transcribe.return_value = (segments_critical_after_two(), mock_info)
 
-        with patch("app.services.transcription.emit_event"), \
-             patch("app.services.transcription.check_vram_for_model", return_value={"fits": True}):
+        with (
+            patch("app.services.transcription.emit_event"),
+            patch("app.services.transcription.check_vram_for_model", return_value={"fits": True}),
+        ):
             from app.services.transcription import transcribe_with_progress
 
             with pytest.raises(CriticalAbortError):
-                transcribe_with_progress(
-                    mock_model, "/fake/audio.wav", "test1234",
-                    "cpu", "tiny", 10.0
-                )
+                transcribe_with_progress(mock_model, "/fake/audio.wav", "test1234", "cpu", "tiny", 10.0)
 
         # 2 segments were processed, then 3rd segment is yielded but critical check fires
         assert len(task["segments_preview"]) == 2
@@ -527,14 +538,13 @@ class TestTranscriptionCriticalAbort:
         mock_info.language = "en"
         mock_model.transcribe.return_value = (segments_with_brief_critical(), mock_info)
 
-        with patch("app.services.transcription.emit_event"), \
-             patch("app.services.transcription.check_vram_for_model", return_value={"fits": True}):
+        with (
+            patch("app.services.transcription.emit_event"),
+            patch("app.services.transcription.check_vram_for_model", return_value={"fits": True}),
+        ):
             from app.services.transcription import transcribe_with_progress
 
-            result = transcribe_with_progress(
-                mock_model, "/fake/audio.wav", "test1234",
-                "cpu", "tiny", 10.0
-            )
+            result = transcribe_with_progress(mock_model, "/fake/audio.wav", "test1234", "cpu", "tiny", 10.0)
 
         assert len(result["segments"]) == 2
 
@@ -552,15 +562,14 @@ class TestTranscriptionCriticalAbort:
         mock_info.language = "en"
         mock_model.transcribe.return_value = (segments_critical_on_last(), mock_info)
 
-        with patch("app.services.transcription.emit_event"), \
-             patch("app.services.transcription.check_vram_for_model", return_value={"fits": True}):
+        with (
+            patch("app.services.transcription.emit_event"),
+            patch("app.services.transcription.check_vram_for_model", return_value={"fits": True}),
+        ):
             from app.services.transcription import transcribe_with_progress
 
             with pytest.raises(CriticalAbortError):
-                transcribe_with_progress(
-                    mock_model, "/fake/audio.wav", "test1234",
-                    "cpu", "tiny", 10.0
-                )
+                transcribe_with_progress(mock_model, "/fake/audio.wav", "test1234", "cpu", "tiny", 10.0)
 
         assert len(task["segments_preview"]) == 1
 
@@ -579,15 +588,14 @@ class TestTranscriptionCriticalAbort:
         mock_info.language = "en"
         mock_model.transcribe.return_value = (generate_segments(), mock_info)
 
-        with patch("app.services.transcription.emit_event"), \
-             patch("app.services.transcription.check_vram_for_model", return_value={"fits": True}):
+        with (
+            patch("app.services.transcription.emit_event"),
+            patch("app.services.transcription.check_vram_for_model", return_value={"fits": True}),
+        ):
             from app.services.transcription import transcribe_with_progress
 
             with pytest.raises(CriticalAbortError):
-                transcribe_with_progress(
-                    mock_model, "/fake/audio.wav", "test1234",
-                    "cpu", "tiny", 100.0
-                )
+                transcribe_with_progress(mock_model, "/fake/audio.wav", "test1234", "cpu", "tiny", 100.0)
 
         # 50 segments processed (0-49), then segment 50 triggers critical, abort on 51
         assert len(task["segments_preview"]) == 50
@@ -597,6 +605,7 @@ class TestTranscriptionCriticalAbort:
 # 4. Pipeline _check_critical() — tested via direct state logic
 #    (circular import prevents direct import of pipeline._check_critical)
 # ═══════════════════════════════════════════════════════════════════
+
 
 class TestPipelineCheckCriticalLogic:
     """Verify the _check_critical logic: raises CriticalAbortError
@@ -646,6 +655,7 @@ class TestPipelineCheckCriticalLogic:
 # 5. Critical state middleware
 # ═══════════════════════════════════════════════════════════════════
 
+
 class TestCriticalStateMiddleware:
     """Verify middleware blocks non-health requests during critical state."""
 
@@ -653,6 +663,7 @@ class TestCriticalStateMiddleware:
         self.snapshot = _save_critical_state()
         from app.main import app
         from fastapi.testclient import TestClient
+
         self.client = TestClient(app, base_url="https://testserver")
 
     def teardown_method(self):
@@ -662,9 +673,12 @@ class TestCriticalStateMiddleware:
         """POST /upload returns 503 during critical state."""
         state.set_critical(["Database connection lost"])
         import io
-        res = self.client.post("/upload",
-                               data={"device": "cpu", "model_size": "tiny", "language": "auto"},
-                               files={"file": ("test.mp4", io.BytesIO(b"\x00" * 1024), "video/mp4")})
+
+        res = self.client.post(
+            "/upload",
+            data={"device": "cpu", "model_size": "tiny", "language": "auto"},
+            files={"file": ("test.mp4", io.BytesIO(b"\x00" * 1024), "video/mp4")},
+        )
         assert res.status_code == 503
         body = res.json()
         assert body["critical"] is True
@@ -776,6 +790,7 @@ class TestCriticalStateMiddleware:
 # 6. State set_critical / clear_critical
 # ═══════════════════════════════════════════════════════════════════
 
+
 class TestCriticalStateManagement:
     """Verify state.set_critical() and state.clear_critical() behavior."""
 
@@ -819,14 +834,14 @@ class TestCriticalStateManagement:
 # 7. _check_db helper in health_monitor
 # ═══════════════════════════════════════════════════════════════════
 
+
 class TestHealthMonitorCheckDb:
     """Test the _check_db helper directly."""
 
     def test_returns_none_when_healthy(self):
         from app.services.health_monitor import _check_db
 
-        with patch("app.services.query_layer.check_db_health",
-                    new_callable=AsyncMock, return_value={"ok": True}):
+        with patch("app.services.query_layer.check_db_health", new_callable=AsyncMock, return_value={"ok": True}):
             result = _run_async(_check_db())
 
         assert result is None
@@ -834,8 +849,7 @@ class TestHealthMonitorCheckDb:
     def test_returns_reason_when_unhealthy(self):
         from app.services.health_monitor import _check_db
 
-        with patch("app.services.query_layer.check_db_health",
-                    new_callable=AsyncMock, return_value={"ok": False}):
+        with patch("app.services.query_layer.check_db_health", new_callable=AsyncMock, return_value={"ok": False}):
             result = _run_async(_check_db())
 
         assert result == "Database connection lost"
@@ -843,8 +857,9 @@ class TestHealthMonitorCheckDb:
     def test_returns_reason_when_exception(self):
         from app.services.health_monitor import _check_db
 
-        with patch("app.services.query_layer.check_db_health",
-                    new_callable=AsyncMock, side_effect=ConnectionError("refused")):
+        with patch(
+            "app.services.query_layer.check_db_health", new_callable=AsyncMock, side_effect=ConnectionError("refused")
+        ):
             result = _run_async(_check_db())
 
         assert result is not None
@@ -854,6 +869,7 @@ class TestHealthMonitorCheckDb:
 # ═══════════════════════════════════════════════════════════════════
 # 8. Force-abort active tasks on critical state transition
 # ═══════════════════════════════════════════════════════════════════
+
 
 class TestForceAbortActiveTasks:
     """Verify that set_critical() force-aborts ALL active tasks."""
@@ -886,6 +902,7 @@ class TestForceAbortActiveTasks:
     def test_unblocks_paused_tasks(self):
         """Paused tasks (with pause_event cleared) get unblocked so they can exit."""
         import threading
+
         pause_event = threading.Event()
         pause_event.clear()  # Task is paused
         state.tasks["t1"] = {"status": "transcribing", "percent": 50, "pause_event": pause_event}
@@ -964,6 +981,7 @@ class TestForceAbortActiveTasks:
 # 9. /api/status includes system_critical fields
 # ═══════════════════════════════════════════════════════════════════
 
+
 class TestApiStatusCriticalFields:
     """Verify /api/status response includes system_critical info."""
 
@@ -971,9 +989,11 @@ class TestApiStatusCriticalFields:
         self.snapshot = _save_critical_state()
         from app.main import app
         from fastapi.testclient import TestClient
+
         self.client = TestClient(app, base_url="https://testserver")
         # Clear the /api/status response cache so tests get fresh data
         from app.routes.health import _status_cache
+
         _status_cache["data"] = None
         _status_cache["expires"] = 0.0
 
@@ -991,6 +1011,7 @@ class TestApiStatusCriticalFields:
     def test_includes_system_critical_when_critical(self):
         # Clear cache before setting critical
         from app.routes.health import _status_cache
+
         _status_cache["data"] = None
         _status_cache["expires"] = 0.0
         state.set_critical(["Database connection lost"])
@@ -1004,6 +1025,7 @@ class TestApiStatusCriticalFields:
 # ═══════════════════════════════════════════════════════════════════
 # 10. Subprocess kill on critical state
 # ═══════════════════════════════════════════════════════════════════
+
 
 class TestSubprocessKillOnCritical:
     """Verify that _force_abort_active_tasks kills running subprocesses."""
@@ -1075,6 +1097,7 @@ class TestSubprocessKillOnCritical:
 # 11. Upload abort on critical state
 # ═══════════════════════════════════════════════════════════════════
 
+
 class TestUploadAbortOnCritical:
     """Verify upload chunk loop aborts when system enters critical state."""
 
@@ -1088,6 +1111,7 @@ class TestUploadAbortOnCritical:
         """Upload route checks system_critical in the chunk read loop."""
         from app.routes.upload import upload
         import inspect
+
         source = inspect.getsource(upload)
         # Verify the critical check is in the upload function
         assert "system_critical" in source, "Upload route must check system_critical in chunk loop"
@@ -1096,6 +1120,7 @@ class TestUploadAbortOnCritical:
 # ═══════════════════════════════════════════════════════════════════
 # 12. Diarization abort on critical state
 # ═══════════════════════════════════════════════════════════════════
+
 
 class TestDiarizationCriticalAbort:
     """Verify diarization checks critical state before and after processing."""
@@ -1111,6 +1136,7 @@ class TestDiarizationCriticalAbort:
         """diarize_audio checks critical state before starting."""
         from app.services.diarization import diarize_audio
         import inspect
+
         source = inspect.getsource(diarize_audio)
         assert "system_critical" in source or "CriticalAbortError" in source
 
@@ -1118,6 +1144,7 @@ class TestDiarizationCriticalAbort:
         """Verify diarize_audio imports and uses CriticalAbortError."""
         from app.services.diarization import diarize_audio
         import inspect
+
         source = inspect.getsource(diarize_audio)
         assert "CriticalAbortError" in source
 
@@ -1125,6 +1152,7 @@ class TestDiarizationCriticalAbort:
 # ═══════════════════════════════════════════════════════════════════
 # 13. Extract audio — killable Popen
 # ═══════════════════════════════════════════════════════════════════
+
 
 class TestExtractAudioKillable:
     """Verify extract_audio uses Popen and stores subprocess ref in task dict."""
@@ -1144,6 +1172,7 @@ class TestExtractAudioKillable:
         """extract_audio stores Popen process in task['_subprocess'] when task_id provided."""
         from app.utils.media import extract_audio
         import inspect
+
         source = inspect.getsource(extract_audio)
         assert "Popen" in source, "extract_audio must use Popen, not subprocess.run"
         assert "_subprocess" in source, "extract_audio must store process ref in task dict"
@@ -1152,6 +1181,7 @@ class TestExtractAudioKillable:
         """soft_embed_subtitles and hard_burn_subtitles use Popen for killability."""
         from app.services.subtitle_embed import soft_embed_subtitles, hard_burn_subtitles
         import inspect
+
         soft_src = inspect.getsource(soft_embed_subtitles)
         hard_src = inspect.getsource(hard_burn_subtitles)
         assert "Popen" in soft_src, "soft_embed must use Popen"
@@ -1163,6 +1193,7 @@ class TestExtractAudioKillable:
 # ═══════════════════════════════════════════════════════════════════
 # 14. Thread injection (PyThreadState_SetAsyncExc) on critical state
 # ═══════════════════════════════════════════════════════════════════
+
 
 class TestThreadInjectionOnCritical:
     """Verify that _force_abort_active_tasks injects CriticalAbortError into pipeline threads."""
@@ -1181,10 +1212,13 @@ class TestThreadInjectionOnCritical:
     def test_injects_abort_into_thread(self):
         """Active task with _thread_id gets CriticalAbortError injected via ctypes."""
         import ctypes
+
         state.tasks["t1"] = {"status": "transcribing", "percent": 50, "_thread_id": 12345}
 
-        with patch("app.services.sse.emit_event"), \
-             patch.object(ctypes.pythonapi, "PyThreadState_SetAsyncExc", return_value=1) as mock_inject:
+        with (
+            patch("app.services.sse.emit_event"),
+            patch.object(ctypes.pythonapi, "PyThreadState_SetAsyncExc", return_value=1) as mock_inject,
+        ):
             state.set_critical(["Database connection lost"])
 
         mock_inject.assert_called_once()
@@ -1205,10 +1239,13 @@ class TestThreadInjectionOnCritical:
     def test_handles_injection_failure(self):
         """If PyThreadState_SetAsyncExc returns 0 (thread not found), no crash."""
         import ctypes
+
         state.tasks["t1"] = {"status": "transcribing", "percent": 50, "_thread_id": 99999}
 
-        with patch("app.services.sse.emit_event"), \
-             patch.object(ctypes.pythonapi, "PyThreadState_SetAsyncExc", return_value=0):
+        with (
+            patch("app.services.sse.emit_event"),
+            patch.object(ctypes.pythonapi, "PyThreadState_SetAsyncExc", return_value=0),
+        ):
             state.set_critical(["Database connection lost"])  # Should not raise
 
         assert state.tasks["t1"]["cancel_requested"] is True
@@ -1216,10 +1253,13 @@ class TestThreadInjectionOnCritical:
     def test_resets_if_multiple_threads_affected(self):
         """If injection affects >1 thread, reset and log error."""
         import ctypes
+
         state.tasks["t1"] = {"status": "transcribing", "percent": 50, "_thread_id": 12345}
 
-        with patch("app.services.sse.emit_event"), \
-             patch.object(ctypes.pythonapi, "PyThreadState_SetAsyncExc", return_value=2) as mock_inject:
+        with (
+            patch("app.services.sse.emit_event"),
+            patch.object(ctypes.pythonapi, "PyThreadState_SetAsyncExc", return_value=2) as mock_inject,
+        ):
             state.set_critical(["Database connection lost"])
 
         # Should be called twice: once to inject, once to reset (with None)
@@ -1231,6 +1271,7 @@ class TestThreadInjectionOnCritical:
         """process_video stores threading.current_thread().ident in task['_thread_id']."""
         from app.services.pipeline import process_video
         import inspect
+
         source = inspect.getsource(process_video)
         assert "_thread_id" in source, "process_video must store thread ID in task"
         assert "current_thread" in source, "process_video must use threading.current_thread()"
@@ -1239,6 +1280,7 @@ class TestThreadInjectionOnCritical:
         """Pipeline checks critical state after model loading (before transcription)."""
         from app.services.pipeline import process_video
         import inspect
+
         source = inspect.getsource(process_video)
         # Find model loading and the critical check after it
         model_load_idx = source.index("model_loaded")
@@ -1250,5 +1292,6 @@ class TestThreadInjectionOnCritical:
         """process_video removes _thread_id from task in finally block."""
         from app.services.pipeline import process_video
         import inspect
+
         source = inspect.getsource(process_video)
         assert 'pop("_thread_id"' in source, "process_video must clean up _thread_id in finally"

@@ -110,6 +110,7 @@ def _force_abort_active_tasks(reasons: list[str]):
         if thread_id is not None:
             try:
                 from app.exceptions import CriticalAbortError
+
                 res = ctypes.pythonapi.PyThreadState_SetAsyncExc(
                     ctypes.c_ulong(thread_id),
                     ctypes.py_object(CriticalAbortError),
@@ -126,11 +127,16 @@ def _force_abort_active_tasks(reasons: list[str]):
 
         # Emit SSE event for this task
         from app.services.sse import emit_event
-        emit_event(task_id, "critical_abort", {
-            "status": "error",
-            "message": f"System critical — all operations halted: {reason_text}",
-            "reasons": reasons,
-        })
+
+        emit_event(
+            task_id,
+            "critical_abort",
+            {
+                "status": "error",
+                "message": f"System critical — all operations halted: {reason_text}",
+                "reasons": reasons,
+            },
+        )
 
         aborted += 1
 
@@ -161,8 +167,7 @@ def get_task_semaphore(max_tasks: int = 3) -> threading.Semaphore:
 
 def get_active_task_count() -> int:
     """Count currently processing tasks."""
-    return sum(1 for t in tasks.values()
-               if t.get("status") not in ("done", "error", "cancelled", "queued"))
+    return sum(1 for t in tasks.values() if t.get("status") not in ("done", "error", "cancelled", "queued"))
 
 
 def drain_tasks(timeout: float = 60.0) -> bool:
@@ -182,10 +187,24 @@ def drain_tasks(timeout: float = 60.0) -> bool:
 
 # Fields safe to persist (no threads, events, profiler objects)
 _PERSIST_FIELDS = {
-    "status", "percent", "message", "filename", "duration", "file_size",
-    "file_size_fmt", "audio_size_fmt", "segments", "language",
-    "language_requested", "device", "model_size",
-    "word_timestamps", "diarize", "speakers", "session_id", "created_at",
+    "status",
+    "percent",
+    "message",
+    "filename",
+    "duration",
+    "file_size",
+    "file_size_fmt",
+    "audio_size_fmt",
+    "segments",
+    "language",
+    "language_requested",
+    "device",
+    "model_size",
+    "word_timestamps",
+    "diarize",
+    "speakers",
+    "session_id",
+    "created_at",
 }
 
 

@@ -47,6 +47,7 @@ async def update_threshold(name: str, value: float = Query(..., description="New
     thresholds = get_alert_thresholds()
     if name not in thresholds:
         from fastapi import HTTPException
+
         raise HTTPException(404, f"Unknown threshold: {name}")
     set_alert_threshold(name, value)
     return {"ok": True, "name": name, "value": value}

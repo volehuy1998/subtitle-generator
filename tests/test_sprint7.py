@@ -19,6 +19,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 
 # ── S7-1: User Feedback ──
 
+
 class TestFeedback:
     def test_submit_feedback(self):
         res = client.post("/feedback", json={"rating": 5, "comment": "Great tool!"})
@@ -60,6 +61,7 @@ class TestFeedback:
 
 # ── S7-2: API Documentation ──
 
+
 class TestApiDocs:
     def test_openapi_schema_available(self):
         res = client.get("/openapi.json")
@@ -99,6 +101,7 @@ class TestApiDocs:
 
 # ── S7-4: Release v1.0 ──
 
+
 class TestRelease:
     def test_changelog_exists(self):
         assert (PROJECT_ROOT / "CHANGELOG.md").exists()
@@ -122,6 +125,7 @@ class TestRelease:
 
 # ── S7-5: Performance Benchmarks ──
 
+
 class TestBenchmarks:
     def test_benchmark_script_exists(self):
         assert (PROJECT_ROOT / "benchmark.py").exists()
@@ -132,6 +136,7 @@ class TestBenchmarks:
     def test_health_endpoint_fast(self):
         """Health endpoint should respond in under 100ms."""
         import time
+
         t0 = time.time()
         res = client.get("/health")
         elapsed_ms = (time.time() - t0) * 1000
@@ -141,6 +146,7 @@ class TestBenchmarks:
     def test_metrics_endpoint_fast(self):
         """Metrics endpoint should respond in under 200ms."""
         import time
+
         t0 = time.time()
         res = client.get("/metrics")
         elapsed_ms = (time.time() - t0) * 1000
@@ -150,6 +156,7 @@ class TestBenchmarks:
     def test_system_info_fast(self):
         """System info should respond in under 500ms."""
         import time
+
         t0 = time.time()
         res = client.get("/system-info")
         elapsed_ms = (time.time() - t0) * 1000
@@ -158,6 +165,7 @@ class TestBenchmarks:
 
 
 # ── Full API Surface Verification ──
+
 
 class TestApiSurface:
     """Verify all major endpoints are accessible."""

@@ -18,13 +18,17 @@ from pathlib import Path
 from app.main import app
 from app import state
 from app.utils.subtitle_format import (
-    break_line, calculate_cps, validate_timing,
-    format_segments_with_linebreaks, words_to_segments,
+    break_line,
+    calculate_cps,
+    validate_timing,
+    format_segments_with_linebreaks,
+    words_to_segments,
 )
 from app.utils.srt import segments_to_srt, segments_to_vtt, segments_to_json
 from app.services.cleanup import cleanup_old_files
 from app.services.diarization import (
-    is_diarization_available, assign_speakers_to_segments,
+    is_diarization_available,
+    assign_speakers_to_segments,
 )
 from app.services.transcription import get_optimal_transcribe_options
 from fastapi.testclient import TestClient
@@ -33,6 +37,7 @@ client = TestClient(app, base_url="https://testserver")
 
 
 # ── S4-4: Subtitle Line-Breaking Rules ──
+
 
 class TestLineBreaking:
     def test_short_line_unchanged(self):
@@ -162,6 +167,7 @@ class TestWordsToSegments:
 
 # ── S4-2: Word-Level Timestamps ──
 
+
 class TestWordTimestamps:
     def test_transcribe_options_with_words(self):
         opts = get_optimal_transcribe_options("cpu", "small", "en", word_timestamps=True)
@@ -174,11 +180,11 @@ class TestWordTimestamps:
 
 # ── S4-3: Custom Vocabulary ──
 
+
 class TestCustomVocabulary:
     def test_initial_prompt_in_options(self):
         opts = get_optimal_transcribe_options(
-            "cpu", "small", "en",
-            initial_prompt="Technical terms: Kubernetes, FastAPI, CTranslate2"
+            "cpu", "small", "en", initial_prompt="Technical terms: Kubernetes, FastAPI, CTranslate2"
         )
         assert opts["initial_prompt"] == "Technical terms: Kubernetes, FastAPI, CTranslate2"
 
@@ -192,6 +198,7 @@ class TestCustomVocabulary:
 
 
 # ── S4-1: Speaker Diarization ──
+
 
 class TestDiarization:
     def test_availability_check(self):
@@ -248,6 +255,7 @@ class TestDiarization:
 
 # ── SRT/VTT with Speaker Labels ──
 
+
 class TestSrtWithSpeakers:
     def test_srt_with_speaker(self):
         segments = [
@@ -278,7 +286,9 @@ class TestSrtWithSpeakers:
     def test_json_export_with_words(self):
         segments = [
             {
-                "start": 0, "end": 3, "text": "Hello world",
+                "start": 0,
+                "end": 3,
+                "text": "Hello world",
                 "speaker": "SPEAKER_00",
                 "words": [
                     {"word": "Hello", "start": 0.0, "end": 0.5, "probability": 0.99},
@@ -300,6 +310,7 @@ class TestSrtWithSpeakers:
 
 
 # ── S4-5: Auto-Cleanup ──
+
 
 class TestAutoCleanup:
     def test_cleanup_removes_old_files(self):
@@ -345,6 +356,7 @@ class TestAutoCleanup:
 
 
 # ── Upload Endpoint with New Parameters ──
+
 
 class TestUploadNewParams:
     def test_upload_accepts_word_timestamps(self):
@@ -400,6 +412,7 @@ class TestUploadNewParams:
 
 
 # ── Download JSON Format ──
+
 
 class TestDownloadJson:
     def test_download_json_not_found(self):

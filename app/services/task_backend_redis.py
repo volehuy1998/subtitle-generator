@@ -28,6 +28,7 @@ class RedisTaskBackend(TaskBackend):
 
     def __init__(self):
         from app.services.redis_client import get_sync_redis
+
         self._redis = get_sync_redis()
         logger.info("BACKEND Using Redis task backend")
 
@@ -54,7 +55,7 @@ class RedisTaskBackend(TaskBackend):
             for key in keys:
                 raw = self._redis.get(key)
                 if raw:
-                    task_id = key[len(self.KEY_PREFIX):]
+                    task_id = key[len(self.KEY_PREFIX) :]
                     result.append((task_id, _deserialize(raw)))
             if cursor == 0:
                 break
@@ -65,7 +66,7 @@ class RedisTaskBackend(TaskBackend):
         cursor = 0
         while True:
             cursor, keys = self._redis.scan(cursor, match=f"{self.KEY_PREFIX}*", count=100)
-            result.extend(k[len(self.KEY_PREFIX):] for k in keys)
+            result.extend(k[len(self.KEY_PREFIX) :] for k in keys)
             if cursor == 0:
                 break
         return result

@@ -1,4 +1,5 @@
 """E2E tests: translation dropdown appears once in Transcribe form, not duplicated in embed panel."""
+
 from playwright.sync_api import Page
 
 BASE_URL = "https://openlabs.club"
@@ -27,9 +28,7 @@ def test_translate_dropdown_not_duplicated_after_transcription(page: Page):
 
     # The transcribe form should have exactly 1 translate dropdown
     # (The embed tab is not visible, so its dropdown doesn't count)
-    assert initial_count == 1, (
-        f"Expected exactly 1 translation dropdown in the transcribe form, found {initial_count}"
-    )
+    assert initial_count == 1, f"Expected exactly 1 translation dropdown in the transcribe form, found {initial_count}"
 
 
 def test_embed_tab_has_translate_dropdown(page: Page):
@@ -57,6 +56,4 @@ def test_translation_languages_populated(page: Page):
     option_count = options.count()
 
     # Should have "No translation" + at least 1 language target (English via Whisper)
-    assert option_count >= 2, (
-        f"Expected at least 2 options (No translation + languages), found {option_count}"
-    )
+    assert option_count >= 2, f"Expected at least 2 options (No translation + languages), found {option_count}"

@@ -65,13 +65,14 @@ def sanitize_filename(filename: str) -> str:
     # Use ntpath + posixpath to strip paths regardless of host OS
     import ntpath
     import posixpath
+
     name = posixpath.basename(ntpath.basename(filename))
     # Remove null bytes and control characters
-    name = re.sub(r'[\x00-\x1f\x7f]', '', name)
+    name = re.sub(r"[\x00-\x1f\x7f]", "", name)
     # Remove characters that could cause path traversal or shell issues
-    name = re.sub(r'[<>:"/\\|?*]', '_', name)
+    name = re.sub(r'[<>:"/\\|?*]', "_", name)
     # Remove leading/trailing dots and spaces
-    name = name.strip('. ')
+    name = name.strip(". ")
     # Fallback if nothing remains
     if not name:
         name = "unnamed_file"

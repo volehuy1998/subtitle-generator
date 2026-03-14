@@ -54,10 +54,10 @@ def clear_task_context():
 # ── Log sanitization ──
 
 _SENSITIVE_PATTERNS = [
-    (re.compile(r'\bsk-[A-Za-z0-9]{10,}\b'), '[REDACTED_API_KEY]'),
-    (re.compile(r'\bhf_[A-Za-z0-9]{10,}\b'), '[REDACTED_HF_TOKEN]'),
-    (re.compile(r'Bearer\s+[A-Za-z0-9\._\-]+'), 'Bearer [REDACTED]'),
-    (re.compile(r'(?i)(api[_-]?key|token|secret|password|authorization)\s*[=:]\s*\S+'), r'\1=[REDACTED]'),
+    (re.compile(r"\bsk-[A-Za-z0-9]{10,}\b"), "[REDACTED_API_KEY]"),
+    (re.compile(r"\bhf_[A-Za-z0-9]{10,}\b"), "[REDACTED_HF_TOKEN]"),
+    (re.compile(r"Bearer\s+[A-Za-z0-9\._\-]+"), "Bearer [REDACTED]"),
+    (re.compile(r"(?i)(api[_-]?key|token|secret|password|authorization)\s*[=:]\s*\S+"), r"\1=[REDACTED]"),
 ]
 
 
@@ -69,6 +69,7 @@ def sanitize_log_message(msg: str) -> str:
 
 
 # ── Formatters ──
+
 
 class JsonFormatter(logging.Formatter):
     """Structured JSON log formatter for log analysis tool integration."""
@@ -111,6 +112,7 @@ class SanitizingJsonFormatter(JsonFormatter):
 
 # ── Webhook log handler ──
 
+
 class WebhookLogHandler(logging.Handler):
     """Send log entries to an HTTP endpoint via POST."""
 
@@ -122,6 +124,7 @@ class WebhookLogHandler(logging.Handler):
     def emit(self, record):
         try:
             import urllib.request
+
             data = self._formatter.format(record).encode("utf-8")
             req = urllib.request.Request(
                 self.url,
@@ -135,6 +138,7 @@ class WebhookLogHandler(logging.Handler):
 
 
 # ── Security event logging ──
+
 
 def log_security_event(event_type: str, ip: str = "", path: str = "", details: dict = None):
     """Log a security-related event in structured format."""
@@ -162,6 +166,7 @@ def log_security_event(event_type: str, ip: str = "", path: str = "", details: d
 
 # ── Setup ──
 
+
 def setup_logging():
     """Configure the application logger with configurable handlers."""
     log_level = getattr(logging, LOG_LEVEL, logging.INFO)
@@ -172,8 +177,7 @@ def setup_logging():
         return
 
     console_format = logging.Formatter(
-        "[%(asctime)s] %(levelname)-8s [%(threadName)s] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
+        "[%(asctime)s] %(levelname)-8s [%(threadName)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
     )
 
     # Console handler (stdout for Docker)
@@ -190,7 +194,10 @@ def setup_logging():
     if LOG_OUTPUT in ("file", "both"):
         # Human-readable rotating log
         file_handler = logging.handlers.RotatingFileHandler(
-            LOG_DIR / "app.log", maxBytes=10 * 1024 * 1024, backupCount=10, encoding="utf-8",
+            LOG_DIR / "app.log",
+            maxBytes=10 * 1024 * 1024,
+            backupCount=10,
+            encoding="utf-8",
         )
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(console_format)
@@ -198,7 +205,10 @@ def setup_logging():
 
         # Error file: errors only
         error_handler = logging.handlers.RotatingFileHandler(
-            LOG_DIR / "error.log", maxBytes=5 * 1024 * 1024, backupCount=5, encoding="utf-8",
+            LOG_DIR / "error.log",
+            maxBytes=5 * 1024 * 1024,
+            backupCount=5,
+            encoding="utf-8",
         )
         error_handler.setLevel(logging.ERROR)
         error_handler.setFormatter(console_format)
@@ -213,7 +223,10 @@ def setup_logging():
 
     # JSON Lines file: always enabled for log analysis tools
     json_handler = logging.handlers.RotatingFileHandler(
-        json_log_path, maxBytes=20 * 1024 * 1024, backupCount=20, encoding="utf-8",
+        json_log_path,
+        maxBytes=20 * 1024 * 1024,
+        backupCount=20,
+        encoding="utf-8",
     )
     json_handler.setLevel(logging.DEBUG)
     json_handler.setFormatter(SanitizingJsonFormatter())
@@ -255,7 +268,9 @@ def log_task_event(task_id: str, event: str, **kwargs):
 
     # Also log to main logger for unified log stream
     level = logging.WARNING if event in ("error", "cancel_requested", "vram_warning") else logging.INFO
-    logger.log(level, f"TASK_EVENT [{task_id[:8]}] {event} {kwargs}" if kwargs else f"TASK_EVENT [{task_id[:8]}] {event}")
+    logger.log(
+        level, f"TASK_EVENT [{task_id[:8]}] {event} {kwargs}" if kwargs else f"TASK_EVENT [{task_id[:8]}] {event}"
+    )
 
 
 def log_system_info(system_info: dict):

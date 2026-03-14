@@ -71,6 +71,7 @@ async def update_security_assertions(request: Request, payload: dict):
     """
     _require_admin(request)
     import json as _json
+
     _ASSERTIONS_FILE.parent.mkdir(parents=True, exist_ok=True)
     with open(_ASSERTIONS_FILE, "w") as f:
         _json.dump(payload, f, indent=2)

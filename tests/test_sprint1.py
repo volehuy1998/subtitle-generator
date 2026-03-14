@@ -19,6 +19,7 @@ SAMPLE_SEGMENTS = [
 
 # ── S1-1: Multi-language support ──
 
+
 class TestLanguagesEndpoint:
     def test_returns_languages_dict(self):
         data = client.get("/languages").json()
@@ -86,6 +87,7 @@ class TestUploadWithLanguage:
 
 
 # ── S1-2: VTT subtitle format ──
+
 
 class TestVttFormat:
     def test_vtt_starts_with_header(self):
@@ -159,6 +161,7 @@ class TestDownloadFormat:
 
 # ── S1-3: Task history persistence ──
 
+
 class TestTaskPersistence:
     def test_save_and_load_history(self):
         # Clear state
@@ -192,6 +195,7 @@ class TestTaskPersistence:
             state.tasks.update(original_tasks)
             # Clean up test file
             from app.config import TASK_HISTORY_FILE
+
             TASK_HISTORY_FILE.unlink(missing_ok=True)
 
     def test_only_terminal_tasks_persisted(self):
@@ -213,11 +217,13 @@ class TestTaskPersistence:
             state.tasks.clear()
             state.tasks.update(original_tasks)
             from app.config import TASK_HISTORY_FILE
+
             TASK_HISTORY_FILE.unlink(missing_ok=True)
 
     def test_load_empty_history(self):
         """Loading when no history file exists should not crash."""
         from app.config import TASK_HISTORY_FILE
+
         TASK_HISTORY_FILE.unlink(missing_ok=True)
         state.load_task_history()  # Should not raise
 
@@ -229,6 +235,7 @@ class TestTaskPersistence:
 
 
 # ── S1-4: Frontend error handling ──
+
 
 class TestErrorResponses:
     def test_413_on_oversized_content_type(self):

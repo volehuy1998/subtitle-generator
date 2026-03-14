@@ -24,7 +24,7 @@ async def analytics_summary():
 
 @router.get("/analytics/timeseries")
 async def analytics_timeseries(
-    minutes: int = Query(60, ge=1, le=1440, description="Number of minutes of data (1-1440)")
+    minutes: int = Query(60, ge=1, le=1440, description="Number of minutes of data (1-1440)"),
 ):
     """Get time-series data points for charting.
 
@@ -49,17 +49,13 @@ async def analytics_users():
 
 
 @router.get("/analytics/daily")
-async def analytics_daily(
-    days: int = Query(30, ge=1, le=365, description="Number of days of data")
-):
+async def analytics_daily(days: int = Query(30, ge=1, le=365, description="Number of days of data")):
     """Get daily aggregated analytics from the database."""
     return {"days": await analytics_pg.get_daily_stats(days)}
 
 
 @router.get("/analytics/export", response_class=PlainTextResponse)
-async def analytics_export(
-    format: str = Query("csv", description="Export format: csv or json")
-):
+async def analytics_export(format: str = Query("csv", description="Export format: csv or json")):
     """Export analytics data as CSV or JSON.
 
     CSV: time-series data (24h) with columns: timestamp, uploads, completed, failed, cancelled, avg_processing_sec.
@@ -67,6 +63,7 @@ async def analytics_export(
     """
     if format == "json":
         import json
+
         # Try DB time-series first
         db_ts = await analytics_pg.get_timeseries(minutes=1440)
         ts = db_ts if db_ts else get_timeseries(minutes=1440)

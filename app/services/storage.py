@@ -127,9 +127,11 @@ def get_storage() -> StorageAdapter:
     global _storage
     if _storage is None:
         from app.config import STORAGE_BACKEND
+
         if STORAGE_BACKEND == "s3":
             try:
                 from app.services.storage_s3 import S3StorageAdapter
+
                 _storage = S3StorageAdapter()
                 return _storage
             except Exception as e:

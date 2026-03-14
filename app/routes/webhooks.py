@@ -103,11 +103,15 @@ async def fire_webhook(task_id: str, result: dict):
 
     try:
         import httpx
+
         async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.post(url, json={
-                "task_id": task_id,
-                "result": result,
-            })
+            response = await client.post(
+                url,
+                json={
+                    "task_id": task_id,
+                    "result": result,
+                },
+            )
             logger.info(f"WEBHOOK Fired for [{task_id[:8]}] -> {url} (status={response.status_code})")
     except ImportError:
         logger.warning(f"WEBHOOK httpx not installed, skipping callback for [{task_id[:8]}]")

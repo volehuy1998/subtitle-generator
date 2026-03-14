@@ -72,7 +72,9 @@ def _get_cpu_brand() -> str:
         elif platform.system() == "Darwin":
             result = subprocess.run(
                 ["sysctl", "-n", "machdep.cpu.brand_string"],
-                capture_output=True, text=True, timeout=5,
+                capture_output=True,
+                text=True,
+                timeout=5,
             )
             if result.returncode == 0:
                 return result.stdout.strip()
@@ -112,22 +114,25 @@ def _detect_gpu() -> dict:
         allocated = torch.cuda.memory_allocated(i) / 1024**3
         reserved = torch.cuda.memory_reserved(i) / 1024**3
         total_gb = props.total_memory / 1024**3
-        info["devices"].append({
-            "index": i,
-            "name": props.name,
-            "total_gb": round(total_gb, 1),
-            "allocated_gb": round(allocated, 2),
-            "reserved_gb": round(reserved, 2),
-            "free_gb": round(total_gb - allocated, 1),
-            "compute_capability": f"{props.major}.{props.minor}",
-            "multi_processor_count": props.multi_processor_count,
-        })
+        info["devices"].append(
+            {
+                "index": i,
+                "name": props.name,
+                "total_gb": round(total_gb, 1),
+                "allocated_gb": round(allocated, 2),
+                "reserved_gb": round(reserved, 2),
+                "free_gb": round(total_gb - allocated, 1),
+                "compute_capability": f"{props.major}.{props.minor}",
+                "multi_processor_count": props.multi_processor_count,
+            }
+        )
     return info
 
 
 def _detect_storage() -> dict:
     try:
         from app.config import BASE_DIR
+
         usage = shutil.disk_usage(str(BASE_DIR))
         return {
             "total_gb": round(usage.total / 1024**3, 1),
@@ -161,6 +166,7 @@ def _detect_software() -> dict:
     pyannote_version = "not installed"
     try:
         import pyannote.audio
+
         pyannote_version = getattr(pyannote.audio, "__version__", "installed")
     except ImportError:
         pass
@@ -254,7 +260,9 @@ def log_capabilities(caps: dict):
     logger.info(f"Frequency:       {cpu['current_freq_mhz']:.0f} / {cpu['max_freq_mhz']:.0f} MHz")
     logger.info(f"Load:            {cpu['load_percent']:.1f}%")
     logger.info("-" * 70)
-    logger.info(f"RAM:             {mem['total_gb']} GB total, {mem['available_gb']} GB available ({mem['percent']}% used)")
+    logger.info(
+        f"RAM:             {mem['total_gb']} GB total, {mem['available_gb']} GB available ({mem['percent']}% used)"
+    )
     logger.info(f"Swap:            {mem['swap_total_gb']} GB total, {mem['swap_used_gb']} GB used")
     logger.info("-" * 70)
     if gpu["cuda_available"]:

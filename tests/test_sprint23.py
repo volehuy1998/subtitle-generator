@@ -27,20 +27,24 @@ def run_async(coro):
 
 # ── Model Tests ──
 
+
 class TestUserModel:
     """Test UserRecord ORM model."""
 
     def test_model_exists(self):
         from app.db.models import UserRecord
+
         assert UserRecord.__tablename__ == "users"
 
     def test_model_columns(self):
         from app.db.models import UserRecord
+
         cols = {c.name for c in UserRecord.__table__.columns}
         assert {"id", "username", "password_hash", "role", "is_active", "created_at"} <= cols
 
     def test_model_indexes(self):
         from app.db.models import UserRecord
+
         idx_names = {idx.name for idx in UserRecord.__table__.indexes}
         assert "ix_users_username" in idx_names
 
@@ -50,15 +54,18 @@ class TestApiKeyModel:
 
     def test_model_exists(self):
         from app.db.models import ApiKeyRecord
+
         assert ApiKeyRecord.__tablename__ == "api_keys"
 
     def test_model_columns(self):
         from app.db.models import ApiKeyRecord
+
         cols = {c.name for c in ApiKeyRecord.__table__.columns}
         assert {"id", "key_hash", "label", "owner_id", "created_at", "last_used", "expires_at", "is_active"} <= cols
 
     def test_model_indexes(self):
         from app.db.models import ApiKeyRecord
+
         idx_names = {idx.name for idx in ApiKeyRecord.__table__.indexes}
         assert "ix_api_keys_hash" in idx_names
         assert "ix_api_keys_owner" in idx_names
@@ -66,11 +73,13 @@ class TestApiKeyModel:
 
 # ── Auth Service Tests ──
 
+
 class TestAuthService:
     """Test auth service functions."""
 
     def test_module_imports(self):
         from app.services import auth
+
         assert hasattr(auth, "register_user")
         assert hasattr(auth, "authenticate_user")
         assert hasattr(auth, "create_access_token")
@@ -83,14 +92,17 @@ class TestAuthService:
 
     def test_register_is_async(self):
         from app.services.auth import register_user
+
         assert asyncio.iscoroutinefunction(register_user)
 
     def test_authenticate_is_async(self):
         from app.services.auth import authenticate_user
+
         assert asyncio.iscoroutinefunction(authenticate_user)
 
     def test_jwt_roundtrip(self):
         from app.services.auth import create_access_token, decode_jwt
+
         token = create_access_token(1, "testuser", "user")
         payload = decode_jwt(token)
         assert payload is not None
@@ -101,6 +113,7 @@ class TestAuthService:
 
     def test_refresh_token_type(self):
         from app.services.auth import create_refresh_token, decode_jwt
+
         token = create_refresh_token(42)
         payload = decode_jwt(token)
         assert payload is not None
@@ -109,18 +122,21 @@ class TestAuthService:
 
     def test_invalid_jwt_returns_none(self):
         from app.services.auth import decode_jwt
+
         assert decode_jwt("invalid.token.here") is None
         assert decode_jwt("") is None
         assert decode_jwt("not-a-jwt") is None
 
     def test_password_hashing(self):
         from app.services.auth import _hash_password, _verify_password
+
         hashed = _hash_password("mypassword")
         assert _verify_password("mypassword", hashed) is True
         assert _verify_password("wrongpassword", hashed) is False
 
     def test_api_key_hashing(self):
         from app.services.auth import hash_api_key
+
         h1 = hash_api_key("sk-test123")
         h2 = hash_api_key("sk-test123")
         assert h1 == h2  # Deterministic
@@ -128,6 +144,7 @@ class TestAuthService:
 
 
 # ── Auth Endpoint Tests ──
+
 
 class TestAuthEndpoints:
     """Test auth API endpoints."""
@@ -191,6 +208,7 @@ class TestAuthEndpoints:
 
 # ── API Key Management Tests ──
 
+
 class TestApiKeyEndpoints:
     """Test API key management endpoints."""
 
@@ -241,15 +259,18 @@ class TestApiKeyEndpoints:
 
 # ── Migration Tests ──
 
+
 class TestMigration004:
     """Test Alembic migration file."""
 
     def test_migration_exists(self):
         from pathlib import Path
+
         assert Path("alembic/versions/004_users_api_keys.py").exists()
 
     def test_migration_has_upgrade(self):
         from pathlib import Path
+
         content = Path("alembic/versions/004_users_api_keys.py").read_text()
         assert "def upgrade" in content
         assert "users" in content
@@ -257,10 +278,12 @@ class TestMigration004:
 
     def test_migration_has_downgrade(self):
         from pathlib import Path
+
         content = Path("alembic/versions/004_users_api_keys.py").read_text()
         assert "def downgrade" in content
 
     def test_migration_chain(self):
         from pathlib import Path
+
         content = Path("alembic/versions/004_users_api_keys.py").read_text()
         assert '"003"' in content

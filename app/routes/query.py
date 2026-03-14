@@ -82,9 +82,9 @@ async def export_tasks(
     try:
         if format == "csv":
             data = await export_tasks_csv(status=status, limit=limit)
-            return PlainTextResponse(data, media_type="text/csv", headers={
-                "Content-Disposition": "attachment; filename=tasks_export.csv"
-            })
+            return PlainTextResponse(
+                data, media_type="text/csv", headers={"Content-Disposition": "attachment; filename=tasks_export.csv"}
+            )
         data = await export_tasks_json(status=status, limit=limit)
         return {"tasks": data, "count": len(data)}
     except DatabaseUnavailableError:

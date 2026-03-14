@@ -23,6 +23,7 @@ logger = logging.getLogger("subtitle-generator")
 _pyannote_available = False
 try:
     from pyannote.audio import Pipeline as PyannotePipeline  # noqa: F401
+
     _pyannote_available = True
 except ImportError:
     pass
@@ -40,8 +41,10 @@ def is_diarization_available() -> dict:
         "pyannote_installed": _pyannote_available,
         "hf_token_set": bool(hf_token),
         "reason": (
-            "Ready" if _pyannote_available and hf_token
-            else "pyannote.audio not installed" if not _pyannote_available
+            "Ready"
+            if _pyannote_available and hf_token
+            else "pyannote.audio not installed"
+            if not _pyannote_available
             else "HF_TOKEN environment variable not set"
         ),
     }
@@ -87,10 +90,13 @@ def _get_pipeline():
         return pipeline
 
 
-def diarize_audio(audio_path: Path, task_id: str = "",
-                  num_speakers: Optional[int] = None,
-                  min_speakers: Optional[int] = None,
-                  max_speakers: Optional[int] = None) -> list:
+def diarize_audio(
+    audio_path: Path,
+    task_id: str = "",
+    num_speakers: Optional[int] = None,
+    min_speakers: Optional[int] = None,
+    max_speakers: Optional[int] = None,
+) -> list:
     """Run speaker diarization on audio file.
 
     Returns list of speaker turns:
@@ -109,6 +115,7 @@ def diarize_audio(audio_path: Path, task_id: str = "",
         # Check critical state before starting expensive diarization
         from app import state
         from app.exceptions import CriticalAbortError
+
         if state.system_critical:
             reasons = "; ".join(state.system_critical_reasons) if state.system_critical_reasons else "Unknown"
             raise CriticalAbortError(f"Diarization aborted — system critical: {reasons}")
@@ -134,18 +141,20 @@ def diarize_audio(audio_path: Path, task_id: str = "",
 
         turns = []
         for turn, _, speaker in diarization.itertracks(yield_label=True):
-            turns.append({
-                "start": round(turn.start, 3),
-                "end": round(turn.end, 3),
-                "speaker": speaker,
-            })
+            turns.append(
+                {
+                    "start": round(turn.start, 3),
+                    "end": round(turn.end, 3),
+                    "speaker": speaker,
+                }
+            )
 
         elapsed = time.time() - t0
         unique_speakers = len(set(t["speaker"] for t in turns))
         logger.info(f"DIARIZE [{task_id[:8]}] Done: {len(turns)} turns, {unique_speakers} speakers in {elapsed:.1f}s")
-        log_task_event(task_id, "diarize_complete",
-                       turns=len(turns), speakers=unique_speakers,
-                       elapsed_sec=round(elapsed, 2))
+        log_task_event(
+            task_id, "diarize_complete", turns=len(turns), speakers=unique_speakers, elapsed_sec=round(elapsed, 2)
+        )
         return turns
 
     except Exception as e:

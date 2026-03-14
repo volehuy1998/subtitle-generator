@@ -3,9 +3,14 @@
 import time
 from unittest.mock import MagicMock
 from profiler import (
-    snapshot_system, snapshot_gpu, format_snapshot_short,
-    StepTimer, TranscriptionProfiler, PipelineSummary,
-    ResourceMonitor, format_bytes_simple,
+    snapshot_system,
+    snapshot_gpu,
+    format_snapshot_short,
+    StepTimer,
+    TranscriptionProfiler,
+    PipelineSummary,
+    ResourceMonitor,
+    format_bytes_simple,
 )
 import sys
 
@@ -13,10 +18,21 @@ import sys
 class TestSnapshotSystem:
     def test_returns_expected_keys(self):
         snap = snapshot_system()
-        for key in ["timestamp", "cpu_percent", "cpu_freq_mhz", "cpu_count_logical",
-                     "cpu_count_physical", "proc_cpu_percent", "proc_rss_mb",
-                     "proc_vms_mb", "proc_threads", "ram_total_gb", "ram_used_gb",
-                     "ram_available_gb", "ram_percent"]:
+        for key in [
+            "timestamp",
+            "cpu_percent",
+            "cpu_freq_mhz",
+            "cpu_count_logical",
+            "cpu_count_physical",
+            "proc_cpu_percent",
+            "proc_rss_mb",
+            "proc_vms_mb",
+            "proc_threads",
+            "ram_total_gb",
+            "ram_used_gb",
+            "ram_available_gb",
+            "ram_percent",
+        ]:
             assert key in snap, f"Missing key: {key}"
 
     def test_cpu_percent_is_numeric(self):
@@ -63,16 +79,28 @@ class TestSnapshotGpu:
 
 class TestFormatSnapshotShort:
     def test_basic_output(self):
-        snap = {"cpu_percent": 25.0, "ram_used_gb": 8.0, "ram_total_gb": 16.0,
-                "ram_percent": 50.0, "proc_rss_mb": 200.0}
+        snap = {
+            "cpu_percent": 25.0,
+            "ram_used_gb": 8.0,
+            "ram_total_gb": 16.0,
+            "ram_percent": 50.0,
+            "proc_rss_mb": 200.0,
+        }
         result = format_snapshot_short(snap)
         assert "CPU=25.0%" in result
         assert "Proc=200.0MB" in result
 
     def test_includes_gpu_when_present(self):
-        snap = {"cpu_percent": 10.0, "ram_used_gb": 4.0, "ram_total_gb": 16.0,
-                "ram_percent": 25.0, "proc_rss_mb": 100.0,
-                "gpu_allocated_mb": 512.0, "gpu_total_mb": 8192.0, "gpu_utilization_percent": 6.3}
+        snap = {
+            "cpu_percent": 10.0,
+            "ram_used_gb": 4.0,
+            "ram_total_gb": 16.0,
+            "ram_percent": 25.0,
+            "proc_rss_mb": 100.0,
+            "gpu_allocated_mb": 512.0,
+            "gpu_total_mb": 8192.0,
+            "gpu_utilization_percent": 6.3,
+        }
         assert "GPU=" in format_snapshot_short(snap)
 
 

@@ -39,11 +39,7 @@ async def get_recent_events(limit: int = 50) -> list[dict]:
     """Get recent audit events from the database."""
     try:
         async with get_session() as session:
-            result = await session.execute(
-                select(AuditLog)
-                .order_by(AuditLog.timestamp.desc())
-                .limit(limit)
-            )
+            result = await session.execute(select(AuditLog).order_by(AuditLog.timestamp.desc()).limit(limit))
             rows = result.scalars().all()
             events = []
             for r in rows:
@@ -77,8 +73,7 @@ async def get_audit_stats() -> dict:
 
             # Count by event type
             result = await session.execute(
-                select(AuditLog.event_type, func.count(AuditLog.id))
-                .group_by(AuditLog.event_type)
+                select(AuditLog.event_type, func.count(AuditLog.id)).group_by(AuditLog.event_type)
             )
             type_counts = dict(result.all())
 

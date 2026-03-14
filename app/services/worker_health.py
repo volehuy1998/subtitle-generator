@@ -61,14 +61,16 @@ def get_worker_status() -> list[dict]:
             elapsed = now - info["last_heartbeat"]
             status = "active" if elapsed < WORKER_TIMEOUT else "unresponsive"
             uptime = now - info["started_at"]
-            result.append({
-                "worker_id": wid,
-                "status": status,
-                "pid": info["pid"],
-                "tasks_processed": info["tasks_processed"],
-                "uptime_sec": round(uptime, 1),
-                "last_heartbeat_sec_ago": round(elapsed, 1),
-            })
+            result.append(
+                {
+                    "worker_id": wid,
+                    "status": status,
+                    "pid": info["pid"],
+                    "tasks_processed": info["tasks_processed"],
+                    "uptime_sec": round(uptime, 1),
+                    "last_heartbeat_sec_ago": round(elapsed, 1),
+                }
+            )
     return result
 
 
@@ -76,8 +78,7 @@ def get_healthy_worker_count() -> int:
     """Count workers that are responsive."""
     now = time.time()
     with _lock:
-        return sum(1 for info in _workers.values()
-                   if now - info["last_heartbeat"] < WORKER_TIMEOUT)
+        return sum(1 for info in _workers.values() if now - info["last_heartbeat"] < WORKER_TIMEOUT)
 
 
 def cleanup_dead_workers() -> int:
@@ -85,8 +86,7 @@ def cleanup_dead_workers() -> int:
     now = time.time()
     removed = 0
     with _lock:
-        dead = [wid for wid, info in _workers.items()
-                if now - info["last_heartbeat"] > WORKER_TIMEOUT * 3]
+        dead = [wid for wid, info in _workers.items() if now - info["last_heartbeat"] > WORKER_TIMEOUT * 3]
         for wid in dead:
             del _workers[wid]
             removed += 1

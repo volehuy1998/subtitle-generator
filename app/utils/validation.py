@@ -56,9 +56,9 @@ def verify_checksum(file_path: Path | str, expected: str, algorithm: str = "sha2
 
 # ── Subtitle content sanitization ──
 
-_CONTROL_CHARS = re.compile(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]')
-_HTML_TAGS = re.compile(r'<(?!/?(?:b|i|u|font)\b)[^>]+>', re.IGNORECASE)
-_SCRIPT_PATTERN = re.compile(r'<script[^>]*>.*?</script>', re.IGNORECASE | re.DOTALL)
+_CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+_HTML_TAGS = re.compile(r"<(?!/?(?:b|i|u|font)\b)[^>]+>", re.IGNORECASE)
+_SCRIPT_PATTERN = re.compile(r"<script[^>]*>.*?</script>", re.IGNORECASE | re.DOTALL)
 
 
 def sanitize_subtitle_text(text: str) -> str:
@@ -72,13 +72,13 @@ def sanitize_subtitle_text(text: str) -> str:
     if not text:
         return text
     # Remove script tags first
-    text = _SCRIPT_PATTERN.sub('', text)
+    text = _SCRIPT_PATTERN.sub("", text)
     # Remove dangerous HTML tags (keep b, i, u, font)
-    text = _HTML_TAGS.sub('', text)
+    text = _HTML_TAGS.sub("", text)
     # Remove control chars
-    text = _CONTROL_CHARS.sub('', text)
+    text = _CONTROL_CHARS.sub("", text)
     # Normalize Unicode
-    text = unicodedata.normalize('NFC', text)
+    text = unicodedata.normalize("NFC", text)
     return text.strip()
 
 
@@ -101,11 +101,11 @@ def validate_subtitle_timing(start: float, end: float) -> tuple[bool, str]:
 # ── Error message sanitization ──
 
 _INTERNAL_PATTERNS = [
-    (re.compile(r'[A-Za-z]:[/\\][\w/\\.-]+'), '[PATH]'),  # Windows paths
-    (re.compile(r'/(?:home|usr|var|tmp|opt)/[\w/.-]+'), '[PATH]'),  # Unix paths
-    (re.compile(r'\b(?:sqlite|postgresql|mysql)://\S+'), '[DB_URL]'),  # DB URLs
-    (re.compile(r'File ".*?", line \d+'), 'Internal error'),  # Python tracebacks
-    (re.compile(r'Traceback \(most recent call last\):.*', re.DOTALL), 'Internal error'),
+    (re.compile(r"[A-Za-z]:[/\\][\w/\\.-]+"), "[PATH]"),  # Windows paths
+    (re.compile(r"/(?:home|usr|var|tmp|opt)/[\w/.-]+"), "[PATH]"),  # Unix paths
+    (re.compile(r"\b(?:sqlite|postgresql|mysql)://\S+"), "[DB_URL]"),  # DB URLs
+    (re.compile(r'File ".*?", line \d+'), "Internal error"),  # Python tracebacks
+    (re.compile(r"Traceback \(most recent call last\):.*", re.DOTALL), "Internal error"),
 ]
 
 
@@ -124,11 +124,21 @@ def sanitize_error_message(msg: str, include_details: bool = False) -> str:
 
 # ── FFmpeg filter value validation ──
 
-_FFMPEG_SAFE_CHARS = re.compile(r'^[a-zA-Z0-9 _\-.,/]+$')
+_FFMPEG_SAFE_CHARS = re.compile(r"^[a-zA-Z0-9 _\-.,/]+$")
 _FFMPEG_ALLOWED_FONTS = {
-    "Arial", "Helvetica", "Verdana", "Times New Roman", "Courier New",
-    "Georgia", "Impact", "Tahoma", "Trebuchet MS", "Comic Sans MS",
-    "Liberation Sans", "DejaVu Sans", "Noto Sans",
+    "Arial",
+    "Helvetica",
+    "Verdana",
+    "Times New Roman",
+    "Courier New",
+    "Georgia",
+    "Impact",
+    "Tahoma",
+    "Trebuchet MS",
+    "Comic Sans MS",
+    "Liberation Sans",
+    "DejaVu Sans",
+    "Noto Sans",
 }
 
 
@@ -147,5 +157,5 @@ def validate_ffmpeg_font(font_name: str) -> str:
     if not font_name:
         return "Arial"
     # Strip dangerous chars
-    sanitized = re.sub(r'[^a-zA-Z0-9 _-]', '', font_name).strip()
+    sanitized = re.sub(r"[^a-zA-Z0-9 _-]", "", font_name).strip()
     return sanitized if sanitized else "Arial"

@@ -31,9 +31,14 @@ async def record_event(event_type: str, data: dict | None = None) -> None:
         logger.error(f"ANALYTICS_PG record_event failed: {e}")
 
 
-async def update_daily_stats(uploads: int = 0, completed: int = 0, failed: int = 0,
-                             cancelled: int = 0, processing_sec: float = 0,
-                             file_size: int = 0) -> None:
+async def update_daily_stats(
+    uploads: int = 0,
+    completed: int = 0,
+    failed: int = 0,
+    cancelled: int = 0,
+    processing_sec: float = 0,
+    file_size: int = 0,
+) -> None:
     """Upsert daily aggregated stats."""
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     try:
@@ -60,17 +65,20 @@ async def update_daily_stats(uploads: int = 0, completed: int = 0, failed: int =
         logger.error(f"ANALYTICS_PG update_daily_stats failed: {e}")
 
 
-async def upsert_timeseries_point(minute_ts: datetime, uploads: int = 0,
-                                   completed: int = 0, failed: int = 0,
-                                   cancelled: int = 0, processing_sec: float = 0,
-                                   task_count: int = 0) -> None:
+async def upsert_timeseries_point(
+    minute_ts: datetime,
+    uploads: int = 0,
+    completed: int = 0,
+    failed: int = 0,
+    cancelled: int = 0,
+    processing_sec: float = 0,
+    task_count: int = 0,
+) -> None:
     """Upsert a minute-resolution time-series point."""
     try:
         async with get_session() as session:
             result = await session.execute(
-                select(AnalyticsTimeseries).where(
-                    AnalyticsTimeseries.timestamp == minute_ts
-                )
+                select(AnalyticsTimeseries).where(AnalyticsTimeseries.timestamp == minute_ts)
             )
             existing = result.scalar_one_or_none()
             if existing:
@@ -114,9 +122,7 @@ async def get_timeseries(minutes: int = 60) -> list[dict]:
                     "completed": r.completed,
                     "failed": r.failed,
                     "cancelled": r.cancelled,
-                    "avg_processing_sec": round(
-                        r.total_processing_sec / r.task_count if r.task_count > 0 else 0, 2
-                    ),
+                    "avg_processing_sec": round(r.total_processing_sec / r.task_count if r.task_count > 0 else 0, 2),
                 }
                 for r in rows
             ]
@@ -129,11 +135,7 @@ async def get_daily_stats(days: int = 30) -> list[dict]:
     """Get daily aggregated stats for the last N days."""
     try:
         async with get_session() as session:
-            result = await session.execute(
-                select(AnalyticsDaily)
-                .order_by(AnalyticsDaily.date.desc())
-                .limit(days)
-            )
+            result = await session.execute(select(AnalyticsDaily).order_by(AnalyticsDaily.date.desc()).limit(days))
             rows = result.scalars().all()
             return [
                 {

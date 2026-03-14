@@ -39,18 +39,17 @@ COMPONENTS = [
 async def _check_component_status(component_id: str) -> dict:
     """Check real-time status of a service component."""
     if component_id == "transcription":
-        active = sum(1 for t in state.tasks.values()
-                     if t.get("status") in ("transcribing", "extracting"))
+        active = sum(1 for t in state.tasks.values() if t.get("status") in ("transcribing", "extracting"))
         return {"status": "operational", "detail": f"{active} active"}
     elif component_id == "combine":
-        active = sum(1 for t in state.tasks.values()
-                     if t.get("status") == "combining")
+        active = sum(1 for t in state.tasks.values() if t.get("status") == "combining")
         return {"status": "operational", "detail": f"{active} active"}
     elif component_id == "api":
         return {"status": "operational", "detail": "serving requests"}
     elif component_id == "database":
         try:
             from app.services.query_layer import check_db_health
+
             result = await check_db_health()
             if result.get("status") == "healthy":
                 latency = result.get("latency_ms", "?")
@@ -89,9 +88,9 @@ async def _get_uptime_history(days: int = 90) -> dict:
         async with get_status_session() as session:
             cutoff = now_utc - timedelta(days=days)
             result = await session.execute(
-                select(StatusIncident).where(
-                    StatusIncident.created_at >= cutoff
-                ).order_by(StatusIncident.created_at.desc())
+                select(StatusIncident)
+                .where(StatusIncident.created_at >= cutoff)
+                .order_by(StatusIncident.created_at.desc())
             )
             incidents = result.scalars().all()
 
@@ -99,16 +98,22 @@ async def _get_uptime_history(days: int = 90) -> dict:
             comp_incidents = defaultdict(list)
             for inc in incidents:
                 # SQLite returns naive datetimes — make them timezone-aware
-                inc_start = inc.created_at.replace(tzinfo=timezone.utc) if inc.created_at.tzinfo is None else inc.created_at
+                inc_start = (
+                    inc.created_at.replace(tzinfo=timezone.utc) if inc.created_at.tzinfo is None else inc.created_at
+                )
                 inc_end = inc.resolved_at
                 if inc_end is not None and inc_end.tzinfo is None:
                     inc_end = inc_end.replace(tzinfo=timezone.utc)
                 start = max(inc_start, window_start)
                 end = inc_end or now_utc
                 end = min(end, now_utc)
-                comp_incidents[inc.component].append({
-                    "start": start, "end": end, "severity": inc.severity,
-                })
+                comp_incidents[inc.component].append(
+                    {
+                        "start": start,
+                        "end": end,
+                        "severity": inc.severity,
+                    }
+                )
 
             for comp in COMPONENTS:
                 comp_id = comp["id"]
@@ -159,8 +164,10 @@ async def _get_uptime_history(days: int = 90) -> dict:
         logger.error(f"STATUS uptime history failed: {e}")
         for comp in COMPONENTS:
             history[comp["id"]] = {
-                "daily": [{"date": (today - timedelta(days=days - 1 - i)).isoformat(),
-                           "status": "operational"} for i in range(days)],
+                "daily": [
+                    {"date": (today - timedelta(days=days - 1 - i)).isoformat(), "status": "operational"}
+                    for i in range(days)
+                ],
                 "uptime_pct": 100.0,
             }
 
@@ -173,9 +180,10 @@ async def _get_incidents(days: int = 14, limit: int = 20) -> list:
         async with get_status_session() as session:
             cutoff = datetime.now(timezone.utc) - timedelta(days=days)
             result = await session.execute(
-                select(StatusIncident).where(
-                    StatusIncident.created_at >= cutoff
-                ).order_by(StatusIncident.created_at.desc()).limit(limit)
+                select(StatusIncident)
+                .where(StatusIncident.created_at >= cutoff)
+                .order_by(StatusIncident.created_at.desc())
+                .limit(limit)
             )
             incidents = result.scalars().all()
 
@@ -183,26 +191,31 @@ async def _get_incidents(days: int = 14, limit: int = 20) -> list:
             for inc in incidents:
                 # Load updates
                 updates_result = await session.execute(
-                    select(StatusIncidentUpdate).where(
-                        StatusIncidentUpdate.incident_id == inc.id
-                    ).order_by(StatusIncidentUpdate.created_at.desc())
+                    select(StatusIncidentUpdate)
+                    .where(StatusIncidentUpdate.incident_id == inc.id)
+                    .order_by(StatusIncidentUpdate.created_at.desc())
                 )
                 updates = updates_result.scalars().all()
 
-                items.append({
-                    "id": inc.id,
-                    "title": inc.title,
-                    "severity": inc.severity,
-                    "component": inc.component,
-                    "status": inc.status,
-                    "created_at": inc.created_at.isoformat(),
-                    "resolved_at": inc.resolved_at.isoformat() if inc.resolved_at else None,
-                    "updates": [{
-                        "status": u.status,
-                        "message": u.message,
-                        "created_at": u.created_at.isoformat(),
-                    } for u in updates],
-                })
+                items.append(
+                    {
+                        "id": inc.id,
+                        "title": inc.title,
+                        "severity": inc.severity,
+                        "component": inc.component,
+                        "status": inc.status,
+                        "created_at": inc.created_at.isoformat(),
+                        "resolved_at": inc.resolved_at.isoformat() if inc.resolved_at else None,
+                        "updates": [
+                            {
+                                "status": u.status,
+                                "message": u.message,
+                                "created_at": u.created_at.isoformat(),
+                            }
+                            for u in updates
+                        ],
+                    }
+                )
             return items
     except Exception as e:
         logger.error(f"STATUS get_incidents failed: {e}")
@@ -248,17 +261,13 @@ async def _get_task_stats() -> dict:
                 select(
                     TaskRecord.status,
                     func.count(TaskRecord.id).label("count"),
-                ).where(
-                    TaskRecord.created_at >= cutoff
-                ).group_by(TaskRecord.status)
+                )
+                .where(TaskRecord.created_at >= cutoff)
+                .group_by(TaskRecord.status)
             )
             db_stats = {row.status: row.count for row in result}
             # Get IDs already in DB to avoid double-counting
-            id_result = await session.execute(
-                select(TaskRecord.task_id).where(
-                    TaskRecord.created_at >= cutoff
-                )
-            )
+            id_result = await session.execute(select(TaskRecord.task_id).where(TaskRecord.created_at >= cutoff))
             db_task_ids = {row.task_id for row in id_result}
     except Exception:
         pass
@@ -312,32 +321,37 @@ async def status_open_incidents():
     try:
         async with get_status_session() as session:
             result = await session.execute(
-                select(StatusIncident).where(
-                    StatusIncident.status != "resolved"
-                ).order_by(StatusIncident.created_at.desc())
+                select(StatusIncident)
+                .where(StatusIncident.status != "resolved")
+                .order_by(StatusIncident.created_at.desc())
             )
             incidents = result.scalars().all()
             items = []
             for inc in incidents:
                 updates_result = await session.execute(
-                    select(StatusIncidentUpdate).where(
-                        StatusIncidentUpdate.incident_id == inc.id
-                    ).order_by(StatusIncidentUpdate.created_at.desc())
+                    select(StatusIncidentUpdate)
+                    .where(StatusIncidentUpdate.incident_id == inc.id)
+                    .order_by(StatusIncidentUpdate.created_at.desc())
                 )
                 updates = updates_result.scalars().all()
-                items.append({
-                    "id": inc.id,
-                    "title": inc.title,
-                    "severity": inc.severity,
-                    "component": inc.component,
-                    "status": inc.status,
-                    "created_at": inc.created_at.isoformat(),
-                    "updates": [{
-                        "status": u.status,
-                        "message": u.message,
-                        "created_at": u.created_at.isoformat(),
-                    } for u in updates],
-                })
+                items.append(
+                    {
+                        "id": inc.id,
+                        "title": inc.title,
+                        "severity": inc.severity,
+                        "component": inc.component,
+                        "status": inc.status,
+                        "created_at": inc.created_at.isoformat(),
+                        "updates": [
+                            {
+                                "status": u.status,
+                                "message": u.message,
+                                "created_at": u.created_at.isoformat(),
+                            }
+                            for u in updates
+                        ],
+                    }
+                )
             return {"incidents": items}
     except Exception as e:
         logger.error(f"STATUS open_incidents failed: {e}")
@@ -352,10 +366,12 @@ class CreateIncidentRequest(dict):
 async def create_incident_api(request: Request):
     """Create a new incident. Requires auth when API_KEYS is configured."""
     from app.services.incident_logger import create_incident
+
     try:
         body = await request.json()
     except Exception:
         from fastapi.responses import JSONResponse
+
         return JSONResponse(status_code=400, content={"detail": "Invalid JSON body"})
 
     title = (body.get("title") or "").strip()
@@ -365,16 +381,19 @@ async def create_incident_api(request: Request):
 
     if not title or not component:
         from fastapi.responses import JSONResponse
+
         return JSONResponse(status_code=422, content={"detail": "title and component are required"})
     if severity not in ("minor", "major", "critical", "maintenance"):
         severity = "minor"
     if component not in {c["id"] for c in COMPONENTS}:
         from fastapi.responses import JSONResponse
+
         return JSONResponse(status_code=422, content={"detail": f"Unknown component: {component}"})
 
     incident_id = await create_incident(title=title, component=component, severity=severity, message=message)
     if incident_id is None:
         from fastapi.responses import JSONResponse
+
         return JSONResponse(status_code=500, content={"detail": "Failed to create incident"})
     return {"id": incident_id, "title": title, "status": "investigating"}
 
@@ -383,10 +402,12 @@ async def create_incident_api(request: Request):
 async def update_incident_api(incident_id: int, request: Request):
     """Add a status update to an existing incident."""
     from app.services.incident_logger import update_incident
+
     try:
         body = await request.json()
     except Exception:
         from fastapi.responses import JSONResponse
+
         return JSONResponse(status_code=400, content={"detail": "Invalid JSON body"})
 
     status = (body.get("status") or "").strip()
@@ -394,14 +415,17 @@ async def update_incident_api(incident_id: int, request: Request):
 
     if status not in ("investigating", "identified", "monitoring", "resolved"):
         from fastapi.responses import JSONResponse
+
         return JSONResponse(status_code=422, content={"detail": "Invalid status"})
     if not message:
         from fastapi.responses import JSONResponse
+
         return JSONResponse(status_code=422, content={"detail": "message is required"})
 
     ok = await update_incident(incident_id, status, message)
     if not ok:
         from fastapi.responses import JSONResponse
+
         return JSONResponse(status_code=404, content={"detail": "Incident not found"})
     return {"id": incident_id, "status": status}
 
@@ -410,6 +434,7 @@ async def update_incident_api(incident_id: int, request: Request):
 async def resolve_incident_api(incident_id: int, request: Request):
     """Resolve an incident."""
     from app.services.incident_logger import resolve_incident
+
     try:
         body = await request.json()
     except Exception:
@@ -419,9 +444,11 @@ async def resolve_incident_api(incident_id: int, request: Request):
         ok = await resolve_incident(incident_id, message)
     except Exception as e:
         from fastapi.responses import JSONResponse
+
         return JSONResponse(status_code=500, content={"detail": f"Database error: {e}"})
     if not ok:
         from fastapi.responses import JSONResponse
+
         return JSONResponse(status_code=404, content={"detail": "Incident not found"})
     return {"id": incident_id, "status": "resolved"}
 
@@ -439,6 +466,7 @@ _GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN") or 
 async def _fetch_github_json(path: str) -> dict | list | None:
     """Fetch JSON from GitHub API."""
     import urllib.request
+
     url = f"https://api.github.com/repos/{_GITHUB_REPO}{path}"
     headers = {
         "Accept": "application/vnd.github.v3+json",
@@ -494,21 +522,22 @@ async def status_commits():
             subject = msg_parts[0].strip()
             body = msg_parts[1].strip() if len(msg_parts) > 1 else ""
             # Remove Co-Authored-By lines
-            body_lines = [ln for ln in body.split("\n")
-                          if not ln.strip().startswith("Co-Authored-By:")]
+            body_lines = [ln for ln in body.split("\n") if not ln.strip().startswith("Co-Authored-By:")]
             body = "\n".join(body_lines).strip()
 
             date = info.get("author", {}).get("date", "")
 
-            commits.append({
-                "sha": sha,
-                "sha_short": sha[:7],
-                "subject": subject,
-                "body": body,
-                "date": date,
-                "ci_status": ci_map.get(sha, "unknown"),
-                "stats": gh_commit.get("stats", {}),
-            })
+            commits.append(
+                {
+                    "sha": sha,
+                    "sha_short": sha[:7],
+                    "subject": subject,
+                    "body": body,
+                    "date": date,
+                    "ci_status": ci_map.get(sha, "unknown"),
+                    "stats": gh_commit.get("stats", {}),
+                }
+            )
 
         # Fetch file details only for the 5 most recent commits (saves rate limit)
         async def _fetch_commit_files(commit):
@@ -545,6 +574,7 @@ def _get_page_lock():
     global _page_lock
     if _page_lock is None:
         import asyncio
+
         _page_lock = asyncio.Lock()
     return _page_lock
 

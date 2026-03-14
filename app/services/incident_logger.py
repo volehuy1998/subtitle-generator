@@ -104,6 +104,7 @@ async def auto_detect_incidents():
     # Check database
     try:
         from app.services.query_layer import check_db_health
+
         db_result = await check_db_health()
         db_ok = db_result.get("status") == "healthy"
     except Exception:
@@ -115,8 +116,8 @@ async def auto_detect_incidents():
             component="database",
             severity="critical",
             message="The database health check is failing. Task persistence, analytics, "
-                    "and session tracking are affected. Tasks will continue to process "
-                    "but results may not be saved to the database. In-memory fallback is active.",
+            "and session tracking are affected. Tasks will continue to process "
+            "but results may not be saved to the database. In-memory fallback is active.",
         )
     elif db_ok and "database" in _open_incidents:
         await resolve_incident(
@@ -134,9 +135,9 @@ async def auto_detect_incidents():
             component="storage",
             severity="major",
             message="FFmpeg is not found on the system PATH. This affects audio extraction "
-                    "from video files, media probing (duration/codec detection), subtitle "
-                    "embedding (both soft mux and hard burn), and the video combine feature. "
-                    "Transcription of pre-extracted audio files (WAV, MP3, FLAC) is still functional.",
+            "from video files, media probing (duration/codec detection), subtitle "
+            "embedding (both soft mux and hard burn), and the video combine feature. "
+            "Transcription of pre-extracted audio files (WAV, MP3, FLAC) is still functional.",
         )
     elif ffmpeg_ok and "storage" in _open_incidents:
         await resolve_incident(
@@ -155,9 +156,9 @@ async def auto_detect_incidents():
                 component="storage",
                 severity="major",
                 message=f"Available disk space is critically low ({free_gb:.1f} GB remaining). "
-                        "New file uploads may fail and output files cannot be generated. "
-                        "The automatic cleanup job runs every 30 minutes and removes files "
-                        f"older than the retention period, but manual intervention may be needed.",
+                "New file uploads may fail and output files cannot be generated. "
+                "The automatic cleanup job runs every 30 minutes and removes files "
+                f"older than the retention period, but manual intervention may be needed.",
             )
     except Exception:
         pass
@@ -167,11 +168,7 @@ async def load_open_incidents():
     """Load currently open incidents from DB on startup."""
     try:
         async with get_status_session() as session:
-            result = await session.execute(
-                select(StatusIncident).where(
-                    StatusIncident.status != "resolved"
-                )
-            )
+            result = await session.execute(select(StatusIncident).where(StatusIncident.status != "resolved"))
             for inc in result.scalars().all():
                 _open_incidents[inc.component] = inc.id
             if _open_incidents:

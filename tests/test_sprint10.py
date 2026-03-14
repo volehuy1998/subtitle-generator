@@ -28,6 +28,7 @@ def _read_html():
 
 # ── S10-1: Advanced Upload Options in UI ──
 
+
 @pytest.mark.skip(reason="Advanced Options removed; frontend migrated to React")
 class TestUploadAdvancedOptions:
     def test_word_timestamps_checkbox(self):
@@ -49,6 +50,7 @@ class TestUploadAdvancedOptions:
 
 # ── S10-2: Custom Vocabulary ──
 
+
 @pytest.mark.skip(reason="Advanced Options removed; frontend migrated to React")
 class TestCustomVocabulary:
     def test_vocabulary_input_exists(self):
@@ -62,6 +64,7 @@ class TestCustomVocabulary:
 
 
 # ── S10-3: Max Chars Per Line ──
+
 
 @pytest.mark.skip(reason="Advanced Options removed; frontend migrated to React")
 class TestMaxCharsSlider:
@@ -82,12 +85,13 @@ class TestMaxCharsSlider:
 
 # ── S10-4: JSON Download Button ──
 
+
 class TestJsonDownload:
     def test_json_download_button_exists(self):
         assert 'id="downloadBtnJson"' in _read_html()
 
     def test_json_button_hidden_by_default(self):
-        assert 'display:none' in _read_html().split('downloadBtnJson')[1][:50]
+        assert "display:none" in _read_html().split("downloadBtnJson")[1][:50]
 
     @pytest.mark.skip(reason="Advanced Options removed; frontend migrated to React")
     def test_json_button_shown_for_word_timestamps(self):
@@ -97,6 +101,7 @@ class TestJsonDownload:
 
 
 # ── S10-5: Subtitle Embedding UI ──
+
 
 class TestEmbedUI:
     @pytest.mark.skip(reason="Advanced Options removed; frontend migrated to React")
@@ -135,6 +140,7 @@ class TestEmbedUI:
 
 # ── S10-6: Speaker Labels ──
 
+
 @pytest.mark.skip(reason="Frontend migrated to React")
 class TestSpeakerLabels:
     def test_speaker_label_css(self):
@@ -153,6 +159,7 @@ class TestSpeakerLabels:
 
 
 # ── S10-7: Upload Sends Advanced Params ──
+
 
 @pytest.mark.skip(reason="Advanced Options removed; frontend migrated to React")
 class TestUploadParamWiring:
@@ -174,6 +181,7 @@ class TestUploadParamWiring:
 
 
 # ── S10-8: Integration ──
+
 
 class TestIntegration:
     def test_main_page_loads(self):

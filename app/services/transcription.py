@@ -14,9 +14,9 @@ from profiler import TranscriptionProfiler
 logger = logging.getLogger("subtitle-generator")
 
 
-def get_optimal_transcribe_options(device: str, model_size: str, language: str = "auto",
-                                    word_timestamps: bool = False,
-                                    initial_prompt: str = "") -> dict:
+def get_optimal_transcribe_options(
+    device: str, model_size: str, language: str = "auto", word_timestamps: bool = False, initial_prompt: str = ""
+) -> dict:
     """Get optimal faster-whisper transcription settings."""
     opts = {
         "vad_filter": True,
@@ -44,12 +44,18 @@ def get_optimal_transcribe_options(device: str, model_size: str, language: str =
     return opts
 
 
-def transcribe_with_progress(model, audio_path: str, task_id: str,
-                              device: str, model_size: str,
-                              total_duration: float, language: str = "auto",
-                              word_timestamps: bool = False,
-                              initial_prompt: str = "",
-                              translate_to_english: bool = False) -> dict:
+def transcribe_with_progress(
+    model,
+    audio_path: str,
+    task_id: str,
+    device: str,
+    model_size: str,
+    total_duration: float,
+    language: str = "auto",
+    word_timestamps: bool = False,
+    initial_prompt: str = "",
+    translate_to_english: bool = False,
+) -> dict:
     """Transcribe using faster-whisper with real-time segment streaming."""
     task = state.tasks[task_id]
     task["segments_preview"] = []
@@ -61,11 +67,15 @@ def transcribe_with_progress(model, audio_path: str, task_id: str,
     profiler.total_frames = total_frames
     task["transcription_profiler"] = profiler
 
-    emit_event(task_id, "transcribe_start", {
-        "total_frames": total_frames,
-        "audio_duration_sec": round(total_duration, 1),
-        "word_timestamps": word_timestamps,
-    })
+    emit_event(
+        task_id,
+        "transcribe_start",
+        {
+            "total_frames": total_frames,
+            "audio_duration_sec": round(total_duration, 1),
+            "word_timestamps": word_timestamps,
+        },
+    )
 
     opts = get_optimal_transcribe_options(device, model_size, language, word_timestamps, initial_prompt)
     if translate_to_english:

@@ -45,6 +45,7 @@ def _cleanup_brute_force():
 
 # ── S16-1: Audit Logging ──
 
+
 class TestAuditLogging:
     def setup_method(self):
         _cleanup_audit()
@@ -90,6 +91,7 @@ class TestAuditLogging:
         with patch.dict(os.environ, {"API_KEYS": "valid-key-123"}):
             # Reset cached keys
             from app.middleware import auth
+
             auth._api_keys = None
             try:
                 client.get("/upload", headers={"X-API-Key": "wrong-key"})
@@ -104,6 +106,7 @@ class TestAuditLogging:
 
 # ── S16-2: CORS Configuration ──
 
+
 class TestCORSConfiguration:
     def test_cors_default_origins(self):
         origins = get_cors_origins()
@@ -117,10 +120,13 @@ class TestCORSConfiguration:
             assert len(origins) == 2
 
     def test_cors_headers_in_response(self):
-        res = client.options("/health", headers={
-            "Origin": "http://localhost:3000",
-            "Access-Control-Request-Method": "GET",
-        })
+        res = client.options(
+            "/health",
+            headers={
+                "Origin": "http://localhost:3000",
+                "Access-Control-Request-Method": "GET",
+            },
+        )
         # CORS should respond (either 200 or 400, but headers should be present)
         assert res.status_code in (200, 400)
 
@@ -132,6 +138,7 @@ class TestCORSConfiguration:
 
 # ── S16-3: Request Body Size Limiting ──
 
+
 class TestBodySizeLimit:
     def test_normal_request_passes(self):
         res = client.get("/health")
@@ -139,6 +146,7 @@ class TestBodySizeLimit:
 
     def test_body_limit_middleware_exists(self):
         from app.middleware.body_limit import API_BODY_LIMIT
+
         assert API_BODY_LIMIT == 1 * 1024 * 1024  # 1 MB
 
     def test_large_content_length_rejected(self):
@@ -152,10 +160,12 @@ class TestBodySizeLimit:
 
     def test_upload_route_has_higher_limit(self):
         from app.middleware.body_limit import _UPLOAD_PATHS
+
         assert "/upload" in _UPLOAD_PATHS
 
 
 # ── S16-4: Brute Force Protection ──
+
 
 class TestBruteForceProtection:
     def setup_method(self):
@@ -194,6 +204,7 @@ class TestBruteForceProtection:
 
 
 # ── S16-5: File Quarantine ──
+
 
 class TestFileQuarantine:
     def setup_method(self):
@@ -241,6 +252,7 @@ class TestFileQuarantine:
 
 # ── S16-6: Security Audit Endpoint ──
 
+
 class TestSecurityAuditEndpoint:
     def setup_method(self):
         _cleanup_audit()
@@ -279,6 +291,7 @@ class TestSecurityAuditEndpoint:
         """When API keys are configured, audit endpoint requires valid key."""
         with patch.dict(os.environ, {"API_KEYS": "secret-key-abc"}):
             from app.middleware import auth
+
             auth._api_keys = None
             try:
                 # No key - should be forbidden
@@ -302,6 +315,7 @@ class TestSecurityAuditEndpoint:
 
 # ── S16-7: Integration Tests ──
 
+
 class TestSecurityIntegration:
     def test_security_route_registered(self):
         res = client.get("/openapi.json")
@@ -321,15 +335,18 @@ class TestSecurityIntegration:
 
     def test_audit_service_importable(self):
         from app.services.audit import log_audit_event, get_recent_audit_events, get_audit_stats
+
         assert callable(log_audit_event)
         assert callable(get_recent_audit_events)
         assert callable(get_audit_stats)
 
     def test_quarantine_service_importable(self):
         from app.services.quarantine import quarantine_file, get_quarantine_count
+
         assert callable(quarantine_file)
         assert callable(get_quarantine_count)
 
     def test_brute_force_middleware_importable(self):
         from app.middleware.brute_force import BruteForceMiddleware
+
         assert BruteForceMiddleware is not None

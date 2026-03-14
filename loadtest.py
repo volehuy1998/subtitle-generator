@@ -18,8 +18,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib import request, error
 
 
-def timed_request(url: str, method: str = "GET", data: bytes = None,
-                  headers: dict = None) -> dict:
+def timed_request(url: str, method: str = "GET", data: bytes = None, headers: dict = None) -> dict:
     """Make a timed HTTP request. Returns {status, latency_ms, size}."""
     req = request.Request(url, method=method, data=data, headers=headers or {})
     t0 = time.time()
@@ -101,23 +100,29 @@ def main():
     # Test 1: Health endpoint
     print("\n[1/3] Testing GET /health ...")
     health = run_throughput_test(args.url, "/health", args.concurrent, args.duration)
-    print(f"  RPS: {health['rps']} | P50: {health['latency_p50']}ms | "
-          f"P95: {health['latency_p95']}ms | P99: {health['latency_p99']}ms | "
-          f"Errors: {health['errors']}/{health['total_requests']}")
+    print(
+        f"  RPS: {health['rps']} | P50: {health['latency_p50']}ms | "
+        f"P95: {health['latency_p95']}ms | P99: {health['latency_p99']}ms | "
+        f"Errors: {health['errors']}/{health['total_requests']}"
+    )
 
     # Test 2: System info
     print("\n[2/3] Testing GET /system-info ...")
     sysinfo = run_throughput_test(args.url, "/system-info", args.concurrent, args.duration)
-    print(f"  RPS: {sysinfo['rps']} | P50: {sysinfo['latency_p50']}ms | "
-          f"P95: {sysinfo['latency_p95']}ms | P99: {sysinfo['latency_p99']}ms | "
-          f"Errors: {sysinfo['errors']}/{sysinfo['total_requests']}")
+    print(
+        f"  RPS: {sysinfo['rps']} | P50: {sysinfo['latency_p50']}ms | "
+        f"P95: {sysinfo['latency_p95']}ms | P99: {sysinfo['latency_p99']}ms | "
+        f"Errors: {sysinfo['errors']}/{sysinfo['total_requests']}"
+    )
 
     # Test 3: Metrics endpoint
     print("\n[3/3] Testing GET /metrics ...")
     metrics = run_throughput_test(args.url, "/metrics", args.concurrent, args.duration)
-    print(f"  RPS: {metrics['rps']} | P50: {metrics['latency_p50']}ms | "
-          f"P95: {metrics['latency_p95']}ms | P99: {metrics['latency_p99']}ms | "
-          f"Errors: {metrics['errors']}/{metrics['total_requests']}")
+    print(
+        f"  RPS: {metrics['rps']} | P50: {metrics['latency_p50']}ms | "
+        f"P95: {metrics['latency_p95']}ms | P99: {metrics['latency_p99']}ms | "
+        f"Errors: {metrics['errors']}/{metrics['total_requests']}"
+    )
 
     # Summary
     print("\n" + "=" * 70)

@@ -74,6 +74,7 @@ async def ready(response: Response):
     # Database connectivity
     try:
         from app.services.query_layer import check_db_health
+
         db_result = await check_db_health()
         checks["db"] = {"ok": db_result.get("ok", False), "latency_ms": db_result.get("latency_ms")}
     except Exception:
@@ -83,8 +84,13 @@ async def ready(response: Response):
     active = sum(1 for t in state.tasks.values() if t.get("status") not in ("done", "error", "cancelled"))
     checks["tasks"] = {"active": active}
 
-    all_ok = (checks["disk"]["ok"] and checks["ffmpeg"] and checks.get("db", {}).get("ok", False)
-              and all(checks["dirs"].values()) and not state.shutting_down)
+    all_ok = (
+        checks["disk"]["ok"]
+        and checks["ffmpeg"]
+        and checks.get("db", {}).get("ok", False)
+        and all(checks["dirs"].values())
+        and not state.shutting_down
+    )
 
     if not all_ok:
         response.status_code = 503
@@ -106,6 +112,7 @@ async def model_status():
 async def capabilities():
     """Report which features are available based on system dependencies."""
     from app.config import FFMPEG_AVAILABLE, FFPROBE_AVAILABLE, VIDEO_EXTENSIONS, AUDIO_ONLY_EXTENSIONS
+
     return {
         "ffmpeg": FFMPEG_AVAILABLE,
         "ffprobe": FFPROBE_AVAILABLE,
@@ -117,8 +124,9 @@ async def capabilities():
             "embed_hard": FFMPEG_AVAILABLE,
             "media_probe": FFPROBE_AVAILABLE,
         },
-        "accepted_extensions": list(VIDEO_EXTENSIONS | AUDIO_ONLY_EXTENSIONS) if FFMPEG_AVAILABLE
-                               else list(AUDIO_ONLY_EXTENSIONS),
+        "accepted_extensions": list(VIDEO_EXTENSIONS | AUDIO_ONLY_EXTENSIONS)
+        if FFMPEG_AVAILABLE
+        else list(AUDIO_ONLY_EXTENSIONS),
     }
 
 
@@ -153,6 +161,7 @@ _status_lock = None  # asyncio.Lock, created lazily (can't create at import time
 def _get_status_lock():
     global _status_lock
     import asyncio
+
     if _status_lock is None:
         _status_lock = asyncio.Lock()
     return _status_lock
@@ -184,6 +193,7 @@ def _blocking_system_stats() -> dict:
     # CPU/Memory
     try:
         import psutil
+
         result["cpu_percent"] = psutil.cpu_percent(interval=0)
         mem = psutil.virtual_memory()
         result["memory_percent"] = mem.percent
@@ -194,6 +204,7 @@ def _blocking_system_stats() -> dict:
     # Alerts (uses threading.Lock internally — safe in thread worker)
     try:
         from app.services.monitoring import check_alerts
+
         alerts = check_alerts()
         result["alerts"] = alerts
         result["alert_count"] = len(alerts)
@@ -230,10 +241,7 @@ async def system_status():
         uptime = round(now - _start_time, 1)
 
         # Active tasks (in-memory dict read — no I/O)
-        active_tasks = sum(
-            1 for t in state.tasks.values()
-            if t.get("status") not in ("done", "error", "cancelled")
-        )
+        active_tasks = sum(1 for t in state.tasks.values() if t.get("status") not in ("done", "error", "cancelled"))
 
         # Run all blocking syscalls off the event loop
         stats = await asyncio.to_thread(_blocking_system_stats)
@@ -243,6 +251,7 @@ async def system_status():
         db_latency_ms = None
         try:
             from app.services.query_layer import check_db_health
+
             db_result = await check_db_health()
             db_ok = db_result.get("status") == "healthy"
             db_latency_ms = db_result.get("latency_ms")
@@ -257,6 +266,7 @@ async def system_status():
         gpu_vram_free = None
         try:
             import torch
+
             if torch.cuda.is_available():
                 gpu_available = True
                 props = torch.cuda.get_device_properties(0)
@@ -316,6 +326,7 @@ async def health_stream(request: Request):
     Pushes health status every 3 seconds. The SSE connection itself
     serves as a connectivity signal — if it drops, the client knows immediately.
     """
+
     async def event_generator():
         while True:
             if await request.is_disconnected():

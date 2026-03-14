@@ -23,6 +23,7 @@ logger = logging.getLogger("subtitle-generator")
 # System snapshot
 # ---------------------------------------------------------------------------
 
+
 def snapshot_system() -> dict:
     """Capture a point-in-time snapshot of system resources."""
     proc = psutil.Process()
@@ -91,16 +92,14 @@ def format_snapshot_short(snap: dict) -> str:
         f"Proc={snap.get('proc_rss_mb', '?')}MB",
     ]
     if "gpu_allocated_mb" in snap:
-        parts.append(
-            f"GPU={snap['gpu_allocated_mb']}/"
-            f"{snap['gpu_total_mb']}MB({snap['gpu_utilization_percent']}%)"
-        )
+        parts.append(f"GPU={snap['gpu_allocated_mb']}/{snap['gpu_total_mb']}MB({snap['gpu_utilization_percent']}%)")
     return " | ".join(parts)
 
 
 # ---------------------------------------------------------------------------
 # Step Timer - high precision timing for pipeline steps
 # ---------------------------------------------------------------------------
+
 
 class StepTimer:
     """Track timing for a named step with resource snapshots."""
@@ -121,8 +120,7 @@ class StepTimer:
         self.start_time = time.perf_counter()
         self.start_snap = snapshot_system()
         logger.info(
-            f"STEP [{self.task_id[:8]}] >>> {self.step_name} started | "
-            f"{format_snapshot_short(self.start_snap)}"
+            f"STEP [{self.task_id[:8]}] >>> {self.step_name} started | {format_snapshot_short(self.start_snap)}"
         )
         return self
 
@@ -132,8 +130,8 @@ class StepTimer:
         elapsed = self.end_time - self.start_time
 
         # Resource deltas
-        ram_delta = (self.end_snap.get("proc_rss_mb", 0) - self.start_snap.get("proc_rss_mb", 0))
-        gpu_delta = (self.end_snap.get("gpu_allocated_mb", 0) - self.start_snap.get("gpu_allocated_mb", 0))
+        ram_delta = self.end_snap.get("proc_rss_mb", 0) - self.start_snap.get("proc_rss_mb", 0)
+        gpu_delta = self.end_snap.get("gpu_allocated_mb", 0) - self.start_snap.get("gpu_allocated_mb", 0)
 
         status = "FAILED" if exc_type else "OK"
         msg = (
@@ -199,6 +197,7 @@ class StepTimer:
 # ---------------------------------------------------------------------------
 # Transcription Profiler - per-segment metrics
 # ---------------------------------------------------------------------------
+
 
 class TranscriptionProfiler:
     """Tracks per-segment timing and resource usage during transcription."""
@@ -268,7 +267,7 @@ class TranscriptionProfiler:
             self._milestone_logged.add(pct_10)
             snap = snapshot_system()
             logger.info(
-                f"PERF [{self.task_id[:8]}] {pct_10*10}% | "
+                f"PERF [{self.task_id[:8]}] {pct_10 * 10}% | "
                 f"audio={metrics['audio_processed_sec']:.0f}/{metrics['audio_total_sec']:.0f}s | "
                 f"speed: instant={instant_throughput:.1f}x avg={avg_throughput:.1f}x overall={overall_throughput:.1f}x | "
                 f"elapsed={elapsed:.1f}s eta={metrics['eta_sec']:.0f}s | "
@@ -298,7 +297,7 @@ class TranscriptionProfiler:
             f"SEG [{self.task_id[:8]}] #{segment_index} "
             f"[{segment.get('start_fmt', '?')} -> {segment.get('end_fmt', '?')}] "
             f"dur={seg_duration:.1f}s chars={text_len} "
-            f"wall={elapsed:.1f}s | \"{segment.get('text', '').strip()[:60]}\""
+            f'wall={elapsed:.1f}s | "{segment.get("text", "").strip()[:60]}"'
         )
 
     def summary(self) -> dict:
@@ -333,7 +332,7 @@ class TranscriptionProfiler:
             if speeds:
                 mean_speed = sum(speeds) / len(speeds)
                 variance = sum((s - mean_speed) ** 2 for s in speeds) / len(speeds)
-                std_speed = variance ** 0.5
+                std_speed = variance**0.5
                 summary["speed_mean_x"] = round(mean_speed, 2)
                 summary["speed_std_x"] = round(std_speed, 2)
                 summary["speed_cv"] = round(std_speed / mean_speed, 3) if mean_speed > 0 else 0
@@ -346,43 +345,51 @@ class TranscriptionProfiler:
         # Slower than real-time
         overall_speed = audio_total / elapsed if elapsed > 0 else 0
         if overall_speed < 1.0 and audio_total > 10:
-            anomalies.append({
-                "type": "slower_than_realtime",
-                "severity": "critical",
-                "message": f"Transcription at {overall_speed:.2f}x realtime (slower than real-time). "
-                           f"Consider using a smaller model or different device.",
-                "speed_x": round(overall_speed, 2),
-            })
+            anomalies.append(
+                {
+                    "type": "slower_than_realtime",
+                    "severity": "critical",
+                    "message": f"Transcription at {overall_speed:.2f}x realtime (slower than real-time). "
+                    f"Consider using a smaller model or different device.",
+                    "speed_x": round(overall_speed, 2),
+                }
+            )
 
         # Very long segments (possible hallucination)
         if seg_durations:
             long_segs = [s for s in self.segments if s["duration_sec"] > 25]
             if long_segs:
-                anomalies.append({
-                    "type": "long_segments",
-                    "severity": "warning",
-                    "message": f"{len(long_segs)} segment(s) longer than 25s detected (possible hallucination).",
-                    "segments": [s["index"] for s in long_segs],
-                })
+                anomalies.append(
+                    {
+                        "type": "long_segments",
+                        "severity": "warning",
+                        "message": f"{len(long_segs)} segment(s) longer than 25s detected (possible hallucination).",
+                        "segments": [s["index"] for s in long_segs],
+                    }
+                )
 
         # Very short segments with little text (noise)
         if self.segments:
             noise_segs = [s for s in self.segments if s["duration_sec"] < 0.5 and s["text_length"] < 5]
             if len(noise_segs) > 2:
-                anomalies.append({
-                    "type": "noise_segments",
-                    "severity": "info",
-                    "message": f"{len(noise_segs)} very short segments (<0.5s) with little text detected.",
-                })
+                anomalies.append(
+                    {
+                        "type": "noise_segments",
+                        "severity": "info",
+                        "message": f"{len(noise_segs)} very short segments (<0.5s) with little text detected.",
+                    }
+                )
 
         # Speed instability
         if summary.get("speed_cv", 0) > 0.5:
-            anomalies.append({
-                "type": "speed_unstable",
-                "severity": "warning",
-                "message": f"High speed variability (CV={summary['speed_cv']:.2f}). "
-                           f"Range: {summary.get('speed_min_x', '?')}x - {summary.get('speed_max_x', '?')}x.",
-            })
+            anomalies.append(
+                {
+                    "type": "speed_unstable",
+                    "severity": "warning",
+                    "message": f"High speed variability (CV={summary['speed_cv']:.2f}). "
+                    f"Range: {summary.get('speed_min_x', '?')}x - {summary.get('speed_max_x', '?')}x.",
+                }
+            )
 
         if anomalies:
             summary["anomalies"] = anomalies
@@ -396,6 +403,7 @@ class TranscriptionProfiler:
 # ---------------------------------------------------------------------------
 # Pipeline Summary
 # ---------------------------------------------------------------------------
+
 
 class PipelineSummary:
     """Collects timing from all steps and produces a final summary."""
@@ -451,7 +459,7 @@ class PipelineSummary:
         if total > 0 and self.step_timings:
             breakdown = {}
             for name, dur in self.step_timings.items():
-                breakdown[name] = f"{dur:.2f}s ({dur/total*100:.1f}%)"
+                breakdown[name] = f"{dur:.2f}s ({dur / total * 100:.1f}%)"
             summary["time_breakdown"] = breakdown
 
         # Log the summary
@@ -472,11 +480,15 @@ class PipelineSummary:
             logger.info(f"    Segments:     {ts.get('total_segments', '?')}")
             logger.info(f"    Speed:        {ts.get('overall_speed_x', '?')}x realtime")
             if "speed_mean_x" in ts:
-                logger.info(f"    Speed range:  {ts['speed_min_x']}x - {ts['speed_max_x']}x (avg={ts['speed_mean_x']}x, cv={ts['speed_cv']})")
+                logger.info(
+                    f"    Speed range:  {ts['speed_min_x']}x - {ts['speed_max_x']}x (avg={ts['speed_mean_x']}x, cv={ts['speed_cv']})"
+                )
         logger.info("  Resources:")
         logger.info(f"    RAM:  {self.start_snap.get('proc_rss_mb', '?')}MB -> {end_snap.get('proc_rss_mb', '?')}MB")
         if "gpu_allocated_mb" in end_snap:
-            logger.info(f"    VRAM: {self.start_snap.get('gpu_allocated_mb', '?')}MB -> {end_snap.get('gpu_allocated_mb', '?')}MB")
+            logger.info(
+                f"    VRAM: {self.start_snap.get('gpu_allocated_mb', '?')}MB -> {end_snap.get('gpu_allocated_mb', '?')}MB"
+            )
         logger.info("=" * 70)
 
         return summary
@@ -486,16 +498,17 @@ def format_bytes_simple(b: int) -> str:
     if b < 1024:
         return f"{b}B"
     elif b < 1024 * 1024:
-        return f"{b/1024:.1f}KB"
+        return f"{b / 1024:.1f}KB"
     elif b < 1024**3:
-        return f"{b/1024**2:.1f}MB"
+        return f"{b / 1024**2:.1f}MB"
     else:
-        return f"{b/1024**3:.2f}GB"
+        return f"{b / 1024**3:.2f}GB"
 
 
 # ---------------------------------------------------------------------------
 # Background resource monitor (optional, for continuous sampling)
 # ---------------------------------------------------------------------------
+
 
 class ResourceMonitor:
     """Background thread that samples system resources at intervals."""
@@ -546,7 +559,9 @@ class ResourceMonitor:
 
         result = {
             "sample_count": len(self.samples),
-            "duration_sec": round(self.samples[-1].get("sample_time", 0) - self.samples[0].get("sample_time", 0), 1) if len(self.samples) > 1 else 0,
+            "duration_sec": round(self.samples[-1].get("sample_time", 0) - self.samples[0].get("sample_time", 0), 1)
+            if len(self.samples) > 1
+            else 0,
             "cpu_avg_percent": avg("cpu_percent"),
             "cpu_peak_percent": peak("cpu_percent"),
             "ram_avg_mb": avg("proc_rss_mb"),
@@ -563,43 +578,51 @@ class ResourceMonitor:
         gpu_total = peak("gpu_total_mb")
         gpu_peak = peak("gpu_allocated_mb")
         if gpu_total and gpu_peak and gpu_peak > gpu_total:
-            anomalies.append({
-                "type": "vram_overflow",
-                "severity": "critical",
-                "message": f"GPU VRAM overflow: {gpu_peak}MB allocated vs {gpu_total}MB total. "
-                           f"Model is spilling to system RAM, causing severe performance degradation.",
-                "peak_mb": gpu_peak,
-                "total_mb": gpu_total,
-            })
+            anomalies.append(
+                {
+                    "type": "vram_overflow",
+                    "severity": "critical",
+                    "message": f"GPU VRAM overflow: {gpu_peak}MB allocated vs {gpu_total}MB total. "
+                    f"Model is spilling to system RAM, causing severe performance degradation.",
+                    "peak_mb": gpu_peak,
+                    "total_mb": gpu_total,
+                }
+            )
 
         # Check for excessive RAM usage (>80% of system)
         ram_peak_pct = peak("ram_percent")
         if ram_peak_pct and ram_peak_pct > 80:
-            anomalies.append({
-                "type": "high_ram_usage",
-                "severity": "warning",
-                "message": f"System RAM usage peaked at {ram_peak_pct}%.",
-            })
+            anomalies.append(
+                {
+                    "type": "high_ram_usage",
+                    "severity": "warning",
+                    "message": f"System RAM usage peaked at {ram_peak_pct}%.",
+                }
+            )
 
         # Check for CPU saturation
         cpu_peak_pct = peak("cpu_percent")
         if cpu_peak_pct and cpu_peak_pct > 95:
-            anomalies.append({
-                "type": "cpu_saturation",
-                "severity": "warning",
-                "message": f"CPU usage peaked at {cpu_peak_pct}%, possible bottleneck.",
-            })
+            anomalies.append(
+                {
+                    "type": "cpu_saturation",
+                    "severity": "warning",
+                    "message": f"CPU usage peaked at {cpu_peak_pct}%, possible bottleneck.",
+                }
+            )
 
         # Check for large RAM swings (instability)
         ram_vals = [s["proc_rss_mb"] for s in self.samples if "proc_rss_mb" in s]
         if len(ram_vals) > 3:
             ram_range = max(ram_vals) - min(ram_vals)
             if ram_range > 1000:
-                anomalies.append({
-                    "type": "ram_instability",
-                    "severity": "info",
-                    "message": f"Process RAM fluctuated by {ram_range:.0f}MB during execution.",
-                })
+                anomalies.append(
+                    {
+                        "type": "ram_instability",
+                        "severity": "info",
+                        "message": f"Process RAM fluctuated by {ram_range:.0f}MB during execution.",
+                    }
+                )
 
         if anomalies:
             result["anomalies"] = anomalies

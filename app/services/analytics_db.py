@@ -70,14 +70,14 @@ def record_event(event_type: str, data: dict | None = None):
             logger.error(f"ANALYTICS_DB Failed to record event: {e}")
 
 
-def update_daily_stats(uploads: int = 0, completed: int = 0, failed: int = 0,
-                       processing_sec: float = 0):
+def update_daily_stats(uploads: int = 0, completed: int = 0, failed: int = 0, processing_sec: float = 0):
     """Update daily aggregated stats."""
     today = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d")
     with _lock:
         try:
             conn = _get_conn()
-            conn.execute("""
+            conn.execute(
+                """
                 INSERT INTO analytics_daily (date, uploads, completed, failed, total_processing_sec)
                 VALUES (?, ?, ?, ?, ?)
                 ON CONFLICT(date) DO UPDATE SET
@@ -85,7 +85,9 @@ def update_daily_stats(uploads: int = 0, completed: int = 0, failed: int = 0,
                     completed = completed + excluded.completed,
                     failed = failed + excluded.failed,
                     total_processing_sec = total_processing_sec + excluded.total_processing_sec
-            """, (today, uploads, completed, failed, processing_sec))
+            """,
+                (today, uploads, completed, failed, processing_sec),
+            )
             conn.commit()
         except Exception as e:
             logger.error(f"ANALYTICS_DB Failed to update daily stats: {e}")

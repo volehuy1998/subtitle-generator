@@ -19,11 +19,13 @@ client = TestClient(app, base_url="https://testserver")
 
 # ── Business Metrics Tests ──
 
+
 class TestBusinessMetrics:
     """Test business metrics tracking."""
 
     def test_module_imports(self):
         from app.services import monitoring
+
         assert hasattr(monitoring, "record_upload")
         assert hasattr(monitoring, "record_completion")
         assert hasattr(monitoring, "record_failure")
@@ -32,30 +34,35 @@ class TestBusinessMetrics:
 
     def test_record_upload(self):
         from app.services.monitoring import record_upload, get_business_metrics
+
         record_upload()
         metrics = get_business_metrics()
         assert metrics["uploads_per_hour"] >= 1
 
     def test_record_completion(self):
         from app.services.monitoring import record_completion, get_business_metrics
+
         record_completion(processing_time=5.0)
         metrics = get_business_metrics()
         assert metrics["completions_per_hour"] >= 1
 
     def test_record_failure(self):
         from app.services.monitoring import record_failure, get_business_metrics
+
         record_failure()
         metrics = get_business_metrics()
         assert metrics["failures_per_hour"] >= 1
 
     def test_success_rate(self):
         from app.services.monitoring import get_business_metrics
+
         metrics = get_business_metrics()
         assert "success_rate_pct" in metrics
         assert 0 <= metrics["success_rate_pct"] <= 100
 
     def test_processing_time_stats(self):
         from app.services.monitoring import record_completion, get_business_metrics
+
         record_completion(processing_time=10.0)
         record_completion(processing_time=20.0)
         metrics = get_business_metrics()
@@ -64,6 +71,7 @@ class TestBusinessMetrics:
 
     def test_embed_metrics(self):
         from app.services.monitoring import record_embed, get_business_metrics
+
         record_embed("soft")
         record_embed("hard")
         metrics = get_business_metrics()
@@ -73,20 +81,31 @@ class TestBusinessMetrics:
 
     def test_metrics_structure(self):
         from app.services.monitoring import get_business_metrics
+
         metrics = get_business_metrics()
-        expected_keys = {"uploads_per_hour", "completions_per_hour", "failures_per_hour",
-                         "success_rate_pct", "avg_processing_sec", "p95_processing_sec",
-                         "embed_total", "embed_soft", "embed_hard"}
+        expected_keys = {
+            "uploads_per_hour",
+            "completions_per_hour",
+            "failures_per_hour",
+            "success_rate_pct",
+            "avg_processing_sec",
+            "p95_processing_sec",
+            "embed_total",
+            "embed_soft",
+            "embed_hard",
+        }
         assert expected_keys <= set(metrics.keys())
 
 
 # ── Alert System Tests ──
+
 
 class TestAlertSystem:
     """Test alerting rules and triggers."""
 
     def test_get_thresholds(self):
         from app.services.monitoring import get_alert_thresholds
+
         thresholds = get_alert_thresholds()
         assert "error_rate_pct" in thresholds
         assert "queue_depth_max" in thresholds
@@ -96,6 +115,7 @@ class TestAlertSystem:
 
     def test_set_threshold(self):
         from app.services.monitoring import set_alert_threshold, get_alert_thresholds
+
         original = get_alert_thresholds()["error_rate_pct"]
         set_alert_threshold("error_rate_pct", 10.0)
         assert get_alert_thresholds()["error_rate_pct"] == 10.0
@@ -103,11 +123,13 @@ class TestAlertSystem:
 
     def test_check_alerts_returns_list(self):
         from app.services.monitoring import check_alerts
+
         alerts = check_alerts()
         assert isinstance(alerts, list)
 
     def test_alert_structure(self):
         from app.services.monitoring import check_alerts
+
         alerts = check_alerts()
         for alert in alerts:
             assert "alert" in alert
@@ -116,6 +138,7 @@ class TestAlertSystem:
 
     def test_disk_alert_check(self):
         from app.services.monitoring import set_alert_threshold, check_alerts, get_alert_thresholds
+
         original = get_alert_thresholds()["disk_free_min_gb"]
         # Set impossibly high threshold to trigger alert
         set_alert_threshold("disk_free_min_gb", 999999.0)
@@ -127,17 +150,20 @@ class TestAlertSystem:
 
 # ── Performance Profiling Tests ──
 
+
 class TestPerformanceProfiling:
     """Test per-request timing breakdown."""
 
     def test_start_timer(self):
         from app.services.monitoring import start_timer
+
         t = start_timer()
         assert isinstance(t, float)
         assert t > 0
 
     def test_record_timing(self):
         from app.services.monitoring import start_timer, record_timing, get_performance_profile
+
         t = start_timer()
         time.sleep(0.01)
         record_timing("test_category", t, task_id="test-123")
@@ -148,6 +174,7 @@ class TestPerformanceProfiling:
 
     def test_profile_structure(self):
         from app.services.monitoring import start_timer, record_timing, get_performance_profile
+
         t = start_timer()
         record_timing("probe", t)
         profile = get_performance_profile()
@@ -161,6 +188,7 @@ class TestPerformanceProfiling:
 
     def test_multiple_categories(self):
         from app.services.monitoring import start_timer, record_timing, get_performance_profile
+
         for cat in ["upload", "transcribe", "embed"]:
             t = start_timer()
             record_timing(cat, t)
@@ -172,11 +200,13 @@ class TestPerformanceProfiling:
 
 # ── Health Dashboard Tests ──
 
+
 class TestHealthDashboard:
     """Test comprehensive health dashboard."""
 
     def test_dashboard_function(self):
         from app.services.monitoring import get_health_dashboard
+
         dashboard = get_health_dashboard()
         assert "timestamp" in dashboard
         assert "status" in dashboard
@@ -187,11 +217,13 @@ class TestHealthDashboard:
 
     def test_dashboard_status(self):
         from app.services.monitoring import get_health_dashboard
+
         dashboard = get_health_dashboard()
         assert dashboard["status"] in ("healthy", "degraded")
 
 
 # ── Monitoring Endpoint Tests ──
+
 
 class TestMonitoringEndpoints:
     """Test monitoring API endpoints."""
@@ -240,6 +272,7 @@ class TestMonitoringEndpoints:
 
 
 # ── Prometheus Metrics Tests ──
+
 
 class TestPrometheusMetrics:
     """Test Prometheus-format metrics endpoint."""

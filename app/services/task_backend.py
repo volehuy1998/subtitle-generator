@@ -93,9 +93,11 @@ def get_task_backend() -> TaskBackend:
     global _backend
     if _backend is None:
         from app.config import REDIS_URL, ROLE
+
         if REDIS_URL and ROLE != "standalone":
             try:
                 from app.services.task_backend_redis import RedisTaskBackend
+
                 _backend = RedisTaskBackend()
                 return _backend
             except Exception as e:
@@ -103,6 +105,7 @@ def get_task_backend() -> TaskBackend:
 
         try:
             from app.db.task_backend_db import DatabaseTaskBackend
+
             _backend = DatabaseTaskBackend()
             logger.info("BACKEND Using database task backend")
         except Exception as e:

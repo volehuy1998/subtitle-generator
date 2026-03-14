@@ -106,9 +106,7 @@ async def register_user(username: str, password: str, role: str = "user") -> Opt
     try:
         async with get_session() as session:
             # Check existing
-            result = await session.execute(
-                select(UserRecord).where(UserRecord.username == username)
-            )
+            result = await session.execute(select(UserRecord).where(UserRecord.username == username))
             if result.scalar_one_or_none():
                 return None
             user = UserRecord(
@@ -129,9 +127,7 @@ async def authenticate_user(username: str, password: str) -> Optional[dict]:
     try:
         async with get_session() as session:
             result = await session.execute(
-                select(UserRecord).where(
-                    and_(UserRecord.username == username, UserRecord.is_active == 1)
-                )
+                select(UserRecord).where(and_(UserRecord.username == username, UserRecord.is_active == 1))
             )
             user = result.scalar_one_or_none()
             if not user or not _verify_password(password, user.password_hash):
@@ -146,9 +142,7 @@ async def get_user_by_id(user_id: int) -> Optional[dict]:
     """Get user by ID."""
     try:
         async with get_session() as session:
-            result = await session.execute(
-                select(UserRecord).where(UserRecord.id == user_id)
-            )
+            result = await session.execute(select(UserRecord).where(UserRecord.id == user_id))
             user = result.scalar_one_or_none()
             if not user:
                 return None
@@ -193,9 +187,7 @@ async def validate_db_api_key(raw_key: str) -> Optional[dict]:
         key_hash_val = hash_api_key(raw_key)
         async with get_session() as session:
             result = await session.execute(
-                select(ApiKeyRecord).where(
-                    and_(ApiKeyRecord.key_hash == key_hash_val, ApiKeyRecord.is_active == 1)
-                )
+                select(ApiKeyRecord).where(and_(ApiKeyRecord.key_hash == key_hash_val, ApiKeyRecord.is_active == 1))
             )
             record = result.scalar_one_or_none()
             if not record:
@@ -206,9 +198,7 @@ async def validate_db_api_key(raw_key: str) -> Optional[dict]:
             # Update last_used
             record.last_used = datetime.now(timezone.utc)
             # Get owner
-            owner_result = await session.execute(
-                select(UserRecord).where(UserRecord.id == record.owner_id)
-            )
+            owner_result = await session.execute(select(UserRecord).where(UserRecord.id == record.owner_id))
             owner = owner_result.scalar_one_or_none()
             if not owner or not owner.is_active:
                 return None
@@ -223,18 +213,19 @@ async def list_api_keys(owner_id: int) -> list[dict]:
     try:
         async with get_session() as session:
             result = await session.execute(
-                select(ApiKeyRecord).where(
-                    and_(ApiKeyRecord.owner_id == owner_id, ApiKeyRecord.is_active == 1)
-                )
+                select(ApiKeyRecord).where(and_(ApiKeyRecord.owner_id == owner_id, ApiKeyRecord.is_active == 1))
             )
             keys = result.scalars().all()
-            return [{
-                "id": k.id,
-                "label": k.label,
-                "created_at": k.created_at.isoformat() if k.created_at else None,
-                "last_used": k.last_used.isoformat() if k.last_used else None,
-                "expires_at": k.expires_at.isoformat() if k.expires_at else None,
-            } for k in keys]
+            return [
+                {
+                    "id": k.id,
+                    "label": k.label,
+                    "created_at": k.created_at.isoformat() if k.created_at else None,
+                    "last_used": k.last_used.isoformat() if k.last_used else None,
+                    "expires_at": k.expires_at.isoformat() if k.expires_at else None,
+                }
+                for k in keys
+            ]
     except Exception:
         return []
 
@@ -244,9 +235,7 @@ async def revoke_api_key(key_id: int, owner_id: int) -> bool:
     try:
         async with get_session() as session:
             result = await session.execute(
-                select(ApiKeyRecord).where(
-                    and_(ApiKeyRecord.id == key_id, ApiKeyRecord.owner_id == owner_id)
-                )
+                select(ApiKeyRecord).where(and_(ApiKeyRecord.id == key_id, ApiKeyRecord.owner_id == owner_id))
             )
             record = result.scalar_one_or_none()
             if not record:
