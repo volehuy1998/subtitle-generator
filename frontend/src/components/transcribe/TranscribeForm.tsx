@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { api } from '@/api/client'
 import { useUIStore } from '@/store/uiStore'
-import type { SystemInfo, TranslationPair } from '@/api/types'
+import type { SystemInfo, TranslationPair, ModelPreloadStatus } from '@/api/types'
 
 export interface UploadOptions {
   device: string
@@ -18,12 +18,15 @@ interface Props {
 
 const MODELS = ['tiny', 'base', 'small', 'medium', 'large'] as const
 
-const MODEL_INFO: Record<string, { speed: string; accuracy: string; vram: string; bestFor: string; pro: string; con: string }> = {
-  tiny:   { speed: '⚡⚡⚡⚡', accuracy: '★☆☆☆☆', vram: '0.5 GB', bestFor: 'Quick drafts',    pro: 'Fastest, minimal RAM',      con: 'Many errors, misses words' },
-  base:   { speed: '⚡⚡⚡',  accuracy: '★★☆☆☆', vram: '0.8 GB', bestFor: 'Short clips',      pro: 'Fast, CPU-friendly',        con: 'Struggles with accents'    },
-  small:  { speed: '⚡⚡',   accuracy: '★★★☆☆', vram: '1.5 GB', bestFor: 'General use',       pro: 'Good balance of speed/quality', con: 'Moderate GPU VRAM needed' },
-  medium: { speed: '⚡',     accuracy: '★★★★☆', vram: '3.0 GB', bestFor: 'Long recordings',   pro: 'High accuracy, multilingual',   con: 'Slow on CPU'              },
-  large:  { speed: '·',      accuracy: '★★★★★', vram: '5.5 GB', bestFor: 'Final output',      pro: 'Best accuracy, all languages',  con: 'Needs GPU; very slow on CPU' },
+const MODEL_INFO: Record<string, {
+  params: string; vram: string; speed: string; wer: string;
+  desc: string; tag?: string; tagColor?: string;
+}> = {
+  tiny:   { params: '39M',   vram: '~1 GB',  speed: '~10x',  wer: '~7.6%', desc: 'Fastest. Good for quick drafts and testing.' },
+  base:   { params: '74M',   vram: '~1 GB',  speed: '~7x',   wer: '~5.0%', desc: 'Fast and light. Solid for clear English audio.' },
+  small:  { params: '244M',  vram: '~2 GB',  speed: '~4x',   wer: '~3.4%', desc: 'Balanced speed and quality for most tasks.', tag: 'Popular', tagColor: 'var(--color-primary)' },
+  medium: { params: '769M',  vram: '~5 GB',  speed: '~2x',   wer: '~2.9%', desc: 'High accuracy. Handles accents and multilingual well.' },
+  large:  { params: '1.55B', vram: '~10 GB', speed: '~1x',   wer: '~2.4%', desc: 'Best quality. Ideal for final production output.', tag: 'Best accuracy', tagColor: 'var(--color-success)' },
 }
 
 const FORMAT_OPTIONS = [
@@ -52,6 +55,8 @@ export function TranscribeForm({ onUpload }: Props) {
   const [language, setLanguage] = useState<string>('auto')
   const [format, setFormat] = useState<string>('srt')
   const [translateTo, setTranslateTo] = useState<string>('')
+  const [preload, setPreload] = useState<ModelPreloadStatus | null>(null)
+  const preloadPoll = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     Promise.all([api.systemInfo(), api.languages(), api.translationLanguages()])
@@ -60,10 +65,39 @@ export function TranscribeForm({ onUpload }: Props) {
         setLanguages(langs.languages)
         setTranslationTargets(transLangs.pairs)
         setDevice(info.cuda_available ? 'cuda' : 'cpu')
+        // Initialize preload state from system info
+        if (info.model_preload) {
+          setPreload(info.model_preload)
+          // If still loading, auto-select the model being preloaded
+          if (info.model_preload.status === 'loading' && info.model_preload.models?.length) {
+            setModel(info.model_preload.models[0])
+          } else if (info.model_preload.status === 'ready' && info.model_preload.loaded?.length) {
+            setModel(info.model_preload.loaded[0])
+          }
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
+
+  // Poll model preload status while loading
+  useEffect(() => {
+    if (preload?.status !== 'loading') {
+      if (preloadPoll.current) clearInterval(preloadPoll.current)
+      return
+    }
+    preloadPoll.current = setInterval(() => {
+      api.modelStatus()
+        .then((status) => {
+          setPreload(status)
+          if (status.status !== 'loading' && preloadPoll.current) {
+            clearInterval(preloadPoll.current)
+          }
+        })
+        .catch(() => {})
+    }, 3000)
+    return () => { if (preloadPoll.current) clearInterval(preloadPoll.current) }
+  }, [preload?.status])
 
   const onDrop = useCallback((accepted: File[]) => {
     const file = accepted[0]
@@ -81,6 +115,13 @@ export function TranscribeForm({ onUpload }: Props) {
   const modelFitsGpu = (m: string) => {
     const rec = systemInfo?.model_recommendations?.[m]
     return rec === 'ok' || rec === 'tight' ? true : rec === 'too_large' ? false : null
+  }
+
+  const modelPreloadState = (m: string): 'ready' | 'loading' | null => {
+    if (!preload) return null
+    if (preload.loaded?.includes(m)) return 'ready'
+    if (preload.status === 'loading' && preload.current_model === m) return 'loading'
+    return null
   }
 
   const chipBase = 'px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer select-none'
@@ -180,100 +221,147 @@ export function TranscribeForm({ onUpload }: Props) {
         {loading ? (
           <Skeleton className="h-48 w-full" />
         ) : (
-          <div
-            className="rounded-xl overflow-hidden"
-            style={{ border: '1px solid var(--color-border)' }}
-          >
-            {/* Table header */}
-            <div
-              className="model-grid grid text-xs font-semibold"
-              style={{
-                gridTemplateColumns: '90px 1fr 1fr 72px',
-                padding: '6px 10px',
-                background: 'var(--color-surface-2)',
-                color: 'var(--color-text-3)',
-                letterSpacing: '0.06em',
-                borderBottom: '1px solid var(--color-border)',
-              }}
-            >
-              <span>MODEL</span>
-              <span className="model-col-speed">SPEED / ACCURACY</span>
-              <span className="model-col-pros">PROS &amp; CONS</span>
-              <span style={{ textAlign: 'right' }}>VRAM</span>
-            </div>
-
-            {MODELS.map((m, idx) => {
+          <div className="flex flex-col gap-2">
+            {MODELS.map((m) => {
               const info = MODEL_INFO[m]
-              const fits = modelFitsGpu(m)
               const isActive = model === m
-              const gpuFit =
-                systemInfo?.cuda_available
-                  ? fits === true
-                    ? { label: 'Fits', color: 'var(--color-success)' }
-                    : fits === false
-                      ? { label: '✕', color: 'var(--color-danger)' }
-                      : null
-                  : null
+              const preloadState = modelPreloadState(m)
+              const fits = modelFitsGpu(m)
+
+              // Accuracy bar: tiny=1, base=2, small=3, medium=4, large=5
+              const accuracyLevel = MODELS.indexOf(m) + 1
+              // Speed bar: tiny=5, base=4, small=3, medium=2, large=1
+              const speedLevel = MODELS.length - MODELS.indexOf(m)
 
               return (
                 <button
                   key={m}
                   type="button"
                   onClick={() => setModel(m)}
-                  className="model-grid w-full text-left grid transition-colors"
+                  className="w-full text-left rounded-lg border transition-all"
                   style={{
-                    gridTemplateColumns: '90px 1fr 1fr 72px',
-                    padding: '8px 10px',
-                    gap: '0',
+                    padding: '10px 12px',
                     background: isActive ? 'var(--color-primary-light)' : 'var(--color-surface)',
-                    borderBottom: idx < MODELS.length - 1 ? '1px solid var(--color-border)' : 'none',
-                    borderLeft: `3px solid ${isActive ? 'var(--color-primary)' : 'transparent'}`,
+                    borderColor: isActive ? 'var(--color-primary)' : 'var(--color-border)',
                     cursor: 'pointer',
                   }}
                 >
-                  {/* Name + GPU fit */}
-                  <div className="flex items-center gap-1.5">
+                  {/* Row 1: Name + badges */}
+                  <div className="flex items-center gap-2 mb-1.5">
+                    {/* Radio dot */}
+                    <div
+                      className="w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 flex items-center justify-center"
+                      style={{ borderColor: isActive ? 'var(--color-primary)' : 'var(--color-border-2)' }}
+                    >
+                      {isActive && (
+                        <div className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--color-primary)' }} />
+                      )}
+                    </div>
+
                     <span
-                      className="text-xs font-semibold"
+                      className="text-sm font-semibold"
                       style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-text)' }}
                     >
                       {m.charAt(0).toUpperCase() + m.slice(1)}
                     </span>
-                    {gpuFit && (
-                      <span className="text-xs" style={{ color: gpuFit.color, fontSize: '10px' }}>
-                        {gpuFit.label}
+
+                    <span
+                      className="text-xs"
+                      style={{ color: 'var(--color-text-3)', fontSize: '10px' }}
+                    >
+                      {info.params} params
+                    </span>
+
+                    {/* Tag badge */}
+                    {info.tag && (
+                      <span
+                        className="text-xs font-medium px-1.5 rounded-full"
+                        style={{
+                          background: isActive ? 'var(--color-primary)' : (info.tagColor ?? 'var(--color-text-3)'),
+                          color: 'white',
+                          fontSize: '9px',
+                          lineHeight: '16px',
+                        }}
+                      >
+                        {info.tag}
                       </span>
+                    )}
+
+                    {/* Preload status */}
+                    {preloadState === 'ready' && (
+                      <span
+                        className="inline-flex items-center gap-0.5 text-xs font-medium px-1.5 rounded-full"
+                        style={{
+                          background: 'var(--color-success-light, #D1FAE5)',
+                          color: 'var(--color-success)',
+                          fontSize: '9px',
+                          lineHeight: '16px',
+                        }}
+                      >
+                        <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
+                          <path d="M1.5 4l2 2 3-3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        Ready
+                      </span>
+                    )}
+                    {preloadState === 'loading' && (
+                      <svg className="animate-spin flex-shrink-0" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" aria-label="Loading model">
+                        <circle cx="6" cy="6" r="4.5" stroke="var(--color-primary)" strokeWidth="1.5" opacity="0.25" />
+                        <path d="M10.5 6a4.5 4.5 0 00-4.5-4.5" stroke="var(--color-primary)" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                    )}
+
+                    {/* GPU fit */}
+                    {systemInfo?.cuda_available && fits === false && (
+                      <span className="text-xs" style={{ color: 'var(--color-danger)', fontSize: '10px' }}>VRAM</span>
                     )}
                   </div>
 
-                  {/* Speed + accuracy */}
-                  <div className="model-col-speed flex flex-col gap-0.5">
-                    <span className="text-xs" style={{ color: 'var(--color-text-2)', fontSize: '10px', letterSpacing: '0' }}>
-                      {info.speed}
-                    </span>
-                    <span className="text-xs" style={{ color: '#F59E0B', fontSize: '10px' }}>
-                      {info.accuracy}
-                    </span>
-                  </div>
+                  {/* Row 2: Description */}
+                  <p
+                    className="text-xs mb-2"
+                    style={{ color: 'var(--color-text-2)', marginLeft: '22px', lineHeight: '1.4' }}
+                  >
+                    {info.desc}
+                  </p>
 
-                  {/* Pros & cons */}
-                  <div className="model-col-pros flex flex-col gap-0.5 pr-1">
-                    <span className="text-xs" style={{ color: 'var(--color-success)', fontSize: '10px', lineHeight: '1.3' }}>
-                      + {info.pro}
-                    </span>
-                    <span className="text-xs" style={{ color: 'var(--color-danger)', fontSize: '10px', lineHeight: '1.3' }}>
-                      − {info.con}
-                    </span>
-                  </div>
+                  {/* Row 3: Stat bars */}
+                  <div className="flex gap-4" style={{ marginLeft: '22px' }}>
+                    {/* Speed */}
+                    <div className="flex items-center gap-1.5 flex-1">
+                      <span className="text-xs flex-shrink-0" style={{ color: 'var(--color-text-3)', fontSize: '10px', width: '42px' }}>Speed</span>
+                      <div className="flex gap-0.5 flex-1">
+                        {[1, 2, 3, 4, 5].map((i) => (
+                          <div
+                            key={i}
+                            className="h-1 rounded-full flex-1"
+                            style={{
+                              background: i <= speedLevel ? 'var(--color-primary)' : 'var(--color-border)',
+                              opacity: i <= speedLevel ? (0.4 + (i / 5) * 0.6) : 1,
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-xs flex-shrink-0" style={{ color: 'var(--color-text-3)', fontSize: '10px', width: '28px', textAlign: 'right', cursor: 'help' }} title="Speed relative to the Large model. 10x means this model processes audio 10 times faster than Large.">{info.speed}</span>
+                    </div>
 
-                  {/* VRAM */}
-                  <div className="flex flex-col items-end gap-0.5">
-                    <span className="text-xs font-medium" style={{ color: 'var(--color-text-2)', fontSize: '10px' }}>
-                      {info.vram}
-                    </span>
-                    <span className="text-xs" style={{ color: 'var(--color-text-3)', fontSize: '10px' }}>
-                      {info.bestFor}
-                    </span>
+                    {/* Accuracy */}
+                    <div className="flex items-center gap-1.5 flex-1">
+                      <span className="text-xs flex-shrink-0" style={{ color: 'var(--color-text-3)', fontSize: '10px', width: '52px' }}>Accuracy</span>
+                      <div className="flex gap-0.5 flex-1">
+                        {[1, 2, 3, 4, 5].map((i) => (
+                          <div
+                            key={i}
+                            className="h-1 rounded-full flex-1"
+                            style={{
+                              background: i <= accuracyLevel ? 'var(--color-success)' : 'var(--color-border)',
+                              opacity: i <= accuracyLevel ? (0.4 + (i / 5) * 0.6) : 1,
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-xs flex-shrink-0" style={{ color: 'var(--color-text-3)', fontSize: '10px', width: '36px', textAlign: 'right', cursor: 'help' }} title="Word Error Rate — percentage of words transcribed incorrectly. Lower is better.">{info.wer} WER</span>
+                    </div>
                   </div>
                 </button>
               )

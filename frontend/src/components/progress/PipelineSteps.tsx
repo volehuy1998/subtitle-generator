@@ -4,6 +4,8 @@ interface Props {
   activeStep: number
   stepTimings: StepTimings
   isPaused: boolean
+  isUploading?: boolean
+  uploadPercent?: number
 }
 
 const BASE_STEPS = [
@@ -21,7 +23,7 @@ function formatTiming(sec: number | undefined): string {
   return `${Math.floor(sec / 60)}m ${(sec % 60).toFixed(0)}s`
 }
 
-export function PipelineSteps({ activeStep, stepTimings, isPaused }: Props) {
+export function PipelineSteps({ activeStep, stepTimings, isPaused, isUploading, uploadPercent }: Props) {
   // Include Translate step only when translation timing is present
   const hasTranslation = stepTimings.translate !== undefined
   const STEPS = hasTranslation
@@ -31,9 +33,10 @@ export function PipelineSteps({ activeStep, stepTimings, isPaused }: Props) {
   return (
     <div className="flex items-start w-full">
       {STEPS.map((step, index) => {
-        const isDone = activeStep > index
-        const isActive = activeStep === index
-        const isPending = activeStep < index
+        // During upload phase, show Upload step (index 0) as active
+        const effectiveStep = isUploading ? 0 : activeStep
+        const isDone = effectiveStep > index
+        const isActive = effectiveStep === index
         const timing = stepTimings[step.key]
 
         const circleColor =
@@ -96,16 +99,17 @@ export function PipelineSteps({ activeStep, stepTimings, isPaused }: Props) {
                 {step.label}
               </span>
 
-              {/* Timing */}
+              {/* Timing / Upload percent */}
               <span
                 className="text-xs"
                 style={{
-                  color: 'var(--color-text-3)',
+                  color: isUploading && index === 0 ? 'var(--color-primary)' : 'var(--color-text-3)',
                   minHeight: '16px',
                   fontSize: '11px',
+                  fontWeight: isUploading && index === 0 ? 500 : 'normal',
                 }}
               >
-                {formatTiming(timing)}
+                {isUploading && index === 0 ? `${uploadPercent ?? 0}%` : formatTiming(timing)}
               </span>
             </div>
 

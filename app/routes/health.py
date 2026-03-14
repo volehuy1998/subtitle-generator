@@ -96,6 +96,12 @@ async def ready(response: Response):
     }
 
 
+@router.get("/api/model-status")
+async def model_status():
+    """Get model preload status for frontend display."""
+    return state.model_preload
+
+
 @router.get("/api/capabilities")
 async def capabilities():
     """Report which features are available based on system dependencies."""
@@ -295,6 +301,7 @@ async def system_status():
                 for a in stats["alerts"]
             ],
             "alert_count": stats["alert_count"],
+            "model_preload": state.model_preload,
         }
 
         _status_cache["data"] = result

@@ -34,7 +34,18 @@ export function ProgressView({ taskId }: Props) {
     filename, fileSize, status, percent, message, isPaused,
     isPauseRequesting, isCancelRequesting,
     isComplete, activeStep, stepTimings, liveSegments, warning,
+    isUploading, uploadPercent,
   } = store
+
+  // Extra progress fields from SSE (shallow-merged into store via applyProgressData)
+  const extra = store as unknown as Record<string, unknown>
+  const processedSec = extra.processed_sec as number | undefined
+  const totalSec = extra.total_sec as number | undefined
+  const speedX = extra.speed_x as number | undefined
+  const eta = extra.eta as string | undefined
+  const elapsed = extra.elapsed as string | undefined
+
+  const isTranscribing = status === 'transcribing' && processedSec !== undefined && totalSec !== undefined && totalSec > 0
 
   const isActive = !isComplete && status !== 'error' && status !== 'cancelled'
   const anyRequesting = isPauseRequesting || isCancelRequesting
@@ -73,7 +84,7 @@ export function ProgressView({ taskId }: Props) {
     isPaused || isPauseRequesting ? 'var(--color-warning)' :
     'var(--color-text-2)'
 
-  // Status text logic
+  // Status text logic (used for non-transcribing phases)
   const statusText =
     status === 'error' ? (store.error ?? 'An error occurred') :
     status === 'cancelled' ? 'Task cancelled.' :
@@ -88,6 +99,11 @@ export function ProgressView({ taskId }: Props) {
     isPauseRequesting && isPaused ? 'Resuming...' :
     isPaused ? 'Resume' :
     'Pause'
+
+  // Audio progress ratio for the mini bar
+  const audioRatio = (isTranscribing && totalSec > 0)
+    ? Math.min((processedSec ?? 0) / totalSec, 1)
+    : 0
 
   return (
     <div className="flex flex-col gap-5">
@@ -137,6 +153,8 @@ export function ProgressView({ taskId }: Props) {
         activeStep={activeStep}
         stepTimings={stepTimings}
         isPaused={isPaused}
+        isUploading={isUploading}
+        uploadPercent={uploadPercent}
       />
 
       {/* Progress bar */}
@@ -157,7 +175,9 @@ export function ProgressView({ taskId }: Props) {
         {/* Status / percent row */}
         <div className="flex items-center justify-between">
           <span className="text-xs" style={{ color: statusColor }}>
-            {statusText}
+            {isTranscribing && !isPaused && !isCancelRequesting
+              ? 'Transcribing audio...'
+              : statusText}
           </span>
           <span
             className="text-xs font-semibold tabular-nums"
@@ -167,6 +187,88 @@ export function ProgressView({ taskId }: Props) {
           </span>
         </div>
       </div>
+
+      {/* Transcription detail panel — only during active transcription */}
+      {isTranscribing && (
+        <div
+          className="rounded-lg px-3 py-2.5"
+          style={{ background: 'var(--color-surface-2)', border: '1px solid var(--color-border)' }}
+        >
+          {/* Audio position bar */}
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xs tabular-nums font-medium" style={{ color: 'var(--color-primary)', minWidth: '36px' }}>
+              {formatTimestamp(processedSec ?? 0)}
+            </span>
+            <div
+              className="flex-1 h-1 rounded-full overflow-hidden"
+              style={{ background: 'var(--color-border)' }}
+            >
+              <div
+                className="h-full rounded-full transition-all duration-700"
+                style={{ width: `${audioRatio * 100}%`, background: 'var(--color-primary)' }}
+              />
+            </div>
+            <span className="text-xs tabular-nums" style={{ color: 'var(--color-text-3)', minWidth: '36px', textAlign: 'right' }}>
+              {formatTimestamp(totalSec ?? 0)}
+            </span>
+          </div>
+
+          {/* Stats row */}
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Speed */}
+            {speedX !== undefined && speedX > 0 && (
+              <div className="flex items-center gap-1" title="Processing speed relative to audio duration. 2.0x means 1 minute of audio is processed in 30 seconds.">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+                  <path d="M5 1v4l2.5 1.5" stroke="var(--color-text-3)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="5" cy="5" r="4" stroke="var(--color-text-3)" strokeWidth="1" fill="none" />
+                </svg>
+                <span className="text-xs tabular-nums" style={{ color: 'var(--color-text-2)', cursor: 'help' }}>
+                  {speedX.toFixed(1)}x realtime
+                </span>
+              </div>
+            )}
+
+            {/* ETA */}
+            {eta && eta !== '-' && eta !== '0:00' && (
+              <div className="flex items-center gap-1" title="Estimated Time of Arrival — approximate time until transcription completes, based on current processing speed.">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+                  <path d="M5 2v3h3" stroke="var(--color-text-3)" strokeWidth="1" strokeLinecap="round" />
+                  <circle cx="5" cy="5" r="4" stroke="var(--color-text-3)" strokeWidth="1" fill="none" />
+                </svg>
+                <span className="text-xs tabular-nums" style={{ color: 'var(--color-text-2)', cursor: 'help' }}>
+                  ~{eta} remaining
+                </span>
+              </div>
+            )}
+
+            {/* Elapsed */}
+            {elapsed && elapsed !== '0:00' && (
+              <div className="flex items-center gap-1" title="Total wall-clock time since transcription started.">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+                  <path d="M2 8l3-3 2 1.5L8 3" stroke="var(--color-text-3)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                </svg>
+                <span className="text-xs tabular-nums" style={{ color: 'var(--color-text-3)', cursor: 'help' }}>
+                  {elapsed} elapsed
+                </span>
+              </div>
+            )}
+
+            {/* Segments found */}
+            {liveSegments.length > 0 && (
+              <div className="flex items-center gap-1" title="Number of subtitle segments (sentences or phrases) detected so far.">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+                  <rect x="1" y="2" width="8" height="1.5" rx="0.5" fill="var(--color-text-3)" />
+                  <rect x="1" y="4.5" width="6" height="1.5" rx="0.5" fill="var(--color-text-3)" />
+                  <rect x="1" y="7" width="7" height="1.5" rx="0.5" fill="var(--color-text-3)" />
+                </svg>
+                <span className="text-xs tabular-nums" style={{ color: 'var(--color-text-3)', cursor: 'help' }}>
+                  {liveSegments.length} segments
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Warning */}
       {warning && (
@@ -216,8 +318,8 @@ export function ProgressView({ taskId }: Props) {
         </div>
       )}
 
-      {/* Task controls */}
-      {isActive && (
+      {/* Task controls (hide during upload) */}
+      {isActive && !isUploading && (
         <div className="flex items-center gap-2">
           <button
             type="button"

@@ -3,7 +3,7 @@ import type {
   SystemInfo, LanguagesResponse, UploadResponse,
   TaskProgress, TasksResponse, HealthStatus,
   EmbedResult, CombineStatus, SubtitlesResponse,
-  TranslationLanguagesResponse,
+  TranslationLanguagesResponse, ModelPreloadStatus,
 } from './types'
 
 const json = async <T>(res: Response): Promise<T> => {
@@ -23,6 +23,38 @@ export const api = {
 
   upload: (fd: FormData) =>
     fetch('/upload', { method: 'POST', body: fd }).then(r => json<UploadResponse>(r)),
+
+  /** Upload with XHR for progress tracking. Returns a promise + abort handle. */
+  uploadWithProgress: (fd: FormData, onProgress: (percent: number) => void) => {
+    let rejectFn: (reason: Error) => void
+    const promise = new Promise<UploadResponse>((resolve, reject) => {
+      rejectFn = reject
+      const xhr = new XMLHttpRequest()
+      xhr.open('POST', '/upload')
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100))
+      }
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(JSON.parse(xhr.responseText))
+        } else {
+          try {
+            const err = JSON.parse(xhr.responseText)
+            reject(new Error(err.detail ?? xhr.statusText))
+          } catch {
+            reject(new Error(xhr.statusText))
+          }
+        }
+      }
+
+      xhr.onerror = () => reject(new Error('Network error'))
+      xhr.onabort = () => reject(new Error('Upload cancelled'))
+      xhr.send(fd)
+    })
+    return { promise, abort: () => rejectFn?.(new Error('Upload cancelled')) }
+  },
 
   progress: (taskId: string) =>
     fetch(`/progress/${taskId}`).then(r => json<TaskProgress>(r)),
@@ -65,4 +97,7 @@ export const api = {
 
   translationLanguages: () =>
     fetch('/translation/languages').then(r => json<TranslationLanguagesResponse>(r)),
+
+  modelStatus: () =>
+    fetch('/api/model-status').then(r => json<ModelPreloadStatus>(r)),
 }

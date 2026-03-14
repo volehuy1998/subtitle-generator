@@ -137,3 +137,14 @@ When adding tests, follow the existing sprint pattern or add to the relevant dom
 - System requirements detected at startup (`services/system_capability.py`): CPU/GPU/RAM/OS/codecs, auto-tunes OMP threads and max concurrent tasks.
 - Database migrations managed via Alembic (`app/db/alembic/`).
 - Frontend built with Vite; dev server proxies API calls to FastAPI backend.
+
+## Git Standards
+
+- **Commit format**: [Conventional Commits v1.0.0](https://www.conventionalcommits.org/en/v1.0.0/). Enforced by `commit-msg` hook.
+  - Format: `<type>(<scope>): <description>` (e.g., `feat(ui): add upload progress bar`)
+  - Types: `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `style`, `ci`, `build`, `chore`, `security`
+  - Scopes: `pipeline`, `transcribe`, `translate`, `embed`, `sse`, `api`, `db`, `auth`, `middleware`, `health`, `ui`, `store`, `hooks`, `docker`, `deploy`, `config`
+- **Branching**: GitHub Flow. Create branch from `main` (`feat/...`, `fix/...`), open PR, squash merge.
+- **PR template**: `.github/PULL_REQUEST_TEMPLATE.md`
+- **Versioning**: Semver tags (`v2.1.0`). Version in `app/main.py` FastAPI version field.
+- **Full standards**: See `class.md` Section 5.

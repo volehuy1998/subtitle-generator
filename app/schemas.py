@@ -106,6 +106,7 @@ class SystemStatusResponse(BaseModel):
     system_critical_reasons: list[str]
     alerts: list[AlertItem]
     alert_count: int
+    model_preload: Optional[dict] = None
 
 
 # ── System info ───────────────────────────────────────────────────────────────

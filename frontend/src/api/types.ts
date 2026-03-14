@@ -8,6 +8,7 @@ export interface SystemInfo {
   model_recommendations: Record<string, 'ok' | 'tight' | 'too_large'>
   auto_model: string
   diarization?: { available: boolean }
+  model_preload?: ModelPreloadStatus
 }
 
 export interface LanguagesResponse {
@@ -101,6 +102,16 @@ export interface HealthStatus {
   gpu_vram_total?: number | null
   gpu_vram_used?: number | null
   gpu_vram_free?: number | null
+  model_preload?: ModelPreloadStatus
+}
+
+export interface ModelPreloadStatus {
+  status: 'idle' | 'loading' | 'ready' | 'error'
+  models: string[]
+  current_model: string | null
+  loaded: string[]
+  total: number
+  error: string | null
 }
 
 export interface EmbedResult {

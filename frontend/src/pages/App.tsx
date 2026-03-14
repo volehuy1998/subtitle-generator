@@ -68,6 +68,18 @@ export default function App() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleUpload = async (file: File, opts: { device: string; model: string; language: string; format: string; translateTo?: string }) => {
+    // Switch to progress screen immediately
+    store.reset()
+    store.setTaskId('uploading')
+    store.setUploading(true, 0)
+    store.applyProgressData({
+      filename: file.name,
+      fileSize: file.size,
+      status: 'uploading',
+      percent: 0,
+      message: `Uploading ${file.name}…`,
+    })
+
     const fd = new FormData()
     fd.append('file', file)
     fd.append('model_size', opts.model)
@@ -80,18 +92,25 @@ export default function App() {
     }
 
     try {
-      const result = await api.upload(fd)
-      store.reset()
+      const { promise } = api.uploadWithProgress(fd, (pct) => {
+        store.setUploadPercent(pct)
+        store.applyProgressData({
+          message: pct < 100 ? `Uploading… ${pct}%` : 'Upload complete, starting processing…',
+          percent: pct,
+        })
+      })
+      const result = await promise
+      // Upload done — transition to real task tracking
+      store.setUploading(false)
       store.setTaskId(result.task_id)
       store.applyProgressData({
-        filename: file.name,
-        fileSize: file.size,
-        status: 'uploading',
+        status: 'queued',
         percent: 0,
-        message: 'Uploading…',
+        message: 'Processing started…',
       })
       localStorage.setItem('sg_currentTaskId', result.task_id)
     } catch (err) {
+      store.setUploading(false)
       store.setError(err instanceof Error ? err.message : 'Upload failed')
     }
   }

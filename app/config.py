@@ -57,14 +57,17 @@ VALID_MODELS = ["tiny", "base", "small", "medium", "large"]
 VALID_DEVICES = ["cuda", "cpu"]
 
 # --- Concurrency ---
-MAX_CONCURRENT_TASKS = 3
+# Set via env var to override auto-tuning, or leave empty for auto-detection
+_max_tasks_env = os.environ.get("MAX_CONCURRENT_TASKS", "")
+MAX_CONCURRENT_TASKS = int(_max_tasks_env) if _max_tasks_env else 3  # default 3, auto-tuned at startup
+MAX_CONCURRENT_TASKS_EXPLICIT = bool(_max_tasks_env)  # True if user set it explicitly
 
 # --- Rate limits ---
 UPLOAD_RATE_LIMIT = "5/minute"
 API_RATE_LIMIT = "60/minute"
 
 # --- Performance ---
-PRELOAD_MODEL = os.environ.get("PRELOAD_MODEL", "")  # e.g., "medium" to preload at startup
+PRELOAD_MODEL = os.environ.get("PRELOAD_MODEL", "")  # e.g., "medium", "tiny,base,large", or "all"
 ENABLE_COMPRESSION = os.environ.get("ENABLE_COMPRESSION", "true").lower() == "true"
 STATIC_CACHE_MAX_AGE = 3600  # 1 hour cache for static-like responses
 

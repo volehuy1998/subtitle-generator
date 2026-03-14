@@ -28,6 +28,17 @@ task_event_queues: dict[str, queue.Queue] = {}
 # Semaphore to limit concurrent transcription tasks
 _task_semaphore: threading.Semaphore | None = None
 
+# Model preload status: tracks background model loading progress
+# status: "idle" | "loading" | "ready" | "error"
+model_preload: dict = {
+    "status": "idle",
+    "models": [],
+    "current_model": None,
+    "loaded": [],
+    "total": 0,
+    "error": None,
+}
+
 # Shutdown flag - when True, no new tasks accepted
 shutting_down: bool = False
 

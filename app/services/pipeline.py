@@ -247,7 +247,11 @@ def process_video(task_id: str, video_path: Path, model_size: str, device: str,
         task["status"] = "transcribing"
         task["current_step"] = 2
         compute_type = get_compute_type(device, model_size)
-        task["message"] = f"Loading {model_size} model on {device.upper()} ({compute_type})..."
+        from app import state as _state
+        _model_cached = (model_size, device) in _state.loaded_models
+        task["message"] = (f"Starting transcription with {model_size} model..."
+                           if _model_cached
+                           else f"Loading {model_size} model on {device.upper()} ({compute_type})...")
         task["step_timing"] = {"upload": round(step_probe.elapsed, 2), "extract": round(step_extract.elapsed, 2)}
         log_task_event(task_id, "step_start", step=2, name="transcribe", status="transcribing",
                        model=model_size, device=device)

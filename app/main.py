@@ -93,17 +93,17 @@ async def lifespan(app: FastAPI):
     worker_id = register_worker()
     app.state.worker_id = worker_id
 
-    # Preload model if configured (skip on web-only servers)
-    if ROLE != "web" and PRELOAD_MODEL and PRELOAD_MODEL in ("tiny", "base", "small", "medium", "large"):
-        try:
-            from app.services.model_manager import get_model
-            import torch
-            device = "cuda" if torch.cuda.is_available() else "cpu"
-            logger.info(f"PRELOAD Loading model '{PRELOAD_MODEL}' on {device.upper()}...")
-            await asyncio.to_thread(get_model, PRELOAD_MODEL, device)
-            logger.info(f"PRELOAD Model '{PRELOAD_MODEL}' ready")
-        except Exception as e:
-            logger.warning(f"PRELOAD Failed: {e}")
+    # Preload models in background (skip on web-only servers)
+    # Models load AFTER server starts accepting connections, so users see the UI immediately.
+    # Supports: "medium", "tiny,base,large", or "all"
+    if ROLE != "web" and PRELOAD_MODEL:
+        from app.config import VALID_MODELS
+        if PRELOAD_MODEL.strip().lower() == "all":
+            models_to_load = list(VALID_MODELS)
+        else:
+            models_to_load = [m.strip() for m in PRELOAD_MODEL.split(",") if m.strip() in VALID_MODELS]
+        if models_to_load:
+            asyncio.create_task(_preload_models_background(models_to_load))
 
     # Start background cleanup task
     cleanup_task = asyncio.create_task(periodic_cleanup())
@@ -177,6 +177,40 @@ async def lifespan(app: FastAPI):
     logger.info(f"SHUTDOWN Complete (role={ROLE})")
 
 
+async def _preload_models_background(models_to_load: list[str]):
+    """Load models in background so the server accepts connections immediately."""
+    import torch
+    from app.services.model_manager import get_model
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    state.model_preload = {
+        "status": "loading",
+        "models": models_to_load,
+        "current_model": None,
+        "loaded": [],
+        "total": len(models_to_load),
+        "error": None,
+    }
+    logger.info(f"PRELOAD Loading {len(models_to_load)} model(s) on {device.upper()} in background: {', '.join(models_to_load)}")
+
+    for model_name in models_to_load:
+        state.model_preload["current_model"] = model_name
+        logger.info(f"PRELOAD Loading '{model_name}'...")
+        try:
+            await asyncio.to_thread(get_model, model_name, device)
+            state.model_preload["loaded"].append(model_name)
+            logger.info(f"PRELOAD Model '{model_name}' ready ({len(state.model_preload['loaded'])}/{len(models_to_load)})")
+        except Exception as e:
+            logger.warning(f"PRELOAD Failed to load '{model_name}': {e}")
+            state.model_preload["status"] = "error"
+            state.model_preload["error"] = f"Failed to load '{model_name}': {e}"
+            return
+
+    state.model_preload["status"] = "ready"
+    state.model_preload["current_model"] = None
+    logger.info(f"PRELOAD All {len(models_to_load)} model(s) loaded successfully")
+
+
 def _apply_tuning(tuning: dict):
     """Apply auto-tuned settings to runtime config."""
     import os
@@ -187,10 +221,16 @@ def _apply_tuning(tuning: dict):
     os.environ["OMP_NUM_THREADS"] = omp
     os.environ["MKL_NUM_THREADS"] = omp
 
-    # Update concurrent task limit
-    config.MAX_CONCURRENT_TASKS = tuning["max_concurrent_tasks"]
+    # Update concurrent task limit (respect explicit env var override)
+    if config.MAX_CONCURRENT_TASKS_EXPLICIT:
+        max_tasks = config.MAX_CONCURRENT_TASKS
+        logger.info(f"TUNING MAX_CONCURRENT_TASKS={max_tasks} (explicit override via env var)")
+    else:
+        max_tasks = tuning["max_concurrent_tasks"]
+        config.MAX_CONCURRENT_TASKS = max_tasks
+        logger.info(f"TUNING MAX_CONCURRENT_TASKS={max_tasks} (auto-tuned)")
 
-    logger.info(f"TUNING Applied: OMP_THREADS={omp}, MAX_TASKS={tuning['max_concurrent_tasks']}")
+    logger.info(f"TUNING Applied: OMP_THREADS={omp}, MAX_TASKS={max_tasks}")
 
 
 def create_app() -> FastAPI:

@@ -42,6 +42,10 @@ export interface TaskState {
   // Translation
   translatedTo: string | null
 
+  // Upload tracking
+  isUploading: boolean
+  uploadPercent: number
+
   // Download
   downloadReady: boolean
   embedDownloadUrl: string | null
@@ -52,6 +56,8 @@ export interface TaskState {
 
 interface TaskActions {
   setTaskId: (id: string) => void
+  setUploading: (uploading: boolean, percent?: number) => void
+  setUploadPercent: (percent: number) => void
   applyProgressData: (data: Partial<TaskState>) => void
   addSegment: (seg: SegmentEvent) => void
   setLiveSegments: (segs: LiveSegment[]) => void
@@ -70,7 +76,7 @@ interface TaskActions {
 
 const initial: TaskState = {
   taskId: null, filename: null, fileSize: null,
-  status: null, percent: 0, message: '', isPaused: false, isPauseRequesting: false, isCancelRequesting: false, isComplete: false, error: null,
+  status: null, percent: 0, message: '', isPaused: false, isPauseRequesting: false, isCancelRequesting: false, isComplete: false, error: null, isUploading: false, uploadPercent: 0,
   activeStep: -1, stepTimings: {},
   language: null, segments: 0, totalTimeSec: null, audioDuration: null,
   isVideo: false, speedFactor: null, translatedTo: null,
@@ -83,6 +89,10 @@ export const useTaskStore = create<TaskState & TaskActions>((set) => ({
   ...initial,
 
   setTaskId: (id) => set({ taskId: id }),
+
+  setUploading: (uploading, percent) => set({ isUploading: uploading, uploadPercent: percent ?? 0 }),
+
+  setUploadPercent: (percent) => set({ uploadPercent: percent }),
 
   applyProgressData: (data) => set((s) => ({ ...s, ...data })),
 

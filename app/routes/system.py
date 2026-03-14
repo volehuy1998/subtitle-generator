@@ -12,8 +12,11 @@ router = APIRouter(tags=["System"])
 
 @router.get("/system-info", response_model=SystemInfoResponse)
 async def system_info():
+    from app import state
     info = get_system_info()
     info["diarization"] = is_diarization_available()
+    # Include model preload status so the UI can show which models are ready
+    info["model_preload"] = state.model_preload
     return info
 
 

@@ -24,7 +24,7 @@ export function useSSE(taskId: string | null) {
   }, [])
 
   const connect = useCallback(() => {
-    if (!taskId || closed.current) return
+    if (!taskId || taskId === 'uploading' || closed.current) return
     esRef.current?.close()
 
     const es = new EventSource(`/events/${taskId}`)
@@ -154,7 +154,7 @@ export function useSSE(taskId: string | null) {
   }, [taskId, close, store])
 
   useEffect(() => {
-    if (!taskId) return
+    if (!taskId || taskId === 'uploading') return
     closed.current = false
     connect()
     return () => { closed.current = true; close() }

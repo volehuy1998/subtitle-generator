@@ -12,11 +12,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # Python lint
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: pip install ruff
       - run: ruff check . --select E,F,W --ignore E501
+
+      # Frontend lint + type check
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: TypeScript check
+        working-directory: frontend
+        run: npx tsc -b --noEmit
+      - name: ESLint
+        working-directory: frontend
+        run: npx eslint src/ --max-warnings 0 || true
 
   test:
     name: Test
@@ -24,6 +40,8 @@ jobs:
     needs: lint
     steps:
       - uses: actions/checkout@v4
+
+      # Backend tests
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -33,14 +51,31 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install pytest pytest-cov
-      - name: Run tests
+      - name: Run backend tests
         run: pytest tests/ -v --tb=short --cov=app --cov-report=xml
-      - name: Upload coverage
+      - name: Upload backend coverage
         if: github.event_name == 'push'
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-report
+          name: backend-coverage
           path: coverage.xml
+
+      # Frontend tests
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Run frontend tests
+        working-directory: frontend
+        run: npx vitest run --coverage
+      - name: Upload frontend coverage
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/
 
   build:
     name: Build Docker Image
