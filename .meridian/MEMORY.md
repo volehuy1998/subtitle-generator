@@ -6,7 +6,7 @@
 
 ## Team Meridian (Deployment)
 - [team_meridian.md](team_meridian.md) — Team Meridian: external deployment team (8 members — Compass, Crane, Vault, Gauge, Rudder, Signal, Ballast, Dockhand)
-- [meridian_server.md](meridian_server.md) — Meridian server: 124.197.31.140, Ubuntu 22.04, 8 CPU, 15GB RAM, domains/TLS/container layout/paths
+- [meridian_server.md](meridian_server.md) — Meridian server: hardware specs, domains, TLS, container layout (sensitive details redacted)
 - [meridian_deployment_20260315.md](meridian_deployment_20260315.md) — First deployment session: two-domain setup, 7 workarounds, 7 issues filed
 - [meridian_session_20260315.md](meridian_session_20260315.md) — Full session context: deployment, audit, investor feedback, memory system, next steps per specialist
 - [meridian_issues_tracker.md](meridian_issues_tracker.md) — All filed issues (#67-#72, #78) with priority, specialist assignment, and status
@@ -17,6 +17,9 @@
 - [feedback_config_over_cli.md](feedback_config_over_cli.md) — Always use .env config files over CLI flags for deployment
 - [feedback_delegate_no_bottleneck.md](feedback_delegate_no_bottleneck.md) — Compass must delegate to specialists, never bottleneck tasks at leader level
 - [feedback_author_disclosure.md](feedback_author_disclosure.md) — Every team member must disclose their identity (name, role) when creating any content
+
+## Cross-Team Agreements
+- [project_cross_team_agreement.md](project_cross_team_agreement.md) — CODEOWNERS, 48h SLA, release notifications, CI validation — agreed 2026-03-15 via RFC #82
 
 ## Project State
 - [project_session_20260314.md](project_session_20260314.md) — Major Sentinel session: UI overhaul, Google SWE standards, 17 issues resolved, 10 PRs merged
