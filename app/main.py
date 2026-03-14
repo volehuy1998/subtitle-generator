@@ -294,7 +294,7 @@ def create_app() -> FastAPI:
             "Optional API key via `X-API-Key` header or `api_key` query parameter.\n"
             "Set `API_KEYS` environment variable (comma-separated) to enable."
         ),
-        version="2.0.0",
+        version="2.1.0",
         lifespan=lifespan,
         docs_url="/docs",
         redoc_url="/redoc",
