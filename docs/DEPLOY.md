@@ -305,10 +305,16 @@ If you prefer full control:
 ```bash
 git clone https://github.com/volehuy1998/subtitle-generator /opt/subtitle-generator
 cd /opt/subtitle-generator
+
+# Copy and fill in the environment config file
+cp .env.example .env
+# Edit .env with your values — see comments inside for each variable
+nano .env
+
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 
-# Dev:
+# Dev (reads .env automatically if python-dotenv is installed, or export vars):
 ENVIRONMENT=dev .venv/bin/python main.py
 
 # Prod (with certificates already in place):
@@ -316,6 +322,96 @@ ENVIRONMENT=prod \
 SSL_CERTFILE=/path/to/fullchain.pem \
 SSL_KEYFILE=/path/to/privkey.pem \
 .venv/bin/python main.py
+```
+
+See [`.env.example`](../.env.example) for the full list of configurable environment variables with descriptions and defaults.
+
+---
+
+## Docker: preview subdomain deployment (newui profile)
+
+The `newui` Docker Compose profile runs the current codebase build on an internal port (`127.0.0.1:8001`), allowing an external nginx reverse proxy to serve it at a separate subdomain (e.g. `newui.example.com`) for design review before promoting to production.
+
+**This is required for any frontend design changes.** See [CONTRIBUTING.md §6a](../CONTRIBUTING.md#6a-ui--frontend-design-review-process) for the full subdomain-first design review policy.
+
+```bash
+# Start the preview container (builds from current code)
+docker compose --profile newui up -d --build
+
+# Verify it is running on port 8001
+curl -s http://127.0.0.1:8001/api/health | head -c 100
+```
+
+### Host nginx config (two-domain setup)
+
+A minimal nginx config that routes both the production domain and the preview subdomain:
+
+```nginx
+# /etc/nginx/sites-available/subforge
+
+# HTTP → HTTPS redirect for both domains
+server {
+    listen 80;
+    server_name example.com newui.example.com;
+    return 301 https://$host$request_uri;
+}
+
+# Production domain → production container (pinned image)
+server {
+    listen 443 ssl;
+    server_name example.com;
+
+    ssl_certificate     /etc/letsencrypt/live/example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
+
+    location / {
+        proxy_pass         https://127.0.0.1:8000;
+        proxy_ssl_verify   off;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto https;
+        # SSE support
+        proxy_buffering    off;
+        proxy_read_timeout 3600s;
+    }
+}
+
+# Preview subdomain → preview container (current build)
+server {
+    listen 443 ssl;
+    server_name newui.example.com;
+
+    ssl_certificate     /etc/letsencrypt/live/newui.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/newui.example.com/privkey.pem;
+
+    location / {
+        proxy_pass         http://127.0.0.1:8001;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto https;
+        # SSE support
+        proxy_buffering    off;
+        proxy_read_timeout 3600s;
+    }
+}
+```
+
+### Promoting a reviewed design to production
+
+After investor approval:
+
+```bash
+# 1. Build and tag the new production image
+docker build -t subtitle-generator-prod:v2.2.0 .
+
+# 2. Update PROD_IMAGE_TAG in .env
+#    (do NOT hardcode it in docker-compose.yml)
+sed -i 's/^PROD_IMAGE_TAG=.*/PROD_IMAGE_TAG=v2.2.0/' .env
+
+# 3. Restart the production container
+docker compose --profile cpu up -d
 ```
 
 See `CLAUDE.md` for the full environment variable reference and architecture details.
