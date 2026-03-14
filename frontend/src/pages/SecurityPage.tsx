@@ -2,25 +2,25 @@ import { useEffect, useState } from 'react'
 import { StaticPageLayout } from '@/components/layout/StaticPageLayout'
 
 const C = {
-  text:          '#0F172A',
-  text2:         '#475569',
-  text3:         '#94A3B8',
-  border:        '#E2E8F0',
-  border2:       '#CBD5E1',
-  surface:       '#FFFFFF',
-  surface2:      '#F8FAFC',
-  primary:       '#863bff',
-  primaryLight:  '#f3eeff',
-  primaryMid:    '#ddd6fe',
-  success:       '#10B981',
-  successLight:  '#ECFDF5',
-  successBorder: '#A7F3D0',
-  warning:       '#F59E0B',
-  warningLight:  '#FFFBEB',
-  errorLight:    '#FEF2F2',
-  blue:          '#2563EB',
-  blueLight:     '#EFF6FF',
-  amber:         '#F59E0B',
+  text:          'var(--color-text)',
+  text2:         'var(--color-text-2)',
+  text3:         'var(--color-text-3)',
+  border:        'var(--color-border)',
+  border2:       'var(--color-border-2)',
+  surface:       'var(--color-surface)',
+  surface2:      'var(--color-surface-2)',
+  primary:       'var(--color-primary)',
+  primaryLight:  'var(--color-primary-light)',
+  primaryMid:    'var(--color-primary-border)',
+  success:       'var(--color-success)',
+  successLight:  'var(--color-success-light)',
+  successBorder: 'var(--color-success-border)',
+  warning:       'var(--color-warning)',
+  warningLight:  'var(--color-warning-light)',
+  errorLight:    'var(--color-danger-light)',
+  blue:          'var(--color-primary)',
+  blueLight:     'var(--color-primary-light)',
+  amber:         'var(--color-warning)',
 }
 
 interface Assertion {
@@ -62,9 +62,9 @@ function Card({ children, style }: { children: React.ReactNode; style?: React.CS
 }
 
 function BadgeStyle(status: string): React.CSSProperties {
-  if (status === 'secure')   return { background: C.successLight, color: '#065F46', border: `1px solid ${C.successBorder}` }
-  if (status === 'low_risk') return { background: C.blueLight, color: '#1E40AF', border: '1px solid #BFDBFE' }
-  if (status === 'at_risk')  return { background: C.errorLight, color: '#991B1B', border: '1px solid #FECACA' }
+  if (status === 'secure')   return { background: 'var(--color-success-light)', color: 'var(--color-success)', border: '1px solid var(--color-success-border)' }
+  if (status === 'low_risk') return { background: 'var(--color-primary-light)', color: 'var(--color-primary)', border: '1px solid var(--color-primary-border)' }
+  if (status === 'at_risk')  return { background: 'var(--color-danger-light)', color: 'var(--color-danger)', border: '1px solid var(--color-border-2)' }
   return { background: C.surface2, color: C.text3, border: `1px solid ${C.border2}` }
 }
 function BadgeLabel(status: string) {
@@ -145,8 +145,8 @@ export function SecurityPage() {
             </p>
           )}
         </div>
-        <div style={{ marginLeft: 'auto', flexShrink: 0, background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.35)', color: '#6ee7b7', borderRadius: '20px', padding: '5px 14px', fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399', display: 'inline-block' }} />
+        <div style={{ marginLeft: 'auto', flexShrink: 0, background: 'var(--color-success-light)', border: '1px solid var(--color-success-border)', color: 'var(--color-success)', borderRadius: '20px', padding: '5px 14px', fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--color-success)', display: 'inline-block' }} />
           Risk Level: Low
         </div>
       </div>

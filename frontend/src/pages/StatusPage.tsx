@@ -3,6 +3,25 @@ import { AppHeader } from '@/components/layout/AppHeader'
 import { HealthPanel } from '@/components/system/HealthPanel'
 import { useUIStore } from '@/store/uiStore'
 
+// ── Design tokens (CSS variables) ──────────────────────────────────────────
+const C = {
+  text:    'var(--color-text)',
+  text2:   'var(--color-text-2)',
+  text3:   'var(--color-text-3)',
+  border:  'var(--color-border)',
+  border2: 'var(--color-border-2)',
+  surface: 'var(--color-surface)',
+  surface2:'var(--color-surface-2)',
+  primary: 'var(--color-primary)',
+  success: 'var(--color-success)',
+  successLight: 'var(--color-success-light)',
+  successBorder:'var(--color-success-border)',
+  warning: 'var(--color-warning)',
+  warningLight: 'var(--color-warning-light)',
+  danger:  'var(--color-danger)',
+  dangerLight:  'var(--color-danger-light)',
+}
+
 // ── Types ──────────────────────────────────────────────────────────────────
 
 interface ComponentStatus {
@@ -120,21 +139,21 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  operational: '#10B981',
-  degraded: '#F59E0B',
-  outage: '#EF4444',
-  maintenance: '#6366F1',
-  no_data: '#CBD5E1',
+  operational: 'var(--color-success)',
+  degraded: 'var(--color-warning)',
+  outage: 'var(--color-danger)',
+  maintenance: 'var(--color-primary)',
+  no_data: 'var(--color-text-3)',
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────
 
 function Banner({ data }: { data: StatusPage }) {
   const config = {
-    operational: { icon: '✓', label: 'All Systems Operational', bg: '#ECFDF5', border: '#A7F3D0', color: '#065F46' },
-    degraded: { icon: '⚠', label: 'Some Systems Experiencing Issues', bg: '#FFFBEB', border: '#FDE68A', color: '#92400E' },
-    outage: { icon: '✕', label: 'Service Disruption Detected', bg: '#FEF2F2', border: '#FECACA', color: '#7F1D1D' },
-  }[data.overall] ?? { icon: '✓', label: 'All Systems Operational', bg: '#ECFDF5', border: '#A7F3D0', color: '#065F46' }
+    operational: { icon: '✓', label: 'All Systems Operational', bg: C.successLight, border: C.successBorder, color: C.success },
+    degraded: { icon: '⚠', label: 'Some Systems Experiencing Issues', bg: C.warningLight, border: C.border2, color: C.warning },
+    outage: { icon: '✕', label: 'Service Disruption Detected', bg: C.dangerLight, border: C.border2, color: C.danger },
+  }[data.overall] ?? { icon: '✓', label: 'All Systems Operational', bg: C.successLight, border: C.successBorder, color: C.success }
 
   return (
     <div style={{
@@ -151,7 +170,7 @@ function Banner({ data }: { data: StatusPage }) {
       }}>{config.icon}</div>
       <div>
         <div style={{ fontWeight: '700', fontSize: '1.05rem', color: config.color }}>{config.label}</div>
-        <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: '2px' }}>
+        <div style={{ fontSize: '0.78rem', color: C.text2, marginTop: '2px' }}>
           Last updated: {formatDateTime(data.updated_at)}
         </div>
       </div>
@@ -170,11 +189,11 @@ function StatsRow({ data }: { data: StatusPage }) {
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '24px' }}>
       {stats.map((s) => (
         <div key={s.label} style={{
-          background: '#fff', border: '1px solid #E2E8F0', borderRadius: '10px',
+          background: C.surface, border: `1px solid ${C.border}`, borderRadius: '10px',
           padding: '14px 16px', textAlign: 'center',
         }}>
-          <div style={{ fontSize: '1.4rem', fontWeight: '700', color: '#1E293B' }}>{s.value}</div>
-          <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '2px' }}>{s.label}</div>
+          <div style={{ fontSize: '1.4rem', fontWeight: '700', color: C.text }}>{s.value}</div>
+          <div style={{ fontSize: '0.75rem', color: C.text2, marginTop: '2px' }}>{s.label}</div>
         </div>
       ))}
     </div>
@@ -187,17 +206,17 @@ function ComponentCard({ comp, history, sla }: { comp: ComponentStatus; history:
   const daily = history?.daily ?? []
   const aboveSla = pct >= sla
   const downLabel = formatDowntime(downMin)
-  const color = STATUS_COLOR[comp.status] ?? '#CBD5E1'
+  const color = STATUS_COLOR[comp.status] ?? C.text3
 
   return (
     <div style={{
-      background: '#fff', border: '1px solid #E2E8F0', borderRadius: '10px',
+      background: C.surface, border: `1px solid ${C.border}`, borderRadius: '10px',
       padding: '16px 18px', marginBottom: '10px',
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px' }}>
         <div>
-          <div style={{ fontWeight: '600', fontSize: '0.9rem', color: '#1E293B' }}>{comp.name}</div>
-          <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: '2px' }}>{comp.description}</div>
+          <div style={{ fontWeight: '600', fontSize: '0.9rem', color: C.text }}>{comp.name}</div>
+          <div style={{ fontSize: '0.78rem', color: C.text2, marginTop: '2px' }}>{comp.description}</div>
         </div>
         <div style={{
           display: 'flex', alignItems: 'center', gap: '6px',
@@ -215,7 +234,7 @@ function ComponentCard({ comp, history, sla }: { comp: ComponentStatus; history:
               title={`${formatDate(d.date)}: ${STATUS_LABELS[d.status] ?? d.status}`}
               style={{
                 flex: 1, height: '24px', borderRadius: '2px',
-                background: STATUS_COLOR[d.status] ?? '#CBD5E1',
+                background: STATUS_COLOR[d.status] ?? C.text3,
                 opacity: d.status === 'no_data' ? 0.3 : 1,
               }}
             />
@@ -224,17 +243,17 @@ function ComponentCard({ comp, history, sla }: { comp: ComponentStatus; history:
         <div style={{
           textAlign: 'right', minWidth: '56px',
           fontSize: '0.8rem', fontWeight: '700',
-          color: aboveSla ? '#10B981' : '#EF4444',
+          color: aboveSla ? C.success : C.danger,
         }}>
           {formatUpPct(pct, downMin)}%
           {downLabel && (
-            <div style={{ fontSize: '0.63rem', color: '#94A3B8', fontWeight: '400' }}>{downLabel}</div>
+            <div style={{ fontSize: '0.63rem', color: C.text3, fontWeight: '400' }}>{downLabel}</div>
           )}
         </div>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#94A3B8', marginTop: '4px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: C.text3, marginTop: '4px' }}>
         <span>90 days ago</span>
-        <span>Today · <span style={{ color: '#6366F1', fontWeight: '600' }}>SLA {sla.toFixed(1)}%</span></span>
+        <span>Today · <span style={{ color: C.primary, fontWeight: '600' }}>SLA {sla.toFixed(1)}%</span></span>
       </div>
     </div>
   )
@@ -246,7 +265,7 @@ function IncidentsSection({ data }: { data: StatusPage }) {
 
   if (incidents.length === 0) {
     return (
-      <div style={{ color: '#64748B', fontSize: '0.88rem', padding: '16px 0' }}>
+      <div style={{ color: C.text2, fontSize: '0.88rem', padding: '16px 0' }}>
         No incidents reported in the last 14 days. All systems have been operating normally.
       </div>
     )
@@ -265,20 +284,20 @@ function IncidentsSection({ data }: { data: StatusPage }) {
     <div>
       {order.map((dateKey) => (
         <div key={dateKey} style={{ marginBottom: '16px' }}>
-          <div style={{ fontSize: '0.78rem', fontWeight: '700', color: '#64748B', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div style={{ fontSize: '0.78rem', fontWeight: '700', color: C.text2, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             {formatDate(dateKey + 'T00:00:00')}
           </div>
           {groups[dateKey].map((inc, i) => {
-            const badgeColor = inc.status === 'resolved' ? '#10B981'
-              : inc.severity === 'critical' ? '#EF4444'
-              : inc.severity === 'major' ? '#F59E0B' : '#6366F1'
+            const badgeColor = inc.status === 'resolved' ? C.success
+              : inc.severity === 'critical' ? C.danger
+              : inc.severity === 'major' ? C.warning : C.primary
             return (
               <div key={i} style={{
-                background: '#fff', border: '1px solid #E2E8F0',
+                background: C.surface, border: `1px solid ${C.border}`,
                 borderRadius: '10px', padding: '14px 16px', marginBottom: '8px',
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
-                  <div style={{ fontWeight: '600', fontSize: '0.9rem', color: '#1E293B' }}>{inc.title}</div>
+                  <div style={{ fontWeight: '600', fontSize: '0.9rem', color: C.text }}>{inc.title}</div>
                   <span style={{
                     background: badgeColor, color: '#fff',
                     borderRadius: '4px', padding: '2px 8px',
@@ -288,7 +307,7 @@ function IncidentsSection({ data }: { data: StatusPage }) {
                     {inc.status === 'resolved' ? 'Resolved' : inc.severity}
                   </span>
                 </div>
-                <div style={{ fontSize: '0.78rem', color: '#64748B', marginBottom: '8px' }}>
+                <div style={{ fontSize: '0.78rem', color: C.text2, marginBottom: '8px' }}>
                   Affected: {compMap[inc.component] ?? inc.component}
                 </div>
                 {inc.updates && inc.updates.length > 0 && (
@@ -298,11 +317,11 @@ function IncidentsSection({ data }: { data: StatusPage }) {
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '2px' }}>
                           <span style={{
                             fontSize: '0.7rem', fontWeight: '700', textTransform: 'capitalize',
-                            color: STATUS_COLOR[u.status] ?? '#64748B',
+                            color: STATUS_COLOR[u.status] ?? C.text2,
                           }}>{u.status}</span>
-                          <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>{formatDateTime(u.created_at)}</span>
+                          <span style={{ fontSize: '0.72rem', color: C.text3 }}>{formatDateTime(u.created_at)}</span>
                         </div>
-                        <div style={{ fontSize: '0.82rem', color: '#475569' }}>{u.message}</div>
+                        <div style={{ fontSize: '0.82rem', color: C.text2 }}>{u.message}</div>
                       </div>
                     ))}
                   </div>
@@ -320,11 +339,11 @@ function CommitCard({ commit, idx, expanded, onToggle }: {
   commit: Commit; idx: number; expanded: boolean; onToggle: (idx: number) => void
 }) {
   const ciConfig = {
-    success: { label: 'Passed', color: '#10B981', bg: '#ECFDF5' },
-    failure: { label: 'Failed', color: '#EF4444', bg: '#FEF2F2' },
-    in_progress: { label: 'Running', color: '#F59E0B', bg: '#FFFBEB' },
-    unknown: { label: 'N/A', color: '#94A3B8', bg: '#F8FAFC' },
-  }[commit.ci_status] ?? { label: 'N/A', color: '#94A3B8', bg: '#F8FAFC' }
+    success: { label: 'Passed', color: C.success, bg: C.successLight },
+    failure: { label: 'Failed', color: C.danger, bg: C.dangerLight },
+    in_progress: { label: 'Running', color: C.warning, bg: C.warningLight },
+    unknown: { label: 'N/A', color: C.text3, bg: C.surface2 },
+  }[commit.ci_status] ?? { label: 'N/A', color: C.text3, bg: C.surface2 }
 
   const dateStr = (() => {
     try {
@@ -343,7 +362,7 @@ function CommitCard({ commit, idx, expanded, onToggle }: {
       type="button"
       onClick={() => onToggle(idx)}
       style={{
-        background: '#fff', border: '1px solid #E2E8F0', borderRadius: '10px',
+        background: C.surface, border: `1px solid ${C.border}`, borderRadius: '10px',
         padding: '12px 16px', marginBottom: '8px', cursor: 'pointer',
         transition: 'border-color 0.15s',
         width: '100%', textAlign: 'left', font: 'inherit', color: 'inherit',
@@ -355,11 +374,11 @@ function CommitCard({ commit, idx, expanded, onToggle }: {
           borderRadius: '4px', padding: '2px 8px',
           fontSize: '0.72rem', fontWeight: '700', flexShrink: 0,
         }}>{ciConfig.label}</span>
-        <span style={{ flex: 1, fontWeight: '500', fontSize: '0.88rem', color: '#1E293B', minWidth: 0 }}>
+        <span style={{ flex: 1, fontWeight: '500', fontSize: '0.88rem', color: C.text, minWidth: 0 }}>
           {commit.subject}
         </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-          <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
+          <span style={{ fontSize: '0.75rem', color: C.text3 }}>
             {commit.files_count} file{commit.files_count !== 1 ? 's' : ''}
           </span>
           <a
@@ -369,13 +388,13 @@ function CommitCard({ commit, idx, expanded, onToggle }: {
             onClick={(e) => e.stopPropagation()}
             style={{
               fontFamily: 'monospace', fontSize: '0.75rem',
-              color: '#6366F1', fontWeight: '700',
+              color: C.primary, fontWeight: '700',
               padding: '1px 6px', borderRadius: '4px',
-              background: '#EEF2FF', textDecoration: 'none',
+              background: 'var(--color-primary-light)', textDecoration: 'none',
             }}
           >{commit.sha_short}</a>
-          <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>{dateStr}</span>
-          <span style={{ color: '#94A3B8', transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>▶</span>
+          <span style={{ fontSize: '0.75rem', color: C.text3 }}>{dateStr}</span>
+          <span style={{ color: C.text3, transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>▶</span>
         </span>
       </div>
 
@@ -386,7 +405,7 @@ function CommitCard({ commit, idx, expanded, onToggle }: {
         >
           {body && (
             <pre style={{
-              fontFamily: 'inherit', fontSize: '0.82rem', color: '#475569',
+              fontFamily: 'inherit', fontSize: '0.82rem', color: C.text2,
               whiteSpace: 'pre-wrap', marginBottom: '10px',
             }}>{body}</pre>
           )}
@@ -395,8 +414,8 @@ function CommitCard({ commit, idx, expanded, onToggle }: {
               {commit.files.map((f, fi) => (
                 <span key={fi} style={{
                   fontSize: '0.73rem', padding: '2px 7px', borderRadius: '4px',
-                  background: f.action === 'A' ? '#ECFDF5' : f.action === 'D' ? '#FEF2F2' : '#F8FAFC',
-                  color: f.action === 'A' ? '#065F46' : f.action === 'D' ? '#7F1D1D' : '#475569',
+                  background: f.action === 'A' ? C.successLight : f.action === 'D' ? C.dangerLight : C.surface2,
+                  color: f.action === 'A' ? C.success : f.action === 'D' ? C.danger : C.text2,
                   fontFamily: 'monospace',
                 }}>{f.path}</span>
               ))}
@@ -406,7 +425,7 @@ function CommitCard({ commit, idx, expanded, onToggle }: {
             href={`https://github.com/volehuy1998/subtitle-generator/commit/${commit.sha}`}
             target="_blank"
             rel="noopener noreferrer"
-            style={{ fontSize: '0.78rem', color: '#6366F1' }}
+            style={{ fontSize: '0.78rem', color: C.primary }}
           >
             View on GitHub ↗
           </a>
@@ -455,7 +474,7 @@ export function StatusPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F1F5F9', fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif', fontSize: '14px', color: '#1E293B' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--color-bg)', fontFamily: 'var(--font-family-sans)', fontSize: '14px', color: C.text }}>
       <AppHeader />
       {healthPanelOpen && <HealthPanel health={health} onClose={() => setHealthPanelOpen(false)} />}
 
@@ -482,7 +501,7 @@ export function StatusPage() {
             </Section>
           </>
         ) : (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#94A3B8' }}>Loading…</div>
+          <div style={{ textAlign: 'center', padding: '60px', color: C.text3 }}>Loading…</div>
         )}
 
         <Section title="Deployment History">
@@ -498,16 +517,16 @@ export function StatusPage() {
                 />
               ))
             ) : (
-              <div style={{ color: '#64748B', fontSize: '0.88rem', padding: '16px 0' }}>No commit history available.</div>
+              <div style={{ color: C.text2, fontSize: '0.88rem', padding: '16px 0' }}>No commit history available.</div>
             )
           ) : (
-            <div style={{ color: '#94A3B8', fontSize: '0.88rem', padding: '16px 0' }}>Loading…</div>
+            <div style={{ color: C.text3, fontSize: '0.88rem', padding: '16px 0' }}>Loading…</div>
           )}
         </Section>
       </main>
 
       {/* Footer */}
-      <footer style={{ textAlign: 'center', padding: '24px', fontSize: '0.75rem', color: '#94A3B8' }}>
+      <footer style={{ textAlign: 'center', padding: '24px', fontSize: '0.75rem', color: C.text3 }}>
         SubForge · Python 3.12 · FastAPI · faster-whisper (CTranslate2) · pyannote.audio · FFmpeg · React 19 · TypeScript · Tailwind CSS · Open Source
       </footer>
     </div>
@@ -517,7 +536,7 @@ export function StatusPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section style={{ marginBottom: '32px' }}>
-      <h2 style={{ fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.07em', color: '#64748B', marginBottom: '12px' }}>
+      <h2 style={{ fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.07em', color: C.text2, marginBottom: '12px' }}>
         {title}
       </h2>
       {children}

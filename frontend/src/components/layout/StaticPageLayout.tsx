@@ -12,10 +12,10 @@ export function StaticPageLayout({ children }: Props) {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#F1F5F9',
-      fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
+      background: 'var(--color-bg)',
+      fontFamily: 'var(--font-family-sans)',
       fontSize: '14px',
-      color: '#0F172A',
+      color: 'var(--color-text)',
       WebkitFontSmoothing: 'antialiased',
     }}>
       <AppHeader />
@@ -26,18 +26,18 @@ export function StaticPageLayout({ children }: Props) {
         {children}
       </main>
       <footer style={{
-        borderTop: '1px solid #E2E8F0',
+        borderTop: '1px solid var(--color-border)',
         marginTop: '64px',
         padding: '22px 24px',
         textAlign: 'center',
         fontSize: '0.73rem',
-        color: '#94A3B8',
+        color: 'var(--color-text-3)',
       }}>
         &copy; 2026 SubForge &mdash; Open-source subtitle generator &mdash;{' '}
         <a href="https://github.com/volehuy1998/subtitle-generator" target="_blank" rel="noopener"
-          style={{ color: '#94A3B8' }}
-          onMouseEnter={e => (e.currentTarget.style.color = '#863bff')}
-          onMouseLeave={e => (e.currentTarget.style.color = '#94A3B8')}
+          style={{ color: 'var(--color-text-3)' }}
+          onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-primary)')}
+          onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-text-3)')}
         >GitHub</a>
       </footer>
     </div>
