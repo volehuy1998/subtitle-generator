@@ -4,7 +4,7 @@ description: Security work completed 2026-03-15 — CodeQL fixes and automated s
 type: project
 ---
 
-**Why:** The codebase had 30 open CodeQL alerts. PR #85 (Meridian memory sync) leaked a public IP. Both needed to be addressed.
+**Why:** The codebase had 30 open CodeQL alerts. PR #85 (memory sync) leaked a public IP. Both needed to be addressed.
 
 **How to apply:** When touching auth/API key code, be aware of the PBKDF2 migration and the API key hash migration blocker.
 

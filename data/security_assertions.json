@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "003cc48",
-    "sha_full": "003cc48e24db59381e7286592a765163b4c93f67",
-    "datetime": "2026-03-15T05:59:57+07:00",
-    "message": "fix(ci): scan only changed files in memory backup validation"
+    "sha": "10f931c",
+    "sha_full": "10f931c24f98b2de869d0ed283aa3d638ad930dc",
+    "datetime": "2026-03-15T06:13:56+07:00",
+    "message": "chore: remove all Meridian team references from repository"
   },
   "assertions": [
     {

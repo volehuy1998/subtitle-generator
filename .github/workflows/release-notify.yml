@@ -74,7 +74,7 @@ jobs:
               '- [ ] CHANGELOG.md updated',
               '- [ ] No known regressions in this release',
               '',
-              '## Team Meridian — deployment checklist',
+              '## Deployment checklist',
               '',
               `- [ ] Pull new Docker image: \`docker pull ghcr.io/${repo}:${version}\``,
               '- [ ] Review changelog entries above for breaking changes',
@@ -93,8 +93,8 @@ jobs:
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `Deploy ${tag} — joint deployment checklist`,
+              title: `Deploy ${tag} — deployment checklist`,
               body: body,
-              labels: ['deployment', 'sentinel', 'meridian'],
+              labels: ['deployment', 'sentinel'],
               assignees: [actor],
             });
