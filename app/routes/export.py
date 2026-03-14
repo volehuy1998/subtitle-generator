@@ -5,11 +5,13 @@ import logging
 import uuid
 import zipfile
 from pathlib import Path
+from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query, Request
 
 from app import state
 from app.config import OUTPUT_DIR
+from app.utils.validation import safe_path
 
 logger = logging.getLogger("subtitle-generator")
 router = APIRouter(tags=["Download"])
@@ -21,7 +23,7 @@ _share_links: dict[str, dict] = {}
 @router.get("/export/bulk")
 async def bulk_export(
     request: Request,
-    format: str = Query("srt", description="Subtitle format: srt, vtt, or json"),
+    format: Literal["srt", "vtt", "json"] = Query("srt", description="Subtitle format: srt, vtt, or json"),
     session_only: bool = Query(True, description="Export only your tasks"),
 ):
     """Download all completed subtitles as a ZIP archive.
@@ -39,7 +41,7 @@ async def bulk_export(
             continue
 
         filename_base = Path(t.get("filename", "unknown")).stem
-        subtitle_path = OUTPUT_DIR / f"{tid}.{format}"
+        subtitle_path = safe_path(OUTPUT_DIR / f"{tid}.{format}", allowed_dir=OUTPUT_DIR)
         if subtitle_path.exists():
             files_to_zip.append((f"{filename_base}.{format}", subtitle_path))
 
@@ -91,7 +93,7 @@ async def create_share_link(task_id: str):
 @router.get("/share/{share_id}/download")
 async def download_shared(
     share_id: str,
-    format: str = Query("srt", description="srt, vtt, or json"),
+    format: Literal["srt", "vtt", "json"] = Query("srt", description="srt, vtt, or json"),
 ):
     """Download subtitles via a share link (no authentication required)."""
     link = _share_links.get(share_id)
@@ -99,13 +101,9 @@ async def download_shared(
         raise HTTPException(404, "Share link not found or expired")
 
     task_id = link["task_id"]
-    subtitle_path = OUTPUT_DIR / f"{task_id}.{format}"
+    subtitle_path = safe_path(OUTPUT_DIR / f"{task_id}.{format}", allowed_dir=OUTPUT_DIR)
     if not subtitle_path.exists():
         raise HTTPException(404, f"Subtitle file not found ({format})")
-
-    # Security check
-    if not str(subtitle_path.resolve()).startswith(str(OUTPUT_DIR.resolve())):
-        raise HTTPException(403, "Access denied")
 
     from fastapi.responses import FileResponse
 

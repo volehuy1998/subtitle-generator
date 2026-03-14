@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "47be23b",
-    "sha_full": "47be23b43612b2511d4e2c60e24bc9c29e67d7e4",
-    "datetime": "2026-03-15T03:37:51+07:00",
-    "message": "feat(ci): automated cross-team collaboration (CODEOWNERS + release notify + deploy validation)"
+    "sha": "733b6b3",
+    "sha_full": "733b6b358f9db4afab4e17ab69d36af5c6e92de2",
+    "datetime": "2026-03-15T04:20:04+07:00",
+    "message": "security: resolve 30 CodeQL alerts across 8 vulnerability categories"
   },
   "assertions": [
     {

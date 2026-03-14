@@ -304,8 +304,8 @@ async def check_db_health() -> dict:
             "ok": True,
         }
     except Exception as e:
+        logger.error(f"DB health check failed: {e}", exc_info=True)
         return {
             "status": "unhealthy",
-            "error": str(e),
             "ok": False,
         }

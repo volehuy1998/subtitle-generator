@@ -443,9 +443,10 @@ async def resolve_incident_api(incident_id: int, request: Request):
     try:
         ok = await resolve_incident(incident_id, message)
     except Exception as e:
+        logger.error(f"STATUS resolve_incident failed: {e}", exc_info=True)
         from fastapi.responses import JSONResponse
 
-        return JSONResponse(status_code=500, content={"detail": f"Database error: {e}"})
+        return JSONResponse(status_code=500, content={"detail": "Failed to resolve incident"})
     if not ok:
         from fastapi.responses import JSONResponse
 
@@ -562,8 +563,8 @@ async def status_commits():
         _commits_cache["ts"] = now
         return result
     except Exception as e:
-        logger.error(f"STATUS commits failed: {e}")
-        return {"commits": [], "error": str(e)}
+        logger.error(f"STATUS commits failed: {e}", exc_info=True)
+        return {"commits": []}
 
 
 _page_cache: dict = {"data": None, "expires": 0.0}

@@ -14,6 +14,7 @@ from app import state
 from app.config import OUTPUT_DIR, STORAGE_BACKEND
 from app.logging_setup import log_task_event
 from app.utils.access import check_task_access
+from app.utils.validation import safe_path
 
 logger = logging.getLogger("subtitle-generator")
 router = APIRouter(tags=["Download"])
@@ -50,24 +51,17 @@ async def download(task_id: str, request: Request, format: Literal["srt", "vtt",
     media_type = media_types.get(format, "text/plain")
 
     if STORAGE_BACKEND == "s3":
-        # Try S3 pre-signed URL first
         from app.services.storage import get_storage
 
         storage = get_storage()
-        # Ensure file is available locally (download from S3 if needed)
         local_path = storage.get_output_path(filename)
         if local_path is None:
             raise HTTPException(404, f"{format.upper()} file not found")
-        sub_path = local_path
+        sub_path = safe_path(local_path, allowed_dir=OUTPUT_DIR)
     else:
-        sub_path = OUTPUT_DIR / filename
+        sub_path = safe_path(OUTPUT_DIR / filename, allowed_dir=OUTPUT_DIR)
         if not sub_path.exists():
             raise HTTPException(404, f"{format.upper()} file not found")
-
-    # Security: verify path is within OUTPUT_DIR
-    resolved = sub_path.resolve()
-    if not str(resolved).startswith(str(OUTPUT_DIR.resolve())):
-        raise HTTPException(403, "Access denied")
 
     logger.info(f"DOWNLOAD [{task_id[:8]}] Serving {original_name}")
     log_task_event(task_id, "downloaded", filename=original_name, format=format)

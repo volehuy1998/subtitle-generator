@@ -122,12 +122,12 @@ class TestCSPUpdate:
     def test_csp_allows_google_fonts_stylesheet(self):
         res = client.get("/")
         csp = res.headers.get("Content-Security-Policy", "")
-        assert "https://fonts.googleapis.com" in csp
+        assert any(token.startswith("https://fonts.googleapis.com") for token in csp.split())
 
     def test_csp_allows_google_fonts_files(self):
         res = client.get("/")
         csp = res.headers.get("Content-Security-Policy", "")
-        assert "https://fonts.gstatic.com" in csp
+        assert any(token.startswith("https://fonts.gstatic.com") for token in csp.split())
 
 
 # ── S11-7: Benchmark Regression Tests ──
