@@ -40,7 +40,7 @@ async def bulk_export(
         if session_only and t.get("session_id") != session_id:
             continue
 
-        filename_base = Path(t.get("filename", "unknown")).stem
+        filename_base = Path(Path(t.get("filename", "unknown")).name).stem
         subtitle_path = safe_path(OUTPUT_DIR / f"{tid}.{format}", allowed_dir=OUTPUT_DIR)
         if subtitle_path.exists():
             files_to_zip.append((f"{filename_base}.{format}", subtitle_path))
