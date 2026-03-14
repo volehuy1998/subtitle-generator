@@ -4,25 +4,28 @@ description: Open work items as of 2026-03-15
 type: project
 ---
 
-As of 2026-03-15, CI is fully green. All known ESLint errors resolved.
+As of 2026-03-15, all open PRs resolved. CI fully green.
 
-## Recently completed (2026-03-15)
+## Completed this session (2026-03-15)
 
-- **release-please automation** — PR #63 merged
-- **ESLint mask removed** — PR #65 merged: removed `|| true` from CI, fixed all 5 hidden ESLint errors
-- **Team Meridian issues #67–#72** — all resolved and merged (PRs #68–#74)
-- **release-please / v2.2.0** — PR #64 merged; Docker image published; PR #76 merged (.env.example PROD_IMAGE_TAG bump)
-- **PR #80 merged** — Quill's Configuration Best Practices section in DEPLOY.md (resolves Issue #78)
-- **RFC #82 + PR #83** — Cross-team automation (CODEOWNERS + release-notify.yml + deploy-validate CI job + CONTRIBUTING.md §10). PR #83 open, awaiting Meridian review (48h SLA).
+- **PR #80 MERGED** — Quill's Configuration Best Practices in DEPLOY.md (resolves #78)
+- **PR #83 MERGED** — Cross-team automation (CODEOWNERS + release-notify.yml + deploy-validate CI + CONTRIBUTING.md §10). Reviewed and approved by both Sentinel and Meridian teams.
+- **PR #79 MERGED** — Team Meridian .meridian/ memory backup. Three rounds of security review; public IP redacted from MEMORY.md index before merge.
+- **Issue #82 CLOSED** — RFC resolved by PR #83
 
 ## Open items
 
-- **PR #83** — Cross-team automation (CODEOWNERS, release-notify.yml, deploy-validate); awaiting Meridian review (due ~2026-03-16T20:40)
-- **PR #79** — Team Meridian .meridian/ memory backup; blocked on Meridian redacting public IP + open DB ports from meridian_server.md
-- **PR #81** — release-please 2.2.1 PR (auto-generated); will auto-merge when next feature lands
+- **PR #81** — release-please 2.3.0 (auto-generated after PR #83 feat merged). Will auto-merge when enough features land. No action needed.
+- **Forge's future note** — CODEOWNERS should migrate from `@volehuy15061998` (individual) to GitHub org team when Meridian grows
 - **Distributed system deployment** — 5-server plan (sub-ctrl, sub-api-1/2, sub-data, sub-worker-1) not yet started
 - **process_video() refactoring** — 514 lines → step functions, deferred
 - **SLOs** — not yet defined
 - **mypy/pyright** — not yet in CI
+
+## Cross-team automation now in place
+
+- CODEOWNERS: 8 deploy-critical files require Meridian co-review (48h SLA)
+- release-notify.yml: joint deployment checklist issue on every release
+- ci.yml deploy-validate: compose config, bash syntax, PROD_IMAGE_TAG consistency
+- 3 new labels: deployment, sentinel, meridian
 </content>
-</invoke>

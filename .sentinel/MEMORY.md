@@ -15,5 +15,5 @@
 - [project_status_page.md](project_status_page.md) — Public status page at /status with auto-incident detection
 - [project_session_20260314.md](project_session_20260314.md) — Major session: UI overhaul, Google SWE standards, Team Sentinel, 17 issues resolved, 10 PRs merged, CodeQL enabled
 - [project_ci_failures.md](project_ci_failures.md) — CI fully green as of 2026-03-15; ESLint mask removed (PR #65), all errors fixed
-- [project_pending_work.md](project_pending_work.md) — Open: distributed deploy, process_video refactor, SLOs, mypy, Team Meridian #37
-- [project_session_20260315.md](project_session_20260315.md) — Session 2026-03-15: CI/CD fixes (PRs #63/#65), subdomain evaluation, PR attribute standards
+- [project_pending_work.md](project_pending_work.md) — Open: PR #81 (release-please), distributed deploy, process_video refactor, SLOs, mypy
+- [project_session_20260315.md](project_session_20260315.md) — Session 2026-03-15 (full day): ESLint fix, Meridian issues #67–72, v2.2.0 release, cross-team automation (PRs #79/#80/#83), all resolved
