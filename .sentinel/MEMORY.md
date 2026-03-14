@@ -16,6 +16,7 @@
 - [project_status_page.md](project_status_page.md) — Public status page at /status with auto-incident detection
 - [project_session_20260314.md](project_session_20260314.md) — Major session: UI overhaul, Google SWE standards, Team Sentinel, 17 issues resolved, 10 PRs merged, CodeQL enabled
 - [project_ci_failures.md](project_ci_failures.md) — CI fully green as of 2026-03-15; ESLint mask removed (PR #65), all errors fixed
-- [project_pending_work.md](project_pending_work.md) — Open: PRs #86/#87/#88 queued, API key migration blocker, distributed deploy, SLOs, mypy
+- [project_pending_work.md](project_pending_work.md) — All PRs cleared as of session 4. Remaining: API key migration blocker, distributed deploy, SLOs, mypy, CodeQL residual annotations
 - [project_session_20260315.md](project_session_20260315.md) — Session 2026-03-15 (full day): ESLint fix, Meridian issues #67–72, v2.2.0 release, cross-team automation (PRs #79/#80/#83), all resolved
 - [project_security_20260315.md](project_security_20260315.md) — 30 CodeQL fixes (PR #86) + automated secret scanning / public IP detection (PR #87)
+- [project_session4_20260315.md](project_session4_20260315.md) — Session 4: PR attribute enforcement (PR #93), retroactive tagging of PRs #86-90, all PRs merged, v2.3.0 released
