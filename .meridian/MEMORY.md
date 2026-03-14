@@ -18,6 +18,7 @@
 - [feedback_delegate_no_bottleneck.md](feedback_delegate_no_bottleneck.md) — Compass must delegate to specialists, never bottleneck tasks at leader level
 - [feedback_author_disclosure.md](feedback_author_disclosure.md) — Every team member must disclose their identity (name, role) when creating any content
 - [feedback_vault_review_before_push.md](feedback_vault_review_before_push.md) — Vault must scan every .meridian/ sync for sensitive data before pushing to GitHub
+- [feedback_always_backup.md](feedback_always_backup.md) — CRITICAL: every memory change must be immediately backed up to GitHub via scripts/meridian-backup.sh
 
 ## Cross-Team Agreements
 - [project_cross_team_agreement.md](project_cross_team_agreement.md) — CODEOWNERS, 48h SLA, release notifications, CI validation — agreed 2026-03-15 via RFC #82
