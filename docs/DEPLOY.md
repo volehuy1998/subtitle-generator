@@ -172,6 +172,109 @@ module.  The script warns you if this applies.
 
 ---
 
+## Configuration Best Practices
+
+### Use a `.env` file — not CLI flags — for secrets and runtime config
+
+CLI flags are convenient for a first deploy, but they are a poor long-term strategy:
+secrets appear in shell history, re-deployments are error-prone if you mistype a value,
+and there is no record of what the running service was configured with.
+
+The recommended workflow is:
+
+```bash
+# 1. Copy the template (one time, on the server)
+cp /opt/subtitle-generator/.env.example /opt/subtitle-generator/.env
+
+# 2. Fill in your values — comments inside explain every variable
+nano /opt/subtitle-generator/.env
+
+# 3. Deploy (and re-deploy) with minimal CLI flags — secrets stay in .env
+sudo bash deploy.sh --domain example.com --email admin@example.com
+```
+
+For bare-metal deployments the script writes environment variables directly into the
+systemd unit.  For Docker deployments the script writes them into `.env`, which
+`docker-compose.yml` reads automatically.  Either way, once `.env` is in place you only
+need the structural flags (`--domain`, `--mode`, `--docker`, etc.) on the command line.
+
+---
+
+### What belongs in `.env`
+
+| Variable | Why it belongs in `.env` |
+|---|---|
+| `API_KEYS` | Secret — must not appear in shell history |
+| `HF_TOKEN` | Secret — Hugging Face download token |
+| `DATABASE_URL` | Environment-specific; differs between dev / staging / prod |
+| `REDIS_URL` | Infrastructure detail that doesn't belong in a CLI flag |
+| `SSL_CERTFILE` / `SSL_KEYFILE` | Paths may change on renewal; centralised in one file |
+| `PRELOAD_MODEL` | Affects startup time; worth documenting alongside other runtime settings |
+| `FILE_RETENTION_HOURS` | Operational tuning — keep with the rest of the config |
+| `CORS_ORIGINS` | Domain-specific; should match `DOMAIN` |
+| `WEBHOOK_ALERT_URL` | Optional integration secret |
+
+See [`.env.example`](../.env.example) for the full list with descriptions and defaults.
+
+---
+
+### What NOT to do
+
+**Do not edit `docker-compose.yml` to hardcode configuration values.**
+`docker-compose.yml` is version-controlled and shared across all deployments.
+Changes made directly to that file will be overwritten the next time you pull from
+`main` (the deploy script runs `git reset --hard origin/BRANCH`).  All
+deployment-specific values belong in `.env`.
+
+**Do not pass `API_KEYS` or tokens as CLI flags.**
+Anything typed at the shell is saved in `.bash_history` and visible in
+`/proc/<pid>/cmdline`.  Use `.env` exclusively for secrets.
+
+**Do not commit `.env` to version control.**
+The file is listed in `.gitignore`.  Commit `.env.example` with placeholder values
+instead, and manage your live `.env` outside of git (or in a secrets manager).
+
+---
+
+### `--env-file` support (future enhancement)
+
+The current script does not accept a `--env-file` flag to pre-seed configuration before
+running.  That enhancement has been tracked as a separate feature request.  For now,
+ensure `.env` exists at `<install-dir>/.env` before running the script.
+
+---
+
+### Reproducibility — re-deploying with the same config
+
+To guarantee that a re-deploy (update or disaster recovery) produces an identical
+configuration:
+
+1. **Keep `.env` under external version control** (private git repo, Vault, AWS Secrets
+   Manager, or even a password manager) — not in the public repository.
+2. **Store the deploy command** alongside it so you always know which structural flags
+   were used:
+
+   ```bash
+   # /root/deploy-cmd.sh  (chmod 700, not committed to the public repo)
+   sudo bash /opt/subtitle-generator/scripts/deploy.sh \
+     --domain example.com \
+     --email  admin@example.com \
+     --preload small
+   # Secrets (API_KEYS, HF_TOKEN, etc.) are read from .env — not repeated here
+   ```
+
+3. **Re-deploy** by restoring `.env` and running the stored command:
+
+   ```bash
+   # Restore .env from your secrets manager, then:
+   bash /root/deploy-cmd.sh
+   ```
+
+The script preserves `.env`, `uploads/`, and `outputs/` across updates, so existing
+files and configuration are never overwritten by a re-run.
+
+---
+
 ## Examples
 
 ```bash
