@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "2ff5656",
-    "sha_full": "2ff5656924371a3d23f710f00dd25053eb3b4e01",
-    "datetime": "2026-03-14T19:15:24+07:00",
-    "message": "fix(middleware): remove fonts.googleapis.com from CSP connect-src"
+    "sha": "5dceca4",
+    "sha_full": "5dceca4510a72e1ade1a1b737fe72d14045e67b8",
+    "datetime": "2026-03-14T19:09:09+07:00",
+    "message": "fix(security): fix post-commit hook feedback loop on last_security_commit"
   },
   "assertions": [
     {

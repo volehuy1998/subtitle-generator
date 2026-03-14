@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+# post-commit hook: auto-update last_security_commit in data/security_assertions.json
+# when the commit touches security-related SOURCE files or has a security-type message.
+#
+# NOTE: data/security_assertions.json is explicitly excluded from the file match
+# because it is this hook's OUTPUT — matching it would create a feedback loop where
+# every commit triggers the hook, which updates the file, which triggers again.
+
+# Guard against re-entry when this hook amends the commit
+[ -n "$GIT_HOOKS_INHIBIT" ] && exit 0
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+ASSERTIONS_FILE="$REPO_ROOT/data/security_assertions.json"
+
+# Check if the commit is security-related by message keyword or file path.
+COMMIT_MSG=$(git log -1 --format="%s")
+# Exclude the assertions JSON itself — it is the output, not the trigger.
+CHANGED_FILES=$(git diff-tree --no-commit-id -r --name-only HEAD | grep -v "^data/security_assertions.json$")
+
+SECURITY_KEYWORDS="security|auth|csp|csrf|xss|sql.inject|injection|tls|ssl|certif|encrypt|password|token|jwt|cors|owasp|vuln|cve|brute.force|rate.limit|sanitiz|escap|validat|firewall|middleware/auth|middleware/brute|middleware/security"
+
+# Match against commit message
+MSG_MATCH=$(echo "$COMMIT_MSG" | grep -iE "$SECURITY_KEYWORDS")
+# Match against changed file paths (assertions JSON already excluded above)
+FILES_MATCH=$(echo "$CHANGED_FILES" | grep -iE "$SECURITY_KEYWORDS")
+
+if [ -z "$MSG_MATCH" ] && [ -z "$FILES_MATCH" ]; then
+    exit 0  # Not a security commit — nothing to do
+fi
+
+# Gather commit metadata
+SHA_FULL=$(git log -1 --format="%H")
+SHA_SHORT=$(git log -1 --format="%h")
+COMMIT_DATE=$(git log -1 --format="%aI")   # ISO 8601 with timezone
+
+echo "[post-commit] Security commit detected — updating $ASSERTIONS_FILE"
+
+# Use Python to update the JSON file in-place (preserves all other fields)
+python3 - <<PYEOF
+import json, sys
+from pathlib import Path
+
+f = Path("$ASSERTIONS_FILE")
+try:
+    data = json.loads(f.read_text())
+except Exception:
+    data = {"assertions": []}
+
+data["last_security_commit"] = {
+    "sha": "$SHA_SHORT",
+    "sha_full": "$SHA_FULL",
+    "datetime": "$COMMIT_DATE",
+    "message": """$COMMIT_MSG""",
+}
+
+f.write_text(json.dumps(data, indent=2) + "\n")
+print(f"[post-commit] Updated last_security_commit to $SHA_SHORT ($COMMIT_DATE)")
+PYEOF
+
+# Stage the updated file and amend silently if it changed
+if ! git diff --quiet "$ASSERTIONS_FILE" 2>/dev/null; then
+    git add "$ASSERTIONS_FILE"
+    # Use --no-edit amend to fold the data update into the same commit
+    GIT_HOOKS_INHIBIT=1 git commit --amend --no-edit --quiet
+fi
