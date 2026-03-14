@@ -26,15 +26,17 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
         response.headers["X-XSS-Protection"] = "1; mode=block"
-        # CSP: allow inline styles/scripts for the single-page template
+        # CSP: allow inline styles/scripts for the single-page template.
+        # fonts.googleapis.com serves the stylesheet; fonts.gstatic.com serves
+        # the actual font files. Both are required for Google Fonts to load.
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
             "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
-            "style-src 'self' 'unsafe-inline'; "
-            "connect-src 'self'; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "connect-src 'self' https://fonts.googleapis.com; "
             "img-src 'self' data:; "
             "media-src 'self' blob:; "
-            "font-src 'self'"
+            "font-src 'self' https://fonts.gstatic.com"
         )
 
         # Cache headers for static-like endpoints

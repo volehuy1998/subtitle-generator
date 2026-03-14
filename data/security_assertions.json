@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "98dd9fe",
-    "sha_full": "98dd9fefd4227c81723334f67ec5d3b57a4cd17a",
-    "datetime": "2026-03-14T18:01:22+07:00",
-    "message": "feat(ui): Enterprise Slate dark theme \u2014 corporate redesign"
+    "sha": "240ca2a",
+    "sha_full": "240ca2a45733b460bb1212549b8be7334e649797",
+    "datetime": "2026-03-14T19:02:15+07:00",
+    "message": "fix(security): allow Google Fonts in CSP so brand fonts load correctly"
   },
   "assertions": [
     {
