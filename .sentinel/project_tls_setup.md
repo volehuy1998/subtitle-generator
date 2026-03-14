@@ -4,10 +4,9 @@ description: TLS cert obtained, main.py updated with HTTPS+HTTP redirect, DEPLOY
 type: project
 ---
 
-TLS certificate for openlabs.club obtained via Certbot:
-- Cert: /etc/letsencrypt/live/openlabs.club/fullchain.pem
-- Key: /etc/letsencrypt/live/openlabs.club/privkey.pem
-- Expires: 2026-06-10 (auto-renewal configured)
+TLS certificate obtained via Certbot for the production domain:
+- Cert and key paths configured via `SSL_CERTFILE` and `SSL_KEYFILE` env vars
+- Auto-renewal configured via Certbot systemd timer
 
 main.py updated to run HTTPS on port 443 + HTTP→HTTPS redirect on port 80 (dual uvicorn servers via asyncio.gather).
 
