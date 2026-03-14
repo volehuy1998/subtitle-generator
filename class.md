@@ -1316,3 +1316,425 @@ Current version: `2.0.0` (from `app/main.py` FastAPI version).
 8. Retroactively tag past releases based on git history
 9. Add CONTRIBUTING.md referencing these standards
 10. Set up automated changelog generation from Conventional Commits
+
+---
+
+## 6. Google Software Engineering Standards
+
+This section maps practices from Google's engineering culture to the SubForge project, drawing primarily from *Software Engineering at Google* (Winters, Manshreck, Wright, 2020), the *Google SRE Book* (Beyer et al., 2016), Google's public style guides (https://google.github.io/styleguide/), and the release-please automation tool (https://github.com/googleapis/release-please).
+
+### 6.1 Code Review (Google Engineering Practices)
+
+Google treats code review as the single most important quality gate. Their publicly documented guidelines (https://google.github.io/eng-practices/) define three distinct approval dimensions and strict turnaround expectations.
+
+**Three approval dimensions:**
+
+| Dimension | What the reviewer checks | SubForge mapping |
+|-----------|------------------------|------------------|
+| **Correctness** | Does the code do what it claims? Are there bugs, race conditions, edge cases? | Any reviewer can approve correctness |
+| **Ownership** | Does this change belong in this part of the codebase? Does it fit the module architecture? | Module owners (route owner, service owner) approve ownership |
+| **Readability** | Does the code follow style, conventions, and idioms? Is it maintainable? | Readability-approved reviewers (those who know the project conventions) |
+
+**Key practices to adopt:**
+
+- **Small CLs (changelists):** Target < 400 lines per PR. Research shows reviewer effectiveness drops sharply after 400 lines. Large changes should be split into stacked PRs (e.g., refactor first, then feature, then tests).
+- **One business day turnaround:** Reviews should be completed within one business day. If you cannot review in time, reassign or acknowledge with an ETA.
+- **"Nit:" prefix:** Use `Nit:` for non-blocking style suggestions that the author can choose to address or ignore. This reduces review friction by clearly separating must-fix from nice-to-have.
+- **CODEOWNERS file:** GitHub's CODEOWNERS mechanism auto-assigns reviewers based on file paths, implementing Google's concept of per-directory ownership.
+
+**Action items for SubForge:**
+- Add a `CODEOWNERS` file mapping module paths to owners:
+  ```
+  # Backend
+  /app/services/pipeline.py    @backend-lead
+  /app/services/transcription.py @backend-lead
+  /app/routes/                 @backend-lead
+  /app/middleware/              @backend-lead
+  /app/db/                     @backend-lead
+
+  # Frontend
+  /frontend/src/               @frontend-lead
+
+  # Infrastructure
+  /docker-compose.yml          @infra-lead
+  /.github/                    @infra-lead
+  /deploy/                     @infra-lead
+  ```
+- Enforce PR size warnings: add a CI check or GitHub Action that warns when a PR exceeds 400 lines changed.
+- Document the three approval dimensions in the PR template so reviewers know what to look for.
+
+### 6.2 Testing (Google Test Pyramid)
+
+Google's testing philosophy is built around the test pyramid, size-based classification, and pragmatic rules like the Beyonce Rule.
+
+**Test pyramid target ratios:**
+
+| Layer | Target % | SubForge current state | What it covers |
+|-------|----------|----------------------|----------------|
+| Unit (Small) | ~80% | ~1300 tests in pytest, most are unit-level | Individual functions, classes, pure logic |
+| Integration (Medium) | ~15% | Some ASGI transport tests against FastAPI app | Module interactions, API contracts, DB queries |
+| E2E (Large) | ~5% | Playwright tests in `tests/e2e/` | Full browser flows, upload-to-download |
+
+**Test size definitions (Google internal classification):**
+
+| Size | Constraints | Time limit | SubForge examples |
+|------|------------|------------|-------------------|
+| **Small** | No I/O, no network, no disk, no sleep. Single process, single thread. | < 60 seconds | `test_srt.py`, `test_formatting.py`, pure function tests |
+| **Medium** | Localhost only (no external services). Can use disk, localhost network. | < 300 seconds | `test_api.py` (ASGI transport), `test_combine.py`, DB tests |
+| **Large** | Can access external services, real network, real GPU. | < 900 seconds | `tests/e2e/` (Playwright), full pipeline with real Whisper model |
+
+**The Beyonce Rule:** "If you liked it, then you shoulda put a test on it." If a behavior matters to your system, it must be covered by an automated test. Unwritten expectations are not contracts -- only tested behavior is guaranteed. This is especially relevant for SubForge's SSE event protocol, pipeline step ordering, and error handling paths.
+
+**DAMP over DRY in tests:** Google prefers tests that are "Descriptive and Meaningful Phrases" over "Don't Repeat Yourself." Test code should prioritize clarity over abstraction. Each test should be readable in isolation without jumping to shared helpers. Duplication in tests is acceptable when it makes the test self-documenting.
+
+**Flaky test target:** Google targets a flaky test rate below 0.15%. A flaky test is one that passes and fails without any code change. Flaky tests erode confidence in CI and train developers to ignore red builds. Track flaky tests explicitly and fix or quarantine them within one week.
+
+**Action items for SubForge:**
+- Add pytest markers for test sizes:
+  ```python
+  # conftest.py
+  import pytest
+
+  def pytest_configure(config):
+      config.addinivalue_line("markers", "small: unit tests, no I/O (< 60s)")
+      config.addinivalue_line("markers", "medium: integration tests, localhost only (< 300s)")
+      config.addinivalue_line("markers", "large: e2e tests, may use external services (< 900s)")
+  ```
+- Mark existing tests with `@pytest.mark.small`, `@pytest.mark.medium`, or `@pytest.mark.large`.
+- Configure fast presubmit to run only small tests: `pytest -m small`.
+- Add flaky test tracking: log test results over time and flag tests that fail intermittently.
+- Apply the Beyonce Rule to SSE event contracts, pipeline step ordering, and translation fallback paths.
+
+### 6.3 Documentation (Docs as Code)
+
+Google classifies documentation into five types, each serving a different audience and purpose. Documentation is treated as code: it lives in the repository, is reviewed in PRs, and is tested for freshness.
+
+**Five documentation types:**
+
+| Type | Purpose | SubForge example |
+|------|---------|-----------------|
+| **Reference** | API docs, function signatures, parameter descriptions | Swagger/OpenAPI auto-generated from FastAPI route docstrings |
+| **Design docs** | Explain *why* a system works the way it does, trade-offs considered | Architecture decisions (e.g., why Zustand over Redux, why SSE over WebSocket-only) |
+| **Tutorials** | Step-by-step guides for new users | "How to transcribe your first file" walkthrough |
+| **Conceptual** | Explain concepts needed to understand the system | Pipeline flow explanation, translation modes comparison |
+| **Landing pages** | Navigation hubs that point to other docs | CLAUDE.md serves this role currently |
+
+**Google Python docstring style:**
+```python
+def transcribe_audio(file_path: str, model_size: str = "base", language: str | None = None) -> list[dict]:
+    """Transcribe an audio file using faster-whisper.
+
+    Loads or reuses a cached model, extracts audio to WAV if needed,
+    and runs transcription with beam search.
+
+    Args:
+        file_path: Absolute path to the input audio or video file.
+        model_size: Whisper model size (tiny/base/small/medium/large).
+        language: ISO 639-1 language code, or None for auto-detection.
+
+    Returns:
+        List of segment dicts with keys: start, end, text, words.
+
+    Raises:
+        FileNotFoundError: If file_path does not exist.
+        TranscriptionError: If whisper fails to process the audio.
+    """
+```
+
+**Comments explain WHY, not WHAT:** Code should be self-documenting for *what* it does. Comments are reserved for *why* a particular approach was chosen, non-obvious constraints, or workarounds. Bad: `# increment counter`. Good: `# Retry up to 3 times because the model loader occasionally fails on first load due to a CTranslate2 race condition`.
+
+**Action items for SubForge:**
+- Add module-level docstrings to all files in `app/routes/` and `app/services/` explaining the module's responsibility and key behaviors.
+- Adopt Google-style docstrings (Args/Returns/Raises) for all public functions.
+- Audit existing comments: remove "what" comments, add "why" comments where trade-offs or workarounds exist.
+- Treat CLAUDE.md as the landing page; add links to design docs for major subsystems (pipeline, translation, embedding).
+
+### 6.4 Style Guides
+
+Google maintains language-specific style guides that are publicly available. The key principle: 90% of style rules should be auto-enforced by tooling, so code reviews focus on logic rather than formatting.
+
+**Google Python Style Guide key rules (https://google.github.io/styleguide/pyguide.html):**
+
+| Rule | Current SubForge state | Action |
+|------|----------------------|--------|
+| Import ordering (stdlib, third-party, local) | Not enforced | Enable ruff rule `I` (isort) |
+| No wildcard imports (`from x import *`) | Not enforced | Enable ruff rule `F403` (already in `F` selection) |
+| Naming: `snake_case` functions/vars, `PascalCase` classes | Followed by convention | No change needed |
+| Type hints on all public functions | Partial | Add mypy or pyright to CI |
+| Logging with `%s` format, not f-strings | Not followed (f-strings used in logging) | Enable ruff rule `G` (logging-format) |
+| No bare `except:` | Not enforced | Enable ruff rule `E722` (already in `E` selection) |
+| Avoid mutable default arguments | Not enforced | Enable ruff rule `B006` via `B` (bugbear) |
+| Use `collections.abc` for type hints, not `typing` | Not enforced | Enable ruff rule `UP` (pyupgrade) |
+
+**Google TypeScript Style Guide key rules (https://google.github.io/styleguide/tsguide.html):**
+
+| Rule | Current SubForge state | Action |
+|------|----------------------|--------|
+| Use `interface` over `type` for object shapes | Mixed usage | Add ESLint rule `@typescript-eslint/consistent-type-definitions` |
+| `const` by default, `let` only when reassignment needed | Mostly followed | No change needed |
+| No `any` type | PR checklist item, not enforced | Make `@typescript-eslint/no-explicit-any` an error |
+| Named exports over default exports | Mixed usage | Add ESLint rule `import/no-default-export` |
+| Use `readonly` for properties that should not change | Not enforced | Add `@typescript-eslint/prefer-readonly` |
+
+**Tooling enforcement target (90% auto-enforced):**
+
+| Tool | Purpose | Current | Target |
+|------|---------|---------|--------|
+| `ruff check` | Python linting | `E,F,W` rules only | Add `I,B,UP,SIM,G` rule sets |
+| `ruff format` | Python formatting | Not used | Enable, replace manual formatting |
+| ESLint | TypeScript linting | Configured but not blocking CI | Make blocking in CI |
+| mypy or pyright | Python type checking | Not configured | Add to CI with gradual strictness |
+| Prettier | Frontend formatting | Not configured | Add for consistent TS/CSS formatting |
+
+**Action items for SubForge:**
+- Expand ruff configuration to include rules `I` (import sorting), `B` (bugbear), `UP` (pyupgrade), `SIM` (simplification), and `G` (logging format).
+- Enable `ruff format` for consistent Python formatting.
+- Make ESLint a blocking CI check (fail the build on warnings).
+- Add mypy or pyright with gradual strictness (start with `--ignore-missing-imports`, tighten over time).
+
+### 6.5 CI/CD (Presubmit/Post-submit)
+
+Google splits CI into two stages: a fast presubmit that runs before merge, and a comprehensive post-submit that runs after merge. The key insight is that presubmit must be fast enough that developers never skip it.
+
+**Presubmit (< 2 minutes):**
+- Lint checks (ruff, ESLint, tsc)
+- Small (unit) tests only
+- Commit message format validation
+- Security scanning (no secrets in diff)
+
+**Post-submit (runs on main after merge):**
+- Full test suite (small + medium + large)
+- Code coverage calculation and threshold enforcement
+- Docker build verification
+- Dependency vulnerability scanning (pip-audit, npm audit)
+- Performance benchmarks (optional, track regressions)
+
+**Hermetic testing:** Tests should be fully self-contained and not depend on external state, network services, or execution order. SubForge already does this well with `sys.modules` patching for torch/whisper mocks and ASGI transport for API tests.
+
+**Configuration as code:** All CI configuration lives in version-controlled files (`.github/workflows/`), never in CI platform UI settings. Build steps should be reproducible locally.
+
+**Action items for SubForge:**
+- Split the current CI pipeline into two stages:
+  - **Fast presubmit:** `ruff check` + `tsc -b` + `pytest -m small` (target < 2 min)
+  - **Full post-submit:** All tests + coverage + Docker build + `pip-audit` + `npm audit`
+- Add `pytest -m small` as the presubmit test command.
+- Add `pytest --cov=app --cov-fail-under=70` to post-submit for coverage enforcement.
+- Ensure all CI steps can be run locally with a single `make ci-fast` or `make ci-full` command.
+
+### 6.6 SRE Practices (Four Golden Signals)
+
+Google's SRE book defines four golden signals that every service should monitor. These signals, combined with SLOs and error budgets, form the foundation of reliable operations.
+
+**Four Golden Signals:**
+
+| Signal | What to measure | SubForge implementation |
+|--------|----------------|------------------------|
+| **Latency** | Time to serve a request (p50, p95, p99) | Track per-route response times in `app/services/analytics.py`. Separate successful vs failed request latency. |
+| **Traffic** | Requests per second by endpoint | Already tracked via analytics counters. Add per-route breakdown. |
+| **Errors** | Error rate by type (4xx client, 5xx server, timeout) | Track via middleware. Separate validation errors (expected) from server errors (unexpected). |
+| **Saturation** | Resource utilization approaching limits | Already monitored: CPU, RAM, disk, VRAM via `health_monitor.py`. Add task queue depth (semaphore utilization). |
+
+**SLIs, SLOs, and SLAs:**
+
+| Term | Definition | SubForge example |
+|------|-----------|-----------------|
+| **SLI** (Service Level Indicator) | A quantitative measure of service behavior | "Percentage of /upload requests completing in < 5s" |
+| **SLO** (Service Level Objective) | A target value for an SLI | "99.5% of uploads complete in < 5s over a 30-day window" |
+| **SLA** (Service Level Agreement) | A contract with consequences for missing SLOs | Not applicable (internal service), but SLOs still drive prioritization |
+
+**Proposed SLOs for SubForge:**
+
+| SLO | Target | Measurement |
+|-----|--------|-------------|
+| Upload availability | 99.5% of uploads accepted (non-5xx) over 30 days | Error rate on POST /upload |
+| Transcription success rate | 99% of transcriptions complete without error | Pipeline completion rate |
+| API latency (non-transcription) | p99 < 500ms for health, download, status endpoints | Per-route latency tracking |
+| SSE delivery | 99.9% of pipeline events delivered to connected clients | Event delivery confirmation |
+
+**Error budgets:** If the SLO is 99.5% availability, the error budget is 0.5% (approximately 3.6 hours of downtime per month). When the error budget is nearly exhausted, freeze feature work and focus on reliability. When the error budget is healthy, invest in features.
+
+**Blameless postmortems:** When incidents occur, conduct a blameless postmortem focused on systemic causes, not individual blame. Document: what happened, timeline, root cause, what went well, what could be improved, and action items with owners. Store postmortems in a `postmortems/` directory in the repository.
+
+**Action items for SubForge:**
+- Define SLOs for the four golden signals (see proposed SLOs above).
+- Add latency percentile tracking (p50/p95/p99) to the analytics service, broken down by route.
+- Add task queue saturation metric: `active_tasks / MAX_CONCURRENT_TASKS`.
+- Create a postmortem template in `.github/POSTMORTEM_TEMPLATE.md`:
+  ```markdown
+  # Postmortem: [Incident Title]
+  **Date:** YYYY-MM-DD
+  **Duration:** X hours
+  **Impact:** [What was affected, how many users]
+
+  ## Timeline
+  - HH:MM — [Event]
+
+  ## Root Cause
+  [Systemic cause, not individual blame]
+
+  ## What Went Well
+  - [Thing that helped]
+
+  ## What Could Be Improved
+  - [Process gap]
+
+  ## Action Items
+  - [ ] [Action] — Owner: @person — Due: YYYY-MM-DD
+  ```
+
+### 6.7 Dependency Management
+
+Google is famously skeptical of external dependencies, governed by the principle of Hyrum's Law: "With a sufficient number of users of an API, all observable behaviors of your system will be depended on by somebody." This means that even patch-version upgrades can break your system if you depend on undocumented behavior.
+
+**Key practices:**
+
+- **Pin exact versions:** Use `==` in `requirements.txt`, not `>=` or `~=`. Lock files (`package-lock.json`) must be committed. Reproducible builds require deterministic dependency resolution.
+- **Audit for vulnerabilities:** Run `pip-audit` (Python) and `npm audit` (Node.js) in CI. Block merges on known high/critical CVEs.
+- **SemVer skepticism (Hyrum's Law):** Do not trust that a minor or patch version bump is backward-compatible. Always test after dependency upgrades. Treat every upgrade as potentially breaking.
+- **Minimize dependency count:** Every dependency is a liability (maintenance burden, security surface, build complexity). Before adding a dependency, ask: can we write this in < 100 lines? Is the dependency actively maintained? Does it pull in a large transitive tree?
+
+**Action items for SubForge:**
+- Pin all versions in `requirements.txt` to exact versions (`faster-whisper==1.1.0`, not `faster-whisper>=1.0`).
+- Commit `frontend/package-lock.json` (already done) and verify it is up to date.
+- Add `pip-audit` to CI post-submit stage:
+  ```yaml
+  - name: Audit Python dependencies
+    run: pip install pip-audit && pip-audit -r requirements.txt
+  ```
+- Add `npm audit` to CI post-submit stage:
+  ```yaml
+  - name: Audit Node dependencies
+    run: cd frontend && npm audit --audit-level=high
+  ```
+- Configure Dependabot (`.github/dependabot.yml`) for automated dependency update PRs:
+  ```yaml
+  version: 2
+  updates:
+    - package-ecosystem: "pip"
+      directory: "/"
+      schedule:
+        interval: "weekly"
+    - package-ecosystem: "npm"
+      directory: "/frontend"
+      schedule:
+        interval: "weekly"
+  ```
+
+### 6.8 Version Control (Trunk-Based Development)
+
+Google practices trunk-based development: all developers work off a single main branch, with short-lived feature branches that merge back quickly. This minimizes merge conflicts and integration pain.
+
+**Key practices:**
+
+- **Short-lived branches (< 1 week):** Branches that live longer than a week accumulate merge conflicts and integration risk. If a feature takes longer than a week, break it into smaller increments that can be merged independently.
+- **Small commits:** Each commit should represent a single logical change. This makes bisecting easier, code review faster, and reverts safer. Target < 400 lines per commit (same as PR size guidance).
+- **Feature flags over long branches:** Instead of keeping a feature branch alive until the feature is complete, merge incomplete features behind a flag. This keeps main moving forward and allows testing in production without exposing unfinished work.
+  ```python
+  # app/config.py
+  ENABLE_SPEAKER_DIARIZATION = os.getenv("ENABLE_SPEAKER_DIARIZATION", "true").lower() == "true"
+  ENABLE_BATCH_UPLOAD = os.getenv("ENABLE_BATCH_UPLOAD", "false").lower() == "true"  # WIP feature
+  ```
+- **release-please for automated versioning:** Google's open-source tool `release-please` (https://github.com/googleapis/release-please) automates version bumps and changelog generation from Conventional Commits. It creates a "release PR" that, when merged, tags the release and generates a GitHub Release with a changelog.
+
+**Action items for SubForge:**
+- Configure release-please via GitHub Action:
+  ```yaml
+  # .github/workflows/release.yml
+  name: Release
+  on:
+    push:
+      branches: [main]
+  jobs:
+    release:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: googleapis/release-please-action@v4
+          with:
+            release-type: python
+            package-name: subforge
+  ```
+- Tag the current state as `v2.0.0` (initial release baseline).
+- Tag the next release as `v2.1.0` after merging current pending work (multi-model preload, distributed deploy).
+- Enforce the one-week branch lifetime: add a CI check or bot that warns on branches older than 7 days.
+
+### 6.9 Deprecation
+
+Google's philosophy on deprecation is captured in the principle: "Code is a liability, not an asset." Every line of code has a maintenance cost: it must be understood, tested, secured, and migrated when dependencies change. Removing code is always a net positive if the code is no longer needed.
+
+**Two deprecation modes:**
+
+| Mode | Description | SubForge example |
+|------|------------|-----------------|
+| **Advisory** | Mark as deprecated with warnings, provide migration path, remove after grace period | Deprecating an old API endpoint version while the new one is available |
+| **Compulsory** | Set a hard removal deadline, actively migrate callers, remove on schedule | Removing a feature flag after the feature is fully launched |
+
+**Deprecation process:**
+1. **Identify:** Find unused or redundant code through usage analytics, test coverage gaps, and code review.
+2. **Announce:** Mark with `@deprecated` decorator/comment, log warnings on use, update docs.
+3. **Migrate:** Move callers to the replacement. Provide examples.
+4. **Remove:** Delete the code, remove tests, update imports.
+
+**Action items for SubForge:**
+- Audit for dead code: identify routes, services, and utility functions that are never called or tested.
+- Check for unused routes: compare `app/routes/__init__.py` registrations against actual frontend API calls in `frontend/src/api/client.ts`.
+- Check for unused services: look for service modules that are imported but never called from routes or pipeline.
+- Remove or consolidate redundant endpoints (e.g., if both polling and SSE provide the same data, consider deprecating polling).
+- Add a `@deprecated` decorator for Python functions scheduled for removal:
+  ```python
+  import warnings
+  import functools
+
+  def deprecated(reason: str):
+      def decorator(func):
+          @functools.wraps(func)
+          def wrapper(*args, **kwargs):
+              warnings.warn(
+                  f"{func.__name__} is deprecated: {reason}",
+                  DeprecationWarning,
+                  stacklevel=2,
+              )
+              return func(*args, **kwargs)
+          return wrapper
+      return decorator
+  ```
+
+### 6.10 Priority Action Items
+
+Ranked by impact-to-effort ratio, organized into three time horizons.
+
+**Immediate (this session):**
+
+| Action | Effort | Impact | Reference |
+|--------|--------|--------|-----------|
+| Add `*.pem` to `.gitignore` | 1 min | Prevents accidental secret commit | 6.7 Dependency Management |
+| Create `CODEOWNERS` file | 5 min | Auto-assigns reviewers, enforces ownership | 6.1 Code Review |
+| Enable `ruff format` | 5 min | Consistent Python formatting, eliminates style debates | 6.4 Style Guides |
+| Make ESLint blocking in CI | 5 min | Catches TypeScript issues before merge | 6.4 Style Guides |
+
+**Short-term (this month):**
+
+| Action | Effort | Impact | Reference |
+|--------|--------|--------|-----------|
+| Split CI into fast presubmit / full post-submit | 2 hours | Faster PR feedback loop (< 2 min presubmit) | 6.5 CI/CD |
+| Pin all dependency versions | 1 hour | Reproducible builds, prevents surprise breakage | 6.7 Dependency Management |
+| Add pytest markers `@pytest.mark.small/medium/large` | 2 hours | Enables fast presubmit with small tests only | 6.2 Testing |
+| Add `pip-audit` + `npm audit` to CI | 30 min | Catches known vulnerabilities automatically | 6.7 Dependency Management |
+| Add type annotations to all public functions | 4 hours | Better IDE support, catches bugs at development time | 6.4 Style Guides |
+
+**Medium-term (this quarter):**
+
+| Action | Effort | Impact | Reference |
+|--------|--------|--------|-----------|
+| Define and measure SLOs for four golden signals | 1 week | Data-driven reliability decisions, error budgets | 6.6 SRE Practices |
+| Add mypy/pyright to CI (gradual strictness) | 1 week | Catches type errors, improves maintainability | 6.4 Style Guides |
+| Add property-based testing (Hypothesis) for formatters | 3 days | Finds edge cases in SRT/VTT generation | 6.2 Testing |
+| Create incident runbook and postmortem template | 2 days | Structured incident response, blameless culture | 6.6 SRE Practices |
+| Implement golden signals dashboard (latency percentiles, error rates, saturation) | 1 week | Real-time visibility into service health | 6.6 SRE Practices |
+
+**References:**
+- *Software Engineering at Google* (Winters, Manshreck, Wright, O'Reilly, 2020) — Chapters on code review, testing, deprecation, dependency management, version control
+- *Site Reliability Engineering* (Beyer, Jones, Petoff, Murphy, O'Reilly, 2016) — Chapters on monitoring, SLOs, error budgets, postmortems
+- Google Python Style Guide: https://google.github.io/styleguide/pyguide.html
+- Google TypeScript Style Guide: https://google.github.io/styleguide/tsguide.html
+- Google Engineering Practices (Code Review): https://google.github.io/eng-practices/
+- release-please: https://github.com/googleapis/release-please
