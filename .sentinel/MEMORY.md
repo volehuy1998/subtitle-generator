@@ -1,0 +1,15 @@
+# Memory Index
+
+- [access_privileges.md](access_privileges.md) — Confirmed privileges: full GitHub access (all scopes), full server access, Docker, TLS, CI/CD — granted by investor on 2026-03-14
+- [team_structure.md](team_structure.md) — SubForge engineering team: 11 members (Atlas, Forge, Bolt, Pixel, Prism, Scout, Stress, Harbor, Anchor, Shield, Quill, Hawk) with Google SWE checklists and agent prompt templates
+- [team_meridian.md](team_meridian.md) — Team Meridian: external deployment team (8 members — Compass, Crane, Vault, Gauge, Rudder, Signal, Ballast, Dockhand) who found SubForge on GitHub and file issues about missing production deployment docs
+- [feedback_pr_review_process.md](feedback_pr_review_process.md) — Every PR must have engineer comments (approve/reject/feedback) visible on GitHub before merging. Investor wants transparency.
+- [feedback_detailed_logging.md](feedback_detailed_logging.md) — User values detailed logging for inventory, diagnostics, and planning
+- [reference_repo.md](reference_repo.md) — GitHub repo: volehuy1998/subtitle-generator
+- [project_distributed_system.md](project_distributed_system.md) — 5-server plan: sub-ctrl, sub-api-1/2, sub-data, sub-worker-1; all CPU, PRELOAD_MODEL=all
+- [project_tls.md](project_tls.md) — TLS certificates needed for globally accessible web service
+- [project_tls_setup.md](project_tls_setup.md) — TLS cert obtained, main.py updated with HTTPS+HTTP redirect, DEPLOY.md created
+- [project_status_page.md](project_status_page.md) — Public status page at /status with auto-incident detection
+- [project_session_20260314.md](project_session_20260314.md) — Major session: UI overhaul, Google SWE standards, Team Sentinel, 17 issues resolved, 10 PRs merged, CodeQL enabled
+- [project_ci_failures.md](project_ci_failures.md) — CI fully green as of 2026-03-14; all PRs pass Lint + Test
+- [project_pending_work.md](project_pending_work.md) — Open: distributed deploy, process_video refactor, release-please, SLOs, mypy
