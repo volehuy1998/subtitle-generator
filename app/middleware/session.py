@@ -39,12 +39,15 @@ class SessionMiddleware(BaseHTTPMiddleware):
 
         # Set cookie if new session
         if is_new:
+            # Detect HTTPS (direct TLS or behind a reverse proxy that sets X-Forwarded-Proto)
+            is_https = request.url.scheme == "https" or request.headers.get("x-forwarded-proto", "").lower() == "https"
             response.set_cookie(
                 SESSION_COOKIE,
                 session_id,
                 max_age=SESSION_MAX_AGE,
                 httponly=True,
                 samesite="lax",
+                secure=is_https,
             )
 
         return response

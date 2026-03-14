@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "dea0a53",
-    "sha_full": "dea0a53a46fabf0759250fa139cc3f936d4eb2d0",
-    "datetime": "2026-03-14T19:16:45+07:00",
-    "message": "fix(security): remove manual last_security_commit override from branch"
+    "sha": "95af9c9",
+    "sha_full": "95af9c9dcdc24f80c27070552a59989fe4361353",
+    "datetime": "2026-03-15T01:32:26+07:00",
+    "message": "fix(middleware): add Secure flag to session cookie and explicit CORS allow_headers"
   },
   "assertions": [
     {
