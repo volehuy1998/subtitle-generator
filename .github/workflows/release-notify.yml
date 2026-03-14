@@ -82,7 +82,7 @@ jobs:
               '- [ ] Run `docker compose --profile cpu config` to validate compose file',
               '- [ ] Deploy to staging environment and verify health endpoint',
               '- [ ] Deploy to production environment',
-              '- [ ] Confirm `/health` returns `{"status":"ok"}` post-deploy',
+              '- [ ] Confirm `/health` returns `{"status":"healthy"}` post-deploy',
               '- [ ] Check `/status` page shows all systems operational',
               '',
               '---',
