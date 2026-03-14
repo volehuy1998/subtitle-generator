@@ -13,7 +13,7 @@ import { api } from '@/api/client'
 
 type AppTab = 'transcribe' | 'embed'
 
-export default function App() {
+export function App() {
   const { healthPanelOpen, setHealthPanelOpen, appMode, setAppMode, health } = useUIStore()
   const store = useTaskStore()
 

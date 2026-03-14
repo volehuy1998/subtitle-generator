@@ -10,11 +10,12 @@ Tests cover:
   - Log level standardization
 """
 
+import asyncio
 import json
 import logging
-import asyncio
 
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 client = TestClient(app, base_url="https://testserver")
@@ -118,7 +119,7 @@ class TestJsonFormatter:
         assert "test error" in parsed["exception"]["message"]
 
     def test_json_includes_task_id_from_context(self):
-        from app.logging_setup import JsonFormatter, set_task_context, clear_task_context
+        from app.logging_setup import JsonFormatter, clear_task_context, set_task_context
 
         fmt = JsonFormatter()
         set_task_context("abc-123")
@@ -209,13 +210,13 @@ class TestCorrelationIds:
     """Test correlation ID propagation."""
 
     def test_set_and_get_request_id(self):
-        from app.logging_setup import set_request_id, get_request_id
+        from app.logging_setup import get_request_id, set_request_id
 
         set_request_id("test-req-1")
         assert get_request_id() == "test-req-1"
 
     def test_set_and_get_task_context(self):
-        from app.logging_setup import set_task_context, get_task_context, clear_task_context
+        from app.logging_setup import clear_task_context, get_task_context, set_task_context
 
         set_task_context("task-xyz")
         assert get_task_context() == "task-xyz"
@@ -384,7 +385,7 @@ class TestTaskLifecycleLogging:
         assert callable(log_task_event)
 
     def test_log_task_event_with_context(self):
-        from app.logging_setup import log_task_event, set_task_context, clear_task_context
+        from app.logging_setup import clear_task_context, log_task_event, set_task_context
 
         set_task_context("test-task-1")
         try:

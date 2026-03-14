@@ -1,15 +1,15 @@
 """Tests for architecture improvements: system capability, logging, health, embed, reliability."""
 
 import json
+import logging
 
-from app.main import app
-from app import state
-from app.services.system_capability import detect_system_capabilities, _compute_tuning
-from app.services.subtitle_embed import SubtitleStyle, STYLE_PRESETS
-from app.logging_setup import set_request_id, get_request_id, JsonFormatter
 from fastapi.testclient import TestClient
 
-import logging
+from app import state
+from app.logging_setup import JsonFormatter, get_request_id, set_request_id
+from app.main import app
+from app.services.subtitle_embed import STYLE_PRESETS, SubtitleStyle
+from app.services.system_capability import _compute_tuning, detect_system_capabilities
 
 client = TestClient(app, base_url="https://testserver")
 

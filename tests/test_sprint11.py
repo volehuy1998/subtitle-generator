@@ -13,9 +13,10 @@ S11-8: Integration tests
 import time
 from pathlib import Path
 
-from app.main import app
-from app.config import PRELOAD_MODEL, ENABLE_COMPRESSION, STATIC_CACHE_MAX_AGE
 from fastapi.testclient import TestClient
+
+from app.config import ENABLE_COMPRESSION, PRELOAD_MODEL, STATIC_CACHE_MAX_AGE
+from app.main import app
 
 client = TestClient(app, base_url="https://testserver")
 

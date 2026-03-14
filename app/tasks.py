@@ -29,7 +29,7 @@ def transcribe_task(
     This is the distributed equivalent of the asyncio.to_thread(process_video, ...)
     call in the standalone upload route.
     """
-    from app.config import UPLOAD_DIR, STORAGE_BACKEND
+    from app.config import STORAGE_BACKEND, UPLOAD_DIR
     from app.services.pipeline import process_video
 
     # If using S3, download file to local storage first

@@ -37,13 +37,7 @@ export function ProgressView({ taskId }: Props) {
     isUploading, uploadPercent,
   } = store
 
-  // Extra progress fields from SSE (shallow-merged into store via applyProgressData)
-  const extra = store as unknown as Record<string, unknown>
-  const processedSec = extra.processed_sec as number | undefined
-  const totalSec = extra.total_sec as number | undefined
-  const speedX = extra.speed_x as number | undefined
-  const eta = extra.eta as string | undefined
-  const elapsed = extra.elapsed as string | undefined
+  const { processed_sec: processedSec, total_sec: totalSec, speed_x: speedX, eta, elapsed } = store
 
   const isTranscribing = status === 'transcribing' && processedSec !== undefined && totalSec !== undefined && totalSec > 0
 
@@ -296,6 +290,9 @@ export function ProgressView({ taskId }: Props) {
           </span>
           <div
             className="flex flex-col gap-1 overflow-y-auto rounded-lg p-3"
+            role="log"
+            aria-live="polite"
+            aria-label="Live subtitle preview"
             style={{
               maxHeight: '200px',
               background: 'var(--color-surface-2)',

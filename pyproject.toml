@@ -13,7 +13,7 @@ line-length = 120
 # Phase 1 (now): E, F, W
 # Phase 2 (next): + I (import sorting)
 # Phase 3: + B, UP, SIM
-select = ["E", "F", "W"]
+select = ["E", "F", "W", "I"]
 ignore = [
     "E501",   # Line length — handled by formatter
     "B008",   # Function call in default argument — FastAPI Depends() pattern

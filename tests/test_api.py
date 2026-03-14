@@ -1,8 +1,10 @@
 """Tests for FastAPI endpoints."""
 
 from io import BytesIO
-from app.main import app
+
 from fastapi.testclient import TestClient
+
+from app.main import app
 
 client = TestClient(app, base_url="https://testserver")
 

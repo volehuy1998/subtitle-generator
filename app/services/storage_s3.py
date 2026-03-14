@@ -9,13 +9,13 @@ from botocore.config import Config as BotoConfig
 from botocore.exceptions import ClientError
 
 from app.config import (
-    S3_ENDPOINT_URL,
-    S3_BUCKET_NAME,
-    S3_ACCESS_KEY,
-    S3_SECRET_KEY,
-    S3_REGION,
-    UPLOAD_DIR,
     OUTPUT_DIR,
+    S3_ACCESS_KEY,
+    S3_BUCKET_NAME,
+    S3_ENDPOINT_URL,
+    S3_REGION,
+    S3_SECRET_KEY,
+    UPLOAD_DIR,
 )
 from app.services.storage import StorageAdapter
 

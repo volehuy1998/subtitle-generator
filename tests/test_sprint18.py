@@ -17,9 +17,8 @@ import json
 
 from fastapi.testclient import TestClient
 
-from app.main import app
 from app.config import DATABASE_URL
-
+from app.main import app
 
 client = TestClient(app, base_url="https://testserver")
 
@@ -46,7 +45,7 @@ class TestDependencies:
         assert hasattr(sqlalchemy, "__version__")
 
     def test_sqlalchemy_async_importable(self):
-        from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+        from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
         assert create_async_engine is not None
         assert AsyncSession is not None
@@ -75,7 +74,7 @@ class TestDatabaseConfig:
         assert "sqlite" in DATABASE_URL or "postgresql" in DATABASE_URL
 
     def test_pool_config_exists(self):
-        from app.config import DB_POOL_SIZE, DB_MAX_OVERFLOW, DB_POOL_RECYCLE
+        from app.config import DB_MAX_OVERFLOW, DB_POOL_RECYCLE, DB_POOL_SIZE
 
         assert isinstance(DB_POOL_SIZE, int)
         assert isinstance(DB_MAX_OVERFLOW, int)
@@ -85,7 +84,7 @@ class TestDatabaseConfig:
         assert DB_POOL_RECYCLE > 0
 
     def test_pool_defaults(self):
-        from app.config import DB_POOL_SIZE, DB_MAX_OVERFLOW, DB_POOL_RECYCLE
+        from app.config import DB_MAX_OVERFLOW, DB_POOL_RECYCLE, DB_POOL_SIZE
 
         assert DB_POOL_SIZE == 5
         assert DB_MAX_OVERFLOW == 10
@@ -116,7 +115,7 @@ class TestEngineAndSession:
         assert callable(get_session)
 
     def test_init_db_creates_tables(self):
-        from app.db.engine import init_db, get_engine
+        from app.db.engine import get_engine, init_db
 
         run_async(init_db())
         # Verify tables exist by checking metadata
@@ -402,8 +401,8 @@ class TestDatabaseTaskBackend:
         assert "r1" in backend.raw
 
     def test_persist_task_async(self):
-        from app.db.task_backend_db import DatabaseTaskBackend
         from app.db.engine import init_db
+        from app.db.task_backend_db import DatabaseTaskBackend
 
         run_async(init_db())
         backend = DatabaseTaskBackend()
@@ -425,8 +424,8 @@ class TestDatabaseTaskBackend:
         run_async(_test())
 
     def test_persist_session_async(self):
-        from app.db.task_backend_db import DatabaseTaskBackend
         from app.db.engine import init_db
+        from app.db.task_backend_db import DatabaseTaskBackend
 
         run_async(init_db())
         backend = DatabaseTaskBackend()
@@ -437,8 +436,8 @@ class TestDatabaseTaskBackend:
         run_async(_test())
 
     def test_load_from_db(self):
-        from app.db.task_backend_db import DatabaseTaskBackend
         from app.db.engine import init_db
+        from app.db.task_backend_db import DatabaseTaskBackend
 
         run_async(init_db())
         backend = DatabaseTaskBackend()
@@ -520,14 +519,14 @@ class TestDBPersistence:
 
 class TestIntegration:
     def test_db_package_imports(self):
-        from app.db import Base, TaskRecord, SessionRecord
+        from app.db import Base, SessionRecord, TaskRecord
 
         assert Base is not None
         assert TaskRecord is not None
         assert SessionRecord is not None
 
     def test_models_share_base(self):
-        from app.db.models import Base, TaskRecord, SessionRecord
+        from app.db.models import Base, SessionRecord, TaskRecord
 
         assert issubclass(TaskRecord, Base)
         assert issubclass(SessionRecord, Base)
@@ -555,9 +554,9 @@ class TestIntegration:
 
     def test_full_crud_cycle(self):
         """Full create-read-update-delete cycle via DB backend."""
-        from app.db.task_backend_db import DatabaseTaskBackend
         from app.db.engine import init_db
         from app.db.models import TaskRecord
+        from app.db.task_backend_db import DatabaseTaskBackend
 
         run_async(init_db())
         backend = DatabaseTaskBackend()

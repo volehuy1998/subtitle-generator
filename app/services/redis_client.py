@@ -2,8 +2,8 @@
 
 import logging
 
-import redis.asyncio as aioredis
 import redis as sync_redis
+import redis.asyncio as aioredis
 
 from app.config import REDIS_URL
 

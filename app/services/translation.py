@@ -9,9 +9,9 @@ Two translation modes:
 
 import logging
 
+import app.state as state
 from app.config import TRANSLATION_BATCH_SIZE
 from app.logging_setup import log_task_event
-import app.state as state
 
 logger = logging.getLogger("subtitle-generator")
 

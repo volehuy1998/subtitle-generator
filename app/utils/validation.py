@@ -9,8 +9,7 @@ import re
 import unicodedata
 from pathlib import Path
 
-from app.config import UPLOAD_DIR, OUTPUT_DIR, LOG_DIR
-
+from app.config import LOG_DIR, OUTPUT_DIR, UPLOAD_DIR
 
 # ── Allowed directories for file operations ──
 _SAFE_DIRS = {

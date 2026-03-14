@@ -11,7 +11,7 @@ from fastapi import APIRouter, Request, Response
 from starlette.responses import StreamingResponse
 
 from app import state
-from app.config import OUTPUT_DIR, UPLOAD_DIR, MAX_CONCURRENT_TASKS
+from app.config import MAX_CONCURRENT_TASKS, OUTPUT_DIR, UPLOAD_DIR
 from app.schemas import HealthResponse, SystemStatusResponse
 
 logger = logging.getLogger("subtitle-generator")
@@ -111,7 +111,7 @@ async def model_status():
 @router.get("/api/capabilities")
 async def capabilities():
     """Report which features are available based on system dependencies."""
-    from app.config import FFMPEG_AVAILABLE, FFPROBE_AVAILABLE, VIDEO_EXTENSIONS, AUDIO_ONLY_EXTENSIONS
+    from app.config import AUDIO_ONLY_EXTENSIONS, FFMPEG_AVAILABLE, FFPROBE_AVAILABLE, VIDEO_EXTENSIONS
 
     return {
         "ffmpeg": FFMPEG_AVAILABLE,
@@ -136,10 +136,10 @@ async def scale_info():
 
     Returns worker status, storage backend, task backend, and capacity info.
     """
-    from app.services.worker_health import get_worker_status, get_healthy_worker_count
-    from app.services.task_backend import get_backend_info
-    from app.services.storage import get_storage
     from app.services.analytics_db import get_db_info
+    from app.services.storage import get_storage
+    from app.services.task_backend import get_backend_info
+    from app.services.worker_health import get_healthy_worker_count, get_worker_status
 
     return {
         "workers": get_worker_status(),

@@ -1,26 +1,28 @@
 """FastAPI application factory."""
 
-from app.config import UPLOAD_DIR, OUTPUT_DIR, LOG_DIR  # noqa: F401 - must import first for env vars
+# NOTE: app.config must be imported before any other app or third-party imports.
+# It sets OMP_NUM_THREADS and MKL_NUM_THREADS env vars (lines 6-8 of config.py)
+# which must be in place before PyTorch/NumPy/CTranslate2 are loaded by transitive imports.
+from app.config import UPLOAD_DIR, OUTPUT_DIR, LOG_DIR  # noqa: E402, I001
 
 import asyncio
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app import state
-from app.logging_setup import setup_logging, log_task_event
+from app.config import ENABLE_COMPRESSION, PRELOAD_MODEL, REDIS_URL, ROLE
+from app.logging_setup import log_task_event, setup_logging
+from app.middleware.auth import ApiKeyMiddleware
 from app.middleware.request_log import RequestLogMiddleware
 from app.middleware.security import SecurityHeadersMiddleware
-from app.middleware.auth import ApiKeyMiddleware
 from app.middleware.session import SessionMiddleware
 from app.routes import router
-from app.services.system_capability import detect_system_capabilities, log_capabilities
-from app.services.cleanup import periodic_cleanup
 from app.services.analytics import load_analytics_snapshot, save_analytics_snapshot
-from app.config import PRELOAD_MODEL, ENABLE_COMPRESSION, ROLE, REDIS_URL
-
-import logging
+from app.services.cleanup import periodic_cleanup
+from app.services.system_capability import detect_system_capabilities, log_capabilities
 
 logger = logging.getLogger("subtitle-generator")
 
@@ -34,10 +36,10 @@ async def lifespan(app: FastAPI):
     LOG_DIR.mkdir(exist_ok=True)
 
     # Initialize databases
-    from app.db.engine import init_db, close_db
+    from app.db.engine import close_db, init_db
 
     await init_db()
-    from app.db.status_engine import init_status_db, close_status_db
+    from app.db.status_engine import close_status_db, init_status_db
 
     await init_status_db()
 
@@ -53,8 +55,8 @@ async def lifespan(app: FastAPI):
     _apply_tuning(caps["tuning"])
 
     # Load task history from DB (with JSON file fallback)
-    from app.services.task_backend import get_task_backend
     from app.db.task_backend_db import DatabaseTaskBackend
+    from app.services.task_backend import get_task_backend
 
     backend = get_task_backend()
     if isinstance(backend, DatabaseTaskBackend):
@@ -137,11 +139,11 @@ async def lifespan(app: FastAPI):
     try:
         await cleanup_task
     except asyncio.CancelledError:
-        pass
+        logger.debug("Cleanup task cancelled")
     try:
         await health_task
     except asyncio.CancelledError:
-        pass
+        logger.debug("Health task cancelled")
 
     # Drain in-flight tasks
     active = state.get_active_task_count()
@@ -152,8 +154,8 @@ async def lifespan(app: FastAPI):
     logger.info("SHUTDOWN Saving task history and analytics...")
 
     # Persist final task states to DB
-    from app.services.task_backend import get_task_backend
     from app.db.task_backend_db import DatabaseTaskBackend
+    from app.services.task_backend import get_task_backend
 
     backend = get_task_backend()
     if isinstance(backend, DatabaseTaskBackend):
@@ -170,8 +172,8 @@ async def lifespan(app: FastAPI):
         from app.services.analytics_db import close as close_analytics_db
 
         close_analytics_db()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning("Failed to close analytics DB: %s", e)
 
     # Close Redis connections
     if REDIS_URL:
@@ -180,8 +182,8 @@ async def lifespan(app: FastAPI):
 
             await close_async_redis()
             close_sync_redis()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Failed to close Redis: %s", e)
 
     # Close status DB (local SQLite)
     await close_status_db()
@@ -195,6 +197,7 @@ async def lifespan(app: FastAPI):
 async def _preload_models_background(models_to_load: list[str]):
     """Load models in background so the server accepts connections immediately."""
     import torch
+
     from app.services.model_manager import get_model
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -233,6 +236,7 @@ async def _preload_models_background(models_to_load: list[str]):
 def _apply_tuning(tuning: dict):
     """Apply auto-tuned settings to runtime config."""
     import os
+
     from app import config
 
     # Update OMP threads if auto-tuned value differs
@@ -330,7 +334,8 @@ def create_app() -> FastAPI:
 
     # CORS
     from starlette.middleware.cors import CORSMiddleware
-    from app.middleware.cors import get_cors_origins, CORS_ALLOW_METHODS, CORS_ALLOW_HEADERS
+
+    from app.middleware.cors import CORS_ALLOW_HEADERS, CORS_ALLOW_METHODS, get_cors_origins
 
     app.add_middleware(
         CORSMiddleware,
@@ -368,6 +373,7 @@ def create_app() -> FastAPI:
 
     # Serve React build assets (JS/CSS bundles)
     from pathlib import Path
+
     from fastapi.staticfiles import StaticFiles
 
     _react_assets = Path(__file__).parent.parent / "frontend" / "dist" / "assets"

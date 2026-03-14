@@ -6,7 +6,6 @@ import subprocess
 import time
 from pathlib import Path
 
-
 logger = logging.getLogger("subtitle-generator")
 
 # Security: restrict ffmpeg protocols to prevent SSRF via crafted media files

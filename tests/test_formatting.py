@@ -1,6 +1,6 @@
 """Tests for app.utils.formatting - pure functions, no mocks needed."""
 
-from app.utils.formatting import format_bytes, format_timestamp, format_time_display, format_time_short
+from app.utils.formatting import format_bytes, format_time_display, format_time_short, format_timestamp
 
 
 class TestFormatBytes:

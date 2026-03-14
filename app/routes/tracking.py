@@ -11,13 +11,13 @@ from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 
 from app.services.tracking import (
-    record_ui_event,
-    record_ui_events_batch,
+    get_activity_summary,
+    get_error_events,
     get_feature_usage,
     get_flow_funnel,
-    get_error_events,
     get_session_activity,
-    get_activity_summary,
+    record_ui_event,
+    record_ui_events_batch,
 )
 
 logger = logging.getLogger("subtitle-generator")

@@ -102,7 +102,7 @@ const TIMELINE = [
   { color: C.success, bg: C.successLight, icon: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>, title: 'No third-party data sharing', desc: 'Transcription runs entirely on-server using open-source models (faster-whisper / CTranslate2). Nothing leaves the server.' },
 ]
 
-export default function SecurityPage() {
+export function SecurityPage() {
   const [assertions, setAssertions] = useState<AssertionsData | null>(null)
 
   useEffect(() => {

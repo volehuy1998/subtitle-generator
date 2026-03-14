@@ -11,7 +11,7 @@ from fastapi import APIRouter
 from fastapi.responses import PlainTextResponse
 
 from app import state
-from app.config import UPLOAD_DIR, OUTPUT_DIR
+from app.config import OUTPUT_DIR, UPLOAD_DIR
 
 logger = logging.getLogger("subtitle-generator")
 router = APIRouter(tags=["System"])

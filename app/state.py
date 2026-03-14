@@ -7,7 +7,7 @@ import queue
 import threading
 import time
 
-from app.config import TASK_HISTORY_FILE, MAX_TASK_HISTORY
+from app.config import MAX_TASK_HISTORY, TASK_HISTORY_FILE
 
 logger = logging.getLogger("subtitle-generator")
 

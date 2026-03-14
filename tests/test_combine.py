@@ -2,12 +2,12 @@
 
 from io import BytesIO
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 
-from app.main import app
 from app import state
+from app.main import app
 
 client = TestClient(app, base_url="https://testserver")
 
@@ -255,8 +255,9 @@ class TestSubtitleValidation:
     """Test subtitle file content validation."""
 
     def test_valid_srt_detection(self):
-        from app.routes.combine import _validate_subtitle_file
         import tempfile
+
+        from app.routes.combine import _validate_subtitle_file
 
         with tempfile.NamedTemporaryFile(suffix=".srt", mode="w", delete=False) as f:
             f.write("1\n00:00:01,000 --> 00:00:03,000\nHello\n")
@@ -265,8 +266,9 @@ class TestSubtitleValidation:
         Path(f.name).unlink(missing_ok=True)
 
     def test_valid_vtt_detection(self):
-        from app.routes.combine import _validate_subtitle_file
         import tempfile
+
+        from app.routes.combine import _validate_subtitle_file
 
         with tempfile.NamedTemporaryFile(suffix=".vtt", mode="w", delete=False) as f:
             f.write("WEBVTT\n\n00:00:01.000 --> 00:00:03.000\nHello\n")
@@ -275,8 +277,9 @@ class TestSubtitleValidation:
         Path(f.name).unlink(missing_ok=True)
 
     def test_invalid_srt_detection(self):
-        from app.routes.combine import _validate_subtitle_file
         import tempfile
+
+        from app.routes.combine import _validate_subtitle_file
 
         with tempfile.NamedTemporaryFile(suffix=".srt", mode="w", delete=False) as f:
             f.write("This is just random text with no timestamps\n")
@@ -285,8 +288,9 @@ class TestSubtitleValidation:
         Path(f.name).unlink(missing_ok=True)
 
     def test_invalid_vtt_detection(self):
-        from app.routes.combine import _validate_subtitle_file
         import tempfile
+
+        from app.routes.combine import _validate_subtitle_file
 
         with tempfile.NamedTemporaryFile(suffix=".vtt", mode="w", delete=False) as f:
             f.write("Not a VTT file\n")
@@ -295,8 +299,9 @@ class TestSubtitleValidation:
         Path(f.name).unlink(missing_ok=True)
 
     def test_empty_file_detection(self):
-        from app.routes.combine import _validate_subtitle_file
         import tempfile
+
+        from app.routes.combine import _validate_subtitle_file
 
         with tempfile.NamedTemporaryFile(suffix=".srt", mode="w", delete=False) as f:
             f.write("")

@@ -1,13 +1,13 @@
 """Tests for Sprint 2 features: subtitle editor, task queue, batch, responsive."""
 
 import pytest
+from fastapi.testclient import TestClient
 
-from app.main import app
 from app import state
 from app.config import OUTPUT_DIR
+from app.main import app
 from app.routes.subtitles import _parse_srt, _parse_timestamp
 from app.utils.srt import segments_to_srt, segments_to_vtt
-from fastapi.testclient import TestClient
 
 client = TestClient(app, base_url="https://testserver")
 

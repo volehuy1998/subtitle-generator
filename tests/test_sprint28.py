@@ -13,6 +13,7 @@ Tests cover:
 import asyncio
 
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 client = TestClient(app, base_url="https://testserver")
@@ -130,7 +131,7 @@ class TestAggregationHelpers:
             assert result[0]["uploads"] == 15  # Aggregated
 
     def test_empty_aggregation(self):
-        from app.services.query_layer import _aggregate_by_week, _aggregate_by_month
+        from app.services.query_layer import _aggregate_by_month, _aggregate_by_week
 
         assert _aggregate_by_week([]) == []
         assert _aggregate_by_month([]) == []

@@ -10,13 +10,12 @@ after database shutdown:
 
 import asyncio
 import time
-from unittest.mock import patch, MagicMock, AsyncMock
-
-from app import state
-from app.exceptions import CriticalAbortError
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from app import state
+from app.exceptions import CriticalAbortError
 
 # ── Helpers ──
 
@@ -661,8 +660,9 @@ class TestCriticalStateMiddleware:
 
     def setup_method(self):
         self.snapshot = _save_critical_state()
-        from app.main import app
         from fastapi.testclient import TestClient
+
+        from app.main import app
 
         self.client = TestClient(app, base_url="https://testserver")
 
@@ -987,8 +987,9 @@ class TestApiStatusCriticalFields:
 
     def setup_method(self):
         self.snapshot = _save_critical_state()
-        from app.main import app
         from fastapi.testclient import TestClient
+
+        from app.main import app
 
         self.client = TestClient(app, base_url="https://testserver")
         # Clear the /api/status response cache so tests get fresh data
@@ -1109,8 +1110,9 @@ class TestUploadAbortOnCritical:
 
     def test_upload_aborts_mid_chunk_when_critical(self):
         """Upload route checks system_critical in the chunk read loop."""
-        from app.routes.upload import upload
         import inspect
+
+        from app.routes.upload import upload
 
         source = inspect.getsource(upload)
         # Verify the critical check is in the upload function
@@ -1134,16 +1136,18 @@ class TestDiarizationCriticalAbort:
 
     def test_diarization_aborts_before_start_when_critical(self):
         """diarize_audio checks critical state before starting."""
-        from app.services.diarization import diarize_audio
         import inspect
+
+        from app.services.diarization import diarize_audio
 
         source = inspect.getsource(diarize_audio)
         assert "system_critical" in source or "CriticalAbortError" in source
 
     def test_diarization_source_has_critical_check(self):
         """Verify diarize_audio imports and uses CriticalAbortError."""
-        from app.services.diarization import diarize_audio
         import inspect
+
+        from app.services.diarization import diarize_audio
 
         source = inspect.getsource(diarize_audio)
         assert "CriticalAbortError" in source
@@ -1170,8 +1174,9 @@ class TestExtractAudioKillable:
 
     def test_extract_audio_stores_subprocess_in_task(self):
         """extract_audio stores Popen process in task['_subprocess'] when task_id provided."""
-        from app.utils.media import extract_audio
         import inspect
+
+        from app.utils.media import extract_audio
 
         source = inspect.getsource(extract_audio)
         assert "Popen" in source, "extract_audio must use Popen, not subprocess.run"
@@ -1179,8 +1184,9 @@ class TestExtractAudioKillable:
 
     def test_embed_subprocess_uses_popen(self):
         """soft_embed_subtitles and hard_burn_subtitles use Popen for killability."""
-        from app.services.subtitle_embed import soft_embed_subtitles, hard_burn_subtitles
         import inspect
+
+        from app.services.subtitle_embed import hard_burn_subtitles, soft_embed_subtitles
 
         soft_src = inspect.getsource(soft_embed_subtitles)
         hard_src = inspect.getsource(hard_burn_subtitles)
@@ -1269,8 +1275,9 @@ class TestThreadInjectionOnCritical:
 
     def test_pipeline_stores_thread_id(self):
         """process_video stores threading.current_thread().ident in task['_thread_id']."""
-        from app.services.pipeline import process_video
         import inspect
+
+        from app.services.pipeline import process_video
 
         source = inspect.getsource(process_video)
         assert "_thread_id" in source, "process_video must store thread ID in task"
@@ -1278,8 +1285,9 @@ class TestThreadInjectionOnCritical:
 
     def test_pipeline_has_critical_check_after_model_load(self):
         """Pipeline checks critical state after model loading (before transcription)."""
-        from app.services.pipeline import process_video
         import inspect
+
+        from app.services.pipeline import process_video
 
         source = inspect.getsource(process_video)
         # Find model loading and the critical check after it
@@ -1290,8 +1298,9 @@ class TestThreadInjectionOnCritical:
 
     def test_pipeline_cleans_up_thread_id(self):
         """process_video removes _thread_id from task in finally block."""
-        from app.services.pipeline import process_video
         import inspect
+
+        from app.services.pipeline import process_video
 
         source = inspect.getsource(process_video)
         assert 'pop("_thread_id"' in source, "process_video must clean up _thread_id in finally"

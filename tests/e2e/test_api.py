@@ -1,7 +1,7 @@
 """E2E tests: API endpoints via HTTP (no browser needed)."""
 
-import ssl
 import json
+import ssl
 import urllib.request
 
 BASE_URL = "https://openlabs.club"

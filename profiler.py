@@ -11,8 +11,8 @@ Tracks:
 """
 
 import logging
-import time
 import threading
+import time
 
 import psutil
 import torch

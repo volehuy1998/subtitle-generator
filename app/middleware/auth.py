@@ -16,8 +16,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from app.services.audit import log_audit_event
 from app.middleware.brute_force import record_auth_failure
+from app.services.audit import log_audit_event
 from app.utils.access import get_client_ip
 
 logger = logging.getLogger("subtitle-generator")

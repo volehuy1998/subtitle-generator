@@ -16,6 +16,7 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 client = TestClient(app, base_url="https://testserver")
@@ -45,8 +46,8 @@ class TestSafePath:
             safe_path("/etc/passwd")
 
     def test_safe_path_allows_valid_dir(self):
-        from app.utils.validation import safe_path
         from app.config import OUTPUT_DIR
+        from app.utils.validation import safe_path
 
         OUTPUT_DIR.mkdir(exist_ok=True)
         # Should not raise for a path inside OUTPUT_DIR
@@ -54,8 +55,8 @@ class TestSafePath:
         assert isinstance(result, Path)
 
     def test_safe_path_blocks_dir_escape(self):
-        from app.utils.validation import safe_path
         from app.config import OUTPUT_DIR
+        from app.utils.validation import safe_path
 
         with pytest.raises(ValueError):
             safe_path(OUTPUT_DIR / ".." / ".." / "etc" / "passwd", allowed_dir=OUTPUT_DIR)

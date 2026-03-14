@@ -6,18 +6,18 @@ import uuid
 from pathlib import Path
 from typing import Literal, Optional
 
-from fastapi import APIRouter, Form, UploadFile, HTTPException
+from fastapi import APIRouter, Form, HTTPException, UploadFile
 
 from app import state
-from app.config import UPLOAD_DIR, OUTPUT_DIR, MAX_FILE_SIZE, MIN_FILE_SIZE
+from app.config import MAX_FILE_SIZE, MIN_FILE_SIZE, OUTPUT_DIR, UPLOAD_DIR
 from app.logging_setup import log_task_event
-from app.services.subtitle_embed import (
-    soft_embed_subtitles,
-    hard_burn_subtitles,
-    SubtitleStyle,
-    STYLE_PRESETS,
-)
 from app.services.sse import emit_event
+from app.services.subtitle_embed import (
+    STYLE_PRESETS,
+    SubtitleStyle,
+    hard_burn_subtitles,
+    soft_embed_subtitles,
+)
 from app.utils.security import validate_file_extension, validate_magic_bytes
 
 logger = logging.getLogger("subtitle-generator")
@@ -146,8 +146,8 @@ async def embed_subtitles(
             effective_srt = srt_path
             # Translate subtitles if requested
             if _translate_to:
-                from app.utils.srt import parse_srt, segments_to_srt
                 from app.services.translation import translate_segments
+                from app.utils.srt import parse_srt, segments_to_srt
 
                 srt_content = srt_path.read_text(encoding="utf-8")
                 segments = parse_srt(srt_content)
@@ -278,8 +278,8 @@ async def quick_embed(
             effective_srt = srt_path
             # Translate subtitles if requested
             if _translate_to:
-                from app.utils.srt import parse_srt, segments_to_srt
                 from app.services.translation import translate_segments
+                from app.utils.srt import parse_srt, segments_to_srt
 
                 srt_content = srt_path.read_text(encoding="utf-8")
                 segments = parse_srt(srt_content)

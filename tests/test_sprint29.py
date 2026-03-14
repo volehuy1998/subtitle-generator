@@ -12,6 +12,7 @@ Tests cover:
 import time
 
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 client = TestClient(app, base_url="https://testserver")
@@ -33,21 +34,21 @@ class TestBusinessMetrics:
         assert hasattr(monitoring, "get_business_metrics")
 
     def test_record_upload(self):
-        from app.services.monitoring import record_upload, get_business_metrics
+        from app.services.monitoring import get_business_metrics, record_upload
 
         record_upload()
         metrics = get_business_metrics()
         assert metrics["uploads_per_hour"] >= 1
 
     def test_record_completion(self):
-        from app.services.monitoring import record_completion, get_business_metrics
+        from app.services.monitoring import get_business_metrics, record_completion
 
         record_completion(processing_time=5.0)
         metrics = get_business_metrics()
         assert metrics["completions_per_hour"] >= 1
 
     def test_record_failure(self):
-        from app.services.monitoring import record_failure, get_business_metrics
+        from app.services.monitoring import get_business_metrics, record_failure
 
         record_failure()
         metrics = get_business_metrics()
@@ -61,7 +62,7 @@ class TestBusinessMetrics:
         assert 0 <= metrics["success_rate_pct"] <= 100
 
     def test_processing_time_stats(self):
-        from app.services.monitoring import record_completion, get_business_metrics
+        from app.services.monitoring import get_business_metrics, record_completion
 
         record_completion(processing_time=10.0)
         record_completion(processing_time=20.0)
@@ -70,7 +71,7 @@ class TestBusinessMetrics:
         assert metrics["p95_processing_sec"] > 0
 
     def test_embed_metrics(self):
-        from app.services.monitoring import record_embed, get_business_metrics
+        from app.services.monitoring import get_business_metrics, record_embed
 
         record_embed("soft")
         record_embed("hard")
@@ -114,7 +115,7 @@ class TestAlertSystem:
         assert "memory_pct_max" in thresholds
 
     def test_set_threshold(self):
-        from app.services.monitoring import set_alert_threshold, get_alert_thresholds
+        from app.services.monitoring import get_alert_thresholds, set_alert_threshold
 
         original = get_alert_thresholds()["error_rate_pct"]
         set_alert_threshold("error_rate_pct", 10.0)
@@ -137,7 +138,7 @@ class TestAlertSystem:
             assert "message" in alert
 
     def test_disk_alert_check(self):
-        from app.services.monitoring import set_alert_threshold, check_alerts, get_alert_thresholds
+        from app.services.monitoring import check_alerts, get_alert_thresholds, set_alert_threshold
 
         original = get_alert_thresholds()["disk_free_min_gb"]
         # Set impossibly high threshold to trigger alert
@@ -162,7 +163,7 @@ class TestPerformanceProfiling:
         assert t > 0
 
     def test_record_timing(self):
-        from app.services.monitoring import start_timer, record_timing, get_performance_profile
+        from app.services.monitoring import get_performance_profile, record_timing, start_timer
 
         t = start_timer()
         time.sleep(0.01)
@@ -173,7 +174,7 @@ class TestPerformanceProfiling:
         assert profile["test_category"]["avg_sec"] > 0
 
     def test_profile_structure(self):
-        from app.services.monitoring import start_timer, record_timing, get_performance_profile
+        from app.services.monitoring import get_performance_profile, record_timing, start_timer
 
         t = start_timer()
         record_timing("probe", t)
@@ -187,7 +188,7 @@ class TestPerformanceProfiling:
             assert "p95_sec" in p
 
     def test_multiple_categories(self):
-        from app.services.monitoring import start_timer, record_timing, get_performance_profile
+        from app.services.monitoring import get_performance_profile, record_timing, start_timer
 
         for cat in ["upload", "transcribe", "embed"]:
             t = start_timer()

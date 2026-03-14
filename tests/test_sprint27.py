@@ -11,6 +11,7 @@ Tests cover:
 import time
 
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 client = TestClient(app, base_url="https://testserver")
@@ -115,7 +116,7 @@ class TestWorkerManagement:
         assert len(wid) > 0
 
     def test_register_worker(self):
-        from app.services.scaling import register_worker, get_workers
+        from app.services.scaling import get_workers, register_worker
 
         register_worker("test-worker-1", hostname="test-host")
         workers = get_workers()
@@ -123,7 +124,7 @@ class TestWorkerManagement:
         assert "test-worker-1" in ids
 
     def test_heartbeat_worker(self):
-        from app.services.scaling import register_worker, heartbeat_worker, get_workers
+        from app.services.scaling import get_workers, heartbeat_worker, register_worker
 
         register_worker("heartbeat-test")
         heartbeat_worker("heartbeat-test")
@@ -132,7 +133,7 @@ class TestWorkerManagement:
         assert "last_heartbeat" in w
 
     def test_cleanup_dead_workers(self):
-        from app.services.scaling import register_worker, cleanup_dead_workers, _workers, _workers_lock
+        from app.services.scaling import _workers, _workers_lock, cleanup_dead_workers, register_worker
 
         register_worker("dead-worker")
         # Manually set old heartbeat
@@ -173,7 +174,7 @@ class TestPoolConfig:
         assert config["pool_size"] > 0
 
     def test_pool_env_vars(self):
-        from app.config import DB_POOL_SIZE, DB_MAX_OVERFLOW, DB_POOL_RECYCLE
+        from app.config import DB_MAX_OVERFLOW, DB_POOL_RECYCLE, DB_POOL_SIZE
 
         assert isinstance(DB_POOL_SIZE, int)
         assert isinstance(DB_MAX_OVERFLOW, int)
@@ -284,16 +285,16 @@ class TestRedisConfig:
     """Test Redis configuration."""
 
     def test_redis_url_config(self):
-        from app.services.scaling import REDIS_URL, REDIS_ENABLED
+        from app.services.scaling import REDIS_ENABLED, REDIS_URL
 
         assert isinstance(REDIS_URL, str)
         assert isinstance(REDIS_ENABLED, bool)
 
     def test_redis_disabled_by_default(self):
-        from app.services.scaling import REDIS_ENABLED
-
         # Should be disabled unless REDIS_URL is set
         import os
+
+        from app.services.scaling import REDIS_ENABLED
 
         if not os.environ.get("REDIS_URL"):
             assert REDIS_ENABLED is False

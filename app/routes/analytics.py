@@ -5,8 +5,8 @@ import logging
 from fastapi import APIRouter, Query
 from fastapi.responses import PlainTextResponse
 
-from app.services.analytics import get_summary, get_timeseries, get_user_stats, export_analytics_csv
 from app.services import analytics_pg
+from app.services.analytics import export_analytics_csv, get_summary, get_timeseries, get_user_stats
 
 logger = logging.getLogger("subtitle-generator")
 router = APIRouter(tags=["Analytics"])

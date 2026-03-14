@@ -15,7 +15,7 @@ import json
 import statistics
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from urllib import request, error
+from urllib import error, request
 
 
 def timed_request(url: str, method: str = "GET", data: bytes = None, headers: dict = None) -> dict:

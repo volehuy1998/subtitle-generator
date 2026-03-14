@@ -339,12 +339,14 @@ function CommitCard({ commit, idx, expanded, onToggle }: {
   const body = commit.body.replace(/Co-Authored-By:.*$/gm, '').trim()
 
   return (
-    <div
+    <button
+      type="button"
       onClick={() => onToggle(idx)}
       style={{
         background: '#fff', border: '1px solid #E2E8F0', borderRadius: '10px',
         padding: '12px 16px', marginBottom: '8px', cursor: 'pointer',
         transition: 'border-color 0.15s',
+        width: '100%', textAlign: 'left', font: 'inherit', color: 'inherit',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
@@ -410,13 +412,13 @@ function CommitCard({ commit, idx, expanded, onToggle }: {
           </a>
         </div>
       )}
-    </div>
+    </button>
   )
 }
 
 // ── Main Component ─────────────────────────────────────────────────────────
 
-export default function StatusPage() {
+export function StatusPage() {
   const [statusData, setStatusData] = useState<StatusPage | null>(null)
   const [commitsData, setCommitsData] = useState<CommitsData | null>(null)
   const [expandedCommits, setExpandedCommits] = useState<Set<number>>(new Set())

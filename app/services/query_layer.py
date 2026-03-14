@@ -11,10 +11,10 @@ import logging
 import time
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select, func, and_, or_, desc, asc, text
+from sqlalchemy import and_, asc, desc, func, or_, select, text
 
 from app.db.engine import get_session
-from app.db.models import TaskRecord, AnalyticsDaily, AnalyticsEvent, AuditLog
+from app.db.models import AnalyticsDaily, AnalyticsEvent, AuditLog, TaskRecord
 
 logger = logging.getLogger("subtitle-generator")
 

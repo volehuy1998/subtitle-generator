@@ -9,13 +9,13 @@ import logging
 from fastapi import APIRouter, Query
 
 from app.services.monitoring import (
-    get_business_metrics,
     check_alerts,
-    get_alert_thresholds,
-    set_alert_threshold,
-    get_performance_profile,
-    get_health_dashboard,
     get_alert_history,
+    get_alert_thresholds,
+    get_business_metrics,
+    get_health_dashboard,
+    get_performance_profile,
+    set_alert_threshold,
 )
 
 logger = logging.getLogger("subtitle-generator")

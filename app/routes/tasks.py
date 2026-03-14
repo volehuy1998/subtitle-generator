@@ -3,7 +3,7 @@
 import logging
 import uuid
 
-from fastapi import APIRouter, Request, Query, HTTPException
+from fastapi import APIRouter, HTTPException, Query, Request
 
 from app import state
 

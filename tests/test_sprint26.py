@@ -13,6 +13,7 @@ Tests cover:
 from pathlib import Path
 
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 client = TestClient(app, base_url="https://testserver")
@@ -40,6 +41,7 @@ class TestCspNonce:
 
     def test_nonce_is_base64(self):
         import base64
+
         from app.utils.security_infra import generate_csp_nonce
 
         nonce = generate_csp_nonce()

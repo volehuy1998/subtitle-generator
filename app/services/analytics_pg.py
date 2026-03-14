@@ -7,12 +7,12 @@ hot-path for reads; this module handles durable writes.
 
 import json
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select, func, text
+from sqlalchemy import func, select, text
 
 from app.db.engine import get_session
-from app.db.models import AnalyticsEvent, AnalyticsDaily, AnalyticsTimeseries
+from app.db.models import AnalyticsDaily, AnalyticsEvent, AnalyticsTimeseries
 
 logger = logging.getLogger("subtitle-generator")
 

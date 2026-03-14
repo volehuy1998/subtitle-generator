@@ -10,28 +10,29 @@ S4-6: This file
 
 import json
 import os
-import time
 import tempfile
+import time
 from io import BytesIO
 from pathlib import Path
 
-from app.main import app
+from fastapi.testclient import TestClient
+
 from app import state
+from app.main import app
+from app.services.cleanup import cleanup_old_files
+from app.services.diarization import (
+    assign_speakers_to_segments,
+    is_diarization_available,
+)
+from app.services.transcription import get_optimal_transcribe_options
+from app.utils.srt import segments_to_json, segments_to_srt, segments_to_vtt
 from app.utils.subtitle_format import (
     break_line,
     calculate_cps,
-    validate_timing,
     format_segments_with_linebreaks,
+    validate_timing,
     words_to_segments,
 )
-from app.utils.srt import segments_to_srt, segments_to_vtt, segments_to_json
-from app.services.cleanup import cleanup_old_files
-from app.services.diarization import (
-    is_diarization_available,
-    assign_speakers_to_segments,
-)
-from app.services.transcription import get_optimal_transcribe_options
-from fastapi.testclient import TestClient
 
 client = TestClient(app, base_url="https://testserver")
 

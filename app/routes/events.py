@@ -9,10 +9,10 @@ import json
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
-from app.schemas import TaskProgressResponse
 
 from app import state
 from app.config import REDIS_URL
+from app.schemas import TaskProgressResponse
 from app.utils.access import check_task_access
 
 router = APIRouter(tags=["Progress"])

@@ -9,7 +9,7 @@ import shutil
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from app.config import UPLOAD_DIR, OUTPUT_DIR
+from app.config import OUTPUT_DIR, UPLOAD_DIR
 
 logger = logging.getLogger("subtitle-generator")
 

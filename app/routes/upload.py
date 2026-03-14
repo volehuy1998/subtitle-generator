@@ -6,28 +6,28 @@ import uuid
 from typing import Literal, Optional
 
 import torch
-from fastapi import APIRouter, Form, Request, UploadFile, HTTPException
-from app.schemas import UploadResponse
+from fastapi import APIRouter, Form, HTTPException, Request, UploadFile
 
 from app import state
 from app.config import (
-    UPLOAD_DIR,
+    MAX_CONCURRENT_TASKS,
     MAX_FILE_SIZE,
     MIN_FILE_SIZE,
-    VALID_MODELS,
-    MAX_CONCURRENT_TASKS,
     SUPPORTED_LANGUAGES,
+    UPLOAD_DIR,
+    VALID_MODELS,
 )
 from app.logging_setup import log_task_event
-from app.services.gpu import auto_select_model
-from app.services.pipeline import process_video
-from app.services.sse import create_event_queue
-from app.utils.formatting import format_bytes
-from app.utils.security import validate_file_extension, validate_magic_bytes, sanitize_filename
+from app.routes.metrics import inc
+from app.schemas import UploadResponse
 from app.services.analytics import record_upload
 from app.services.audit import log_audit_event
+from app.services.gpu import auto_select_model
+from app.services.pipeline import process_video
 from app.services.quarantine import quarantine_file, scan_with_clamav
-from app.routes.metrics import inc
+from app.services.sse import create_event_queue
+from app.utils.formatting import format_bytes
+from app.utils.security import sanitize_filename, validate_file_extension, validate_magic_bytes
 
 logger = logging.getLogger("subtitle-generator")
 
@@ -191,7 +191,7 @@ async def upload(
         if isinstance(backend, DatabaseTaskBackend):
             backend.schedule_persist(task_id, state.tasks[task_id])
     except ImportError:
-        pass
+        logger.debug("DatabaseTaskBackend not available, skipping DB persist")
 
     # Build translate option
     extra_transcribe_opts = {}

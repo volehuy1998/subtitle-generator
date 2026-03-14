@@ -1,7 +1,8 @@
 """E2E test fixtures using Playwright."""
 
-import pytest
 import os
+
+import pytest
 
 BASE_URL = os.environ.get("E2E_BASE_URL", "https://openlabs.club")
 

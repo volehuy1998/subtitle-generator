@@ -11,18 +11,19 @@ S12-7: Integration tests
 
 from pathlib import Path
 
+from fastapi.testclient import TestClient
+
 from app.main import app
 from app.services.analytics import (
-    record_request,
-    record_error_category,
-    get_user_stats,
-    export_analytics_csv,
     _client_ips,
-    _user_agents,
     _error_categories,
     _lock,
+    _user_agents,
+    export_analytics_csv,
+    get_user_stats,
+    record_error_category,
+    record_request,
 )
-from fastapi.testclient import TestClient
 
 client = TestClient(app, base_url="https://testserver")
 

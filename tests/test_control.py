@@ -2,10 +2,11 @@
 
 import threading
 from unittest.mock import MagicMock
+
 from fastapi.testclient import TestClient
 
-from app.main import app
 from app import state
+from app.main import app
 
 client = TestClient(app, base_url="https://testserver")
 

@@ -16,21 +16,21 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.services.audit import (
-    _audit_entries,
-    log_audit_event,
-    get_recent_audit_events,
-    get_audit_stats,
-)
 from app.middleware.brute_force import (
-    _tracker,
-    record_auth_failure,
-    is_ip_blocked,
-    get_brute_force_stats,
     MAX_FAILURES,
+    _tracker,
+    get_brute_force_stats,
+    is_ip_blocked,
+    record_auth_failure,
 )
 from app.middleware.cors import get_cors_origins
-from app.services.quarantine import QUARANTINE_DIR, quarantine_file, get_quarantine_count
+from app.services.audit import (
+    _audit_entries,
+    get_audit_stats,
+    get_recent_audit_events,
+    log_audit_event,
+)
+from app.services.quarantine import QUARANTINE_DIR, get_quarantine_count, quarantine_file
 
 client = TestClient(app, base_url="https://testserver")
 
@@ -334,14 +334,14 @@ class TestSecurityIntegration:
         assert "access-control-allow-origin" in res.headers
 
     def test_audit_service_importable(self):
-        from app.services.audit import log_audit_event, get_recent_audit_events, get_audit_stats
+        from app.services.audit import get_audit_stats, get_recent_audit_events, log_audit_event
 
         assert callable(log_audit_event)
         assert callable(get_recent_audit_events)
         assert callable(get_audit_stats)
 
     def test_quarantine_service_importable(self):
-        from app.services.quarantine import quarantine_file, get_quarantine_count
+        from app.services.quarantine import get_quarantine_count, quarantine_file
 
         assert callable(quarantine_file)
         assert callable(get_quarantine_count)

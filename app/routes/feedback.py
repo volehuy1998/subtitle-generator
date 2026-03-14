@@ -6,7 +6,7 @@ import time
 
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 
 from app.config import LOG_DIR
 from app.db.engine import get_session

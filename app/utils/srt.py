@@ -1,6 +1,7 @@
 """SRT and VTT subtitle file generation with speaker labels and word-level support."""
 
 import json
+
 from app.utils.formatting import format_timestamp
 
 
