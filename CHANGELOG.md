@@ -7,7 +7,6 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [2.2.0](https://github.com/volehuy1998/subtitle-generator/compare/v2.1.0...v2.2.0) (2026-03-14)
 
-
 ### Features
 
 * **ui:** Enterprise Slate dark theme — corporate redesign ([#45](https://github.com/volehuy1998/subtitle-generator/issues/45)) ([070bcff](https://github.com/volehuy1998/subtitle-generator/commit/070bcffb1e89a933ae3ed7ad9a4e8929d0541518)), closes [#44](https://github.com/volehuy1998/subtitle-generator/issues/44)
@@ -17,13 +16,17 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 * **deploy:** add complete .env.example and document Docker preview subdomain ([#49](https://github.com/volehuy1998/subtitle-generator/issues/49)) ([ca5abe3](https://github.com/volehuy1998/subtitle-generator/commit/ca5abe31950d1f5264fc802c5b062fef2f8a2ab4)), closes [#47](https://github.com/volehuy1998/subtitle-generator/issues/47)
 * **deploy:** fix deploy.sh Unicode bug, add newui profile, pin PROD_IMAGE_TAG, update docs ([#73](https://github.com/volehuy1998/subtitle-generator/issues/73)) ([627429e](https://github.com/volehuy1998/subtitle-generator/commit/627429e087ecfa9b1359eca5dc30eedda2f1a20c))
-* **middleware:** add Secure flag to session cookie and explicit CORS allow_headers ([#74](https://github.com/volehuy1998/subtitle-generator/issues/74)) ([92ca304](https://github.com/volehuy1998/subtitle-generator/commit/92ca3044b465b586d9e36aa20b0da0c5157872cf))
-* **security:** allow Google Fonts in CSP so brand fonts load correctly ([#57](https://github.com/volehuy1998/subtitle-generator/issues/57)) ([bbd0a92](https://github.com/volehuy1998/subtitle-generator/commit/bbd0a92e6c1c6525ec15b312a662f15adb019af7))
-* **security:** stop post-commit hook updating last_security_commit on every commit ([#61](https://github.com/volehuy1998/subtitle-generator/issues/61)) ([65a4b51](https://github.com/volehuy1998/subtitle-generator/commit/65a4b51bc6cdb976c99191c7a5e4639eee3d6377))
 * **status:** remove test incidents from public status page ([#58](https://github.com/volehuy1998/subtitle-generator/issues/58)) ([2472d9a](https://github.com/volehuy1998/subtitle-generator/commit/2472d9a9507becdbac4c65a0f3cfa2376e73a164))
 * **ui:** fix 5 ESLint errors and remove || true mask from CI ([#65](https://github.com/volehuy1998/subtitle-generator/issues/65)) ([54dbb77](https://github.com/volehuy1998/subtitle-generator/commit/54dbb7790c26d9be9bf4cfe4361949df6c364078))
 * **ui:** hide GPU/CPU hardware badge on non-app pages ([#59](https://github.com/volehuy1998/subtitle-generator/issues/59)) ([f06d051](https://github.com/volehuy1998/subtitle-generator/commit/f06d0513854b797e4d40e94e70e924bb04351afa)), closes [#54](https://github.com/volehuy1998/subtitle-generator/issues/54)
 * **ui:** update About page tech stack — React 18 → React 19, Vite → Vite 6 ([#60](https://github.com/volehuy1998/subtitle-generator/issues/60)) ([e74eecb](https://github.com/volehuy1998/subtitle-generator/commit/e74eecbea961d76ed2ca010a22318b0604487d53))
+
+
+### Security
+
+* **security:** allow Google Fonts in CSP so brand fonts load correctly ([#57](https://github.com/volehuy1998/subtitle-generator/issues/57)) ([bbd0a92](https://github.com/volehuy1998/subtitle-generator/commit/bbd0a92e6c1c6525ec15b312a662f15adb019af7))
+* **security:** stop post-commit hook updating last_security_commit on every commit ([#61](https://github.com/volehuy1998/subtitle-generator/issues/61)) ([65a4b51](https://github.com/volehuy1998/subtitle-generator/commit/65a4b51bc6cdb976c99191c7a5e4639eee3d6377))
+* **middleware:** add Secure flag to session cookie and explicit CORS allow_headers ([#74](https://github.com/volehuy1998/subtitle-generator/issues/74)) ([92ca304](https://github.com/volehuy1998/subtitle-generator/commit/92ca3044b465b586d9e36aa20b0da0c5157872cf))
 
 
 ### Documentation
@@ -31,7 +34,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 * **config:** fix .sentinel restore path and explain naming pattern ([#43](https://github.com/volehuy1998/subtitle-generator/issues/43)) ([c280af3](https://github.com/volehuy1998/subtitle-generator/commit/c280af30b97db4ede77900b6603a67b74f51bf60))
 * **ui:** establish subdomain-first design review policy ([#50](https://github.com/volehuy1998/subtitle-generator/issues/50)) ([923dcec](https://github.com/volehuy1998/subtitle-generator/commit/923dcec782dbdb99d68c8beabc1f592af9c04a6a)), closes [#48](https://github.com/volehuy1998/subtitle-generator/issues/48)
 
-## [Unreleased] - v2.1.0
+## [Unreleased]
 
 ### Added
 - Multi-model preload support: `PRELOAD_MODEL` now accepts comma-separated values (e.g., `tiny,base,large`) or `all` to load every model
