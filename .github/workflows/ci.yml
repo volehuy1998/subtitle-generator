@@ -96,6 +96,28 @@ jobs:
           name: frontend-coverage
           path: frontend/coverage/
 
+  deploy-validate:
+    name: Validate Deploy-Critical Files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Validate docker-compose CPU profile
+        run: docker compose --profile cpu config > /dev/null
+
+      - name: Validate docker-compose newui profile
+        run: docker compose --profile newui config > /dev/null
+
+      - name: Validate deploy.sh syntax
+        run: bash -n scripts/deploy.sh
+
+      - name: Validate PROD_IMAGE_TAG consistency
+        run: |
+          # .env.example must declare PROD_IMAGE_TAG
+          grep -q '^PROD_IMAGE_TAG=' .env.example || { echo "PROD_IMAGE_TAG missing from .env.example"; exit 1; }
+          # docker-compose.yml must reference PROD_IMAGE_TAG
+          grep -q 'PROD_IMAGE_TAG' docker-compose.yml || { echo "docker-compose.yml does not reference PROD_IMAGE_TAG"; exit 1; }
+
   build:
     name: Build Docker Image
     runs-on: ubuntu-latest

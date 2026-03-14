@@ -398,7 +398,26 @@ If labels are missing, check your token scopes and confirm collaborator access i
 
 ---
 
-## 10. Security
+## 10. Cross-Team Review Protocol
+
+Deploy-critical files are automatically assigned to both **Team Sentinel** and **Team Meridian** via CODEOWNERS:
+
+| File | Required reviewers |
+|------|--------------------|
+| `Dockerfile`, `Dockerfile.gpu` | Sentinel + Meridian |
+| `docker-compose.yml` | Sentinel + Meridian |
+| `scripts/deploy.sh` | Sentinel + Meridian |
+| `docs/DEPLOY.md` | Sentinel + Meridian |
+| `.env.example` | Sentinel + Meridian |
+| `nginx.conf`, `entrypoint.sh` | Sentinel + Meridian |
+| `.github/workflows/` | Sentinel only |
+| All other files | Sentinel only |
+
+**Meridian response SLA:** Team Meridian commits to reviewing within **48 hours** of being requested. If no response within 48 hours, Sentinel may merge with a post-merge review note tagging Meridian.
+
+When a new release is published, a deployment checklist issue is automatically created and assigned to both teams (see `.github/workflows/release-notify.yml`).
+
+## 11. Security
 
 ### Reporting vulnerabilities
 
