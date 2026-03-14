@@ -143,8 +143,8 @@ export function AppHeader() {
       {/* Spacer */}
       <div className="flex-1" />
 
-      {/* GPU/CPU badge */}
-      {health !== null && (
+      {/* GPU/CPU badge — only relevant on the App page */}
+      {health !== null && window.location.pathname === '/' && (
         <div
           className="flex items-center gap-1.5 px-2.5 py-1 rounded-md mr-2"
           style={{
