@@ -51,7 +51,7 @@ jobs:
         run: npx tsc -b --noEmit
       - name: ESLint
         working-directory: frontend
-        run: npx eslint src/ --max-warnings 0 || true
+        run: npx eslint src/ --max-warnings 0
 
   test:
     name: Test
