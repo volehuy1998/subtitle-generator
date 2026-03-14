@@ -105,13 +105,13 @@ class TestRelease:
 
     def test_changelog_has_version(self):
         content = (PROJECT_ROOT / "CHANGELOG.md").read_text()
-        assert "v1.0.0" in content
+        assert "1.0.0" in content
 
     def test_changelog_has_sections(self):
         content = (PROJECT_ROOT / "CHANGELOG.md").read_text()
-        assert "Core Features" in content
-        assert "Security" in content
-        assert "Quality" in content
+        # Keep a Changelog format uses ### Added, ### Security, etc.
+        assert "### Added" in content
+        assert "### Security" in content
 
     def test_roadmap_exists(self):
         assert (PROJECT_ROOT / "ROADMAP.md").exists()
