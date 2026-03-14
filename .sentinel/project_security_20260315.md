@@ -39,4 +39,4 @@ Added two-layer CI gate on every PR:
 2. **scripts/scan_sensitive.py**: public IPv4 (RFC 1918 excluded), PEM keys, DB URLs with credentials, hardcoded passwords
 3. **.scanignore**: allowlist for RFC 5737 test IPs, localhost, test fixtures
 
-**Proof:** scanner catches `124.197.31.140` (exit 1), passes `10.0.1.5` / `192.168.1.100` (exit 0).
+**Proof:** scanner catches public IPs (exit 1), passes private IPs like `10.0.1.5` / `192.168.1.100` (exit 0).

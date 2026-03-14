@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "4142060",
-    "sha_full": "4142060aba4cf28671bb4291507b4b29a25a3e0c",
-    "datetime": "2026-03-15T05:47:14+07:00",
-    "message": "chore: sync .sentinel/ \u2014 latest repo state with PRs #98, #101"
+    "sha": "357b4a5",
+    "sha_full": "357b4a50b455c6008204cf0c10a64235d01cd563",
+    "datetime": "2026-03-15T05:53:08+07:00",
+    "message": "chore: sync .sentinel/ \u2014 latest repo state, redact sensitive data"
   },
   "assertions": [
     {
