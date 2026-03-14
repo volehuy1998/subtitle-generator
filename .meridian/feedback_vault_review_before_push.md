@@ -11,7 +11,7 @@ Every `.meridian/` backup sync must be reviewed by Vault (Anya Petrova) before p
 **How to apply:**
 1. Before any `git push` that includes `.meridian/` files, run a sensitive data scan:
    - Check for public IP addresses (non-RFC1918)
-   - Check for port bindings (0.0.0.0:PORT patterns)
+   - Check for port bindings (bind-all-interfaces patterns)
    - Check for absolute server paths (app install dirs, cert dirs, config dirs)
 2. Vault signs off on the scan results
 3. Only then push to GitHub
