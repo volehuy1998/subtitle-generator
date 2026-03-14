@@ -24,6 +24,9 @@ on:
       - 'CLAUDE.md'
       - '.github/PULL_REQUEST_TEMPLATE.md'
 
+permissions:
+  contents: read
+
 jobs:
   lint:
     name: Lint

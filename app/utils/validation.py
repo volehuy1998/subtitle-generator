@@ -57,7 +57,7 @@ def verify_checksum(file_path: Path | str, expected: str, algorithm: str = "sha2
 
 _CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 _HTML_TAGS = re.compile(r"<(?!/?(?:b|i|u|font)\b)[^>]+>", re.IGNORECASE)
-_SCRIPT_PATTERN = re.compile(r"<script[^>]*>.*?</script>", re.IGNORECASE | re.DOTALL)
+_SCRIPT_PATTERN = re.compile(r"<script[^>]*>.*?</\s*script[^>]*>", re.IGNORECASE | re.DOTALL)
 
 
 def sanitize_subtitle_text(text: str) -> str:

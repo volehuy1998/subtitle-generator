@@ -335,7 +335,8 @@ async def health_stream(request: Request):
                 data = await system_status()
                 yield f"data: {json.dumps(data)}\n\n"
             except Exception as e:
-                yield f"data: {json.dumps({'status': 'error', 'message': str(e)})}\n\n"
+                logger.error(f"HEALTH stream error: {e}", exc_info=True)
+                yield f"data: {json.dumps({'status': 'error', 'message': 'Health check unavailable'})}\n\n"
             await asyncio.sleep(3)
             if await request.is_disconnected():
                 break

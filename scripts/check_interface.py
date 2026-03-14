@@ -85,6 +85,7 @@ with sync_playwright() as pw:
         import urllib.request
 
         ctx = ssl.create_default_context()
+        ctx.minimum_version = ssl.TLSVersion.TLSv1_2
         req = urllib.request.Request(BASE_URL, headers={"User-Agent": "check/1.0"})
         with urllib.request.urlopen(req, context=ctx, timeout=10) as r:
             html = r.read().decode()
@@ -156,6 +157,7 @@ with sync_playwright() as pw:
         import ssl
 
         ctx2 = ssl.create_default_context()
+        ctx2.minimum_version = ssl.TLSVersion.TLSv1_2
         with socket.create_connection(("openlabs.club", 443), timeout=10) as sock:
             with ctx2.wrap_socket(sock, server_hostname="openlabs.club") as ssock:
                 cert = ssock.getpeercert()
@@ -216,7 +218,9 @@ try:
         headers={"Content-Type": f"multipart/form-data; boundary={boundary.decode()}"},
         method="POST",
     )
-    with _req.urlopen(req, context=ssl.create_default_context(), timeout=15) as r:
+    upload_ctx = ssl.create_default_context()
+    upload_ctx.minimum_version = ssl.TLSVersion.TLSv1_2
+    with _req.urlopen(req, context=upload_ctx, timeout=15) as r:
         result = json.loads(r.read())
     task_id = result.get("task_id")
     record("Upload accepted", bool(task_id), f"task_id={task_id}")
@@ -225,10 +229,12 @@ try:
         # Poll up to 15s
         import time as _time
 
+        poll_ctx = ssl.create_default_context()
+        poll_ctx.minimum_version = ssl.TLSVersion.TLSv1_2
         final_status = None
         for _ in range(15):
             _time.sleep(1)
-            with _req.urlopen(f"{BASE_URL}/progress/{task_id}", context=ssl.create_default_context(), timeout=5) as r:
+            with _req.urlopen(f"{BASE_URL}/progress/{task_id}", context=poll_ctx, timeout=5) as r:
                 p = json.loads(r.read())
                 if p["status"] in ("done", "error", "cancelled"):
                     final_status = p["status"]

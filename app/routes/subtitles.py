@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from app import state
 from app.config import OUTPUT_DIR
 from app.utils.srt import segments_to_srt, segments_to_vtt
+from app.utils.validation import safe_path
 
 logger = logging.getLogger("subtitle-generator")
 router = APIRouter(tags=["Subtitles"])
@@ -33,7 +34,7 @@ async def get_subtitles(task_id: str):
         raise HTTPException(400, "Subtitles not ready yet")
 
     # Read segments from SRT file
-    srt_path = OUTPUT_DIR / f"{task_id}.srt"
+    srt_path = safe_path(OUTPUT_DIR / f"{task_id}.srt", allowed_dir=OUTPUT_DIR)
     if not srt_path.exists():
         raise HTTPException(404, "Subtitle file not found")
 
@@ -53,8 +54,8 @@ async def update_subtitles(task_id: str, req: UpdateSubtitlesRequest):
     segments = [s.model_dump() for s in req.segments]
 
     # Regenerate files
-    srt_path = OUTPUT_DIR / f"{task_id}.srt"
-    vtt_path = OUTPUT_DIR / f"{task_id}.vtt"
+    srt_path = safe_path(OUTPUT_DIR / f"{task_id}.srt", allowed_dir=OUTPUT_DIR)
+    vtt_path = safe_path(OUTPUT_DIR / f"{task_id}.vtt", allowed_dir=OUTPUT_DIR)
 
     srt_content = segments_to_srt(segments)
     srt_path.write_text(srt_content, encoding="utf-8")
