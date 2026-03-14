@@ -1,6 +1,10 @@
-# SubForge Engineering Team
+# Team Sentinel
 
-AI-powered engineering team built on [Claude Code](https://claude.com/claude-code), following [Google's Software Engineering](https://abseil.io/resources/swe-book) standards.
+> *We guard quality, security, and standards.*
+
+AI-powered engineering team built on [Claude Code](https://claude.com/claude-code) (Claude Opus 4.6, 1M context), following [Google's Software Engineering](https://abseil.io/resources/swe-book) standards.
+
+**11 engineers. 7 specialized teams. Zero code ships without QA and review.**
 
 Every team member carries a Google SWE checklist. No code ships without passing through **Scout** (QA) and **Hawk** (code review).
 
@@ -176,4 +180,4 @@ Every change follows this pipeline:
 
 ---
 
-*Built with [Claude Code](https://claude.com/claude-code) (Claude Opus 4.6, 1M context)*
+*Team Sentinel — Built with [Claude Code](https://claude.com/claude-code) (Claude Opus 4.6, 1M context)*
