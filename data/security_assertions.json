@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "240ca2a",
-    "sha_full": "240ca2a45733b460bb1212549b8be7334e649797",
-    "datetime": "2026-03-14T19:02:15+07:00",
-    "message": "fix(security): allow Google Fonts in CSP so brand fonts load correctly"
+    "sha": "2ff5656",
+    "sha_full": "2ff5656924371a3d23f710f00dd25053eb3b4e01",
+    "datetime": "2026-03-14T19:15:24+07:00",
+    "message": "fix(middleware): remove fonts.googleapis.com from CSP connect-src"
   },
   "assertions": [
     {
