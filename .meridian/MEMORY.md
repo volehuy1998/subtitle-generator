@@ -15,6 +15,7 @@
 - [feedback_detailed_logging.md](feedback_detailed_logging.md) — User values detailed logging for inventory, diagnostics, and planning
 - [feedback_config_over_cli.md](feedback_config_over_cli.md) — Always use .env config files over CLI flags for deployment
 - [feedback_delegate_no_bottleneck.md](feedback_delegate_no_bottleneck.md) — Compass must delegate to specialists, never bottleneck tasks at leader level
+- [feedback_author_disclosure.md](feedback_author_disclosure.md) — Every team member must disclose their identity (name, role) when creating any content
 
 ## Project State
 - [project_session_20260314.md](project_session_20260314.md) — Major Sentinel session: UI overhaul, Google SWE standards, 17 issues resolved, 10 PRs merged
