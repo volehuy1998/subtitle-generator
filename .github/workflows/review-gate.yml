@@ -8,16 +8,15 @@ name: Review Gate
 # This workflow scans PR comments for valid review signatures and sets
 # a required status check that blocks merge without review.
 #
+# STALE REVIEW POLICY: When new commits are pushed (synchronize event),
+# all prior approvals are invalidated. Engineers must re-review after
+# every code change. Only comments posted AFTER the latest push count.
+#
 # Valid review pattern:
 #   **[Name] ([Role]) — APPROVE**
 #   **[Name] ([Role]) — REQUEST CHANGES**
-#
-# Examples:
-#   **Hawk (Code Reviewer) — APPROVE**
-#   **Scout (QA Lead) — REQUEST CHANGES**
 
 on:
-  # Re-check whenever a new comment is posted or the PR is updated
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened]
@@ -32,7 +31,6 @@ jobs:
   review-gate:
     name: Engineer Review
     runs-on: ubuntu-latest
-    # For issue_comment events, only run on PR comments (not issue comments)
     if: >
       github.event_name == 'pull_request' ||
       (github.event_name == 'issue_comment' && github.event.issue.pull_request)
@@ -59,19 +57,31 @@ jobs:
 
           PR_NUMBER="${{ steps.pr.outputs.number }}"
 
-          echo "::group::Fetching comments for PR #${PR_NUMBER}"
+          echo "::group::Fetching PR data for #${PR_NUMBER}"
 
-          # Fetch PR comments (review comments + issue comments)
-          REVIEW_COMMENTS=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/comments" \
-            --paginate --jq '.[].body' 2>/dev/null || echo "")
-          ISSUE_COMMENTS=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
-            --paginate --jq '.[].body' 2>/dev/null || echo "")
-          PR_REVIEWS=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/reviews" \
-            --paginate --jq '.[].body' 2>/dev/null || echo "")
+          # Get the latest push timestamp from the PR
+          LATEST_PUSH=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}" \
+            --jq '.updated_at' 2>/dev/null || echo "")
 
-          ALL_COMMENTS="${REVIEW_COMMENTS}
-          ${ISSUE_COMMENTS}
-          ${PR_REVIEWS}"
+          # Get all commits to find the latest commit timestamp
+          LATEST_COMMIT_DATE=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/commits" \
+            --jq 'last | .commit.committer.date' 2>/dev/null || echo "")
+
+          # Use the latest commit date as the cutoff — reviews must be AFTER this
+          CUTOFF="${LATEST_COMMIT_DATE}"
+
+          if [ -n "$CUTOFF" ]; then
+            echo "  Latest commit: ${CUTOFF}"
+            echo "  Reviews must be posted AFTER this timestamp to count."
+          else
+            echo "  WARNING: Could not determine latest commit date. Counting all reviews."
+          fi
+
+          # Fetch comments WITH timestamps using JSON
+          ISSUE_COMMENTS_JSON=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
+            --paginate 2>/dev/null || echo "[]")
+          PR_REVIEWS_JSON=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/reviews" \
+            --paginate 2>/dev/null || echo "[]")
 
           echo "::endgroup::"
 
@@ -94,54 +104,143 @@ jobs:
           echo "============================================"
           echo "  Engineer Review Gate — PR #${PR_NUMBER}"
           echo "============================================"
+
+          if [ -n "$CUTOFF" ]; then
+            echo "  Cutoff: only reviews after ${CUTOFF}"
+          fi
           echo ""
 
-          APPROVALS=()
-          REJECTIONS=()
+          # Use Python to filter comments by timestamp and check patterns
+          RESULT=$(python3 << 'PYEOF'
+          import json
+          import re
+          import sys
+          from datetime import datetime
 
-          for entry in "${ENGINEERS[@]}"; do
-            NAME="${entry%%:*}"
-            ROLE="${entry##*:}"
-            # Check for approval pattern: **Name (Role) — APPROVE**
-            if echo "$ALL_COMMENTS" | grep -qP "\*\*${NAME}\s*\(${ROLE}\)\s*—\s*APPROVE\*\*"; then
-              APPROVALS+=("${NAME} (${ROLE})")
-              echo "  ✅ ${NAME} (${ROLE}) — APPROVE"
-            fi
-            # Check for rejection pattern: **Name (Role) — REQUEST CHANGES**
-            if echo "$ALL_COMMENTS" | grep -qP "\*\*${NAME}\s*\(${ROLE}\)\s*—\s*REQUEST CHANGES\*\*"; then
-              REJECTIONS+=("${NAME} (${ROLE})")
-              echo "  ❌ ${NAME} (${ROLE}) — REQUEST CHANGES"
-            fi
-          done
+          cutoff = "$CUTOFF" if "$CUTOFF" else None
 
-          echo ""
-          echo "--------------------------------------------"
-          echo "  Approvals: ${#APPROVALS[@]}"
-          echo "  Rejections: ${#REJECTIONS[@]}"
-          echo "--------------------------------------------"
+          engineers = [
+              ("Forge", "Senior Backend Engineer"),
+              ("Bolt", "Backend Engineer"),
+              ("Pixel", "Senior Frontend Engineer"),
+              ("Prism", "UI/UX Engineer"),
+              ("Scout", "QA Lead"),
+              ("Stress", "Performance Engineer"),
+              ("Harbor", "DevOps Engineer"),
+              ("Anchor", "Infrastructure Engineer"),
+              ("Shield", "Security Engineer"),
+              ("Quill", "Documentation Engineer"),
+              ("Hawk", "Code Reviewer"),
+          ]
 
-          # Fail conditions:
-          # 1. No approvals at all
-          # 2. Any REQUEST CHANGES present
+          # Parse comments
+          try:
+              issue_comments = json.loads('''$ISSUE_COMMENTS_JSON''')
+          except Exception:
+              issue_comments = []
+          try:
+              pr_reviews = json.loads('''$PR_REVIEWS_JSON''')
+          except Exception:
+              pr_reviews = []
 
-          if [ ${#REJECTIONS[@]} -gt 0 ]; then
-            echo ""
-            echo "  BLOCKED: ${#REJECTIONS[@]} engineer(s) requested changes."
-            echo "  Resolve all requested changes before merge."
-            echo ""
-            echo "  Engineers blocking:"
-            for r in "${REJECTIONS[@]}"; do
-              echo "    - $r"
+          # Build list of (body, created_at) from all sources
+          all_comments = []
+          for c in issue_comments:
+              all_comments.append((c.get("body", ""), c.get("created_at", "")))
+          for r in pr_reviews:
+              all_comments.append((r.get("body", ""), r.get("submitted_at", r.get("created_at", ""))))
+
+          # Filter by cutoff if available
+          if cutoff:
+              fresh_comments = []
+              for body, ts in all_comments:
+                  if ts and ts > cutoff:
+                      fresh_comments.append(body)
+              stale_count = len(all_comments) - len(fresh_comments)
+          else:
+              fresh_comments = [body for body, _ in all_comments]
+              stale_count = 0
+
+          approvals = []
+          rejections = []
+
+          for name, role in engineers:
+              approve_pattern = rf"\*\*{re.escape(name)}\s*\({re.escape(role)}\)\s*—\s*APPROVE\*\*"
+              reject_pattern = rf"\*\*{re.escape(name)}\s*\({re.escape(role)}\)\s*—\s*REQUEST CHANGES\*\*"
+              for body in fresh_comments:
+                  if re.search(approve_pattern, body):
+                      approvals.append(f"{name} ({role})")
+                      break
+              for body in fresh_comments:
+                  if re.search(reject_pattern, body):
+                      rejections.append(f"{name} ({role})")
+                      break
+
+          # Output structured result
+          result = {
+              "approvals": approvals,
+              "rejections": rejections,
+              "stale_count": stale_count,
+              "total_fresh": len(fresh_comments),
+              "hawk_approved": any("Hawk" in a for a in approvals),
+          }
+          print(json.dumps(result))
+          PYEOF
+          )
+
+          # Parse Python output
+          APPROVALS=$(echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); [print(a) for a in d['approvals']]")
+          REJECTIONS=$(echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); [print(r) for r in d['rejections']]")
+          APPROVAL_COUNT=$(echo "$RESULT" | python3 -c "import sys,json; print(len(json.load(sys.stdin)['approvals']))")
+          REJECTION_COUNT=$(echo "$RESULT" | python3 -c "import sys,json; print(len(json.load(sys.stdin)['rejections']))")
+          STALE_COUNT=$(echo "$RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin)['stale_count'])")
+          HAWK_APPROVED=$(echo "$RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin)['hawk_approved'])")
+
+          # Display results
+          if [ "$APPROVAL_COUNT" -gt 0 ]; then
+            echo "$APPROVALS" | while read -r a; do
+              echo "  ✅ $a — APPROVE"
             done
+          fi
+
+          if [ "$REJECTION_COUNT" -gt 0 ]; then
+            echo "$REJECTIONS" | while read -r r; do
+              echo "  ❌ $r — REQUEST CHANGES"
+            done
+          fi
+
+          if [ "$STALE_COUNT" -gt 0 ]; then
+            echo ""
+            echo "  ⚠️  ${STALE_COUNT} stale review(s) invalidated (posted before latest push)"
+          fi
+
+          echo ""
+          echo "--------------------------------------------"
+          echo "  Fresh approvals: ${APPROVAL_COUNT}"
+          echo "  Fresh rejections: ${REJECTION_COUNT}"
+          echo "  Stale (invalidated): ${STALE_COUNT}"
+          echo "--------------------------------------------"
+
+          # Fail conditions
+          if [ "$REJECTION_COUNT" -gt 0 ]; then
+            echo ""
+            echo "  BLOCKED: ${REJECTION_COUNT} engineer(s) requested changes."
+            echo "  Resolve all requested changes before merge."
             echo ""
             echo "============================================"
             exit 1
           fi
 
-          if [ ${#APPROVALS[@]} -eq 0 ]; then
+          if [ "$APPROVAL_COUNT" -eq 0 ]; then
             echo ""
-            echo "  BLOCKED: No engineer review found."
+            echo "  BLOCKED: No fresh engineer review found."
             echo ""
+            if [ "$STALE_COUNT" -gt 0 ]; then
+              echo "  ${STALE_COUNT} review(s) were posted before the latest push"
+              echo "  and have been INVALIDATED. Engineers must re-review"
+              echo "  after every code change."
+              echo ""
+            fi
             echo "  At least one Sentinel engineer must post a review"
             echo "  using the mandatory Peer Feedback Format:"
             echo ""
@@ -160,16 +259,8 @@ jobs:
             exit 1
           fi
 
-          # Hawk review is mandatory (non-negotiable per CLAUDE.md)
-          HAWK_APPROVED=false
-          for a in "${APPROVALS[@]}"; do
-            if [[ "$a" == *"Hawk"* ]]; then
-              HAWK_APPROVED=true
-              break
-            fi
-          done
-
-          if [ "$HAWK_APPROVED" = false ]; then
+          # Hawk warning
+          if [ "$HAWK_APPROVED" = "False" ]; then
             echo ""
             echo "  ⚠️  WARNING: Hawk (Code Reviewer) has not reviewed."
             echo "  Per CLAUDE.md, Hawk reviews every PR. This is non-negotiable."
@@ -178,5 +269,5 @@ jobs:
           fi
 
           echo ""
-          echo "  PASSED: ${#APPROVALS[@]} engineer approval(s) found."
+          echo "  PASSED: ${APPROVAL_COUNT} fresh engineer approval(s) found."
           echo "============================================"
