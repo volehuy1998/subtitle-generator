@@ -104,8 +104,17 @@ async def ready(response: Response):
 
 @router.get("/api/model-status")
 async def model_status():
-    """Get model preload status for frontend display."""
-    return state.model_preload
+    """Get model preload and per-model readiness for frontend display.
+
+    Returns preload progress and per-model status (ready/loading/not_loaded)
+    so the UI can show which models are available for immediate use.
+    """
+    from app.services.model_manager import get_model_readiness
+
+    return {
+        "preload": state.model_preload,
+        "models": get_model_readiness(),
+    }
 
 
 @router.get("/api/capabilities")

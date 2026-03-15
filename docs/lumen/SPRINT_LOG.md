@@ -46,3 +46,24 @@
 **Design references used:** Microsoft 365, Google Workspace, Claude AI, Vercel, Linear
 
 ---
+
+## Sprint L3: Model Readiness API (2026-03-16)
+
+**Goal:** Backend API for model readiness so UI can show which models are loaded.
+
+**Delivered:**
+- `app/services/model_manager.py` — added `get_model_readiness()` function
+  - Returns per-model status: ready / loading / not_loaded
+  - Includes size_gb and loaded_devices for each model
+- `app/routes/health.py` — enhanced `/api/model-status` endpoint
+  - Now returns both preload progress AND per-model readiness
+  - UI can show green/yellow/gray indicators per model
+- `tests/test_lumen/test_model_readiness.py` — 9 tests:
+  - Endpoint availability, response structure
+  - All 5 model sizes present, valid status values
+  - Correct size_gb values, preload status format
+
+**Tests added:** 9
+**Running total:** 1345 + 9 = 1354
+
+---
