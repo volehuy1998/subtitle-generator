@@ -194,7 +194,28 @@ Upload → probe (ffprobe) → extract audio (ffmpeg→WAV) → load model → t
 - **`app/state.py`** — Global in-memory state: tasks dict, model cache, translation model cache, task semaphore
 - **`frontend/src/`** — React 19 SPA (Vite 6 + TypeScript + Zustand + Tailwind CSS v4)
 
-### Frontend (React SPA)
+### Frontend — DUAL UI SYSTEM (CRITICAL KNOWLEDGE)
+
+**Two completely separate frontends exist in this repository.** Which one is served depends on whether `frontend/dist/` exists at runtime. See `app/routes/pages.py` line 18.
+
+| UI System | Source | Design | Served When |
+|-----------|--------|--------|-------------|
+| **React SPA** | `frontend/src/` → builds to `frontend/dist/` | Enterprise Slate (dark nav, radio buttons, 500MB limit, SRT/VTT only) | `frontend/dist/index.html` exists AND `FRONTEND=react` (default) |
+| **Jinja Templates** | `templates/*.html` | Modern light theme (button pills, 2GB limit, multi-file, JSON format) | `frontend/dist/` does NOT exist, OR `FRONTEND=templates` |
+
+**Deployment implications:**
+- **Docker** (Dockerfile runs `npm run build`) → always serves **React SPA**
+- **Bare-metal** (`deploy.sh` does NOT run `npm run build`) → serves **Jinja templates**
+- **`FRONTEND` env var**: Set to `templates` to force Jinja templates even when React build exists
+
+**WARNING**: The newui Docker Compose profile builds from the same Dockerfile as production — it produces the SAME React SPA output. To preview the Jinja template UI in Docker, set `FRONTEND=templates` in the container environment.
+
+**openlabs.club deployment:**
+- `openlabs.club` → Docker, React SPA (old Enterprise Slate UI)
+- `newui.openlabs.club` → Docker, React SPA (same UI — NOT the new design)
+- `meridian-openlabs.shop` → bare-metal, Jinja templates (new modern UI)
+
+### React SPA Details
 - **Stores**: `taskStore.ts` (task state, progress), `uiStore.ts` (theme, UI toggles)
 - **Hooks**: `useSSE` (real-time task events), `useHealthStream` (system health SSE)
 - **API client**: `frontend/src/api/client.ts` — typed HTTP client for all endpoints
