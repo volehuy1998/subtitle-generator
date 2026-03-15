@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "1382b1a",
-    "sha_full": "1382b1aa8bcf1802d8ce6b893d4ba26bd45741ab",
-    "datetime": "2026-03-15T15:14:37+07:00",
-    "message": "chore: standardize project files and fix stale references"
+    "sha": "3353ebd",
+    "sha_full": "3353ebd3ba428459a5caf9132462d1aeae9370f5",
+    "datetime": "2026-03-15T15:36:40+07:00",
+    "message": "ci: skip unnecessary CI jobs for documentation-only changes"
   },
   "assertions": [
     {
