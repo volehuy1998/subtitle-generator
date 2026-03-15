@@ -79,6 +79,15 @@ Separate team. Deploys on fresh servers using only docs. Files issues for gaps.
 - All recruited from Google (Cloud Platform SRE, Cloud Networking, Security, SRE Observability, Cloud SQL, Cloud Pub/Sub)
 - Full templates in `docs/AGENT_TEMPLATES_DVS.md`
 
+**DVS Permissions (STRICT):**
+DVS engineers have similar responsibilities to the Sentinel development team (they review, analyze, and verify) but they are **NEVER allowed to modify source code**. Their sole responsibility is to:
+- **Deploy** using only published documentation
+- **Report** gaps, bugs, and verification results as GitHub issues
+- **Review** code changes in their domain (infra, security, networking, DB, etc.)
+- **Verify** that fixes resolve the issues they reported
+
+DVS engineers must NOT: write application code, create PRs with code changes, modify configs, or push commits. If a fix is needed, DVS files an issue and Sentinel engineers implement it.
+
 ### Agent Prompt Templates
 Full agent prompts with BACKGROUND, SKILLS, SCOPE, CHECKLIST for each engineer are in `docs/AGENT_TEMPLATES_SENTINEL.md` (Sentinel) and `docs/AGENT_TEMPLATES_DVS.md` (DVS). Use these when dispatching engineers as subagents.
 
@@ -138,6 +147,61 @@ Task arrives at Atlas
 | Scout | Hawk | Reviewer validates test quality |
 | Stress | Scout + Hawk | QA validates benchmark methodology |
 
+### Mandatory Review & Triage Policy (NEVER SKIP)
+
+**Every issue and every PR requires an engineer review. No exceptions. Unreviewed items are invalid.**
+
+Without review, the product development lifecycle is broken — issues rot, PRs drift, bugs ship, and quality erodes. This policy exists to guarantee that nothing enters or exits the pipeline without engineering scrutiny.
+
+#### Session-Start Checklist (Atlas — Every Session)
+1. Run `gh issue list --state open` and `gh pr list --state open`
+2. Any item without assignee or reviewer → triage immediately
+3. Any item open >24 hours with no activity → escalate
+
+#### Issue Triage Rules
+| Priority | First Response SLA | Assignment SLA | Engineer |
+|----------|-------------------|----------------|----------|
+| P0-critical | Immediate | Immediate | Domain lead (Forge/Pixel/Harbor) |
+| P1-high | 4 hours | 4 hours | Domain lead or senior |
+| P2-medium | 8 hours | 24 hours | Any domain engineer |
+| P3-low | 24 hours | 48 hours | Any engineer |
+
+- **Every issue** gets an assignee and at least one comment acknowledging receipt
+- **DVS issues** (label: `dvs`) → auto-assign to domain lead based on content:
+  - Backend/API/pipeline → Forge
+  - Frontend/UI → Pixel
+  - Infrastructure/deploy/nginx → Harbor
+  - Security → Shield
+  - Database → Forge + Harbor
+- **Issue review** must include: root cause analysis, scope assessment, and linked PR (if fix needed)
+
+#### PR Review Rules
+| Condition | Review SLA | Minimum Reviewers |
+|-----------|-----------|-------------------|
+| Any PR (no exceptions) | First review within 8 hours | 1 engineer + Hawk |
+| P0/P1 fix | First review within 2 hours | 1 domain lead + Hawk |
+| Security-sensitive | First review within 4 hours | Shield + domain lead + Hawk |
+| Docs-only | First review within 24 hours | Quill + domain expert |
+
+- **No PR merges without at least one APPROVE** from an engineer review
+- **Hawk reviews every PR** — this is non-negotiable, not just a standing order
+- **Cross-review matrix applies** — the PR author's peer reviewer (from the matrix above) must be requested
+- **Review must use the Peer Feedback Format** — "LGTM" alone is not a valid review
+
+#### Staleness Escalation
+| Age without activity | Action |
+|---------------------|--------|
+| 24 hours | Atlas flags in session, pings assignee |
+| 48 hours | Atlas reassigns to senior engineer |
+| 72 hours | Atlas escalates to domain lead with explanation |
+
+#### Validity Rule
+**An issue or PR without an engineer review is INVALID.** It cannot be:
+- Merged (PRs)
+- Closed as resolved (issues)
+- Referenced as "done" in any roadmap, sprint, or status update
+- Used as basis for a release
+
 ---
 
 ## PR & Review Rules
@@ -169,6 +233,18 @@ Task arrives at Atlas
 6. **Linked issue** — `Closes #N` in PR body
 
 **IMPORTANT**: `gh pr edit` fails on this repo due to Projects classic deprecation. Use `gh api` REST endpoints instead. CI "Validate PR attributes" always fails on Reviewers in single-collaborator repos — requires `--admin` merge override.
+
+### GitHub Branch Protection (main)
+All Sentinel engineers operate through one GitHub account (`volehuy1998`), so native GitHub reviewer assignment is impossible. Instead, review is enforced via the **Review Gate** CI check:
+- **Required status checks**: `Lint`, `Test`, `Engineer Review` (all must pass)
+- **`Engineer Review` check**: Scans PR comments for `**[Name] ([Role]) — APPROVE**` pattern from any known Sentinel engineer. Blocks merge if zero approvals or any `REQUEST CHANGES` present.
+- **Required approving reviews**: 1 (GitHub-native — effectively requires `--admin` override in single-collaborator repo)
+- **Dismiss stale reviews**: true (new pushes invalidate old approvals)
+- **Require last push approval**: true
+- **Require CODEOWNERS review**: true
+- **Enforce admins**: false (allows admin to merge after Engineer Review CI passes)
+- **Merge method**: Squash merge only
+- **Auto-delete branches**: On merge
 
 ### Author Disclosure (Mandatory)
 Every engineer discloses name and role in ALL artifacts:
@@ -370,6 +446,7 @@ Full list in `.env.example` (40+ variables with descriptions). Critical ones:
 | `secret-scan.yml` | push/PR to main | Skipped (paths-ignore) | TruffleHog + custom sensitive data scanner |
 | `docs-skip.yml` | push/PR (docs paths only) | **Runs** (stub jobs) | Provides passing stubs for branch protection |
 | `pr-attributes.yml` | PR events | Always runs | Validates all 6 mandatory PR attributes |
+| `review-gate.yml` | PR events + PR comments | Skipped (stub) | Scans PR comments for valid Sentinel engineer reviews |
 | `release.yml` | push to main | Skipped | Semantic release + Docker push on new release |
 | `release-notify.yml` | Release published | N/A | Auto-creates deployment checklist issue |
 
@@ -459,18 +536,19 @@ Full GitHub access (all scopes) and full server access granted by investor (vole
 | 2026-03-15 (PM-5) | CI standardized: docs-only PRs skip CodeQL/secret-scan, consistency validation added |
 | 2026-03-15 (PM-6) | Sequential workflow replaced with parallel execution model, cross-review matrix, peer feedback protocol |
 | 2026-03-15 (PM-7) | CLAUDE.md consolidated as single source of truth |
+| 2026-03-16 (AM) | Mandatory Review & Triage Policy added — all issues/PRs require engineer review, SLAs defined, staleness escalation, validity rule. Dispatched Hawk+Scout+Forge to review stale PR #128 and Issue #127 |
 
 ### Deployment Rules (NEVER FORGET)
 
 **Matching principle**: Same domain type = same implementation and technology across all servers.
 
 ```
-openlabs.club             =  meridian-openlabs.shop              (production)
+openlabs.club             =  meridian-openlabs.shop              (production — React SPA)
 newui.openlabs.club       =  newui.meridian-openlabs.shop        (evolution preview)
 ```
 
-- **Main domains** are production — what users see. Must be identical across servers.
-- **newui subdomains** are the evolution preview — the next version using new technology. Must be identical across servers.
+- **Main domains** serve **React SPA** (`FRONTEND=react`) — promoted from newui on 2026-03-16.
+- **newui subdomains** are the evolution preview — the next version using new technology.
 - **Main and newui must always be different** — the investor needs to compare side by side.
 - When changing technology on one domain, apply the same change to its counterpart on the other server.
-- Never deploy the same UI to both main and newui.
+- When newui is approved by investor, promote it to main and start the next evolution on newui.
