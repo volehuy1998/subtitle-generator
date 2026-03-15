@@ -31,13 +31,16 @@ When the script finishes it prints the live URLs and useful management commands.
 
 | Requirement | Notes |
 |---|---|
-| Ubuntu Server 24.04 LTS | Other Debian-based distros may work but are untested |
+| Ubuntu Server 22.04 or 24.04 LTS | Other Debian-based distros may work but are untested |
+| Python 3.10+ | Installed by default on Ubuntu 22.04+ (3.10) and 24.04+ (3.12) |
 | Root / sudo access | The script must run as root |
 | Public IP + DNS (prod) | Your domain must point to this server before running |
 | Ports 80 and 443 open (prod) | 80 is used briefly for the ACME challenge, then for HTTP→HTTPS redirect |
 | Port 8000 open (dev) | Only needed for local / private access |
 
 The script installs everything else (Python 3, ffmpeg, git, certbot, Docker, etc.).
+
+> **Note**: Ubuntu 22.04 ships Python 3.10 and Ubuntu 24.04 ships Python 3.12. Both are supported. The deploy script uses the system Python to create a virtual environment.
 
 ---
 

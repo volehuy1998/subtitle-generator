@@ -290,13 +290,17 @@ async def export_tasks_json(status: str = None, limit: int = 10000) -> list[dict
 # ── DB Health Check ──
 
 
+async def _db_health_ping() -> None:
+    """Execute a simple SELECT 1 to verify database connectivity."""
+    async with get_session() as session:
+        await session.execute(text("SELECT 1"))
+
+
 async def check_db_health() -> dict:
     """Check database health: pool status and query latency."""
     try:
         start = time.time()
-        async with asyncio.timeout(3):
-            async with get_session() as session:
-                await session.execute(text("SELECT 1"))
+        await asyncio.wait_for(_db_health_ping(), timeout=3.0)
         latency_ms = round((time.time() - start) * 1000, 2)
         return {
             "status": "healthy",
