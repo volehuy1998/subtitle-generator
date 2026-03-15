@@ -59,6 +59,9 @@ export interface TaskState {
   speed_x?: number
   eta?: string
   elapsed?: string
+
+  // Phase Lumen: liveness tracking
+  lastEventTime: number
 }
 
 interface TaskActions {
@@ -91,6 +94,7 @@ const initial: TaskState = {
   downloadReady: false, embedDownloadUrl: null,
   warning: null,
   processed_sec: undefined, total_sec: undefined, speed_x: undefined, eta: undefined, elapsed: undefined,
+  lastEventTime: Date.now(),
 }
 
 export const useTaskStore = create<TaskState & TaskActions>((set) => ({
@@ -102,7 +106,7 @@ export const useTaskStore = create<TaskState & TaskActions>((set) => ({
 
   setUploadPercent: (percent) => set({ uploadPercent: percent }),
 
-  applyProgressData: (data) => set((s) => ({ ...s, ...data })),
+  applyProgressData: (data) => set((s) => ({ ...s, ...data, lastEventTime: Date.now() })),
 
   addSegment: (seg) => set((s) => ({
     liveSegments: [...s.liveSegments, seg],

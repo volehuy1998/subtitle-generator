@@ -4,6 +4,7 @@ import { useUIStore } from '@/store/uiStore'
 import { useSSE } from '@/hooks/useSSE'
 import { api } from '@/api/client'
 import { PipelineSteps } from './PipelineSteps'
+import { LivenessIndicator } from './LivenessIndicator'
 
 interface Props {
   taskId: string
@@ -211,6 +212,8 @@ export function ProgressView({ taskId }: Props) {
           >
             {percent}%
           </span>
+          {/* Phase Lumen: liveness indicator */}
+          <LivenessIndicator />
         </div>
       </div>
 
