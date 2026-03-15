@@ -129,6 +129,44 @@ services:
     profiles:
       - newui
 
+  # ── Phase Lumen development preview ─────────────────────────────────────────
+  # Usage: docker compose --profile lumen up -d --build
+  # Serves Lumen build on 127.0.0.1:8002 for nginx reverse proxy
+  # Development phase: professional UI overhaul with stability + performance
+
+  subtitle-generator-lumen:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:8002:8000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./outputs:/app/outputs
+      - ./logs:/app/logs
+    environment:
+      - ENVIRONMENT=dev
+      - ROLE=standalone
+      - DATABASE_URL=postgresql+asyncpg://subtitle:subtitle@postgres:5432/subtitle_generator
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - API_KEYS=${API_KEYS:-}
+      - HF_TOKEN=${HF_TOKEN:-}
+      - PRELOAD_MODEL=${PRELOAD_MODEL:-base}
+      - MAX_CONCURRENT_TASKS=${MAX_CONCURRENT_TASKS:-}
+      - FILE_RETENTION_HOURS=${FILE_RETENTION_HOURS:-24}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - CORS_ORIGINS=https://lumen.${DOMAIN:-openlabs.club}
+      - FRONTEND=react
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    profiles:
+      - lumen
+
   # ── Single-server (GPU) ─────────────────────────────────────────────────────
   # Usage: docker compose --profile gpu up -d
 
