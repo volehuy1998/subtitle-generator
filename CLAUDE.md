@@ -226,6 +226,7 @@ Without review, the product development lifecycle is broken — issues rot, PRs 
 3. **Separate severities** — critical blocks merge, nits use `Nit:` prefix
 4. **Acknowledge good work** — "What works well" is mandatory
 5. **Cross-domain feedback welcome** — if Forge sees a frontend issue, flag it
+6. **Use inline code comments** — engineers should comment directly on source code lines in the PR diff to explain issues, suggest fixes, or provide context. Inline comments are more precise than top-level comments and help future readers understand why specific code was changed. The Review Gate CI scans all comment types (inline diff comments, PR review bodies, and issue comments).
 
 ### PR Requirements (All 6 Mandatory)
 1. **Labels** — type (bug/enhancement/documentation/deployment) + priority (P0-P3)
