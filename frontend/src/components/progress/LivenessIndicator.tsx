@@ -9,18 +9,25 @@
  * Pixel (Sr. Frontend Engineer) — Sprint L5
  */
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { useTaskStore } from '@/store/taskStore';
+
+// Subscribe to a 1-second clock tick without impure render calls
+let clockListeners: Array<() => void> = [];
+let clockSnapshot = 0;
+setInterval(() => {
+  clockSnapshot = Date.now();
+  clockListeners.forEach((fn) => fn());
+}, 1000);
+function subscribeClock(cb: () => void) {
+  clockListeners.push(cb);
+  return () => { clockListeners = clockListeners.filter((fn) => fn !== cb); };
+}
+function getClockSnapshot() { return clockSnapshot; }
 
 export function LivenessIndicator() {
   const { status, lastEventTime } = useTaskStore();
-  const [now, setNow] = useState(Date.now());
-
-  // Update "now" every second to keep the time-since-update ticking
-  useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(interval);
-  }, []);
+  const now = useSyncExternalStore(subscribeClock, getClockSnapshot);
 
   // Don't show when task is complete/cancelled/error
   const isActive = status === 'uploading' || status === 'queued' || status === 'transcribing' ||
@@ -28,7 +35,7 @@ export function LivenessIndicator() {
 
   if (!isActive) return null;
 
-  const lastEvent = lastEventTime || Date.now();
+  const lastEvent = lastEventTime || now;
   const secondsAgo = Math.floor((now - lastEvent) / 1000);
 
   let dotColor: string;
