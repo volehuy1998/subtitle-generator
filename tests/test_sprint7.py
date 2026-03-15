@@ -75,7 +75,7 @@ class TestApiDocs:
     def test_openapi_version(self):
         res = client.get("/openapi.json")
         data = res.json()
-        assert data["info"]["version"] == "2.1.0"
+        assert data["info"]["version"] == "2.3.0"
 
     def test_openapi_description(self):
         res = client.get("/openapi.json")
