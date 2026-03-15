@@ -9,6 +9,9 @@ One command is all you need.
 ## Quick start
 
 ```bash
+# Ensure curl is installed (may be missing on minimal Ubuntu installs)
+sudo apt-get update && sudo apt-get install -y curl
+
 # 1. Download the script (run as root on the target server)
 curl -fsSL https://raw.githubusercontent.com/volehuy1998/subtitle-generator/main/scripts/deploy.sh \
   -o deploy.sh
@@ -505,6 +508,8 @@ server {
     ssl_certificate     /etc/letsencrypt/live/newui.example.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/newui.example.com/privkey.pem;
 
+    # IMPORTANT: Must match the app's upload limit (default 2 GB).
+    # Without this, nginx rejects uploads >1MB with HTTP 413.
     client_max_body_size 2G;
 
     location / {
@@ -518,6 +523,16 @@ server {
         proxy_read_timeout 3600s;
     }
 }
+```
+
+After saving the nginx config, obtain TLS certificates for both domains:
+
+```bash
+# Production domain
+sudo certbot --nginx -d example.com
+
+# Preview subdomain
+sudo certbot --nginx -d newui.example.com
 ```
 
 ### Promoting a reviewed design to production

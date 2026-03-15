@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import re
 import uuid
 from pathlib import Path
 from typing import Literal, Optional
@@ -23,6 +24,14 @@ from app.utils.validation import safe_path
 
 logger = logging.getLogger("subtitle-generator")
 router = APIRouter(tags=["Embedding"])
+
+# Strip internal file paths from error messages before they reach users — Shield (Security Engineer)
+_PATH_RE = re.compile(r"(/[a-zA-Z0-9_./-]+)+")
+
+
+def _sanitize_embed_error(exc: Exception) -> str:
+    """Remove internal paths from embed error messages."""
+    return _PATH_RE.sub("<path>", str(exc))[:200]
 
 
 @router.get("/embed/presets")
@@ -312,9 +321,9 @@ async def quick_embed(
                 },
             )
         except Exception as e:
-            logger.error(f"EMBED [{task_id[:8]}] Quick embed failed: {e}")
+            logger.error("EMBED [%s] Quick embed failed: %s", task_id[:8], e)
             log_task_event(task_id, "embed_error", error=str(e))
-            emit_event(task_id, "embed_error", {"message": f"Embedding failed: {e}"})
+            emit_event(task_id, "embed_error", {"message": f"Embedding failed: {_sanitize_embed_error(e)}"})
         finally:
             task.pop("embed_in_progress", None)
 

@@ -1729,6 +1729,8 @@
                 $('embedResult').style.display = 'none';
                 $('embedProgress').style.display = 'none';
                 $('embedStartBtn').disabled = false;
+                // Pixel (Senior Frontend Engineer): track embed panel shown for analytics (#132)
+                track('view', 'embed_panel_toggle', {action: 'show'});
             }
 
         }
@@ -1835,6 +1837,8 @@
             controls.style.display = 'none'; previewPanel.style.display = 'none';
             speedIndicator.style.display = 'none'; warningBanner.style.display = 'none';
             // Reset embed card
+            // Pixel (Senior Frontend Engineer): track embed panel hidden for analytics (#132)
+            if ($('embedCard').style.display !== 'none') track('view', 'embed_panel_toggle', {action: 'hide'});
             $('embedCard').style.display = 'none';
             $('embedResult').style.display = 'none';
             $('embedProgress').style.display = 'none';
@@ -2086,6 +2090,8 @@
 
                     // Hide embed card if it exists
                     var embedCard = $('embedCard');
+                    // Pixel (Senior Frontend Engineer): track embed panel hidden (#132)
+                    if (embedCard && embedCard.style.display !== 'none') track('view', 'embed_panel_toggle', {action: 'hide'});
                     if (embedCard) embedCard.style.display = 'none';
 
                     window._ffmpegAvailable = false;
@@ -2702,11 +2708,8 @@
             return _origStartEmbed();
         };
 
-        // Track panel opens (guard against missing function)
-        if (typeof toggleEmbedPanel === 'function') {
-            const _origToggleEmbed = toggleEmbedPanel;
-            toggleEmbedPanel = function() { track('view', 'embed_panel_toggle'); return _origToggleEmbed(); };
-        }
+        // Pixel (Senior Frontend Engineer): embed_panel_toggle tracking moved inline
+        // to actual show/hide sites (lines ~1733 and ~1840) — see #132
 
         // Track JS errors
         window.addEventListener('error', function(e) {
