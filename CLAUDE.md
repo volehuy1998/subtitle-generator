@@ -461,13 +461,17 @@ Full GitHub access (all scopes) and full server access granted by investor (vole
 | 2026-03-15 (PM-6) | Sequential workflow replaced with parallel execution model, cross-review matrix, peer feedback protocol |
 | 2026-03-15 (PM-7) | CLAUDE.md consolidated as single source of truth |
 
-### Deployment UI Rules (NEVER FORGET)
+### Deployment Rules (NEVER FORGET)
 
-| Domain | `FRONTEND` env var | UI served | Purpose |
-|--------|-------------------|-----------|---------|
-| `openlabs.club` | `templates` | Jinja templates (production) | Live production for users |
-| `newui.openlabs.club` | `react` (default) | React SPA (preview) | Technology evolution preview for investor comparison |
-| `meridian-openlabs.shop` | Not set (no `frontend/dist/`) | Jinja templates (production) | Second production server |
-| `newui.meridian-openlabs.shop` | `react` (needs `npm run build` first) | React SPA (preview) | Technology evolution preview |
+**Matching principle**: Same domain type = same implementation and technology across all servers.
 
-**Rule**: Main domains ALWAYS serve Jinja templates. newui subdomains ALWAYS serve React SPA. This separation exists so the investor can compare production vs the evolving new technology side by side. **Never deploy the same UI to both.**
+```
+openlabs.club             =  meridian-openlabs.shop              (production)
+newui.openlabs.club       =  newui.meridian-openlabs.shop        (evolution preview)
+```
+
+- **Main domains** are production — what users see. Must be identical across servers.
+- **newui subdomains** are the evolution preview — the next version using new technology. Must be identical across servers.
+- **Main and newui must always be different** — the investor needs to compare side by side.
+- When changing technology on one domain, apply the same change to its counterpart on the other server.
+- Never deploy the same UI to both main and newui.
