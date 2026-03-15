@@ -52,8 +52,8 @@ type: reference
 **Access level:** Full sudo access via `claude-user` account
 **Docker:** Full Docker and Docker Compose management
 **Services:** Can start/stop/rebuild all containers (subtitle-generator, PostgreSQL, Redis)
-**TLS:** Access to Let's Encrypt certificates (cert path configured in environment)
-**Filesystem:** Full read/write to project directory
+**TLS:** Access to Let's Encrypt certificates at /etc/letsencrypt/
+**Filesystem:** Full read/write to /home/claude-user/subtitle-generator/
 
 ## What Team Sentinel Is Authorized To Do
 
