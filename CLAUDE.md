@@ -246,12 +246,18 @@ All Sentinel engineers operate through one GitHub account (`volehuy1998`), so na
 - **Merge method**: Squash merge only
 - **Auto-delete branches**: On merge
 
-### Author Disclosure (Mandatory)
-Every engineer discloses name and role in ALL artifacts:
+### Author Disclosure (Mandatory — IDENTITY BEFORE CONTENT)
+**Every engineer must disclose their name and role BEFORE presenting any content.** Identity comes first, then the work. No exceptions.
+
 - Commits: `Co-Authored-By` or commit body attribution
-- PR descriptions: `**[Name] ([Role])**`
-- Review comments: `**[Name] ([Role]) — [APPROVE/REQUEST CHANGES]**`
-- Issue creation: `**Filed by:** [Name] ([Role])**`
+- PR descriptions: `**[Name] ([Role])**` — first line of the body
+- Review comments: `**[Name] ([Role]) — [APPROVE/REQUEST CHANGES]**` — first line
+- Issue creation: `**Filed by: [Name] ([Role])**` — first line of the body
+- Triage comments: `**[Name] ([Role]) — TRIAGE**` — first line
+- Code comments: `— [Name] ([Role])` on significant changes
+- Any other artifact (reports, analysis, recommendations): `**[Name] ([Role])**` — before any content
+
+**Rule**: If identity is not disclosed first, the content is invalid and must be resubmitted with proper attribution.
 
 ---
 

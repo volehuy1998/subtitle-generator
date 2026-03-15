@@ -25,6 +25,20 @@ from app.utils.media import FFMPEG_PROTOCOL_WHITELIST, FFMPEG_TIMEOUT
 logger = logging.getLogger("subtitle-generator")
 
 
+def _filter_ffmpeg_stderr(stderr: str) -> str:
+    """Filter ffmpeg banner/config noise, keep meaningful error lines.
+
+    Mirrors the pattern from app/utils/media.py — Forge (Senior Backend Engineer).
+    """
+    error_lines = [
+        line
+        for line in stderr.strip().splitlines()
+        if not line.startswith(("  ", "ffmpeg version")) and line.strip()
+    ]
+    # Fallback is 500 chars (vs 200 in media.py) — embedding errors need more context for codec/filter diagnostics
+    return "\n".join(error_lines[-5:]) if error_lines else stderr[-500:]
+
+
 def _sanitize_font_name(name: str) -> str:
     """Strip dangerous characters from font name. Only allow alphanumeric, spaces, dash, underscore."""
     sanitized = re.sub(r"[^a-zA-Z0-9 _-]", "", name)
@@ -152,8 +166,9 @@ def soft_embed_subtitles(
 
                 reasons = "; ".join(state.system_critical_reasons) if state.system_critical_reasons else "Unknown"
                 raise CriticalAbortError(f"Embed killed — system critical: {reasons}")
-        logger.error(f"EMBED [{task_id[:8]}] Soft embed failed ({elapsed:.1f}s): {stderr[:500]}")
-        raise RuntimeError(f"Subtitle embedding failed: {stderr[:300]}")
+        filtered = _filter_ffmpeg_stderr(stderr)
+        logger.error("EMBED [%s] Soft embed failed (%.1fs): %s", task_id[:8], elapsed, filtered)
+        raise RuntimeError(f"Subtitle embedding failed: {filtered}")
 
     logger.info(f"EMBED [{task_id[:8]}] Soft embed done in {elapsed:.1f}s -> {output_path.name}")
     if task_id:
@@ -233,8 +248,9 @@ def hard_burn_subtitles(
 
                 reasons = "; ".join(state.system_critical_reasons) if state.system_critical_reasons else "Unknown"
                 raise CriticalAbortError(f"Embed killed — system critical: {reasons}")
-        logger.error(f"EMBED [{task_id[:8]}] Hard burn failed ({elapsed:.1f}s): {stderr[:500]}")
-        raise RuntimeError(f"Subtitle burn failed: {stderr[:300]}")
+        filtered = _filter_ffmpeg_stderr(stderr)
+        logger.error("EMBED [%s] Hard burn failed (%.1fs): %s", task_id[:8], elapsed, filtered)
+        raise RuntimeError(f"Subtitle burn failed: {filtered}")
 
     logger.info(f"EMBED [{task_id[:8]}] Hard burn done in {elapsed:.1f}s -> {output_path.name}")
     if task_id:

@@ -1,0 +1,182 @@
+name: Review Gate
+
+# Enforces that every PR receives at least one engineer review comment
+# using the mandatory Peer Feedback Format before merge is allowed.
+#
+# WHY: All Sentinel engineers operate through a single GitHub account
+# (volehuy1998), so GitHub's native "required reviewers" cannot work.
+# This workflow scans PR comments for valid review signatures and sets
+# a required status check that blocks merge without review.
+#
+# Valid review pattern:
+#   **[Name] ([Role]) — APPROVE**
+#   **[Name] ([Role]) — REQUEST CHANGES**
+#
+# Examples:
+#   **Hawk (Code Reviewer) — APPROVE**
+#   **Scout (QA Lead) — REQUEST CHANGES**
+
+on:
+  # Re-check whenever a new comment is posted or the PR is updated
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created, edited]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  review-gate:
+    name: Engineer Review
+    runs-on: ubuntu-latest
+    # For issue_comment events, only run on PR comments (not issue comments)
+    if: >
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'issue_comment' && github.event.issue.pull_request)
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Determine PR number
+        id: pr
+        env:
+          PR_NUM_FROM_PR: ${{ github.event.pull_request.number }}
+          PR_NUM_FROM_ISSUE: ${{ github.event.issue.number }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            echo "number=${PR_NUM_FROM_PR}" >> "$GITHUB_OUTPUT"
+          else
+            echo "number=${PR_NUM_FROM_ISSUE}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check for valid engineer review
+        run: |
+          set -euo pipefail
+
+          PR_NUMBER="${{ steps.pr.outputs.number }}"
+
+          echo "::group::Fetching comments for PR #${PR_NUMBER}"
+
+          # Fetch PR comments (review comments + issue comments)
+          REVIEW_COMMENTS=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/comments" \
+            --paginate --jq '.[].body' 2>/dev/null || echo "")
+          ISSUE_COMMENTS=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
+            --paginate --jq '.[].body' 2>/dev/null || echo "")
+          PR_REVIEWS=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/reviews" \
+            --paginate --jq '.[].body' 2>/dev/null || echo "")
+
+          ALL_COMMENTS="${REVIEW_COMMENTS}
+          ${ISSUE_COMMENTS}
+          ${PR_REVIEWS}"
+
+          echo "::endgroup::"
+
+          # Known Sentinel engineers and their roles
+          ENGINEERS=(
+            "Forge:Senior Backend Engineer"
+            "Bolt:Backend Engineer"
+            "Pixel:Senior Frontend Engineer"
+            "Prism:UI/UX Engineer"
+            "Scout:QA Lead"
+            "Stress:Performance Engineer"
+            "Harbor:DevOps Engineer"
+            "Anchor:Infrastructure Engineer"
+            "Shield:Security Engineer"
+            "Quill:Documentation Engineer"
+            "Hawk:Code Reviewer"
+          )
+
+          echo ""
+          echo "============================================"
+          echo "  Engineer Review Gate — PR #${PR_NUMBER}"
+          echo "============================================"
+          echo ""
+
+          APPROVALS=()
+          REJECTIONS=()
+
+          for entry in "${ENGINEERS[@]}"; do
+            NAME="${entry%%:*}"
+            ROLE="${entry##*:}"
+            # Check for approval pattern: **Name (Role) — APPROVE**
+            if echo "$ALL_COMMENTS" | grep -qP "\*\*${NAME}\s*\(${ROLE}\)\s*—\s*APPROVE\*\*"; then
+              APPROVALS+=("${NAME} (${ROLE})")
+              echo "  ✅ ${NAME} (${ROLE}) — APPROVE"
+            fi
+            # Check for rejection pattern: **Name (Role) — REQUEST CHANGES**
+            if echo "$ALL_COMMENTS" | grep -qP "\*\*${NAME}\s*\(${ROLE}\)\s*—\s*REQUEST CHANGES\*\*"; then
+              REJECTIONS+=("${NAME} (${ROLE})")
+              echo "  ❌ ${NAME} (${ROLE}) — REQUEST CHANGES"
+            fi
+          done
+
+          echo ""
+          echo "--------------------------------------------"
+          echo "  Approvals: ${#APPROVALS[@]}"
+          echo "  Rejections: ${#REJECTIONS[@]}"
+          echo "--------------------------------------------"
+
+          # Fail conditions:
+          # 1. No approvals at all
+          # 2. Any REQUEST CHANGES present
+
+          if [ ${#REJECTIONS[@]} -gt 0 ]; then
+            echo ""
+            echo "  BLOCKED: ${#REJECTIONS[@]} engineer(s) requested changes."
+            echo "  Resolve all requested changes before merge."
+            echo ""
+            echo "  Engineers blocking:"
+            for r in "${REJECTIONS[@]}"; do
+              echo "    - $r"
+            done
+            echo ""
+            echo "============================================"
+            exit 1
+          fi
+
+          if [ ${#APPROVALS[@]} -eq 0 ]; then
+            echo ""
+            echo "  BLOCKED: No engineer review found."
+            echo ""
+            echo "  At least one Sentinel engineer must post a review"
+            echo "  using the mandatory Peer Feedback Format:"
+            echo ""
+            echo "    **[Name] ([Role]) — APPROVE**"
+            echo "    ### What works well"
+            echo "    - [Specific observation]"
+            echo "    ### Issues found"
+            echo "    - [Severity] [Description]"
+            echo "    ### Recommendation"
+            echo "    [Approve / Block / Nit-only]"
+            echo ""
+            echo "  Valid engineers: Forge, Bolt, Pixel, Prism, Scout,"
+            echo "  Stress, Harbor, Anchor, Shield, Quill, Hawk"
+            echo ""
+            echo "============================================"
+            exit 1
+          fi
+
+          # Hawk review is mandatory (non-negotiable per CLAUDE.md)
+          HAWK_APPROVED=false
+          for a in "${APPROVALS[@]}"; do
+            if [[ "$a" == *"Hawk"* ]]; then
+              HAWK_APPROVED=true
+              break
+            fi
+          done
+
+          if [ "$HAWK_APPROVED" = false ]; then
+            echo ""
+            echo "  ⚠️  WARNING: Hawk (Code Reviewer) has not reviewed."
+            echo "  Per CLAUDE.md, Hawk reviews every PR. This is non-negotiable."
+            echo "  Merge is allowed but Hawk review is expected."
+            echo ""
+          fi
+
+          echo ""
+          echo "  PASSED: ${#APPROVALS[@]} engineer approval(s) found."
+          echo "============================================"

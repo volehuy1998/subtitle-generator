@@ -1,6 +1,7 @@
 """Video processing pipeline: orchestrates probe -> extract -> load -> transcribe -> SRT."""
 
 import logging
+import re
 import threading
 import time as _time
 import traceback
@@ -25,6 +26,40 @@ from app.utils.subtitle_format import format_segments_with_linebreaks, validate_
 from profiler import PipelineSummary, ResourceMonitor, StepTimer
 
 logger = logging.getLogger("subtitle-generator")
+
+# Known exception patterns → user-friendly messages — Forge (Senior Backend Engineer)
+_ERROR_MAP: list[tuple[str, str]] = [
+    ("No such file or directory", "A required file could not be found. Please try again."),
+    ("ffmpeg", "Media processing failed. The file may be corrupted or unsupported."),
+    ("out of memory", "Server ran out of memory. Try a smaller model or shorter file."),
+    ("CUDA out of memory", "GPU memory exhausted. Try a smaller model."),
+    ("Connection refused", "A required service is unavailable. Please try again later."),
+    ("Permission denied", "Server encountered a file permission error."),
+    ("model", "Failed to load the transcription model. Please try again."),
+    ("codec", "Unsupported media codec. Try converting to a standard format."),
+]
+
+_PATH_PATTERN = re.compile(r"(/[a-zA-Z0-9_./-]+)+")
+
+
+def _sanitize_error_for_user(exc: Exception) -> str:
+    """Map raw exceptions to user-friendly messages, stripping paths and internals.
+
+    Detailed errors remain in logs. — Forge (Senior Backend Engineer)
+    """
+    raw = str(exc)
+    # Check known patterns
+    raw_lower = raw.lower()
+    for pattern, friendly in _ERROR_MAP:
+        if pattern.lower() in raw_lower:
+            return friendly
+    # Strip file paths from unknown errors
+    sanitized = _PATH_PATTERN.sub("<path>", raw)
+    # Truncate to reasonable length
+    if len(sanitized) > 200:
+        sanitized = sanitized[:200] + "..."
+    return sanitized if sanitized.strip() else "An unexpected error occurred. Please try again."
+
 
 # Tasks that failed to persist to DB — retried on next successful persist
 _pending_db_persists: list[tuple[str, dict]] = []
@@ -471,7 +506,6 @@ def process_video(
         )
 
         has_speakers = any("speaker" in s for s in result["segments"])
-        has_words = any("words" in s for s in result["segments"])
 
         with StepTimer(task_id, "write_srt", task_log_func=log_task_event) as step_srt:
             srt_content = segments_to_srt(result["segments"], include_speakers=has_speakers)
@@ -482,11 +516,10 @@ def process_video(
             vtt_path = OUTPUT_DIR / f"{task_id}.vtt"
             vtt_path.write_text(vtt_content, encoding="utf-8")
 
-            # Save JSON with word-level data if available
-            if has_words or has_speakers:
-                json_content = segments_to_json(result["segments"])
-                json_path = OUTPUT_DIR / f"{task_id}.json"
-                json_path.write_text(json_content, encoding="utf-8")
+            # Always save JSON — empty results are more informative than 404
+            json_content = segments_to_json(result["segments"])
+            json_path = OUTPUT_DIR / f"{task_id}.json"
+            json_path.write_text(json_content, encoding="utf-8")
 
             srt_size = get_file_size(srt_path)
             pipeline.srt_size = srt_size
@@ -566,8 +599,8 @@ def process_video(
             try:
                 _auto_embed_subtitles(task_id, video_path, auto_embed, language)
             except Exception as e:
-                logger.error(f"TASK [{task_id[:8]}] Auto-embed failed: {e}")
-                emit_event(task_id, "embed_error", {"message": f"Auto-embed failed: {e}"})
+                logger.error("TASK [%s] Auto-embed failed: %s", task_id[:8], e)
+                emit_event(task_id, "embed_error", {"message": f"Auto-embed failed: {_sanitize_error_for_user(e)}"})
             finally:
                 video_path.unlink(missing_ok=True)
         elif is_video_file and video_path.exists():
@@ -630,10 +663,11 @@ def process_video(
         log_task_event(task_id, "pipeline_summary", **pipeline_summary)
         task["status"] = "error"
         # Keep last known percent so task queue shows how far it got
-        task["message"] = str(e)
-        logger.error(f"TASK [{task_id[:8]}] ERROR: {e}\n{traceback.format_exc()}")
+        user_msg = _sanitize_error_for_user(e)
+        task["message"] = user_msg
+        logger.error("TASK [%s] ERROR: %s\n%s", task_id[:8], e, traceback.format_exc())
         log_task_event(task_id, "error", error=str(e), traceback=traceback.format_exc())
-        emit_event(task_id, "error", {"status": "error", "message": str(e)})
+        emit_event(task_id, "error", {"status": "error", "message": user_msg})
         record_failure()
         record_error_category(type(e).__name__)
         inc("transcriptions_failed")

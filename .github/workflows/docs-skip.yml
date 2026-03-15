@@ -32,6 +32,9 @@ on:
       - '.github/PULL_REQUEST_TEMPLATE.md'
       - '.github/POSTMORTEM_TEMPLATE.md'
 
+permissions:
+  contents: read
+
 jobs:
   # ── ci.yml stubs ─────────────────────────────────────────────────────
   lint:
@@ -72,3 +75,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "Docs-only change — sensitive data scan skipped."
+
+  # ── review-gate.yml stub ────────────────────────────────────────────
+  review-gate:
+    name: Engineer Review
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Docs-only change — engineer review gate skipped."

@@ -119,7 +119,7 @@ def extract_audio(video_path: Path, audio_path: Path, threads: int = 0, task_id:
         error_lines = [
             line
             for line in stderr.strip().splitlines()
-            if not line.startswith(("  ", "ffmpeg version", "  built with", "  configuration:", "  lib"))
+            if not line.startswith(("  ", "ffmpeg version"))
             and line.strip()
         ]
         error_msg = "\n".join(error_lines[-5:]) if error_lines else stderr[-200:]

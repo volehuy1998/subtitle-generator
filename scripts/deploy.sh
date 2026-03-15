@@ -285,17 +285,20 @@ cd "$INSTALL_DIR"
 section "6 / Firewall"
 # =============================================================================
 
-if ufw status | grep -q "Status: active"; then
-  if [[ "$MODE" == "prod" ]]; then
-    ufw allow 80/tcp  comment 'SubForge HTTP redirect' &>/dev/null
-    ufw allow 443/tcp comment 'SubForge HTTPS'         &>/dev/null
-    ok "Firewall: opened ports 80 and 443"
-  else
-    ufw allow 8000/tcp comment 'SubForge dev HTTP' &>/dev/null
-    ok "Firewall: opened port 8000"
-  fi
+# Issue #136 fix — Harbor (SRE/DevOps Engineer)
+# Configure and enable ufw firewall with required rules
+ufw allow 22/tcp comment 'SSH' &>/dev/null
+if [[ "$MODE" == "prod" ]]; then
+  ufw allow 80/tcp  comment 'SubForge HTTP redirect' &>/dev/null
+  ufw allow 443/tcp comment 'SubForge HTTPS'         &>/dev/null
 else
-  warn "ufw not active — skipping firewall configuration"
+  ufw allow 8000/tcp comment 'SubForge dev HTTP' &>/dev/null
+fi
+if ! ufw status | grep -q "Status: active"; then
+  ufw --force enable
+  ok "Firewall enabled and rules configured"
+else
+  ok "Firewall already active — rules updated"
 fi
 
 # =============================================================================
@@ -404,6 +407,16 @@ ENVEOF
 else
   # ── Bare-metal / systemd deployment ────────────────────────────────────────
 
+  # Issue #129 fix — Harbor (SRE/DevOps Engineer)
+  # Create dedicated subforge system user instead of running as root
+  info "Ensuring 'subforge' system user exists…"
+  if ! id -u subforge &>/dev/null; then
+    useradd --system --shell /usr/sbin/nologin --home-dir "$INSTALL_DIR" --create-home subforge
+    ok "Created system user 'subforge'"
+  else
+    ok "System user 'subforge' already exists"
+  fi
+
   info "Setting up Python virtual environment…"
   if [[ ! -d "$INSTALL_DIR/.venv" ]]; then
     python3 -m venv "$INSTALL_DIR/.venv"
@@ -418,18 +431,32 @@ else
   mkdir -p "$INSTALL_DIR"/{uploads,outputs,logs}
   ok "Directories created"
 
+  # Issue #129 — set directory ownership to subforge user
+  MODEL_CACHE_DIR="${INSTALL_DIR}/.cache/huggingface"
+  mkdir -p "$MODEL_CACHE_DIR"
+  chown -R subforge:subforge "$INSTALL_DIR"
+  chown -R subforge:subforge "$MODEL_CACHE_DIR"
+  ok "Directory ownership set to subforge:subforge"
+
   # ── Build systemd unit ──────────────────────────────────────────────────────
   info "Writing systemd service unit…"
 
   EXEC_ENV="Environment=ENVIRONMENT=${MODE}"
   EXEC_ENV+=$'\n'"Environment=PYTHONUNBUFFERED=1"
+  EXEC_ENV+=$'\n'"Environment=HOME=${INSTALL_DIR}"
 
   if [[ "$MODE" == "prod" ]]; then
     EXEC_ENV+=$'\n'"Environment=SSL_CERTFILE=${CERT_FILE}"
     EXEC_ENV+=$'\n'"Environment=SSL_KEYFILE=${KEY_FILE}"
   fi
-  [[ -n "$API_KEY" ]]       && EXEC_ENV+=$'\n'"Environment=API_KEYS=${API_KEY}"
   [[ -n "$PRELOAD_MODEL" ]] && EXEC_ENV+=$'\n'"Environment=PRELOAD_MODEL=${PRELOAD_MODEL}"
+
+  # Write secrets to restricted file — Shield (Security Engineer)
+  SECRETS_FILE="/etc/subforge/secrets.env"
+  mkdir -p /etc/subforge
+  : > "$SECRETS_FILE"
+  chmod 600 "$SECRETS_FILE"
+  [[ -n "$API_KEY" ]] && echo "API_KEYS=${API_KEY}" >> "$SECRETS_FILE"
 
   cat > /etc/systemd/system/subforge.service <<UNIT
 [Unit]
@@ -439,12 +466,21 @@ After=network.target
 
 [Service]
 Type=simple
-User=root
+User=subforge
+Group=subforge
 WorkingDirectory=${INSTALL_DIR}
 ExecStart=${INSTALL_DIR}/.venv/bin/python main.py
 Restart=on-failure
 RestartSec=5
+EnvironmentFile=-/etc/subforge/secrets.env
 ${EXEC_ENV}
+
+# Systemd hardening — Harbor (SRE/DevOps Engineer), reviewed by Shield (Security Engineer)
+ProtectSystem=full
+ReadOnlyPaths=/etc/letsencrypt/live
+ReadOnlyPaths=/etc/letsencrypt/archive
+PrivateTmp=true
+NoNewPrivileges=true
 
 [Install]
 WantedBy=multi-user.target
