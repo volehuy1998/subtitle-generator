@@ -1,6 +1,6 @@
 ---
 name: team_structure
-description: SubForge engineering team — 11 members with nicknames, roles, Google standards checklists, and agent prompt templates for each role
+description: SubForge engineering team — 12 members (including Atlas) with nicknames, roles, Google standards checklists, and agent prompt templates for each role
 type: project
 ---
 
