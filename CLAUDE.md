@@ -6,12 +6,15 @@ This file is the **single source of truth** for Claude Code operating in this re
 
 **SubForge** — AI-powered subtitle generator. Upload audio/video, transcribe with faster-whisper (CTranslate2), download SRT/VTT/JSON. Supports translation (Whisper built-in + Argos Translate), subtitle embedding (soft mux / hard burn), speaker diarization, and real-time progress via SSE/WebSocket.
 
+- **Vision**: Make every piece of audio and video content accessible to every person on Earth, regardless of language or ability.
+- **Target users**: Content Creators, Journalists, Educators, Enterprises, Accessibility Advocates, Localization Studios
 - **Repository**: `volehuy1998/subtitle-generator`
 - **Live**: `https://openlabs.club`
-- **Stack**: FastAPI backend + React SPA frontend (Vite + Zustand)
+- **Stack**: FastAPI (Python 3.12) backend + React 19 SPA frontend (Vite 6 + TypeScript + Zustand + Tailwind CSS v4)
 - **Deployment**: Single standalone server or multi-server (web + worker) with Redis and S3
 - **Current version**: Check `app/main.py` FastAPI `version=` field
-- **Tests**: 1328 tests (~20s). CI fully green.
+- **Tests**: 1328 tests (~20s). CI fully green. 30 sprints complete.
+- **Priority order**: Architecture & Performance > Security > Features
 
 ## Identity & Role
 
@@ -20,14 +23,38 @@ You are **Atlas (Tech Lead)** of Team Sentinel. You orchestrate work, decompose 
 ## Commands
 
 ```bash
+# App
 python main.py                    # dev mode (HTTP :8000)
 ENVIRONMENT=prod SSL_CERTFILE=... SSL_KEYFILE=... python main.py  # prod (HTTPS :443)
+
+# Tests
 pytest tests/ -v --tb=short       # all tests (1328, ~20s)
 pytest tests/test_sprint17.py -v  # single file
+pytest tests/e2e/ -v              # e2e (requires Playwright)
+
+# Lint
 ruff check . --select E,F,W --ignore E501  # lint
 ruff format --check --diff .      # format check
-docker compose --profile cpu up --build   # Docker CPU
-docker compose --profile gpu up --build   # Docker GPU
+
+# Docker
+docker compose --profile cpu up --build   # CPU
+docker compose --profile gpu up --build   # GPU
+
+# Makefile (Google SWE: all CI steps reproducible locally)
+make ci-fast          # presubmit: lint + fast tests (< 2 min)
+make ci-full          # post-submit: lint + all tests + coverage + build
+make test             # backend tests
+make test-fast        # unit tests only (< 60s)
+make lint             # ruff + eslint + tsc
+make format           # auto-format all code
+make dev              # run with hot-reload
+make docker-up        # start Docker CPU profile
+make docker-down      # stop Docker
+make migrate          # run Alembic migrations
+make health           # check service health
+make clean            # remove build artifacts
+
+# Validation
 python scripts/validate_consistency.py    # cross-file consistency checks
 ```
 
@@ -167,13 +194,66 @@ Upload → probe (ffprobe) → extract audio (ffmpeg→WAV) → load model → t
 - **`app/state.py`** — Global in-memory state: tasks dict, model cache, translation model cache, task semaphore
 - **`frontend/src/`** — React 19 SPA (Vite 6 + TypeScript + Zustand + Tailwind CSS v4)
 
+### Frontend (React SPA)
+- **Stores**: `taskStore.ts` (task state, progress), `uiStore.ts` (theme, UI toggles)
+- **Hooks**: `useSSE` (real-time task events), `useHealthStream` (system health SSE)
+- **API client**: `frontend/src/api/client.ts` — typed HTTP client for all endpoints
+- **Routing**: SPA client-side navigation, session restore on reload (sessionStorage → SSE reconnect)
+- **Pages**: App (main), StatusPage, AboutPage, ContactPage, SecurityPage
+
+### Translation
+Two modes:
+1. **Whisper translate** (any → English): Built-in `task="translate"` during transcription. Higher quality.
+2. **Argos Translate** (any ↔ any): Offline neural MT via `argostranslate`. Models downloaded on demand (~100-200MB/pair), cached in `state.translation_models[(src, tgt)]`. Post-transcription step with `TRANSLATION_BATCH_SIZE` progress events.
+
+### Subtitle Embedding
+- **Soft embed**: Mux SRT track into MKV/MP4 via `ffmpeg -c copy` (no re-encoding, fast)
+- **Hard burn**: Render as ASS overlay via ffmpeg filter (re-encodes video, slow)
+- **Style presets**: Font, size, color, position, background opacity (default, youtube_white, youtube_yellow, cinema, large_bold, top)
+- **Auto-embed**: Pipeline auto-embeds after transcription if `auto_embed` param set
+- **Combine route**: Upload external video + subtitle files for embedding
+- **Quick embed**: `POST /embed/{task_id}/quick`
+
+### Status Page (`/status`)
+Public status page with auto-incident detection. 5 monitored components: Transcription Engine, Video Combine, Web Application, Database, File Storage. Auto-creates/resolves incidents based on health checks (DB connectivity, FFmpeg availability, disk space). Models: `StatusIncident`, `StatusIncidentUpdate`.
+
 ### Concurrency Model
-Each upload → background thread via `asyncio.to_thread()`. Semaphore limits concurrent tasks (default 3, auto-tuned). Models cached with thread-safe lock. Single uvicorn worker (Whisper not multi-worker safe).
+Each upload → background thread via `asyncio.to_thread()`. Semaphore limits concurrent tasks (default 3, auto-tuned by `system_capability.py`). Models cached in `state.loaded_models[(model_size, device)]` with thread-safe lock. Single uvicorn worker (Whisper not multi-worker safe).
+
+### State & Persistence
+- **Tasks**: in-memory dict (`state.tasks`) → PostgreSQL via `DatabaseTaskBackend` (fallback: `task_history.json`, 100 max entries)
+- **Models**: cached in `state.loaded_models[(model_size, device)]`, reused across requests
+- **Translation models**: cached in `state.translation_models[(src, tgt)]` with thread-safe lock
+- **Analytics**: in-memory ring buffer (24h, minute resolution) + PostgreSQL tables (`analytics_daily`, `analytics_timeseries`, `analytics_events`)
+- **Audit trail**: HMAC-signed entries in PostgreSQL `audit_log` table
+- **Sessions**: `sessions` table (id, created_at, last_seen, ip, user_agent)
 
 ### Real-Time Updates
-- SSE: `GET /events/{task_id}`
+- SSE: `GET /events/{task_id}` (pipeline events), `GET /health/stream` (system metrics, 5s interval)
 - WebSocket: `WS /ws/{task_id}`
 - Polling: `GET /progress/{task_id}`
+
+### Security Implementation
+- **Passwords**: PBKDF2-HMAC-SHA256 (260k iterations, `pbkdf2:salt:hex` format). Legacy SHA-256 verified via fallback until re-auth.
+- **API keys**: HMAC-SHA256(JWT_SECRET, key). **Migration blocker**: existing SHA-256 records fail post-PR #86.
+- **File uploads**: Extension allowlist + magic bytes + size limits + ClamAV quarantine (`app/services/quarantine.py`)
+- **CSP**: Nonce-based (`CSP_NONCE_ENABLED`), configurable per environment
+- **HSTS**: Configurable max-age, includeSubDomains, preload via env vars
+- **Brute force**: Middleware with persistent state (`brute_force_events` table), auto IP blocking
+- **Path traversal**: `safe_path()` with allowed_dir parameter
+- **FFmpeg injection**: Allowlisted filter values via `validate_ffmpeg_filter_value()`
+- **Error sanitization**: Redact paths, DB URLs, tracebacks from client responses
+- **Audit integrity**: `create_signed_audit_entry()` / `verify_audit_entry()` with HMAC
+- **SRI hashes**: `compute_sri_hash()` for CDN resource integrity
+- **Fail2ban**: Config in `scripts/fail2ban/` (filter + jail), manually installed post-deploy
+
+### Structured Logging
+- **Format**: JSON `{timestamp, level, logger, message, request_id, task_id, extra}`
+- **Correlation IDs**: `X-Request-ID` flows through middleware → routes → services → pipeline
+- **Task lifecycle**: Consistent events at each pipeline stage with timing (`TASK_EVENT`, `STEP`, `PERF` patterns)
+- **Redaction**: Sensitive data (API keys, file paths) redacted in log output
+- **Output**: Configurable via `LOG_OUTPUT` (stdout, file, both, json), `LOG_LEVEL`, `LOG_WEBHOOK_URL`
+- **IMPORTANT**: Never remove or reduce logging detail. Use existing patterns as templates when adding features.
 
 ### Multi-Server Deployment
 - **Roles** (`ROLE` env var): `standalone` (default), `web` (API only), `worker` (Celery)
@@ -194,19 +274,46 @@ Tests mock `torch`, `faster_whisper`, `psutil` in `conftest.py` via `sys.modules
 
 ## Key Environment Variables
 
+Full list in `.env.example` (40+ variables with descriptions). Critical ones:
+
 | Variable | Purpose | Default |
 |----------|---------|---------|
+| **Server** | | |
 | `ENVIRONMENT` | `dev` (HTTP) or `prod` (HTTPS + HSTS) | `dev` |
-| `SSL_CERTFILE` / `SSL_KEYFILE` | TLS cert/key paths (prod) | empty |
 | `PORT` | HTTP listen port (dev) | `8000` |
-| `API_KEYS` | Comma-separated API keys | empty (no auth) |
-| `HF_TOKEN` | Hugging Face token | empty |
-| `PRELOAD_MODEL` | Preload whisper model(s) at startup | empty |
-| `FILE_RETENTION_HOURS` | Auto-cleanup retention | `24` |
 | `ROLE` | `standalone`, `web`, or `worker` | `standalone` |
-| `DATABASE_URL` | PostgreSQL or SQLite fallback | SQLite |
+| `SSL_CERTFILE` / `SSL_KEYFILE` | TLS cert/key paths (prod) | empty |
+| `ENABLE_COMPRESSION` | GZip response compression (>500 bytes) | `true` |
+| `MAX_CONCURRENT_TASKS` | Max parallel transcriptions | auto-detected |
+| **Auth & Security** | | |
+| `API_KEYS` | Comma-separated API keys | empty (no auth) |
+| `JWT_SECRET` | Secret for HMAC signing (API keys, audit) | auto-generated |
+| `CORS_ORIGINS` | Allowed CORS origins | `*` |
+| `HSTS_MAX_AGE` | HSTS max-age seconds | `31536000` |
+| `CSP_NONCE_ENABLED` | Per-request CSP nonces | `false` |
+| `AUDIT_HMAC_KEY` | Key for signed audit entries | auto-generated |
+| **Database** | | |
+| `DATABASE_URL` | PostgreSQL (`postgresql+asyncpg://...`) or SQLite | SQLite |
+| `DB_POOL_SIZE` / `DB_MAX_OVERFLOW` | Connection pool config | `5` / `10` |
+| **Redis** | | |
 | `REDIS_URL` | Redis for Pub/Sub, Celery, rate limiting | empty |
+| `CELERY_BROKER_URL` | Celery broker (fallback to REDIS_URL) | empty |
+| **Storage** | | |
 | `STORAGE_BACKEND` | `local` or `s3` | `local` |
+| `S3_ENDPOINT_URL` / `S3_BUCKET_NAME` | S3/MinIO config | empty / `subtitle-generator` |
+| `S3_ACCESS_KEY` / `S3_SECRET_KEY` | S3 credentials | empty |
+| **AI & Models** | | |
+| `HF_TOKEN` | Hugging Face token for model downloads | empty |
+| `PRELOAD_MODEL` | Preload whisper model(s): `tiny,base,small,medium,large` or `all` | empty |
+| `TRANSLATION_BATCH_SIZE` | Segments per Argos translation progress update | `50` |
+| **Operations** | | |
+| `FILE_RETENTION_HOURS` | Auto-cleanup retention period | `24` |
+| `WEBHOOK_ALERT_URL` | Alert webhook for critical events | empty |
+| `LOG_LEVEL` | Logging level (DEBUG/INFO/WARN/ERROR) | `INFO` |
+| `LOG_OUTPUT` | Log target (stdout/file/both/json) | `both` |
+| `GITHUB_TOKEN` | GitHub API access | empty |
+| **Flower (Celery dashboard)** | | |
+| `FLOWER_USER` / `FLOWER_PASSWORD` | Flower auth | `admin` / `changeme` |
 
 ---
 
