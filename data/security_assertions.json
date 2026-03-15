@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "2946aee",
-    "sha_full": "2946aee5a77e29964fb38a9325d1b956ecf8f0f2",
-    "datetime": "2026-03-15T22:04:23+07:00",
-    "message": "chore: remove .sentinel/ directory \u2014 CLAUDE.md is single source of truth"
+    "sha": "bbc64b6",
+    "sha_full": "bbc64b68b460414a8c721c0e905b408e47f3fd18",
+    "datetime": "2026-03-16T01:46:22+07:00",
+    "message": "fix(ci): invalidate stale reviews after new pushes to PR"
   },
   "assertions": [
     {

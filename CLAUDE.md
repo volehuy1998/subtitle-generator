@@ -189,6 +189,7 @@ Without review, the product development lifecycle is broken — issues rot, PRs 
 - **Hawk reviews every PR** — this is non-negotiable, not just a standing order
 - **Cross-review matrix applies** — the PR author's peer reviewer (from the matrix above) must be requested
 - **Review must use the Peer Feedback Format** — "LGTM" alone is not a valid review
+- **Re-review after every push (MANDATORY)**: When new commits are pushed to a PR, ALL prior approvals are automatically invalidated. Engineers must re-review the updated code. The Review Gate CI check enforces this — only APPROVE comments posted AFTER the latest commit timestamp count. Old reviews are marked stale and ignored. This prevents unreviewed code from merging under the cover of an earlier approval.
 
 #### Staleness Escalation
 | Age without activity | Action |
@@ -225,6 +226,7 @@ Without review, the product development lifecycle is broken — issues rot, PRs 
 3. **Separate severities** — critical blocks merge, nits use `Nit:` prefix
 4. **Acknowledge good work** — "What works well" is mandatory
 5. **Cross-domain feedback welcome** — if Forge sees a frontend issue, flag it
+6. **Use inline code comments** — engineers should comment directly on source code lines in the PR diff to explain issues, suggest fixes, or provide context. Inline comments are more precise than top-level comments and help future readers understand why specific code was changed. The Review Gate CI scans all comment types (inline diff comments, PR review bodies, and issue comments).
 
 ### PR Requirements (All 6 Mandatory)
 1. **Labels** — type (bug/enhancement/documentation/deployment) + priority (P0-P3)
@@ -239,7 +241,7 @@ Without review, the product development lifecycle is broken — issues rot, PRs 
 ### GitHub Branch Protection (main)
 All Sentinel engineers operate through one GitHub account (`volehuy1998`), so native GitHub reviewer assignment is impossible. Instead, review is enforced via the **Review Gate** CI check:
 - **Required status checks**: `Lint`, `Test`, `Engineer Review` (all 3 must pass — NO EXCEPTIONS)
-- **`Engineer Review` check**: Scans PR comments for `**[Name] ([Role]) — APPROVE**` pattern from any known Sentinel engineer. Blocks merge if zero approvals or any `REQUEST CHANGES` present.
+- **`Engineer Review` check**: Scans PR comments for `**[Name] ([Role]) — APPROVE**` pattern from any known Sentinel engineer. Blocks merge if zero approvals or any `REQUEST CHANGES` present. **Stale review enforcement**: only reviews posted AFTER the latest commit count — new pushes invalidate all prior approvals.
 - **Required approving reviews**: 0 (native review disabled — `Engineer Review` CI check is the real gate)
 - **Dismiss stale reviews**: true (new pushes invalidate old approvals)
 - **Enforce admins**: **true** (admins CANNOT bypass — no one can merge without all checks passing)
