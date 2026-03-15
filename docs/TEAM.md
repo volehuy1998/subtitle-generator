@@ -307,6 +307,81 @@ What happens to a new deployer who hits this without the fix.
 
 ---
 
+## Recruitment & Onboarding Process
+
+This section defines the mandatory steps for recruiting new engineers and onboarding them into SubForge engineering. **No engineer is considered "hired" until all steps are complete.**
+
+### Phase 1 — Recruitment (Before Hire)
+
+| Step | Owner | Action | Deliverable |
+|------|-------|--------|-------------|
+| 1.1 | Atlas | **Define the role** — identify the gap, write role title, specialization, scope, and which team (Sentinel or DVS) | Role specification |
+| 1.2 | Atlas | **Define selection criteria** — required skills, Google SWE standards applicable, domain expertise needed | Selection criteria doc |
+| 1.3 | Atlas | **Identify candidates** — source from Google, industry, or internal promotion | Candidate shortlist |
+| 1.4 | Atlas + relevant team lead | **Technical evaluation** — assess candidate against selection criteria, verify domain expertise | Evaluation notes |
+| 1.5 | Atlas | **Final decision** — approve or reject candidate, assign nickname | Hire decision |
+
+### Phase 2 — Onboarding (After Hire, Before First Task)
+
+Every new engineer must complete ALL of the following before they are assigned any work:
+
+| Step | Owner | Action | Deliverable | Verification |
+|------|-------|--------|-------------|--------------|
+| 2.1 | Atlas | **Assign nickname and role** — unique, thematic, no conflicts with existing engineers | Nickname confirmed | Check TEAM.md for conflicts |
+| 2.2 | Atlas | **Create agent prompt template** — following the existing format: BACKGROUND, SKILLS, SCOPE, CHECKLIST, IDENTITY | Agent template written | Template in `.sentinel/team_*.md` |
+| 2.3 | Atlas | **Update `.sentinel/team_*.md`** — add engineer to the appropriate team file (team_structure.md or team_dvs.md) | Team file updated | `git diff` shows new entry |
+| 2.4 | Atlas | **Update `docs/TEAM.md`** — add to roster table, code ownership, profiles section, change log | TEAM.md updated | All 4 sections updated |
+| 2.5 | Atlas | **Update `.sentinel/MEMORY.md`** — ensure memory index reflects the new team composition if needed | Memory synced | Index entry accurate |
+| 2.6 | Atlas | **Update local memory** — sync `~/.claude/projects/.../memory/` files | Local memory synced | Memory file updated |
+| 2.7 | Atlas | **Commit and push** — all changes in a single commit on an appropriate branch | Commit pushed | `git log` shows commit |
+| 2.8 | Atlas | **Create GitHub announcement issue** — introduce the new engineer publicly | Issue created | Issue URL recorded |
+| 2.9 | Atlas | **Update GitHub issue #112** — or create successor issue if #112 is closed | Org chart current | Issue reflects new headcount |
+| 2.10 | Atlas | **Verify consistency** — run final check that all artifacts match | Verification passed | Headcount matches everywhere |
+
+### Phase 3 — Activation (First Task)
+
+| Step | Owner | Action |
+|------|-------|--------|
+| 3.1 | Atlas | Assign first task appropriate to the engineer's role |
+| 3.2 | New engineer | Complete task following their role-specific checklist |
+| 3.3 | Hawk (or Flint for DVS) | Review first deliverable against quality standards |
+| 3.4 | Atlas | Confirm engineer is fully operational |
+
+### Onboarding Checklist (Copy-Paste for Each New Hire)
+
+```markdown
+## Onboarding: [NICKNAME] ([ROLE]) — [TEAM]
+
+- [ ] 2.1 Nickname assigned, no conflicts
+- [ ] 2.2 Agent prompt template created
+- [ ] 2.3 `.sentinel/team_*.md` updated
+- [ ] 2.4 `docs/TEAM.md` updated (roster + ownership + profile + changelog)
+- [ ] 2.5 `.sentinel/MEMORY.md` synced
+- [ ] 2.6 Local memory synced
+- [ ] 2.7 Changes committed and pushed to GitHub
+- [ ] 2.8 GitHub announcement issue created
+- [ ] 2.9 Org chart issue updated
+- [ ] 2.10 Consistency verification passed (headcount matches all artifacts)
+- [ ] 3.1 First task assigned
+- [ ] 3.2 First task completed
+- [ ] 3.3 First deliverable reviewed
+- [ ] 3.4 Engineer confirmed operational
+```
+
+### Offboarding / Role Change
+
+| Action | Steps |
+|--------|-------|
+| **Remove engineer** | Remove from TEAM.md roster + profile, remove from `.sentinel/team_*.md`, update MEMORY.md, update org chart issue, commit + push, add to TEAM.md change log |
+| **Change role** | Update role in all locations (TEAM.md, .sentinel/, memory), update agent prompt template scope/checklist, add to TEAM.md change log |
+| **Transfer between teams** | Full offboarding from source team + full onboarding to target team |
+
+### Why This Process Exists
+
+On 2026-03-15, DVS was recruited and their agent templates were committed to `.sentinel/team_dvs.md` and announced via GitHub issue #111, but `docs/TEAM.md` did not exist. The authoritative team reference was scattered across `.sentinel/` files, GitHub issues, and memory — with no single source of truth in the versioned repository. This process ensures that every personnel change is reflected in **all** artifacts simultaneously and that `docs/TEAM.md` is always the authoritative reference.
+
+---
+
 ## Change Log
 
 | Date | Change | Author |
@@ -314,3 +389,4 @@ What happens to a new deployer who hits this without the fix.
 | 2026-03-14 | Team Sentinel established (12 engineers) | Atlas (Tech Lead) |
 | 2026-03-15 | DVS established (6 engineers recruited from Google) | Atlas (Tech Lead) |
 | 2026-03-15 | Initial TEAM.md published | Atlas (Tech Lead) |
+| 2026-03-15 | Added Recruitment & Onboarding Process | Atlas (Tech Lead) |
