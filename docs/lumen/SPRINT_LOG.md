@@ -133,3 +133,20 @@
 **Running total:** 1354
 
 ---
+
+## Sprint L7: Error Message Improvements (2026-03-16)
+
+**Goal:** Make error messages human-readable and user-friendly.
+
+**Delivered:**
+- `ProgressView.tsx` — error display improved:
+  - Added "Something went wrong" heading above technical error
+  - Technical error shown in secondary color (less alarming)
+  - Default message: "An unexpected error occurred. Please try again with a different file or model."
+  - "Start Over" → "Try Again" (more encouraging)
+  - "Task cancelled." → "Transcription cancelled." (more specific)
+
+**Tests added:** 0 (frontend UX)
+**Running total:** 1354
+
+---

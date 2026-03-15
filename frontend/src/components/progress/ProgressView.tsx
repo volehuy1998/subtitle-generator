@@ -412,9 +412,12 @@ export function ProgressView({ taskId }: Props) {
               <circle cx="8" cy="8" r="7" stroke="var(--color-danger)" strokeWidth="1.5" fill="none" />
               <path d="M8 4.5v4M8 10.5v1" stroke="var(--color-danger)" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
-            <span className="text-xs font-medium" style={{ color: 'var(--color-danger)' }}>
-              {store.error ?? 'An error occurred during processing.'}
-            </span>
+            <div className="text-xs font-medium" style={{ color: 'var(--color-danger)' }}>
+              <p style={{ margin: '0 0 4px 0', fontWeight: 600 }}>Something went wrong</p>
+              <p style={{ margin: 0, color: 'var(--color-text-2)', fontWeight: 400 }}>
+                {store.error ?? 'An unexpected error occurred during processing. Please try again with a different file or model.'}
+              </p>
+            </div>
           </div>
           <button
             type="button"
@@ -426,7 +429,7 @@ export function ProgressView({ taskId }: Props) {
               color: 'var(--color-text)',
             }}
           >
-            Start Over
+            Try Again
           </button>
         </div>
       )}
@@ -435,7 +438,7 @@ export function ProgressView({ taskId }: Props) {
       {status === 'cancelled' && (
         <div className="flex flex-col items-center gap-3 py-4">
           <span className="text-sm" style={{ color: 'var(--color-text-3)' }}>
-            Task cancelled.
+            Transcription cancelled.
           </span>
           <button
             type="button"
