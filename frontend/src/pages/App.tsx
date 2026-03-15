@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { AppHeader } from '@/components/layout/AppHeader'
 import { HealthPanel } from '@/components/system/HealthPanel'
 import { ConnectionBanner } from '@/components/system/ConnectionBanner'
@@ -7,6 +7,7 @@ import { TranscribeForm } from '@/components/transcribe/TranscribeForm'
 import { ProgressView } from '@/components/progress/ProgressView'
 import { OutputPanel } from '@/components/output/OutputPanel'
 import { EmbedTab } from '@/components/embed/EmbedTab'
+import { ConfirmationDialog } from '@/components/transcribe/ConfirmationDialog'
 import { useTaskStore } from '@/store/taskStore'
 import { useUIStore } from '@/store/uiStore'
 import { api } from '@/api/client'
@@ -16,6 +17,12 @@ type AppTab = 'transcribe' | 'embed'
 export function App() {
   const { healthPanelOpen, setHealthPanelOpen, appMode, setAppMode, health } = useUIStore()
   const store = useTaskStore()
+
+  // Phase Lumen: pending upload awaiting user confirmation
+  const [pendingUpload, setPendingUpload] = useState<{
+    file: File;
+    opts: { device: string; model: string; language: string; format: string; translateTo?: string };
+  } | null>(null)
 
   // Session restore: if a task was in progress, try to reconnect
   useEffect(() => {
@@ -67,7 +74,23 @@ export function App() {
       })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleUpload = async (file: File, opts: { device: string; model: string; language: string; format: string; translateTo?: string }) => {
+  // Phase Lumen: user must confirm before transcription starts
+  const handleFileSelected = useCallback((file: File, opts: { device: string; model: string; language: string; format: string; translateTo?: string }) => {
+    setPendingUpload({ file, opts })
+  }, [])
+
+  const handleConfirmUpload = useCallback(() => {
+    if (!pendingUpload) return
+    const { file, opts } = pendingUpload
+    setPendingUpload(null)
+    doUpload(file, opts)
+  }, [pendingUpload])
+
+  const handleCancelUpload = useCallback(() => {
+    setPendingUpload(null)
+  }, [])
+
+  const doUpload = async (file: File, opts: { device: string; model: string; language: string; format: string; translateTo?: string }) => {
     // Switch to progress screen immediately
     store.reset()
     store.setTaskId('uploading')
@@ -201,7 +224,7 @@ export function App() {
                 ) : store.isComplete && activeTaskId ? (
                   <ProgressView taskId={activeTaskId} />
                 ) : (
-                  <TranscribeForm onUpload={handleUpload} />
+                  <TranscribeForm onUpload={handleFileSelected} />
                 )
               ) : (
                 <EmbedTab />
@@ -229,6 +252,20 @@ export function App() {
       >
         ↑ SubForge · Python 3.12 · FastAPI · faster-whisper (CTranslate2) · pyannote.audio · FFmpeg · React 19 · TypeScript · Tailwind CSS · Open Source
       </footer>
+
+      {/* Phase Lumen: Confirmation dialog before transcription */}
+      {pendingUpload && (
+        <ConfirmationDialog
+          file={pendingUpload.file}
+          model={pendingUpload.opts.model}
+          language={pendingUpload.opts.language}
+          format={pendingUpload.opts.format}
+          device={pendingUpload.opts.device}
+          translateTo={pendingUpload.opts.translateTo}
+          onConfirm={handleConfirmUpload}
+          onCancel={handleCancelUpload}
+        />
+      )}
     </div>
   )
 }

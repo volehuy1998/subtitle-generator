@@ -67,3 +67,26 @@
 **Running total:** 1345 + 9 = 1354
 
 ---
+
+## Sprint L4: User Confirmation Dialog (2026-03-16)
+
+**Goal:** No transcription starts without explicit user confirmation.
+
+**Delivered:**
+- `frontend/src/components/transcribe/ConfirmationDialog.tsx` — new component
+  - Modal overlay with file summary (name, size, model, language, format, device)
+  - Cancel and "Start Transcription" buttons
+  - Keyboard accessible (role="dialog", aria-modal)
+  - Uses Lumen design tokens (indigo primary, white background, soft shadows)
+- `frontend/src/pages/App.tsx` — modified upload flow:
+  - File drop → shows ConfirmationDialog (pendingUpload state)
+  - User clicks "Start Transcription" → actual upload begins
+  - User clicks "Cancel" → returns to form, nothing starts
+- TypeScript compiles clean, Vite build succeeds
+
+**Tests added:** 0 (frontend component — tested via build + future Playwright E2E)
+**Running total:** 1354
+
+**Investor requirement addressed:** "User confirmation is always required before starting any process"
+
+---
