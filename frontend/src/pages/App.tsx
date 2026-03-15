@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { AppHeader } from '@/components/layout/AppHeader'
 import { HealthPanel } from '@/components/system/HealthPanel'
 import { ConnectionBanner } from '@/components/system/ConnectionBanner'
@@ -75,22 +75,15 @@ export function App() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Phase Lumen: user must confirm before transcription starts
-  const handleFileSelected = useCallback((file: File, opts: { device: string; model: string; language: string; format: string; translateTo?: string }) => {
+  const handleFileSelected = (file: File, opts: { device: string; model: string; language: string; format: string; translateTo?: string }) => {
     setPendingUpload({ file, opts })
-  }, [])
+  }
 
-  const handleConfirmUpload = useCallback(() => {
-    if (!pendingUpload) return
-    const { file, opts } = pendingUpload
+  const handleCancelUpload = () => {
     setPendingUpload(null)
-    doUpload(file, opts)
-  }, [pendingUpload])
+  }
 
-  const handleCancelUpload = useCallback(() => {
-    setPendingUpload(null)
-  }, [])
-
-  const doUpload = async (file: File, opts: { device: string; model: string; language: string; format: string; translateTo?: string }) => {
+  const startUpload = async (file: File, opts: { device: string; model: string; language: string; format: string; translateTo?: string }) => {
     // Switch to progress screen immediately
     store.reset()
     store.setTaskId('uploading')
@@ -262,7 +255,12 @@ export function App() {
           format={pendingUpload.opts.format}
           device={pendingUpload.opts.device}
           translateTo={pendingUpload.opts.translateTo}
-          onConfirm={handleConfirmUpload}
+          onConfirm={() => {
+            if (!pendingUpload) return
+            const { file, opts } = pendingUpload
+            setPendingUpload(null)
+            startUpload(file, opts)
+          }}
           onCancel={handleCancelUpload}
         />
       )}
