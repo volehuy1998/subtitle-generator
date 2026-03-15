@@ -116,3 +116,20 @@
 **Investor requirement addressed:** "How can users know if a process/stage is running or frozen?"
 
 ---
+
+## Sprint L6: Component Styling (2026-03-16)
+
+**Goal:** Remove all hardcoded dark colors from React components.
+
+**Delivered:**
+- `StyleOptions.tsx` — preview background: `#111827` → `var(--color-surface-2)`
+- `ContactPage.tsx` — dark gradient → light gradient (`#F8FAFC → #EEF2FF → #E0F2FE`)
+- `AboutPage.tsx` — dark gradient → light gradient (`#F8FAFC → #EEF2FF → #E8E0FF`)
+- `SecurityPage.tsx` — dark gradient → light gradient (`#F8FAFC → #EEF2FF → #E8E0FF`)
+- `ContactPage.tsx` — hardcoded green `#065F46` → `var(--color-success)`
+- Zero hardcoded dark colors remaining in `frontend/src/`
+
+**Tests added:** 0 (visual-only)
+**Running total:** 1354
+
+---

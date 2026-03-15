@@ -81,7 +81,7 @@ export function AboutPage() {
     <StaticPageLayout>
       {/* Hero */}
       <div style={{
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 55%, #312e81 100%)',
+        background: 'linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 55%, #E8E0FF 100%)',
         borderRadius: '16px', padding: '44px 40px', marginBottom: '32px',
         color: '#fff', display: 'flex', alignItems: 'flex-start', gap: '22px',
         position: 'relative', overflow: 'hidden',
