@@ -514,6 +514,12 @@ Full GitHub access (all scopes) and full server access granted by investor (vole
 ## Production Blocker
 `hash_api_key()` changed from SHA-256 to HMAC-SHA256(JWT_SECRET) in PR #86. Existing DB records will fail validation. Needs migration script or force-revoke before prod deploy.
 
+## Long-Term Development Plan (`docs/DEVELOPMENT_PLAN.md`)
+Investor-approved priorities:
+1. **UX Principles:** User confirmation before any process, brighter/lighter UI (use `feature-dev` plugin), process liveness indicators
+2. **Performance:** Model loading optimization (60-120s → preloaded), transcription speed improvements
+3. **Infrastructure:** Distributed workers, API key migration, security hardening
+
 ---
 
 ## Project Status (as of 2026-03-15)
