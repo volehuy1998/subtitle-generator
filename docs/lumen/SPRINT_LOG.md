@@ -22,3 +22,27 @@
 **Running total:** 1328 + 17 = 1345
 
 ---
+
+## Sprint L2: Design System (2026-03-16)
+
+**Goal:** Transform dark Enterprise Slate theme into professional light theme (Lumen).
+
+**Delivered:**
+- `frontend/src/index.css` — complete color token overhaul:
+  - Background: `#080C14` (dark) → `#FFFFFF` (white)
+  - Text: `#E2E8F0` (light-on-dark) → `#0F172A` (dark-on-light)
+  - Primary: `#3B82F6` (blue) → `#6366F1` (indigo — matches Linear, Stripe, Vercel)
+  - Success: `#34D399` → `#10B981` (emerald)
+  - Shadows: Heavy dark → soft light (`0.05` - `0.10` opacity)
+- Typography: `Plus Jakarta Sans` + `Syne` → **`Inter`** (industry standard for professional UIs)
+- Font size: 14px → 16px base (better readability on light backgrounds)
+- Removed dark-specific effects: dot-grid texture, ambient glow `body::before`
+- `frontend/index.html` — updated Google Fonts import to Inter
+- `docs/lumen/DESIGN_SYSTEM.md` — full design system spec (colors, typography, spacing, shadows, components)
+
+**Tests added:** 0 (design-only sprint)
+**Running total:** 1345
+
+**Design references used:** Microsoft 365, Google Workspace, Claude AI, Vercel, Linear
+
+---
