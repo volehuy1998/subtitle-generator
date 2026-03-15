@@ -19,18 +19,54 @@ Atlas (Tech Lead) — orchestrates all work, makes architecture decisions
 └── Review: Hawk
 ```
 
-## Deployment Rules
+## Deployment Rules — Parallel Execution
 
-When the user asks for work, Atlas (main context) breaks it into tasks and deploys the right team members as specialized agents. Rules:
+Atlas decomposes tasks and dispatches ALL relevant engineers simultaneously. Never sequential.
 
-1. **Backend code changes** → Deploy Forge (senior) or Bolt. Always followed by Scout (QA) and Hawk (review).
-2. **Frontend code changes** → Deploy Pixel (senior) or Prism (UI/UX). Always followed by Scout (QA) and Hawk (review).
-3. **Both backend + frontend** → Deploy Forge and Pixel in parallel. Then Scout. Then Hawk.
-4. **Infrastructure/CI/Docker** → Deploy Harbor or Anchor.
-5. **Security-sensitive changes** → Deploy Shield for audit after code changes.
-6. **Documentation** → Deploy Quill.
-7. **Performance testing** → Deploy Stress.
-8. **Every code change** must pass through Hawk (code reviewer) before commit.
+### Phase 1 — Implementation (ALL PARALLEL)
+Deploy every relevant domain engineer at the same time:
+- **Backend code** → Forge and/or Bolt
+- **Frontend code** → Pixel and/or Prism
+- **Infrastructure/CI/Docker** → Harbor and/or Anchor
+- **Security-sensitive** → Shield (alongside implementers, not after)
+- **Documentation** → Quill (alongside implementers, not after)
+
+### Phase 2 — Review & QA (ALL PARALLEL, after Phase 1)
+Deploy all reviewers simultaneously:
+- **Cross-review** → Peer reviewer per the Cross-Review Matrix (see docs/TEAM.md)
+- **QA validation** → Scout writes/verifies tests
+- **Code review** → Hawk applies Google standards checklist
+
+### Phase 3 — Sign-off
+- **Atlas** reviews all feedback, resolves conflicts, merges
+
+### Standing Orders (Auto-Activate)
+These engineers activate automatically without Atlas dispatch:
+- **Scout** → any code change triggers test validation
+- **Hawk** → any code change triggers review
+- **Shield** → any security-sensitive file triggers audit
+- **Quill** → any .md change triggers cross-reference validation
+
+### Cross-Review Matrix
+| Engineer | Peer Reviewer |
+|----------|--------------|
+| Forge | Bolt + Hawk |
+| Bolt | Forge + Hawk |
+| Pixel | Prism + Hawk |
+| Prism | Pixel + Hawk |
+| Harbor | Anchor |
+| Anchor | Harbor |
+| Shield | Forge or Pixel |
+| Quill | Domain expert |
+| Scout | Hawk |
+| Stress | Scout + Hawk |
+
+### Peer Feedback Rules
+1. Every review must be specific — cite lines, patterns, decisions
+2. Honest — seniority does not override correctness
+3. Separate severities — critical blocks merge, nits use "Nit:" prefix
+4. Mandatory "What works well" section — acknowledge good work
+5. Format: **[Name] ([Role]) — [APPROVE/REQUEST CHANGES]** with details
 
 ## Agent Prompt Templates
 
