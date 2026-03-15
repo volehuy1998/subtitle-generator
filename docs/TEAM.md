@@ -107,20 +107,107 @@ Investor / Stakeholder
 | Code review | Hawk | — | ALL code changes (final gate) |
 | Architecture & decisions | Atlas | — | All — coordinates everything |
 
-### Task Assignment Rules
+### Parallel Execution Model
 
-Atlas assigns engineers based on work type:
+**Principle**: All relevant engineers are dispatched simultaneously — never sequentially. Atlas's role is to decompose the task and fan out, not to be a serial bottleneck.
 
-| Task Type | Primary Engineer(s) | Required Follow-up |
-|-----------|--------------------|--------------------|
-| Backend code changes | Forge (senior) or Bolt | Scout (QA) → Hawk (review) |
-| Frontend code changes | Pixel (senior) or Prism | Scout (QA) → Hawk (review) |
-| Full-stack changes | Forge + Pixel (parallel) | Scout (QA) → Hawk (review) |
-| Infrastructure / CI / Docker | Harbor or Anchor | — |
-| Security-sensitive changes | Shield (audit after code) | — |
-| Documentation | Quill | — |
-| Performance testing | Stress | — |
-| Code review (all changes) | Hawk | — (final gate) |
+```
+Task arrives at Atlas
+        │
+        ├──► Forge/Bolt (backend)      ──┐
+        ├──► Pixel/Prism (frontend)     ─┤── Phase 1: ALL PARALLEL
+        ├──► Harbor/Anchor (infra)      ─┤   (every relevant domain)
+        ├──► Shield (security audit)    ─┤
+        ├──► Quill (docs if needed)     ─┘
+        │
+        ▼ (Phase 1 complete)
+        ├──► Cross-reviews (parallel)  ──┐
+        ├──► Scout (QA validation)      ─┤── Phase 2: ALL PARALLEL
+        ├──► Hawk (code review)         ─┘
+        │
+        ▼ (Phase 2 complete)
+        Atlas (sign-off + merge)
+```
+
+**Rules**:
+1. **Phase 1 is always parallel** — if a task touches backend + frontend + infra, ALL three engineers start simultaneously
+2. **Phase 2 is always parallel** — cross-reviews, QA, and Hawk's code review happen at the same time, not sequentially
+3. **Atlas never implements** — Atlas decomposes, dispatches, and signs off. If Atlas is writing code, the process is broken.
+4. **No waiting** — an engineer never waits for another engineer in the same phase to finish
+
+### Standing Orders (No Atlas Dispatch Needed)
+
+Engineers have pre-assigned responsibilities that activate automatically — Atlas does not need to explicitly assign these:
+
+| Trigger | Engineer | Automatic Action |
+|---------|----------|-----------------|
+| Any backend code change | Scout | Write/update tests for changed code |
+| Any frontend code change | Scout | Write/update frontend tests |
+| Any code change | Hawk | Review against Google standards checklist |
+| Any security-sensitive file touched | Shield | Security audit |
+| Any `app/main.py` version change | Scout | Verify all version assertion tests match |
+| Any `.md` file changed | Quill | Verify cross-references and accuracy |
+| Any `docker-compose.yml` or `Dockerfile` change | Harbor | Validate compose profiles + build |
+| Any `scripts/deploy.sh` change | Anchor | Validate deployment paths |
+
+### Cross-Review Matrix
+
+Every engineer's work is reviewed by a designated peer who provides honest, domain-specific feedback. This ensures no single engineer's blind spots go unchecked.
+
+| Engineer | Peer Reviewer | Why This Pairing |
+|----------|--------------|------------------|
+| **Forge** (Sr. Backend) | **Bolt** + **Hawk** | Bolt knows the API layer; catches integration issues at route-service boundary |
+| **Bolt** (Backend) | **Forge** + **Hawk** | Forge catches architectural problems; mentors on async patterns |
+| **Pixel** (Sr. Frontend) | **Prism** + **Hawk** | Prism catches accessibility/UX issues Pixel might overlook |
+| **Prism** (UI/UX) | **Pixel** + **Hawk** | Pixel catches React anti-patterns and performance issues |
+| **Harbor** (DevOps) | **Anchor** | Infrastructure peer reviews infrastructure — no one else has the context |
+| **Anchor** (Infra) | **Harbor** | DevOps peer reviews deployment — they run the same systems |
+| **Shield** (Security) | **Forge** or **Pixel** | Domain expert validates the security fix is functionally correct |
+| **Quill** (Docs) | Relevant domain expert | The engineer who owns the code validates the doc is accurate |
+| **Scout** (QA) | **Hawk** | Reviewer validates test quality, coverage, and naming conventions |
+| **Stress** (Perf) | **Scout** + **Hawk** | QA validates benchmark methodology; Hawk validates code quality |
+
+### Peer Feedback Protocol
+
+Engineers must provide **honest, specific, actionable** feedback on each other's work. This is mandatory, not optional.
+
+**Feedback format** (posted as GitHub PR comments):
+
+```
+**[Name] ([Role]) — [APPROVE / REQUEST CHANGES / COMMENT]**
+
+### What works well
+- [Specific positive observation]
+
+### Issues found
+- [Severity: critical/high/medium/nit] [Description]
+- [Severity] [Description]
+
+### Recommendation
+[Approve with conditions / Block until fixed / Nit-only, proceed]
+```
+
+**Feedback rules**:
+1. **Be specific** — "This looks fine" is not acceptable. Cite exact lines, patterns, or decisions.
+2. **Be honest** — If a senior engineer's code has a problem, the junior reviewer must flag it. Seniority does not override correctness.
+3. **Separate severity levels** — Critical issues block merge. Nits are noted with `Nit:` prefix but don't block.
+4. **Review the work, not the person** — "This function has a race condition" not "You wrote buggy code"
+5. **Acknowledge good work** — If the implementation is clean, say so specifically. "What works well" is mandatory.
+6. **Cross-domain feedback welcome** — If Forge notices a frontend issue while reviewing, flag it. Domain boundaries are for ownership, not for silence.
+
+### Task Assignment (Legacy Reference)
+
+For simple single-domain tasks, these rules still apply:
+
+| Task Type | Primary Engineer(s) | Cross-Review | QA | Final Gate |
+|-----------|--------------------|--------------|----|------------|
+| Backend code | Forge or Bolt | Bolt↔Forge | Scout | Hawk |
+| Frontend code | Pixel or Prism | Prism↔Pixel | Scout | Hawk |
+| Full-stack | Forge + Pixel (parallel) | Bolt + Prism (parallel) | Scout | Hawk |
+| Infrastructure / CI | Harbor or Anchor | Anchor↔Harbor | — | Hawk |
+| Security-sensitive | Shield (audit) | Forge or Pixel | Scout | Hawk |
+| Documentation | Quill | Domain expert | — | Hawk |
+| Performance | Stress | Scout | — | Hawk |
 
 ### Quality Standards
 
@@ -390,3 +477,6 @@ On 2026-03-15, DVS was recruited and their agent templates were committed to `.s
 | 2026-03-15 | DVS established (6 engineers recruited from Google) | Atlas (Tech Lead) |
 | 2026-03-15 | Initial TEAM.md published | Atlas (Tech Lead) |
 | 2026-03-15 | Added Recruitment & Onboarding Process | Atlas (Tech Lead) |
+| 2026-03-15 | Replaced sequential workflow with parallel execution model | Atlas (Tech Lead) |
+| 2026-03-15 | Added cross-review matrix and peer feedback protocol | Atlas (Tech Lead) |
+| 2026-03-15 | Added standing orders (auto-activate without Atlas dispatch) | Atlas (Tech Lead) |
