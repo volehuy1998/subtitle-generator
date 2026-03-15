@@ -460,3 +460,14 @@ Full GitHub access (all scopes) and full server access granted by investor (vole
 | 2026-03-15 (PM-5) | CI standardized: docs-only PRs skip CodeQL/secret-scan, consistency validation added |
 | 2026-03-15 (PM-6) | Sequential workflow replaced with parallel execution model, cross-review matrix, peer feedback protocol |
 | 2026-03-15 (PM-7) | CLAUDE.md consolidated as single source of truth |
+
+### Deployment UI Rules (NEVER FORGET)
+
+| Domain | `FRONTEND` env var | UI served | Purpose |
+|--------|-------------------|-----------|---------|
+| `openlabs.club` | `templates` | Jinja templates (production) | Live production for users |
+| `newui.openlabs.club` | `react` (default) | React SPA (preview) | Technology evolution preview for investor comparison |
+| `meridian-openlabs.shop` | Not set (no `frontend/dist/`) | Jinja templates (production) | Second production server |
+| `newui.meridian-openlabs.shop` | `react` (needs `npm run build` first) | React SPA (preview) | Technology evolution preview |
+
+**Rule**: Main domains ALWAYS serve Jinja templates. newui subdomains ALWAYS serve React SPA. This separation exists so the investor can compare production vs the evolving new technology side by side. **Never deploy the same UI to both.**
