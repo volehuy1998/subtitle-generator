@@ -115,8 +115,16 @@ def extract_audio(video_path: Path, audio_path: Path, threads: int = 0, task_id:
                 if state.system_critical:
                     reasons = "; ".join(state.system_critical_reasons) if state.system_critical_reasons else "Unknown"
                     raise CriticalAbortError(f"ffmpeg killed — system critical: {reasons}")
-        logger.error(f"FFMPEG Failed (exit={proc.returncode}, {elapsed:.1f}s): {stderr[:500]}")
-        raise RuntimeError(f"ffmpeg error: {stderr[:500]}")
+        # Extract the actual error from stderr (skip ffmpeg banner/config noise)
+        error_lines = [
+            line
+            for line in stderr.strip().splitlines()
+            if not line.startswith(("  ", "ffmpeg version", "  built with", "  configuration:", "  lib"))
+            and line.strip()
+        ]
+        error_msg = "\n".join(error_lines[-5:]) if error_lines else stderr[-200:]
+        logger.error(f"FFMPEG Failed (exit={proc.returncode}, {elapsed:.1f}s): {error_msg}")
+        raise RuntimeError(f"ffmpeg error (exit {proc.returncode}): {error_msg}")
     logger.info(f"FFMPEG Audio extracted in {elapsed:.1f}s -> {audio_path.name}")
 
 

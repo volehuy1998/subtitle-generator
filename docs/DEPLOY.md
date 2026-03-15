@@ -481,6 +481,10 @@ server {
     # HSTS is configured here at the nginx level (not in the app container)
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 
+    # IMPORTANT: Must match the app's upload limit (default 2 GB).
+    # Without this, nginx rejects uploads >1MB with HTTP 413.
+    client_max_body_size 2G;
+
     location / {
         proxy_pass         http://127.0.0.1:8000;
         proxy_set_header   Host $host;
@@ -500,6 +504,8 @@ server {
 
     ssl_certificate     /etc/letsencrypt/live/newui.example.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/newui.example.com/privkey.pem;
+
+    client_max_body_size 2G;
 
     location / {
         proxy_pass         http://127.0.0.1:8001;
