@@ -25,7 +25,7 @@ const CHANNELS = [
     bg: C.blueLight, color: C.blue,
     icon: <><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.8"/><path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></>,
     title: 'Bug Report',
-    badge: { label: 'GitHub Issues', style: { background: C.successLight, color: '#065F46', border: `1px solid ${C.successBorder}` } },
+    badge: { label: 'GitHub Issues', style: { background: C.successLight, color: 'var(--color-success)', border: `1px solid ${C.successBorder}` } },
     desc: 'Found something broken? Open an issue with steps to reproduce. Include your OS, browser, and the file type you were processing.',
   },
   {
@@ -58,7 +58,7 @@ export function ContactPage() {
     <StaticPageLayout>
       {/* Hero */}
       <div style={{
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #064e3b 100%)',
+        background: 'linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 55%, #E0F2FE 100%)',
         borderRadius: '16px', padding: '44px 40px', marginBottom: '32px',
         color: '#fff', display: 'flex', alignItems: 'flex-start', gap: '22px',
         position: 'relative', overflow: 'hidden',
@@ -111,7 +111,7 @@ export function ContactPage() {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: '0.85rem', fontWeight: 600, color: C.text, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 Security Vulnerability
-                <span style={{ fontSize: '0.67rem', fontWeight: 700, padding: '2px 8px', borderRadius: '20px', background: C.successLight, color: '#065F46', border: `1px solid ${C.successBorder}` }}>48h response</span>
+                <span style={{ fontSize: '0.67rem', fontWeight: 700, padding: '2px 8px', borderRadius: '20px', background: C.successLight, color: 'var(--color-success)', border: `1px solid ${C.successBorder}` }}>48h response</span>
               </div>
               <div style={{ fontSize: '0.78rem', color: C.text2, lineHeight: 1.55 }}>
                 Please report security issues via{' '}

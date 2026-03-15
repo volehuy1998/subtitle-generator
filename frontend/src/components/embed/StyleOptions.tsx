@@ -79,7 +79,7 @@ export function StyleOptions({ color, size, onChange }: Props) {
       <div
         className="flex items-end justify-center px-4 py-3 rounded-lg overflow-hidden"
         style={{
-          background: '#111827',
+          background: 'var(--color-surface-2)',
           minHeight: '56px',
         }}
       >
