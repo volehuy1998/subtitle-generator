@@ -2,6 +2,7 @@
 
 - [access_privileges.md](access_privileges.md) — Confirmed privileges: full GitHub access (all scopes), full server access, Docker, TLS, CI/CD — granted by investor on 2026-03-14
 - [team_structure.md](team_structure.md) — SubForge engineering team: 11 members (Atlas, Forge, Bolt, Pixel, Prism, Scout, Stress, Harbor, Anchor, Shield, Quill, Hawk) with Google SWE checklists and agent prompt templates
+- [team_dvs.md](team_dvs.md) — Deployment Verification Squad: 6 Google-recruited engineers (Flint, Pylon, Cipher, Metric, Schema, Relay) who test fresh deployments and file bug reports
 - [feedback_pr_review_process.md](feedback_pr_review_process.md) — Every PR must have engineer comments (approve/reject/feedback) visible on GitHub before merging. Investor wants transparency.
 - [feedback_pr_attributes_mandatory.md](feedback_pr_attributes_mandatory.md) — ALL 6 PR attributes mandatory: labels (type+priority+team), assignees, milestone, project, reviewers, linked issue. Use REST API (gh api) — gh pr edit fails on this repo due to Projects classic deprecation.
 - [feedback_delegation.md](feedback_delegation.md) — Each Sentinel engineer must independently evaluate and comment in their domain. Atlas must not consolidate everything solo — investor explicitly asked why engineers weren't participating.
