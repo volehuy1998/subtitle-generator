@@ -25,11 +25,11 @@
 │  │  Session → ApiKey → RequestLog                                │  │
 │  └──────────────────────────────────────────────────────────────┘  │
 │                                                                     │
-│  ┌─────────────────── ROUTE LAYER (22 routers) ─────────────────┐  │
+│  ┌─────────────────── ROUTE LAYER (29 routers) ─────────────────┐  │
 │  │  upload │ events │ download │ health │ embed │ tasks │ ...    │  │
 │  └─────────────────────────┬────────────────────────────────────┘  │
 │                             │                                       │
-│  ┌─────────────────── SERVICE LAYER (26 modules) ───────────────┐  │
+│  ┌─────────────────── SERVICE LAYER (32 modules) ───────────────┐  │
 │  │  pipeline │ transcription │ model_manager │ analytics │ ...   │  │
 │  └─────────────────────────┬────────────────────────────────────┘  │
 │                             │                                       │
@@ -689,7 +689,7 @@ uvicorn.run(app)
 create_app() → FastAPI instance
   │
   ├── Register middleware (8 layers)
-  ├── Register routes (22 routers)
+  ├── Register routes (29 routers)
   ├── Register exception handlers
   │
   ▼
@@ -788,7 +788,7 @@ lifespan shutdown
           +----+----+
                |
             routes/
-            (22 routers, thin delegation)
+            (29 routers, thin delegation)
                |
           app/main.py
           (app factory, lifespan)
