@@ -33,6 +33,7 @@ def ok(msg: str) -> None:
 
 # ── 1. Version consistency ──────────────────────────────────────────────
 
+
 def check_version_consistency() -> None:
     print("\n[1/5] Version consistency")
 
@@ -48,7 +49,7 @@ def check_version_consistency() -> None:
 
     # Check all test files for version assertions
     tests_dir = ROOT / "tests"
-    version_pattern = re.compile(r'''(?:==|!=)\s*["'](\d+\.\d+\.\d+)["']''')
+    version_pattern = re.compile(r"""(?:==|!=)\s*["'](\d+\.\d+\.\d+)["']""")
     for test_file in sorted(tests_dir.glob("*.py")):
         text = test_file.read_text()
         for line_num, line in enumerate(text.splitlines(), 1):
@@ -66,6 +67,7 @@ def check_version_consistency() -> None:
 
 
 # ── 2. CHANGELOG version ────────────────────────────────────────────────
+
 
 def check_changelog_version() -> None:
     print("\n[2/5] CHANGELOG latest version")
@@ -96,6 +98,7 @@ def check_changelog_version() -> None:
 
 # ── 3. README file references ────────────────────────────────────────────
 
+
 def check_readme_references() -> None:
     print("\n[3/5] README.md file references")
 
@@ -120,6 +123,7 @@ def check_readme_references() -> None:
 
 
 # ── 4. Module counts in CLAUDE.md ────────────────────────────────────────
+
 
 def check_module_counts() -> None:
     print("\n[4/5] CLAUDE.md module counts")
@@ -155,6 +159,7 @@ def check_module_counts() -> None:
 
 # ── 5. Required files exist ──────────────────────────────────────────────
 
+
 def check_required_files() -> None:
     print("\n[5/5] Required project files exist")
 
@@ -180,6 +185,7 @@ def check_required_files() -> None:
 
 
 # ── Main ─────────────────────────────────────────────────────────────────
+
 
 def main() -> int:
     print("=" * 60)
