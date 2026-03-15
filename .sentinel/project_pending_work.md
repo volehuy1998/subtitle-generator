@@ -1,6 +1,6 @@
 ---
 name: project_pending_work
-description: Open work items as of 2026-03-15 (end of session 4) — all PRs cleared, remaining backlog
+description: Open work items as of 2026-03-15 (end of session 5) — all PRs cleared, Meridian removed, remaining backlog
 type: project
 ---
 
@@ -8,18 +8,11 @@ type: project
 
 **How to apply:** Check this list at the start of each session to understand what's in flight.
 
-## All PRs cleared (session 4)
+## All PRs cleared (session 5)
 
-- **PR #81 MERGED** — release v2.3.0
-- **PR #86 MERGED** — 30 CodeQL security fixes
-- **PR #87 MERGED** — Automated sensitive data scanning
-- **PR #88 MERGED** — .sentinel/ memory sync (session 2)
-- **PR #90 MERGED** — .sentinel/ memory sync (session 3)
-- **PR #91 MERGED** — deployment docs sync
-- **PR #93 MERGED** — PR attribute validation CI workflow
-- **PR #95 MERGED** — .sentinel/ memory sync (session 4)
-- **PR #98 MERGED** — .sentinel/ memory sync (session 4 final)
-- **PR #101 MERGED** — Automated memory backup validation (.sentinel/)
+- **0 open PRs**
+- **v2.3.0 released**
+- All Meridian references removed from repo, labels, issues, PRs, releases, branches
 
 ## Production deployment blocker
 
@@ -40,8 +33,8 @@ type: project
 - ci.yml: Lint + Test + Build (required checks: Lint, Test)
 - codeql.yml: CodeQL analysis (actions, JS/TS, Python)
 - secret-scan.yml: TruffleHog + 16-pattern custom scanner
-- pr-attributes.yml: 6-attribute PR validation (session 4)
-- memory-backup.yml: .sentinel/ backup integrity + sensitive data scan (session 4)
+- pr-attributes.yml: 6-attribute PR validation
+- memory-backup.yml: .sentinel/ backup integrity + diff-only sensitive data scan
 - deploy-validate: compose config, bash syntax, PROD_IMAGE_TAG
-- release-notify.yml: deployment checklist on release
-- CODEOWNERS: co-review for 8 deploy-critical files
+- release-notify.yml: deployment checklist on release (Sentinel only)
+- CODEOWNERS: Sentinel-only review for all files including deploy-critical
