@@ -259,7 +259,7 @@ Before changing `PROD_IMAGE_TAG` to promote a new design to production:
 ### Backend tests (pytest)
 
 ```bash
-# Run all tests (1326 tests, ~20s)
+# Run all tests (1328 tests, ~20s)
 pytest tests/ -v --tb=short
 
 # Run a single test file

@@ -15,7 +15,7 @@ python main.py                    # starts uvicorn on 0.0.0.0:8000
 # Run in production mode (HTTPS on 443 + HTTP redirect on 80)
 ENVIRONMENT=prod SSL_CERTFILE=/path/to/cert.pem SSL_KEYFILE=/path/to/key.pem python main.py
 
-# Run all tests (1326 tests, ~20s)
+# Run all tests (1328 tests, ~20s)
 pytest tests/ -v --tb=short
 
 # Run e2e tests (requires playwright)
@@ -44,7 +44,7 @@ Upload -> probe (ffprobe) -> extract audio (ffmpeg->WAV) -> load model -> transc
 - **`app/routes/`** (29 modules) — FastAPI routers, one per feature domain. Aggregated in `routes/__init__.py`. Covers: upload, download, control, events, embed, combine, translation, tasks, subtitles, analytics, dashboard, feedback, auth, monitoring, health, metrics, webhooks, export, security, admin_logs, query, tracking, status_page, system, pages, ws, logs.
 - **`app/services/`** (32 modules) — Business logic. Key: `pipeline.py` (orchestration), `transcription.py` (whisper), `model_manager.py` (model caching), `translation.py` (Whisper + Argos translation), `subtitle_embed.py` (soft/hard embed), `diarization.py` (pyannote), `analytics.py` (counters/timeseries), `health_monitor.py` (background checks + critical state), `cleanup.py` (file/DB retention), `rate_limiter.py`, `quarantine.py` (ClamAV), `audit.py`, `pubsub.py` (Redis Pub/Sub).
 - **`app/middleware/`** (12 modules) — Auth, security headers, session, request logging, brute force, body limit, compression, CORS, rate limit, slow query logging, critical state blocking.
-- **`app/db/`** — SQLAlchemy async models (15 tables), engine setup (PostgreSQL via asyncpg, SQLite fallback via aiosqlite), Alembic migrations (5 versions), database task backend.
+- **`app/db/`** — SQLAlchemy async models (14 tables), engine setup (PostgreSQL via asyncpg, SQLite fallback via aiosqlite), database task backend.
 - **`app/utils/`** — SRT/VTT/JSON generation, line-breaking, media probing (ffmpeg), file validation, security helpers.
 - **`app/config.py`** — All constants, paths, env vars, limits.
 - **`app/state.py`** — Global in-memory state: `state.tasks[task_id]` dict, model cache with `state.model_lock`, translation model cache with `state.translation_model_lock`, task semaphore, critical state management.

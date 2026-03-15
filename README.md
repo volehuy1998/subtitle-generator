@@ -143,7 +143,7 @@ Each step emits SSE events for real-time UI updates. Tasks run in background thr
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React 18 + TypeScript + Vite |
+| Frontend | React 19 + TypeScript + Vite 6 + Tailwind CSS v4 + Zustand |
 | Backend | FastAPI + Uvicorn (single worker) |
 | Transcription | faster-whisper (CTranslate2), GPU via CUDA |
 | Diarization | pyannote.audio (optional) |
@@ -156,7 +156,7 @@ Each step emits SSE events for real-time UI updates. Tasks run in background thr
 
 ```
 app/
-  routes/        # 14+ FastAPI routers (one per feature domain)
+  routes/        # 29 FastAPI routers (one per feature domain)
   services/      # Business logic: pipeline, transcription, model_manager, analytics
   middleware/    # Auth, security headers, brute-force, rate-limit, CORS, compression
   utils/         # SRT/VTT generation, line-breaking, media probing, file validation
@@ -185,7 +185,7 @@ See [docs/DEPLOY.md](docs/DEPLOY.md) for full production deployment instructions
 ## Testing
 
 ```bash
-# Run all tests (~1155 passing)
+# Run all tests (1328 tests)
 pytest tests/ -v --tb=short
 
 # Run a specific test file
@@ -205,6 +205,10 @@ pytest tests/e2e/ -v
 
 The `/security` page shows live OWASP assertion results. Security commits automatically update `data/security_assertions.json` via a git post-commit hook. See [SECURITY.md](SECURITY.md) for the vulnerability disclosure policy.
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, coding standards, and PR process. See [docs/TEAM.md](docs/TEAM.md) for the engineering team structure. Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before participating.
+
 ## License
 
-All rights reserved.
+All rights reserved. See [LICENSE](LICENSE) for details.
