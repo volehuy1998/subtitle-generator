@@ -157,6 +157,8 @@ Without review, the product development lifecycle is broken — issues rot, PRs 
 1. Run `gh issue list --state open` and `gh pr list --state open`
 2. Any item without assignee or reviewer → triage immediately
 3. Any item open >24 hours with no activity → escalate
+4. Check for open `release-please` PRs — merge if CI green to cut the release
+5. After any merge to main, verify release pipeline completes (release PR → tag → notification)
 
 #### Issue Triage Rules
 | Priority | First Response SLA | Assignment SLA | Engineer |
@@ -236,15 +238,38 @@ Without review, the product development lifecycle is broken — issues rot, PRs 
 
 ### GitHub Branch Protection (main)
 All Sentinel engineers operate through one GitHub account (`volehuy1998`), so native GitHub reviewer assignment is impossible. Instead, review is enforced via the **Review Gate** CI check:
-- **Required status checks**: `Lint`, `Test`, `Engineer Review` (all must pass)
+- **Required status checks**: `Lint`, `Test`, `Engineer Review` (all 3 must pass — NO EXCEPTIONS)
 - **`Engineer Review` check**: Scans PR comments for `**[Name] ([Role]) — APPROVE**` pattern from any known Sentinel engineer. Blocks merge if zero approvals or any `REQUEST CHANGES` present.
-- **Required approving reviews**: 1 (GitHub-native — effectively requires `--admin` override in single-collaborator repo)
+- **Required approving reviews**: 0 (native review disabled — `Engineer Review` CI check is the real gate)
 - **Dismiss stale reviews**: true (new pushes invalidate old approvals)
-- **Require last push approval**: true
-- **Require CODEOWNERS review**: true
-- **Enforce admins**: false (allows admin to merge after Engineer Review CI passes)
+- **Enforce admins**: **true** (admins CANNOT bypass — no one can merge without all checks passing)
 - **Merge method**: Squash merge only
 - **Auto-delete branches**: On merge
+
+### `--admin` Merge Override — BANNED (NEVER USE)
+
+**`gh pr merge --admin` is PERMANENTLY BANNED.** It bypasses all branch protection checks including the Engineer Review gate. PR #140 was merged via `--admin` with zero reviews, zero attributes, and zero identity disclosure — violating every policy established in this session. This loophole has been closed:
+
+- `enforce_admins: true` means even the repo owner cannot bypass checks
+- If a check is failing, **fix the issue** — do not override it
+- If `Validate PR attributes` fails on Reviewers (single-collaborator limitation), that check is NOT a required status check — it does not block merge
+- The only 3 required checks are: `Lint`, `Test`, `Engineer Review` — all 3 must pass organically
+
+**Process Incident**: PR #140 merged 2026-03-16 with 6 policy violations. See Issue #141.
+
+**NEVER use `--admin` when `Lint` or `Test` is failing.** If they fail, fix the code first.
+
+**Before every `--admin` merge, verify:** `gh pr checks <number>` shows all checks pass except `Validate PR attributes`.
+
+### Pre-Commit Hook Must Match CI
+
+The pre-commit hook in `.git/hooks/pre-commit` must run the SAME checks as CI:
+- `ruff check` (lint errors)
+- `ruff format --check` (formatting)
+- Secret scanning
+- Blocked file detection
+
+If the pre-commit hook passes but CI fails, the hook is out of date. Fix the hook.
 
 ### Author Disclosure (Mandatory — IDENTITY BEFORE CONTENT)
 **Every engineer must disclose their name and role BEFORE presenting any content.** Identity comes first, then the work. No exceptions.
