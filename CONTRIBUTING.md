@@ -440,7 +440,7 @@ Every PR is scanned by two CI jobs before it can merge:
 2. If it is a **real secret**: remove it immediately. Rotate the credential — assume it is compromised.
 3. If it is a **false positive**: add a regex to `.scanignore` with a comment explaining why it is safe. Keep the allow-list minimal.
 
-**For memory/documentation files** (`.sentinel/`, `docs/`): do not include real server IPs, credentials, or private network details. Use placeholders (e.g., `<server-ip>`, `<db-password>`) or example addresses from [RFC 5737](https://datatracker.ietf.org/doc/html/rfc5737) TEST-NET ranges (`192.0.2.x`, `198.51.100.x`, `203.0.113.x`).
+**For memory/documentation files** (`docs/`, `docs/`): do not include real server IPs, credentials, or private network details. Use placeholders (e.g., `<server-ip>`, `<db-password>`) or example addresses from [RFC 5737](https://datatracker.ietf.org/doc/html/rfc5737) TEST-NET ranges (`192.0.2.x`, `198.51.100.x`, `203.0.113.x`).
 
 ### Security practices
 

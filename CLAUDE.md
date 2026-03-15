@@ -77,10 +77,10 @@ Atlas (Tech Lead) — orchestrates, decomposes, dispatches, signs off
 Separate team. Deploys on fresh servers using only docs. Files issues for gaps.
 - **Flint** (Lead), **Pylon** (Network), **Cipher** (Security), **Metric** (Observability), **Schema** (Database), **Relay** (Integration)
 - All recruited from Google (Cloud Platform SRE, Cloud Networking, Security, SRE Observability, Cloud SQL, Cloud Pub/Sub)
-- Full templates in `.sentinel/team_dvs.md`
+- Full templates in `docs/AGENT_TEMPLATES_DVS.md`
 
 ### Agent Prompt Templates
-Full agent prompts with BACKGROUND, SKILLS, SCOPE, CHECKLIST for each engineer are in `.sentinel/team_structure.md` (Sentinel) and `.sentinel/team_dvs.md` (DVS). Use these when dispatching engineers as subagents.
+Full agent prompts with BACKGROUND, SKILLS, SCOPE, CHECKLIST for each engineer are in `docs/AGENT_TEMPLATES_SENTINEL.md` (Sentinel) and `docs/AGENT_TEMPLATES_DVS.md` (DVS). Use these when dispatching engineers as subagents.
 
 ---
 
@@ -370,7 +370,6 @@ Full list in `.env.example` (40+ variables with descriptions). Critical ones:
 | `secret-scan.yml` | push/PR to main | Skipped (paths-ignore) | TruffleHog + custom sensitive data scanner |
 | `docs-skip.yml` | push/PR (docs paths only) | **Runs** (stub jobs) | Provides passing stubs for branch protection |
 | `pr-attributes.yml` | PR events | Always runs | Validates all 6 mandatory PR attributes |
-| `memory-backup.yml` | `.sentinel/**` changes | Only on .sentinel/ | Validates backup integrity + frontmatter |
 | `release.yml` | push to main | Skipped | Semantic release + Docker push on new release |
 | `release-notify.yml` | Release published | N/A | Auto-creates deployment checklist issue |
 
@@ -441,8 +440,8 @@ Full GitHub access (all scopes) and full server access granted by investor (vole
 | `docs/ROADMAP.md` | 30 completed sprints with feature timeline |
 | `SECURITY.md` | Vulnerability disclosure policy |
 | `CONTRIBUTING.md` | Development setup, Git workflow, PR process |
-| `.sentinel/team_structure.md` | Agent prompt templates with Google SWE checklists |
-| `.sentinel/team_dvs.md` | DVS agent templates and verification checklists |
+| `docs/AGENT_TEMPLATES_SENTINEL.md` | Agent prompt templates with Google SWE checklists |
+| `docs/AGENT_TEMPLATES_DVS.md` | DVS agent templates and verification checklists |
 | `scripts/validate_consistency.py` | CI consistency checks |
 
 ---

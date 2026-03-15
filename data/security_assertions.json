@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "c487b06",
-    "sha_full": "c487b06bfd99518206857c5f677a31880939943e",
-    "datetime": "2026-03-15T15:39:22+07:00",
-    "message": "style: fix ruff format on validate_consistency.py"
+    "sha": "2946aee",
+    "sha_full": "2946aee5a77e29964fb38a9325d1b956ecf8f0f2",
+    "datetime": "2026-03-15T22:04:23+07:00",
+    "message": "chore: remove .sentinel/ directory \u2014 CLAUDE.md is single source of truth"
   },
   "assertions": [
     {
