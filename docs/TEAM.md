@@ -389,8 +389,8 @@ What happens to a new deployer who hits this without the fix.
 | [docs/CODING_STANDARDS.md](CODING_STANDARDS.md) | Frontend architecture review, test plans |
 | [docs/DEPLOY.md](DEPLOY.md) | Deployment guide (what DVS tests against) |
 | [docs/ARCHITECTURE.md](ARCHITECTURE.md) | System architecture and functional flow |
-| [.sentinel/team_structure.md](../.sentinel/team_structure.md) | Sentinel agent prompt templates |
-| [.sentinel/team_dvs.md](../.sentinel/team_dvs.md) | DVS agent prompt templates and checklists |
+| [docs/AGENT_TEMPLATES_SENTINEL.md](../docs/AGENT_TEMPLATES_SENTINEL.md) | Sentinel agent prompt templates |
+| [docs/AGENT_TEMPLATES_DVS.md](../docs/AGENT_TEMPLATES_DVS.md) | DVS agent prompt templates and checklists |
 
 ---
 
@@ -415,10 +415,10 @@ Every new engineer must complete ALL of the following before they are assigned a
 | Step | Owner | Action | Deliverable | Verification |
 |------|-------|--------|-------------|--------------|
 | 2.1 | Atlas | **Assign nickname and role** — unique, thematic, no conflicts with existing engineers | Nickname confirmed | Check TEAM.md for conflicts |
-| 2.2 | Atlas | **Create agent prompt template** — following the existing format: BACKGROUND, SKILLS, SCOPE, CHECKLIST, IDENTITY | Agent template written | Template in `.sentinel/team_*.md` |
-| 2.3 | Atlas | **Update `.sentinel/team_*.md`** — add engineer to the appropriate team file (team_structure.md or team_dvs.md) | Team file updated | `git diff` shows new entry |
+| 2.2 | Atlas | **Create agent prompt template** — following the existing format: BACKGROUND, SKILLS, SCOPE, CHECKLIST, IDENTITY | Agent template written | Template in `docs/AGENT_TEMPLATES_*.md` |
+| 2.3 | Atlas | **Update `docs/AGENT_TEMPLATES_*.md`** — add engineer to the appropriate team file (team_structure.md or team_dvs.md) | Team file updated | `git diff` shows new entry |
 | 2.4 | Atlas | **Update `docs/TEAM.md`** — add to roster table, code ownership, profiles section, change log | TEAM.md updated | All 4 sections updated |
-| 2.5 | Atlas | **Update `.sentinel/MEMORY.md`** — ensure memory index reflects the new team composition if needed | Memory synced | Index entry accurate |
+| 2.5 | Atlas | **Update `CLAUDE.md`** — ensure memory index reflects the new team composition if needed | Memory synced | Index entry accurate |
 | 2.6 | Atlas | **Update local memory** — sync `~/.claude/projects/.../memory/` files | Local memory synced | Memory file updated |
 | 2.7 | Atlas | **Commit and push** — all changes in a single commit on an appropriate branch | Commit pushed | `git log` shows commit |
 | 2.8 | Atlas | **Create GitHub announcement issue** — introduce the new engineer publicly | Issue created | Issue URL recorded |
@@ -441,9 +441,9 @@ Every new engineer must complete ALL of the following before they are assigned a
 
 - [ ] 2.1 Nickname assigned, no conflicts
 - [ ] 2.2 Agent prompt template created
-- [ ] 2.3 `.sentinel/team_*.md` updated
+- [ ] 2.3 `docs/AGENT_TEMPLATES_*.md` updated
 - [ ] 2.4 `docs/TEAM.md` updated (roster + ownership + profile + changelog)
-- [ ] 2.5 `.sentinel/MEMORY.md` synced
+- [ ] 2.5 `CLAUDE.md` synced
 - [ ] 2.6 Local memory synced
 - [ ] 2.7 Changes committed and pushed to GitHub
 - [ ] 2.8 GitHub announcement issue created
@@ -459,13 +459,13 @@ Every new engineer must complete ALL of the following before they are assigned a
 
 | Action | Steps |
 |--------|-------|
-| **Remove engineer** | Remove from TEAM.md roster + profile, remove from `.sentinel/team_*.md`, update MEMORY.md, update org chart issue, commit + push, add to TEAM.md change log |
-| **Change role** | Update role in all locations (TEAM.md, .sentinel/, memory), update agent prompt template scope/checklist, add to TEAM.md change log |
+| **Remove engineer** | Remove from TEAM.md roster + profile, remove from `docs/AGENT_TEMPLATES_*.md`, update MEMORY.md, update org chart issue, commit + push, add to TEAM.md change log |
+| **Change role** | Update role in all locations (TEAM.md, docs/, memory), update agent prompt template scope/checklist, add to TEAM.md change log |
 | **Transfer between teams** | Full offboarding from source team + full onboarding to target team |
 
 ### Why This Process Exists
 
-On 2026-03-15, DVS was recruited and their agent templates were committed to `.sentinel/team_dvs.md` and announced via GitHub issue #111, but `docs/TEAM.md` did not exist. The authoritative team reference was scattered across `.sentinel/` files, GitHub issues, and memory — with no single source of truth in the versioned repository. This process ensures that every personnel change is reflected in **all** artifacts simultaneously and that `docs/TEAM.md` is always the authoritative reference.
+On 2026-03-15, DVS was recruited and their agent templates were committed to `docs/AGENT_TEMPLATES_DVS.md` and announced via GitHub issue #111, but `docs/TEAM.md` did not exist. The authoritative team reference was scattered across `docs/` files, GitHub issues, and memory — with no single source of truth in the versioned repository. This process ensures that every personnel change is reflected in **all** artifacts simultaneously and that `docs/TEAM.md` is always the authoritative reference.
 
 ---
 

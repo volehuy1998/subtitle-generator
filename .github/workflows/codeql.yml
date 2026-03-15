@@ -16,7 +16,6 @@ on:
       - '.gitignore'
       - '.github/PULL_REQUEST_TEMPLATE.md'
       - '.github/POSTMORTEM_TEMPLATE.md'
-      - '.sentinel/**'
   pull_request:
     branches: [ "main" ]
     paths-ignore:
@@ -28,7 +27,6 @@ on:
       - '.gitignore'
       - '.github/PULL_REQUEST_TEMPLATE.md'
       - '.github/POSTMORTEM_TEMPLATE.md'
-      - '.sentinel/**'
   schedule:
     # Weekly full scan (Monday 1:21 PM UTC) — covers all code regardless of path filtering
     - cron: '21 13 * * 1'

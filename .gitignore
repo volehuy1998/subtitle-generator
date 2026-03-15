@@ -48,3 +48,9 @@ Thumbs.db
 
 # Claude Code
 .claude/
+
+# Playwright MCP logs
+.playwright-mcp/
+
+# Screenshots
+*.png
