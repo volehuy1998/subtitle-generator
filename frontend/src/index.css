@@ -4,46 +4,47 @@
   /* Spacing: 4px base grid */
   --spacing: 0.25rem;
 
-  /* Typography */
-  --font-family-sans:    'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  --font-family-display: 'Syne', 'Plus Jakarta Sans', system-ui, sans-serif;
+  /* Typography — Phase Lumen: Inter for clarity, JetBrains Mono for technical data */
+  --font-family-sans:    'Inter', system-ui, -apple-system, sans-serif;
+  --font-family-display: 'Inter', system-ui, -apple-system, sans-serif;
   --font-family-mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
 
-  /* Colors — Enterprise Slate dark theme */
-  --color-bg:        #080C14;
-  --color-surface:   #0D1321;
-  --color-surface-2: #131D2E;
-  --color-border:    #1E2A3D;
-  --color-border-2:  #2A3A55;
-  --color-text:      #E2E8F0;
-  --color-text-2:    #94A3B8;
-  --color-text-3:    #64748B;
+  /* Colors — Phase Lumen: Professional light theme
+     Reference: Microsoft 365, Google Workspace, Claude AI, Vercel */
+  --color-bg:        #FFFFFF;
+  --color-surface:   #F8FAFC;
+  --color-surface-2: #F1F5F9;
+  --color-border:    #E2E8F0;
+  --color-border-2:  #CBD5E1;
+  --color-text:      #0F172A;
+  --color-text-2:    #475569;
+  --color-text-3:    #94A3B8;
 
-  --color-primary:         #3B82F6;
-  --color-primary-hover:   #60A5FA;
-  --color-primary-light:   rgba(59,130,246,0.10);
-  --color-primary-border:  rgba(59,130,246,0.25);
+  --color-primary:         #6366F1;
+  --color-primary-hover:   #4F46E5;
+  --color-primary-light:   rgba(99,102,241,0.08);
+  --color-primary-border:  rgba(99,102,241,0.20);
 
-  --color-success:         #34D399;
-  --color-success-light:   rgba(52,211,153,0.10);
-  --color-success-border:  rgba(52,211,153,0.25);
+  --color-success:         #10B981;
+  --color-success-light:   rgba(16,185,129,0.08);
+  --color-success-border:  rgba(16,185,129,0.20);
 
-  --color-warning:         #FBBF24;
-  --color-warning-light:   rgba(251,191,36,0.10);
+  --color-warning:         #F59E0B;
+  --color-warning-light:   rgba(245,158,11,0.08);
 
-  --color-danger:          #F87171;
-  --color-danger-light:    rgba(248,113,113,0.10);
+  --color-danger:          #EF4444;
+  --color-danger-light:    rgba(239,68,68,0.08);
 
-  /* Radius */
-  --radius-xs: 6px;
-  --radius-sm: 8px;
-  --radius:    10px;
+  /* Radius — slightly softer for light theme */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius:    8px;
   --radius-lg: 12px;
 
-  /* Shadows — calibrated for dark surfaces */
-  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.4);
-  --shadow-md: 0 4px 12px rgb(0 0 0 / 0.3), 0 1px 3px rgb(0 0 0 / 0.2);
-  --shadow-lg: 0 20px 40px rgb(0 0 0 / 0.4), 0 8px 16px rgb(0 0 0 / 0.2);
+  /* Shadows — soft and subtle for light backgrounds */
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px rgb(0 0 0 / 0.07), 0 2px 4px rgb(0 0 0 / 0.06);
+  --shadow-lg: 0 10px 15px rgb(0 0 0 / 0.10), 0 4px 6px rgb(0 0 0 / 0.05);
 }
 
 /* Base */
@@ -52,28 +53,11 @@
 body {
   margin: 0;
   font-family: var(--font-family-sans);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 16px;
+  line-height: 1.6;
   color: var(--color-text);
   background-color: var(--color-bg);
-  /* Subtle dot-grid texture */
-  background-image: radial-gradient(circle, rgba(59,130,246,0.07) 1px, transparent 1px);
-  background-size: 28px 28px;
   -webkit-font-smoothing: antialiased;
-}
-
-/* Top ambient glow */
-body::before {
-  content: '';
-  position: fixed;
-  top: -160px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 900px;
-  height: 400px;
-  background: radial-gradient(ellipse at center, rgba(59,130,246,0.09) 0%, transparent 68%);
-  pointer-events: none;
-  z-index: 0;
 }
 
 /* Scrollbar — always-visible track prevents layout shift when switching tabs */
@@ -106,7 +90,7 @@ html { overflow-y: scroll; scrollbar-width: thin; scrollbar-color: var(--color-b
 }
 .btn-interactive:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(59,130,246,0.20);
+  box-shadow: 0 4px 12px rgba(99,102,241,0.15);
 }
 .btn-interactive:active {
   transform: translateY(0);
@@ -121,7 +105,7 @@ html { overflow-y: scroll; scrollbar-width: thin; scrollbar-color: var(--color-b
 }
 .btn-download:hover {
   background: var(--color-primary-hover);
-  box-shadow: 0 4px 20px rgba(59,130,246,0.35);
+  box-shadow: 0 4px 16px rgba(99,102,241,0.25);
 }
 
 /* Process next file button hover */
