@@ -39,6 +39,7 @@ Deploy all reviewers simultaneously:
 
 ### Phase 3 — Sign-off
 - **Atlas** reviews all feedback, resolves conflicts, merges
+- Note: "Atlas never implements" means Atlas never writes application code. Atlas still handles process coordination, memory updates, and merge operations.
 
 ### Standing Orders (Auto-Activate)
 These engineers activate automatically without Atlas dispatch:
@@ -46,20 +47,26 @@ These engineers activate automatically without Atlas dispatch:
 - **Hawk** → any code change triggers review
 - **Shield** → any security-sensitive file triggers audit
 - **Quill** → any .md change triggers cross-reference validation
+- **Harbor** → any docker-compose.yml or Dockerfile change triggers profile validation
+- **Anchor** → any scripts/deploy.sh change triggers deployment path validation
+- **Scout** → any app/main.py version change triggers version assertion check
+- **Quill** → any version or module count change triggers doc accuracy check
 
 ### Cross-Review Matrix
-| Engineer | Peer Reviewer |
-|----------|--------------|
-| Forge | Bolt + Hawk |
-| Bolt | Forge + Hawk |
-| Pixel | Prism + Hawk |
-| Prism | Pixel + Hawk |
-| Harbor | Anchor |
-| Anchor | Harbor |
-| Shield | Forge or Pixel |
-| Quill | Domain expert |
-| Scout | Hawk |
-| Stress | Scout + Hawk |
+See docs/TEAM.md for full rationale ("Why This Pairing" column).
+
+| Engineer | Peer Reviewer | Rationale |
+|----------|--------------|-----------|
+| Forge | Bolt + Hawk | Bolt knows API layer, catches route-service boundary issues |
+| Bolt | Forge + Hawk | Forge catches architectural problems, mentors on async |
+| Pixel | Prism + Hawk | Prism catches accessibility/UX issues |
+| Prism | Pixel + Hawk | Pixel catches React anti-patterns |
+| Harbor | Anchor | Infra peer reviews infra |
+| Anchor | Harbor | DevOps peer reviews deployment |
+| Shield | Forge or Pixel | Domain expert validates fix is functionally correct |
+| Quill | Domain expert | Code owner validates doc accuracy |
+| Scout | Hawk | Reviewer validates test quality and coverage |
+| Stress | Scout + Hawk | QA validates benchmark methodology |
 
 ### Peer Feedback Rules
 1. Every review must be specific — cite lines, patterns, decisions
