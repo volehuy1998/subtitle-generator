@@ -10,7 +10,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Features
 
-* **ci:** automated cross-team collaboration — CODEOWNERS + release notify + deploy validation ([#83](https://github.com/volehuy1998/subtitle-generator/issues/83)) ([7b3020a](https://github.com/volehuy1998/subtitle-generator/commit/7b3020a3ebfc76dad7d3cf0ef51a74a2c3501bad))
+* **ci:** automated deployment collaboration — CODEOWNERS + release notify + deploy validation ([#83](https://github.com/volehuy1998/subtitle-generator/issues/83)) ([7b3020a](https://github.com/volehuy1998/subtitle-generator/commit/7b3020a3ebfc76dad7d3cf0ef51a74a2c3501bad))
 * **ci:** automated sensitive data scanning to prevent information leaks ([#87](https://github.com/volehuy1998/subtitle-generator/issues/87)) ([90f5f82](https://github.com/volehuy1998/subtitle-generator/commit/90f5f82f5c04926a3a5dff97c59374fab01c3b72))
 
 

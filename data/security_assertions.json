@@ -5,7 +5,7 @@
     "sha": "10f931c",
     "sha_full": "10f931c24f98b2de869d0ed283aa3d638ad930dc",
     "datetime": "2026-03-15T06:13:56+07:00",
-    "message": "chore: remove all Meridian team references from repository"
+    "message": "chore: remove external team references from repository"
   },
   "assertions": [
     {
