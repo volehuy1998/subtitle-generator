@@ -2702,9 +2702,11 @@
             return _origStartEmbed();
         };
 
-        // Track panel opens
-        const _origToggleEmbed = toggleEmbedPanel;
-        toggleEmbedPanel = function() { track('view', 'embed_panel_toggle'); return _origToggleEmbed(); };
+        // Track panel opens (guard against missing function)
+        if (typeof toggleEmbedPanel === 'function') {
+            const _origToggleEmbed = toggleEmbedPanel;
+            toggleEmbedPanel = function() { track('view', 'embed_panel_toggle'); return _origToggleEmbed(); };
+        }
 
         // Track JS errors
         window.addEventListener('error', function(e) {
