@@ -3,11 +3,6 @@ name: Review Gate
 # Enforces that every PR receives at least one engineer review comment
 # using the mandatory Peer Feedback Format before merge is allowed.
 #
-# WHY: All Sentinel engineers operate through a single GitHub account
-# (volehuy1998), so GitHub's native "required reviewers" cannot work.
-# This workflow scans PR comments for valid review signatures and sets
-# a required status check that blocks merge without review.
-#
 # STALE REVIEW POLICY: When new commits are pushed (synchronize event),
 # all prior approvals are invalidated. Engineers must re-review after
 # every code change. Only comments posted AFTER the latest push count.
@@ -59,16 +54,9 @@ jobs:
 
           echo "::group::Fetching PR data for #${PR_NUMBER}"
 
-          # Get the latest push timestamp from the PR
-          LATEST_PUSH=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}" \
-            --jq '.updated_at' 2>/dev/null || echo "")
-
-          # Get all commits to find the latest commit timestamp
-          LATEST_COMMIT_DATE=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/commits" \
+          # Get the latest commit timestamp — reviews must be AFTER this
+          CUTOFF=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/commits" \
             --jq 'last | .commit.committer.date' 2>/dev/null || echo "")
-
-          # Use the latest commit date as the cutoff — reviews must be AFTER this
-          CUTOFF="${LATEST_COMMIT_DATE}"
 
           if [ -n "$CUTOFF" ]; then
             echo "  Latest commit: ${CUTOFF}"
@@ -77,28 +65,13 @@ jobs:
             echo "  WARNING: Could not determine latest commit date. Counting all reviews."
           fi
 
-          # Fetch comments WITH timestamps using JSON
-          ISSUE_COMMENTS_JSON=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
-            --paginate 2>/dev/null || echo "[]")
-          PR_REVIEWS_JSON=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/reviews" \
-            --paginate 2>/dev/null || echo "[]")
+          # Write comments JSON to temp files for Python to read
+          gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
+            --paginate 2>/dev/null > /tmp/issue_comments.json || echo "[]" > /tmp/issue_comments.json
+          gh api "repos/${REPO}/pulls/${PR_NUMBER}/reviews" \
+            --paginate 2>/dev/null > /tmp/pr_reviews.json || echo "[]" > /tmp/pr_reviews.json
 
           echo "::endgroup::"
-
-          # Known Sentinel engineers and their roles
-          ENGINEERS=(
-            "Forge:Senior Backend Engineer"
-            "Bolt:Backend Engineer"
-            "Pixel:Senior Frontend Engineer"
-            "Prism:UI/UX Engineer"
-            "Scout:QA Lead"
-            "Stress:Performance Engineer"
-            "Harbor:DevOps Engineer"
-            "Anchor:Infrastructure Engineer"
-            "Shield:Security Engineer"
-            "Quill:Documentation Engineer"
-            "Hawk:Code Reviewer"
-          )
 
           echo ""
           echo "============================================"
@@ -111,13 +84,11 @@ jobs:
           echo ""
 
           # Use Python to filter comments by timestamp and check patterns
-          RESULT=$(python3 << 'PYEOF'
-          import json
-          import re
-          import sys
-          from datetime import datetime
+          export REVIEW_CUTOFF="$CUTOFF"
+          RESULT=$(python3 -c '
+          import json, os, re
 
-          cutoff = "$CUTOFF" if "$CUTOFF" else None
+          cutoff = os.environ.get("REVIEW_CUTOFF", "")
 
           engineers = [
               ("Forge", "Senior Backend Engineer"),
@@ -133,29 +104,29 @@ jobs:
               ("Hawk", "Code Reviewer"),
           ]
 
-          # Parse comments
+          # Read comments from temp files
           try:
-              issue_comments = json.loads('''$ISSUE_COMMENTS_JSON''')
+              with open("/tmp/issue_comments.json") as f:
+                  issue_comments = json.load(f)
           except Exception:
               issue_comments = []
+
           try:
-              pr_reviews = json.loads('''$PR_REVIEWS_JSON''')
+              with open("/tmp/pr_reviews.json") as f:
+                  pr_reviews = json.load(f)
           except Exception:
               pr_reviews = []
 
-          # Build list of (body, created_at) from all sources
+          # Build list of (body, created_at)
           all_comments = []
           for c in issue_comments:
               all_comments.append((c.get("body", ""), c.get("created_at", "")))
           for r in pr_reviews:
               all_comments.append((r.get("body", ""), r.get("submitted_at", r.get("created_at", ""))))
 
-          # Filter by cutoff if available
+          # Filter by cutoff
           if cutoff:
-              fresh_comments = []
-              for body, ts in all_comments:
-                  if ts and ts > cutoff:
-                      fresh_comments.append(body)
+              fresh_comments = [body for body, ts in all_comments if ts and ts > cutoff]
               stale_count = len(all_comments) - len(fresh_comments)
           else:
               fresh_comments = [body for body, _ in all_comments]
@@ -165,18 +136,17 @@ jobs:
           rejections = []
 
           for name, role in engineers:
-              approve_pattern = rf"\*\*{re.escape(name)}\s*\({re.escape(role)}\)\s*—\s*APPROVE\*\*"
-              reject_pattern = rf"\*\*{re.escape(name)}\s*\({re.escape(role)}\)\s*—\s*REQUEST CHANGES\*\*"
+              approve_pat = rf"\*\*{re.escape(name)}\s*\({re.escape(role)}\)\s*[\u2014—-]\s*APPROVE\*\*"
+              reject_pat = rf"\*\*{re.escape(name)}\s*\({re.escape(role)}\)\s*[\u2014—-]\s*REQUEST CHANGES\*\*"
               for body in fresh_comments:
-                  if re.search(approve_pattern, body):
+                  if re.search(approve_pat, body):
                       approvals.append(f"{name} ({role})")
                       break
               for body in fresh_comments:
-                  if re.search(reject_pattern, body):
+                  if re.search(reject_pat, body):
                       rejections.append(f"{name} ({role})")
                       break
 
-          # Output structured result
           result = {
               "approvals": approvals,
               "rejections": rejections,
@@ -185,29 +155,23 @@ jobs:
               "hawk_approved": any("Hawk" in a for a in approvals),
           }
           print(json.dumps(result))
-          PYEOF
-          )
+          ')
 
           # Parse Python output
-          APPROVALS=$(echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); [print(a) for a in d['approvals']]")
-          REJECTIONS=$(echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); [print(r) for r in d['rejections']]")
           APPROVAL_COUNT=$(echo "$RESULT" | python3 -c "import sys,json; print(len(json.load(sys.stdin)['approvals']))")
           REJECTION_COUNT=$(echo "$RESULT" | python3 -c "import sys,json; print(len(json.load(sys.stdin)['rejections']))")
           STALE_COUNT=$(echo "$RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin)['stale_count'])")
           HAWK_APPROVED=$(echo "$RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin)['hawk_approved'])")
 
-          # Display results
-          if [ "$APPROVAL_COUNT" -gt 0 ]; then
-            echo "$APPROVALS" | while read -r a; do
-              echo "  ✅ $a — APPROVE"
-            done
-          fi
-
-          if [ "$REJECTION_COUNT" -gt 0 ]; then
-            echo "$REJECTIONS" | while read -r r; do
-              echo "  ❌ $r — REQUEST CHANGES"
-            done
-          fi
+          # Display approvals
+          echo "$RESULT" | python3 -c "
+          import sys, json
+          d = json.load(sys.stdin)
+          for a in d['approvals']:
+              print(f'  ✅ {a} — APPROVE')
+          for r in d['rejections']:
+              print(f'  ❌ {r} — REQUEST CHANGES')
+          "
 
           if [ "$STALE_COUNT" -gt 0 ]; then
             echo ""
