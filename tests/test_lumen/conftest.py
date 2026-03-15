@@ -1,7 +1,8 @@
 """Phase Lumen test fixtures and configuration."""
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 # Test fixture directory (audio samples downloaded separately, gitignored)
 FIXTURE_DIR = Path(__file__).parent / "fixtures"
