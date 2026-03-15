@@ -45,8 +45,7 @@ class TestFfmpegBannerFilter:
         error_lines = [
             line
             for line in stderr.strip().splitlines()
-            if not line.startswith(("  ", "ffmpeg version"))
-            and line.strip()
+            if not line.startswith(("  ", "ffmpeg version")) and line.strip()
         ]
         return "\n".join(error_lines[-5:]) if error_lines else stderr[-200:]
 
@@ -184,6 +183,4 @@ class TestTemplateEmbedPanelTracking:
         template_path = Path(__file__).parent.parent / "templates" / "index.html"
         assert template_path.exists(), f"Template not found: {template_path}"
         content = template_path.read_text()
-        assert "embed_panel_toggle" in content, (
-            "Missing embed_panel_toggle tracking in templates/index.html"
-        )
+        assert "embed_panel_toggle" in content, "Missing embed_panel_toggle tracking in templates/index.html"

@@ -31,9 +31,7 @@ def _filter_ffmpeg_stderr(stderr: str) -> str:
     Mirrors the pattern from app/utils/media.py — Forge (Senior Backend Engineer).
     """
     error_lines = [
-        line
-        for line in stderr.strip().splitlines()
-        if not line.startswith(("  ", "ffmpeg version")) and line.strip()
+        line for line in stderr.strip().splitlines() if not line.startswith(("  ", "ffmpeg version")) and line.strip()
     ]
     # Fallback is 500 chars (vs 200 in media.py) — embedding errors need more context for codec/filter diagnostics
     return "\n".join(error_lines[-5:]) if error_lines else stderr[-500:]
