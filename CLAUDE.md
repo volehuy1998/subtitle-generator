@@ -514,11 +514,20 @@ Full GitHub access (all scopes) and full server access granted by investor (vole
 ## Production Blocker
 `hash_api_key()` changed from SHA-256 to HMAC-SHA256(JWT_SECRET) in PR #86. Existing DB records will fail validation. Needs migration script or force-revoke before prod deploy.
 
-## Long-Term Development Plan (`docs/DEVELOPMENT_PLAN.md`)
-Investor-approved priorities:
-1. **UX Principles:** User confirmation before any process, brighter/lighter UI (use `feature-dev` plugin), process liveness indicators
-2. **Performance:** Model loading optimization (60-120s → preloaded), transcription speed improvements
-3. **Infrastructure:** Distributed workers, API key migration, security hardening
+## Phase Lumen — Active Development Phase (`docs/lumen/PHASE_LUMEN.md`)
+
+**Codename:** Lumen · **Subdomain:** `lumen.openlabs.club` · **Scale:** Hundreds of sprints
+
+Three pillars:
+1. **Stability** — Zero bugs, 2000+ tests with real-world audio fixtures (multilingual, accents, noise, edge cases)
+2. **Performance** — Model preloading (<5s cached), pipeline optimization, instant feedback
+3. **Design** — Professional light UI referencing Microsoft/Google/Claude/Vercel. User confirmation before every action. Liveness indicators on every process.
+
+**Workflow:** Develop on `lumen.openlabs.club` → investor reviews → promote to `openlabs.club` when approved.
+
+**Sprint numbering:** L1, L2, L3... (separate from S1-S30). Use `feature-dev` plugin for UI work.
+
+**Full spec:** `docs/lumen/PHASE_LUMEN.md`
 
 ---
 
