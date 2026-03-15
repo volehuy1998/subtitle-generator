@@ -12,7 +12,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-
 # ── FFmpeg Banner Filter Tests ──
 
 
@@ -157,6 +156,7 @@ class TestBannerFilterLogic:
     def test_startswith_tuple_simplified(self):
         """Verify the startswith tuple no longer has redundant entries."""
         import inspect
+
         from app.utils.media import extract_audio
 
         source = inspect.getsource(extract_audio)
