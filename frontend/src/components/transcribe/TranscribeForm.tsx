@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { api } from '@/api/client'
 import { useUIStore } from '@/store/uiStore'
+import { usePreferencesStore } from '@/store/preferencesStore'
 import type { SystemInfo, TranslationPair, ModelPreloadStatus } from '@/api/types'
 
 export interface UploadOptions {
@@ -49,15 +50,16 @@ function Skeleton({ className }: { className?: string }) {
 
 export function TranscribeForm({ onUpload }: Props) {
   const { dbOk } = useUIStore()
+  const prefs = usePreferencesStore()
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null)
   const [languages, setLanguages] = useState<Record<string, string>>({})
   const [translationTargets, setTranslationTargets] = useState<TranslationPair[]>([])
   const [loading, setLoading] = useState(true)
 
   const [device, setDevice] = useState<string>('cpu')
-  const [model, setModel] = useState<string>('base')
-  const [language, setLanguage] = useState<string>('auto')
-  const [format, setFormat] = useState<string>('srt')
+  const [model, setModel] = useState<string>(prefs.defaultModel)
+  const [language, setLanguage] = useState<string>(prefs.defaultLanguage)
+  const [format, setFormat] = useState<string>(prefs.defaultFormat)
   const [translateTo, setTranslateTo] = useState<string>('')
   const [preload, setPreload] = useState<ModelPreloadStatus | null>(null)
   const preloadPoll = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -72,12 +74,6 @@ export function TranscribeForm({ onUpload }: Props) {
         // Initialize preload state from system info
         if (info.model_preload) {
           setPreload(info.model_preload)
-          // If still loading, auto-select the model being preloaded
-          if (info.model_preload.status === 'loading' && info.model_preload.models?.length) {
-            setModel(info.model_preload.models[0])
-          } else if (info.model_preload.status === 'ready' && info.model_preload.loaded?.length) {
-            setModel(info.model_preload.loaded[0])
-          }
         }
       })
       .catch(() => {})

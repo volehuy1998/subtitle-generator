@@ -7,6 +7,7 @@
 
 import { useState } from 'react'
 import { api } from '@/api/client'
+import { usePreferencesStore } from '@/store/preferencesStore'
 
 interface Props {
   taskId: string
@@ -93,7 +94,8 @@ export function DownloadButtons({ taskId, format, segments = 0 }: Props) {
 
 /** Format selector with tabs — Pixel (Sr. Frontend), Sprint L46 */
 function FormatSelector({ taskId, segments }: { taskId: string; segments: number }) {
-  const [selected, setSelected] = useState<ExportFormat>('srt')
+  const { defaultFormat } = usePreferencesStore()
+  const [selected, setSelected] = useState<ExportFormat>((defaultFormat || 'srt') as ExportFormat)
 
   const formats: ExportFormat[] = ['srt', 'vtt', 'json', 'all']
   const meta = FORMAT_META[selected]
