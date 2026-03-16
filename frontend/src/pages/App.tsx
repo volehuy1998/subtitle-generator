@@ -6,6 +6,7 @@ import { TaskQueuePanel } from '@/components/system/TaskQueuePanel'
 import { TranscribeForm } from '@/components/transcribe/TranscribeForm'
 import { ProgressView } from '@/components/progress/ProgressView'
 import { OutputPanel } from '@/components/output/OutputPanel'
+import { TaskHistory } from '@/components/tasks/TaskHistory'
 import { EmbedTab } from '@/components/embed/EmbedTab'
 import { ConfirmationDialog } from '@/components/transcribe/ConfirmationDialog'
 import { useTaskStore } from '@/store/taskStore'
@@ -275,12 +276,13 @@ export function App() {
           </div>
         </div>
 
-        {/* Right column: output panel — full width on mobile, sticky sidebar on desktop */}
+        {/* Right column: output panel + task history — full width on mobile, sticky sidebar on desktop */}
         <div
-          className="w-full lg:flex-shrink-0 lg:w-[300px] lg:sticky"
+          className="w-full lg:flex-shrink-0 lg:w-[300px] lg:sticky flex flex-col gap-4"
           style={{ top: '68px' }}
         >
           <OutputPanel />
+          <TaskHistory />
         </div>
       </main>
 

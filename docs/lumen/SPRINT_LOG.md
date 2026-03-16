@@ -546,3 +546,36 @@
 **Performance phase progress:** L10-L16 complete (70% of L11-L20 range).
 
 ---
+
+## Sprint L17: Output Panel + Task History + Stats API (2026-03-16)
+
+**Goal:** Redesign output panel, add task history with delete, add stats endpoint.
+
+**Delivered:**
+
+### Frontend (Pixel)
+- **Output panel redesign** (`DownloadButtons.tsx` + `OutputPanel.tsx`):
+  - Format descriptions + estimated file sizes per download
+  - Added JSON download option
+  - "Download All (ZIP)" button calling bulk endpoint
+  - "Preview Subtitles" link
+- **Task history** (`TaskHistory.tsx` — NEW):
+  - Fetches `GET /tasks?session_only=true`, shows last 5 terminal tasks
+  - Status icons (green check/red X/gray dash), filename, time ago
+  - Download link for completed tasks
+  - Delete button (trash icon, hover reveal, window.confirm)
+  - "No recent tasks" empty state
+- **API client** (`client.ts`): Added `downloadAllUrl`, `tasksBySession`, `deleteTask`
+
+### Backend (Forge)
+- **Task stats** (`GET /tasks/stats`):
+  - Session-scoped aggregates: total/completed/failed/cancelled/active
+  - total_segments, total_audio_duration_sec, models_used dict
+
+### Tests (Scout) — 40 new tests
+- `test_task_stats.py`: Stats endpoint (20), task list filtering (10), task lifecycle (10)
+
+**Tests added:** 40
+**Running total:** 2316 + 40 = **2356**
+
+---

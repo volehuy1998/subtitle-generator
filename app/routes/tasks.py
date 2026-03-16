@@ -140,6 +140,47 @@ async def check_duplicates(filename: str = Query(...), file_size: int = Query(0)
     }
 
 
+@router.get("/tasks/stats", tags=["Tasks"])
+async def task_stats(request: Request):
+    """Get aggregate task statistics for the current session."""
+    session_id = getattr(request.state, "session_id", "")
+
+    total = 0
+    done = 0
+    failed = 0
+    cancelled = 0
+    total_segments = 0
+    total_duration_sec = 0.0
+    models_used = {}
+
+    for tid, t in state.tasks.items():
+        if session_id and t.get("session_id") != session_id:
+            continue
+        total += 1
+        status = t.get("status", "")
+        if status == "done":
+            done += 1
+            total_segments += t.get("segments", 0)
+            total_duration_sec += t.get("audio_duration", 0) or 0
+            model = t.get("model_size", "unknown")
+            models_used[model] = models_used.get(model, 0) + 1
+        elif status == "error":
+            failed += 1
+        elif status == "cancelled":
+            cancelled += 1
+
+    return {
+        "total_tasks": total,
+        "completed": done,
+        "failed": failed,
+        "cancelled": cancelled,
+        "active": total - done - failed - cancelled,
+        "total_segments": total_segments,
+        "total_audio_duration_sec": round(total_duration_sec, 1),
+        "models_used": models_used,
+    }
+
+
 # Terminal statuses — tasks that are no longer processing
 _TERMINAL_STATUSES = frozenset({"done", "error", "cancelled"})
 
