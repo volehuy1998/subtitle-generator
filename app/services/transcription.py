@@ -18,9 +18,17 @@ def get_optimal_transcribe_options(
     device: str, model_size: str, language: str = "auto", word_timestamps: bool = False, initial_prompt: str = ""
 ) -> dict:
     """Get optimal faster-whisper transcription settings."""
+    # Sprint L14: Optimized VAD parameters for faster processing — Forge (Sr. Backend Engineer)
+    # - min_silence_duration_ms=500: Skip silences longer than 500ms (aggressive enough to speed up, safe for speech)
+    # - speech_pad_ms=200: Pad detected speech segments by 200ms each side (prevents clipping)
+    # - threshold=0.5: VAD confidence threshold (balanced between false positives and missed speech)
     opts = {
         "vad_filter": True,
-        "vad_parameters": dict(min_silence_duration_ms=500),
+        "vad_parameters": dict(
+            min_silence_duration_ms=500,
+            speech_pad_ms=200,
+            threshold=0.5,
+        ),
         "word_timestamps": word_timestamps,
     }
     # Language: None means auto-detect in faster-whisper
@@ -29,18 +37,25 @@ def get_optimal_transcribe_options(
     # Custom vocabulary / domain prompt
     if initial_prompt and initial_prompt.strip():
         opts["initial_prompt"] = initial_prompt.strip()
+    # Sprint L13: Adaptive beam size per model for optimal speed/quality — Forge (Sr. Backend Engineer)
+    # Smaller models benefit less from wider beam search; larger models need it for quality.
+    _BEAM_SIZES = {
+        "tiny": 1,  # Speed priority — greedy is sufficient
+        "base": 3,  # Balanced
+        "small": 5,  # Default
+        "medium": 5,  # Quality
+        "large": 5,  # Quality priority
+    }
     if device == "cuda":
         vram_check = check_vram_for_model(model_size)
         if vram_check.get("tight") or not vram_check.get("fits", True):
             opts["beam_size"] = 1
             logger.info(f"OPTS VRAM tight for {model_size}, using beam_size=1 (greedy)")
         else:
-            opts["beam_size"] = 5
+            opts["beam_size"] = _BEAM_SIZES.get(model_size, 5)
     else:
-        if model_size in ("large", "medium"):
-            opts["beam_size"] = 3
-        else:
-            opts["beam_size"] = 5
+        opts["beam_size"] = _BEAM_SIZES.get(model_size, 5)
+    logger.info(f"OPTS beam_size={opts['beam_size']} for model={model_size} device={device}")
     return opts
 
 
@@ -67,6 +82,10 @@ def transcribe_with_progress(
     profiler.total_frames = total_frames
     task["transcription_profiler"] = profiler
 
+    # Estimate segment count: ~1 segment per 4 seconds of speech — Forge (Sr. Backend Engineer)
+    estimated_segments = max(1, int(total_duration / 4.0)) if total_duration > 0 else 0
+    task["estimated_segments"] = estimated_segments
+
     emit_event(
         task_id,
         "transcribe_start",
@@ -74,6 +93,7 @@ def transcribe_with_progress(
             "total_frames": total_frames,
             "audio_duration_sec": round(total_duration, 1),
             "word_timestamps": word_timestamps,
+            "estimated_segments": estimated_segments,
         },
     )
 
@@ -164,6 +184,8 @@ def transcribe_with_progress(
             "elapsed": format_time_display(elapsed_sec),
             "speed_x": metrics.get("avg_speed_x", 0),
             "instant_speed_x": metrics.get("instant_speed_x", 0),
+            "ema_speed_x": metrics.get("ema_speed_x"),
+            "speed_trend": metrics.get("speed_trend", "unknown"),
             "message": (
                 f"Transcribing: {format_time_display(processed_sec)} / {format_time_display(total_duration)} "
                 f"| {format_bytes(bytes_processed)} / {format_bytes(bytes_total)} "
@@ -171,8 +193,15 @@ def transcribe_with_progress(
             ),
         }
 
+        progress_data["current_segment"] = seg_count
+        progress_data["estimated_segments"] = estimated_segments
+
         task.update(progress_data)
         emit_event(task_id, "progress", progress_data)
-        emit_event(task_id, "segment", {"segment": seg_preview, "segment_count": seg_count})
+        emit_event(
+            task_id,
+            "segment",
+            {"segment": seg_preview, "segment_count": seg_count, "estimated_segments": estimated_segments},
+        )
 
     return {"segments": all_segments, "language": info.language}

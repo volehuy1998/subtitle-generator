@@ -66,10 +66,15 @@ jobs:
           fi
 
           # Write comments JSON to temp files for Python to read
+          # gh api --paginate produces concatenated arrays; use jq -s to merge
           gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
-            --paginate 2>/dev/null > /tmp/issue_comments.json || echo "[]" > /tmp/issue_comments.json
+            --paginate --jq '[.[] | {body, created_at}]' 2>/dev/null \
+            | python3 -c "import sys,json; lists=[json.loads(l) for l in sys.stdin if l.strip()]; print(json.dumps([x for sub in lists for x in sub]))" \
+            > /tmp/issue_comments.json || echo "[]" > /tmp/issue_comments.json
           gh api "repos/${REPO}/pulls/${PR_NUMBER}/reviews" \
-            --paginate 2>/dev/null > /tmp/pr_reviews.json || echo "[]" > /tmp/pr_reviews.json
+            --paginate --jq '[.[] | {body, submitted_at}]' 2>/dev/null \
+            | python3 -c "import sys,json; lists=[json.loads(l) for l in sys.stdin if l.strip()]; print(json.dumps([x for sub in lists for x in sub]))" \
+            > /tmp/pr_reviews.json || echo "[]" > /tmp/pr_reviews.json
 
           echo "::endgroup::"
 

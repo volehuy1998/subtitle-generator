@@ -39,6 +39,9 @@ model_preload: dict = {
     "error": None,
 }
 
+# Session preferences: session_id -> {default_model, default_format, default_language, auto_copy}
+session_preferences: dict[str, dict] = {}
+
 # Shutdown flag - when True, no new tasks accepted
 shutting_down: bool = False
 
@@ -49,6 +52,17 @@ system_critical_reasons: list[str] = []
 
 # Main asyncio event loop reference (set during startup for thread-safe scheduling)
 main_event_loop: object | None = None
+
+# Request counter — incremented by request logging middleware
+total_request_count: int = 0
+
+# Request rate tracking — sliding window of timestamps for RPM calculation
+# Sprint L56 — Forge (Sr. Backend Engineer)
+request_rate_window: list[float] = []
+_rate_window_lock = threading.Lock()
+
+# Peak concurrent tasks — updated when tasks are created
+peak_concurrent_tasks: int = 0
 
 
 def set_critical(reasons: list[str]):
@@ -165,9 +179,41 @@ def get_task_semaphore(max_tasks: int = 3) -> threading.Semaphore:
     return _task_semaphore
 
 
+def record_request_timestamp():
+    """Record a request timestamp for RPM calculation. Thread-safe.
+
+    Sprint L56 — Forge (Sr. Backend Engineer)
+    """
+    now = time.time()
+    cutoff = now - 60
+    with _rate_window_lock:
+        request_rate_window.append(now)
+        # Trim entries older than 60 seconds (avoid unbounded growth)
+        if len(request_rate_window) > 500:
+            while request_rate_window and request_rate_window[0] < cutoff:
+                request_rate_window.pop(0)
+
+
+def get_requests_per_minute() -> int:
+    """Return the number of requests in the last 60 seconds.
+
+    Sprint L56 — Forge (Sr. Backend Engineer)
+    """
+    cutoff = time.time() - 60
+    with _rate_window_lock:
+        # Trim stale entries while counting
+        while request_rate_window and request_rate_window[0] < cutoff:
+            request_rate_window.pop(0)
+        return len(request_rate_window)
+
+
 def get_active_task_count() -> int:
     """Count currently processing tasks."""
-    return sum(1 for t in tasks.values() if t.get("status") not in ("done", "error", "cancelled", "queued"))
+    global peak_concurrent_tasks
+    count = sum(1 for t in tasks.values() if t.get("status") not in ("done", "error", "cancelled", "queued"))
+    if count > peak_concurrent_tasks:
+        peak_concurrent_tasks = count
+    return count
 
 
 def drain_tasks(timeout: float = 60.0) -> bool:
@@ -194,6 +240,9 @@ _PERSIST_FIELDS = {
     "duration",
     "file_size",
     "file_size_fmt",
+    "file_extension",
+    "mime_type",
+    "is_video",
     "audio_size_fmt",
     "segments",
     "language",
@@ -205,6 +254,7 @@ _PERSIST_FIELDS = {
     "speakers",
     "session_id",
     "created_at",
+    "total_time_sec",
 }
 
 

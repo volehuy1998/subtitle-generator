@@ -86,6 +86,9 @@ export const api = {
   downloadUrl: (taskId: string, format: 'srt' | 'vtt' | 'json') =>
     `/download/${taskId}?format=${format}`,
 
+  downloadAllUrl: (taskId: string) =>
+    `/download/${taskId}/all`,
+
   embedDownloadUrl: (taskId: string) =>
     `/embed/download/${taskId}`,
 
@@ -100,4 +103,18 @@ export const api = {
 
   modelStatus: () =>
     fetch('/api/model-status').then(r => json<ModelPreloadStatus>(r)),
+
+  tasksBySession: () =>
+    fetch('/tasks?session_only=true').then(r => json<TasksResponse>(r)),
+
+  deleteTask: (taskId: string) =>
+    fetch(`/tasks/${taskId}`, { method: 'DELETE' }).then(r => json<{ message: string }>(r)),
+
+  preview: (taskId: string, limit = 50) =>
+    fetch(`/preview/${taskId}?limit=${limit}`).then(r => json<{
+      task_id: string
+      total_segments: number
+      preview_limit: number
+      segments: Array<{ start: number; end: number; text: string }>
+    }>(r)),
 }

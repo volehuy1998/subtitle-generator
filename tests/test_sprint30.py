@@ -388,7 +388,8 @@ class TestPipelineStepTimingEvents:
 
         from app.services import pipeline
 
-        source = inspect.getsource(pipeline.process_video)
+        # Sprint L61: step_started_at moved to step functions; check full module
+        source = inspect.getsource(pipeline)
         assert "step_started_at" in source
 
 

@@ -19,6 +19,7 @@ from app.routes.logs import router as logs_router
 from app.routes.metrics import router as metrics_router
 from app.routes.monitoring import router as monitoring_router
 from app.routes.pages import router as pages_router
+from app.routes.preferences import router as preferences_router
 from app.routes.query import router as query_router
 from app.routes.security import router as security_router
 from app.routes.status_page import router as status_page_router
@@ -60,3 +61,4 @@ router.include_router(monitoring_router)
 router.include_router(combine_router)
 router.include_router(status_page_router)
 router.include_router(translation_router)
+router.include_router(preferences_router)

@@ -6,7 +6,10 @@
  * - Yellow warning after 30s without update
  * - Red "Connection lost" if SSE disconnects
  *
- * Pixel (Sr. Frontend Engineer) — Sprint L5
+ * Speed-trend aware (Sprint L12): uses backend speed_trend field
+ * when the task has been running >30s, overriding pure time-based logic.
+ *
+ * Pixel (Sr. Frontend Engineer) — Sprint L5, L12
  */
 
 import { useSyncExternalStore } from 'react';
@@ -26,7 +29,7 @@ function subscribeClock(cb: () => void) {
 function getClockSnapshot() { return clockSnapshot; }
 
 export function LivenessIndicator() {
-  const { status, lastEventTime } = useTaskStore();
+  const { status, lastEventTime, speed_trend } = useTaskStore();
   const now = useSyncExternalStore(subscribeClock, getClockSnapshot);
 
   // Don't show when task is complete/cancelled/error
@@ -42,7 +45,20 @@ export function LivenessIndicator() {
   let label: string;
   let animation: string;
 
-  if (secondsAgo < 15) {
+  // Use speed_trend from backend when the task has been running for >30s
+  const useSpeedTrend = speed_trend && secondsAgo >= 30;
+
+  if (useSpeedTrend && speed_trend === 'stalled') {
+    // Backend reports stalled — override to red regardless of time
+    dotColor = 'var(--color-danger)';
+    label = 'Stalled';
+    animation = 'none';
+  } else if (useSpeedTrend && speed_trend === 'declining') {
+    // Backend reports declining speed — yellow warning
+    dotColor = 'var(--color-warning)';
+    label = 'Slowing down';
+    animation = 'none';
+  } else if (secondsAgo < 15) {
     dotColor = 'var(--color-success)';
     label = secondsAgo <= 1 ? 'Live' : `Live (${secondsAgo}s ago)`;
     animation = 'pulse 2s ease-in-out infinite';

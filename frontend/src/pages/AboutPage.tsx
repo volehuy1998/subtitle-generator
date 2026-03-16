@@ -81,20 +81,20 @@ export function AboutPage() {
     <StaticPageLayout>
       {/* Hero */}
       <div style={{
-        background: 'linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 55%, #E8E0FF 100%)',
+        background: 'var(--gradient-hero-about)',
         borderRadius: '16px', padding: '44px 40px', marginBottom: '32px',
-        color: '#fff', display: 'flex', alignItems: 'flex-start', gap: '22px',
+        display: 'flex', alignItems: 'flex-start', gap: '22px',
         position: 'relative', overflow: 'hidden',
       }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 50% 80% at 90% 50%, rgba(59,130,246,0.18) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ width: '48px', height: '48px', background: 'rgba(59,130,246,0.20)', border: '1px solid rgba(59,130,246,0.30)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
+        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 50% 80% at 90% 50%, ${C.primaryLight} 0%, transparent 70%)`, pointerEvents: 'none' }} />
+        <div style={{ width: '48px', height: '48px', background: C.primaryLight, border: `1px solid ${C.primaryMid}`, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
           <svg width="24" height="24" viewBox="0 0 48 46" fill="none">
-            <path d="M25.946 44.938c-.664.845-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.287c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.497 0-3.578-1.842-3.578H1.237c-.92 0-1.456-1.04-.92-1.788L10.013.474c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.579 1.842 3.579h11.377c.943 0 1.473 1.088.89 1.83L25.947 44.94z" fill="#a78bfa"/>
+            <path d="M25.946 44.938c-.664.845-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.287c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.497 0-3.578-1.842-3.578H1.237c-.92 0-1.456-1.04-.92-1.788L10.013.474c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.579 1.842 3.579h11.377c.943 0 1.473 1.088.89 1.83L25.947 44.94z" fill="var(--color-primary)"/>
           </svg>
         </div>
         <div>
-          <h1 style={{ fontSize: '1.45rem', fontWeight: 700, letterSpacing: '-0.5px', marginBottom: '6px' }}>About SubForge</h1>
-          <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.6 }}>Open-source AI subtitle generation — fast, private, and free to self-host.</p>
+          <h1 style={{ fontSize: '1.45rem', fontWeight: 700, letterSpacing: '-0.5px', marginBottom: '6px', color: C.text }}>About SubForge</h1>
+          <p style={{ fontSize: '0.875rem', color: C.text2, lineHeight: 1.6 }}>Open-source AI subtitle generation — fast, private, and free to self-host.</p>
         </div>
       </div>
 
@@ -202,7 +202,7 @@ export function AboutPage() {
         <div style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '8px', letterSpacing: '-0.3px' }}>Ready to get started?</div>
         <div style={{ fontSize: '0.83rem', color: C.text2, marginBottom: '20px' }}>Drop an audio or video file to generate subtitles instantly — no sign-up required.</div>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          <a href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '9px 20px', borderRadius: '10px', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none', background: 'var(--color-primary)', color: '#fff', boxShadow: '0 4px 20px rgba(59,130,246,0.35)' }}>
+          <a href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '9px 20px', borderRadius: '10px', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none', background: 'var(--color-primary)', color: '#fff', boxShadow: '0 4px 20px var(--color-primary-border)' }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 3l14 9-14 9V3z" fill="white"/></svg>
             Open SubForge
           </a>

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import { Router } from './Router'
 import { ErrorBoundary } from './components/system/ErrorBoundary'
+import { ToastContainer } from './components/ui/ToastContainer'
 
 async function bootstrap() {
   if (import.meta.env.DEV && import.meta.env.VITE_MOCK === 'true') {
@@ -15,6 +16,7 @@ async function bootstrap() {
     <StrictMode>
       <ErrorBoundary>
         <Router />
+        <ToastContainer />
       </ErrorBoundary>
     </StrictMode>,
   )

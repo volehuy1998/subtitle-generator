@@ -80,6 +80,7 @@ export function PipelineSteps({ activeStep, stepTimings, isPaused, isUploading, 
                 style={{
                   background: circleColor,
                   borderColor: circleBorder,
+                  animation: isActive && !isPaused ? 'stepPulse 2s ease-in-out infinite' : 'none',
                 }}
               >
                 {isDone ? (

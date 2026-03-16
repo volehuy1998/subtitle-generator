@@ -10,6 +10,10 @@ export interface UploadOptions {
   language: string
   format: string
   translateTo: string
+  /** Model preload state at the time of upload — used by ConfirmationDialog */
+  modelLoaded: boolean
+  /** First ready model name, if any — used for "Use X Instead" option */
+  firstReadyModel: string | null
 }
 
 interface Props {
@@ -99,30 +103,34 @@ export function TranscribeForm({ onUpload }: Props) {
     return () => { if (preloadPoll.current) clearInterval(preloadPoll.current) }
   }, [preload?.status])
 
-  const onDrop = useCallback((accepted: File[]) => {
-    const file = accepted[0]
-    if (!file) return
-    onUpload(file, { device, model, language, format, translateTo })
-  }, [onUpload, device, model, language, format, translateTo])
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: { 'video/*': [], 'audio/*': [] },
-    multiple: false,
-    maxSize: 500 * 1024 * 1024,
-  })
+  const modelPreloadState = useCallback((m: string): 'ready' | 'loading' | null => {
+    if (!preload) return null
+    if (preload.loaded?.includes(m)) return 'ready'
+    if (preload.status === 'loading' && preload.current_model === m) return 'loading'
+    return null
+  }, [preload])
 
   const modelFitsGpu = (m: string) => {
     const rec = systemInfo?.model_recommendations?.[m]
     return rec === 'ok' || rec === 'tight' ? true : rec === 'too_large' ? false : null
   }
 
-  const modelPreloadState = (m: string): 'ready' | 'loading' | null => {
-    if (!preload) return null
-    if (preload.loaded?.includes(m)) return 'ready'
-    if (preload.status === 'loading' && preload.current_model === m) return 'loading'
-    return null
-  }
+  const onDrop = useCallback((accepted: File[]) => {
+    const file = accepted[0]
+    if (!file) return
+    const selectedModelState = modelPreloadState(model)
+    const isModelLoaded = selectedModelState === 'ready' || selectedModelState === 'loading'
+    // Find first ready model that isn't the selected one
+    const firstReady = preload?.loaded?.find((m) => m !== model) ?? null
+    onUpload(file, { device, model, language, format, translateTo, modelLoaded: isModelLoaded, firstReadyModel: firstReady })
+  }, [onUpload, device, model, language, format, translateTo, preload, modelPreloadState])
+
+  const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
+    onDrop,
+    accept: { 'video/*': [], 'audio/*': [] },
+    multiple: false,
+    maxSize: 500 * 1024 * 1024,
+  })
 
   const chipBase = 'px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer select-none'
 
@@ -244,6 +252,7 @@ export function TranscribeForm({ onUpload }: Props) {
                   role="radio"
                   aria-checked={isActive}
                   onClick={() => setModel(m)}
+                  title={`${m.charAt(0).toUpperCase() + m.slice(1)}: ${info.desc} ${info.vram} VRAM, ${info.speed} realtime`}
                   className="w-full text-left rounded-lg border transition-all"
                   style={{
                     padding: '10px 12px',
@@ -253,7 +262,7 @@ export function TranscribeForm({ onUpload }: Props) {
                   }}
                 >
                   {/* Row 1: Name + badges */}
-                  <div className="flex items-center gap-2 mb-1.5">
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                     {/* Radio dot */}
                     <div
                       className="w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 flex items-center justify-center"
@@ -332,7 +341,7 @@ export function TranscribeForm({ onUpload }: Props) {
                   </p>
 
                   {/* Row 3: Stat bars */}
-                  <div className="flex gap-4" style={{ marginLeft: '22px' }}>
+                  <div className="flex flex-col sm:flex-row gap-1.5 sm:gap-4" style={{ marginLeft: '22px' }}>
                     {/* Speed */}
                     <div className="flex items-center gap-1.5 flex-1">
                       <span className="text-xs flex-shrink-0" style={{ color: 'var(--color-text-3)', fontSize: '10px', width: '42px' }}>Speed</span>
@@ -397,7 +406,6 @@ export function TranscribeForm({ onUpload }: Props) {
               background: 'var(--color-surface)',
               border: '1px solid var(--color-border)',
               color: 'var(--color-text)',
-              outline: 'none',
             }}
           >
             <option value="auto">Auto-detect</option>
@@ -429,7 +437,6 @@ export function TranscribeForm({ onUpload }: Props) {
               background: 'var(--color-surface)',
               border: '1px solid var(--color-border)',
               color: 'var(--color-text)',
-              outline: 'none',
             }}
           >
             <option value="">No translation</option>
@@ -472,31 +479,68 @@ export function TranscribeForm({ onUpload }: Props) {
         </div>
       </div>
 
-      {/* Drop zone */}
+      {/* Drop zone — enhanced drag states, Pixel (Sr. Frontend), Sprint L42 */}
       <div
         {...getRootProps()}
-        className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-6 sm:p-8 cursor-pointer transition-all"
+        aria-label="Upload media file"
+        className={`relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-6 sm:p-8 cursor-pointer transition-all${isDragActive && !isDragReject ? ' dropzone-pulse' : ''}`}
         style={{
-          borderColor: isDragActive ? 'var(--color-primary)' : 'var(--color-border)',
-          background: isDragActive ? 'var(--color-primary-light)' : 'var(--color-surface-2)',
+          borderColor: isDragReject ? 'var(--color-danger)' : isDragActive ? 'var(--color-primary)' : 'var(--color-border)',
+          background: isDragReject ? 'var(--color-danger-light)' : isDragActive ? 'var(--color-primary-light)' : 'var(--color-surface-2)',
         }}
       >
         <input {...getInputProps()} />
+
+        {/* Drag-over overlay — Pixel (Sr. Frontend), Sprint L42 */}
+        {isDragActive && (
+          <div
+            className="absolute inset-0 flex items-center justify-center rounded-xl z-10"
+            style={{ background: isDragReject ? 'rgba(239,68,68,0.06)' : 'rgba(99,102,241,0.06)' }}
+          >
+            <div
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg"
+              style={{
+                background: 'var(--color-bg)',
+                border: `1px solid ${isDragReject ? 'var(--color-danger)' : 'var(--color-primary)'}`,
+                boxShadow: 'var(--shadow-md)',
+              }}
+            >
+              {isDragReject ? (
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <circle cx="8" cy="8" r="7" stroke="var(--color-danger)" strokeWidth="1.5" fill="none" />
+                  <path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="var(--color-danger)" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M8 11V3M5 6l3-3 3 3" stroke="var(--color-primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M2 11v1.5a1.5 1.5 0 001.5 1.5h9a1.5 1.5 0 001.5-1.5V11" stroke="var(--color-primary)" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              )}
+              <span
+                className="text-sm font-medium"
+                style={{ color: isDragReject ? 'var(--color-danger)' : 'var(--color-primary)' }}
+              >
+                {isDragReject ? 'Unsupported format' : 'Drop to upload'}
+              </span>
+            </div>
+          </div>
+        )}
+
         <div
           className="w-10 h-10 rounded-xl flex items-center justify-center"
-          style={{ background: isDragActive ? 'var(--color-primary)' : 'var(--color-border)' }}
+          style={{ background: isDragReject ? 'var(--color-danger)' : isDragActive ? 'var(--color-primary)' : 'var(--color-border)' }}
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
             <path
               d="M10 13V4M6 8l4-4 4 4"
-              stroke={isDragActive ? 'white' : 'var(--color-text-2)'}
+              stroke={isDragActive || isDragReject ? 'white' : 'var(--color-text-2)'}
               strokeWidth="1.75"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
             <path
               d="M3 14v1a2 2 0 002 2h10a2 2 0 002-2v-1"
-              stroke={isDragActive ? 'white' : 'var(--color-text-2)'}
+              stroke={isDragActive || isDragReject ? 'white' : 'var(--color-text-2)'}
               strokeWidth="1.75"
               strokeLinecap="round"
             />
@@ -506,9 +550,9 @@ export function TranscribeForm({ onUpload }: Props) {
         <div className="flex flex-col items-center gap-1 text-center">
           <span
             className="text-sm font-medium"
-            style={{ color: isDragActive ? 'var(--color-primary)' : 'var(--color-text)' }}
+            style={{ color: isDragReject ? 'var(--color-danger)' : isDragActive ? 'var(--color-primary)' : 'var(--color-text)' }}
           >
-            {isDragActive ? 'Release to upload' : 'Drop a file here or click to browse'}
+            {isDragReject ? 'Unsupported format' : isDragActive ? 'Release to upload' : 'Drop a file here or click to browse'}
           </span>
           <span
             className="text-xs"

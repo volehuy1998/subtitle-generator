@@ -1,8 +1,9 @@
 """Subtitle editing routes - get and update segments."""
 
+import json
 import logging
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from app import state
@@ -67,6 +68,47 @@ async def update_subtitles(task_id: str, req: UpdateSubtitlesRequest):
     logger.info(f"EDIT [{task_id[:8]}] Subtitles updated: {len(segments)} segments")
 
     return {"message": "Subtitles updated", "segments": len(segments)}
+
+
+@router.put("/subtitles/{task_id}/{segment_index}")
+async def edit_subtitle(task_id: str, segment_index: int, request: Request):
+    """Edit the text of a specific subtitle segment."""
+    if task_id not in state.tasks:
+        raise HTTPException(404, "Task not found")
+    task = state.tasks[task_id]
+    if task.get("status") != "done":
+        raise HTTPException(400, "Task not yet complete")
+
+    body = await request.json()
+    new_text = str(body.get("text", "")).strip()
+    if not new_text:
+        raise HTTPException(400, "Text cannot be empty")
+
+    json_path = safe_path(OUTPUT_DIR / f"{task_id}.json", allowed_dir=OUTPUT_DIR)
+    if not json_path.exists():
+        raise HTTPException(404, "Output file not found")
+
+    with open(json_path, "r", encoding="utf-8") as f:
+        segments = json.load(f)
+
+    if segment_index < 0 or segment_index >= len(segments):
+        raise HTTPException(400, f"Segment index out of range (0-{len(segments) - 1})")
+
+    old_text = segments[segment_index].get("text", "")
+    segments[segment_index]["text"] = new_text
+
+    # Write back JSON
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(segments, f, ensure_ascii=False, indent=2)
+
+    # Regenerate SRT and VTT
+    srt_path = safe_path(OUTPUT_DIR / f"{task_id}.srt", allowed_dir=OUTPUT_DIR)
+    vtt_path = safe_path(OUTPUT_DIR / f"{task_id}.vtt", allowed_dir=OUTPUT_DIR)
+    srt_path.write_text(segments_to_srt(segments), encoding="utf-8")
+    vtt_path.write_text(segments_to_vtt(segments), encoding="utf-8")
+
+    logger.info(f"EDIT [{task_id[:8]}] Segment {segment_index} text changed")
+    return {"message": "Segment updated", "segment_index": segment_index, "old_text": old_text, "new_text": new_text}
 
 
 def _parse_srt(content: str) -> list[dict]:

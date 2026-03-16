@@ -11,7 +11,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
 from app import state
-from app.config import REDIS_URL
+from app.config import REDIS_URL, SSE_HEARTBEAT_INTERVAL
 from app.schemas import TaskProgressResponse
 from app.utils.access import check_task_access
 
@@ -74,8 +74,8 @@ async def task_events_sse(task_id: str, request: Request):
                 while True:
                     try:
                         event = await asyncio.wait_for(
-                            asyncio.to_thread(q.get, timeout=1),
-                            timeout=2,
+                            asyncio.to_thread(q.get, timeout=SSE_HEARTBEAT_INTERVAL),
+                            timeout=SSE_HEARTBEAT_INTERVAL + 1,
                         )
                         etype = event.get("type", "update")
                         yield f"event: {etype}\ndata: {json.dumps(event, default=str)}\n\n"

@@ -4,6 +4,7 @@ import json
 import logging
 import subprocess
 import time
+from functools import lru_cache
 from pathlib import Path
 
 logger = logging.getLogger("subtitle-generator")
@@ -13,40 +14,59 @@ FFMPEG_PROTOCOL_WHITELIST = "file,pipe,crypto,data"
 FFMPEG_TIMEOUT = 300  # 5 minutes max for ffmpeg operations
 
 
-def get_audio_duration(file_path: Path) -> float:
-    cmd = ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", str(file_path)]
+@lru_cache(maxsize=256)
+def _probe_file_cached(file_path: str) -> dict | None:
+    """Run ffprobe and cache results by file path. — Forge (Sr. Backend Engineer)
+
+    Sprint L10: FFprobe result caching to avoid redundant subprocess calls
+    when get_audio_duration() and has_audio_stream() are called on the same file.
+    """
+    cmd = ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", file_path]
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
         if result.returncode == 0:
             info = json.loads(result.stdout)
-            fmt = info.get("format", {})
-            duration = float(fmt.get("duration", 0))
-            streams = info.get("streams", [])
-            has_audio = False
-            for s in streams:
-                codec_type = s.get("codec_type", "?")
-                codec_name = s.get("codec_name", "?")
-                if codec_type == "audio":
-                    has_audio = True
-                    logger.debug(
-                        f"PROBE Audio: codec={codec_name} sample_rate={s.get('sample_rate')} "
-                        f"channels={s.get('channels')} bitrate={s.get('bit_rate')}"
-                    )
-                elif codec_type == "video":
-                    logger.debug(
-                        f"PROBE Video: codec={codec_name} {s.get('width')}x{s.get('height')} "
-                        f"fps={s.get('r_frame_rate')}"
-                    )
-            logger.debug(
-                f"PROBE Duration: {duration:.2f}s, Format: {fmt.get('format_name')}, "
-                f"Size: {fmt.get('size')} bytes, Has audio: {has_audio}"
-            )
-            return duration
+            logger.debug(f"PROBE Cached probe result for {file_path}")
+            return info
     except subprocess.TimeoutExpired:
         logger.error(f"PROBE Timeout for {file_path}")
     except Exception as e:
         logger.error(f"PROBE Failed for {file_path}: {e}")
-    return 0.0
+    return None
+
+
+def clear_probe_cache():
+    """Clear the ffprobe result cache. — Forge (Sr. Backend Engineer)"""
+    _probe_file_cached.cache_clear()
+
+
+def get_audio_duration(file_path: Path) -> float:
+    info = _probe_file_cached(str(file_path))
+    if info is None:
+        return 0.0
+
+    fmt = info.get("format", {})
+    duration = float(fmt.get("duration", 0))
+    streams = info.get("streams", [])
+    has_audio = False
+    for s in streams:
+        codec_type = s.get("codec_type", "?")
+        codec_name = s.get("codec_name", "?")
+        if codec_type == "audio":
+            has_audio = True
+            logger.debug(
+                f"PROBE Audio: codec={codec_name} sample_rate={s.get('sample_rate')} "
+                f"channels={s.get('channels')} bitrate={s.get('bit_rate')}"
+            )
+        elif codec_type == "video":
+            logger.debug(
+                f"PROBE Video: codec={codec_name} {s.get('width')}x{s.get('height')} fps={s.get('r_frame_rate')}"
+            )
+    logger.debug(
+        f"PROBE Duration: {duration:.2f}s, Format: {fmt.get('format_name')}, "
+        f"Size: {fmt.get('size')} bytes, Has audio: {has_audio}"
+    )
+    return duration
 
 
 def extract_audio(video_path: Path, audio_path: Path, threads: int = 0, task_id: str = ""):
@@ -135,13 +155,12 @@ def get_file_size(file_path: Path) -> int:
 
 
 def has_audio_stream(file_path: Path) -> bool:
-    """Check if a file contains an audio stream (validates it's real media)."""
-    cmd = ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_streams", "-select_streams", "a", str(file_path)]
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-        if result.returncode == 0:
-            info = json.loads(result.stdout)
-            return len(info.get("streams", [])) > 0
-    except Exception:
-        pass
-    return False
+    """Check if a file contains an audio stream (validates it's real media).
+
+    Sprint L10: Uses cached ffprobe result to avoid redundant subprocess calls. — Forge (Sr. Backend Engineer)
+    """
+    info = _probe_file_cached(str(file_path))
+    if info is None:
+        return False
+    streams = info.get("streams", [])
+    return any(s.get("codec_type") == "audio" for s in streams)

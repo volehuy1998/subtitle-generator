@@ -127,7 +127,7 @@ export function OutputPanel() {
             </div>
 
             {/* Download buttons */}
-            <DownloadButtons taskId={taskId} />
+            <DownloadButtons taskId={taskId} segments={segments} />
 
             {/* Process next file button */}
             <button

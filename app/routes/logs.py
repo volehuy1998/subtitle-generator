@@ -15,7 +15,7 @@ from fastapi import APIRouter, Query
 from app.config import LOG_DIR
 from app.logging_setup import task_log_path
 
-router = APIRouter()
+router = APIRouter(tags=["Logs"])
 
 
 @router.get("/logs/recent")

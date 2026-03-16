@@ -32,6 +32,13 @@ class RequestLogMiddleware(BaseHTTPMiddleware):
             record_request(client_ip=client_ip, user_agent=user_agent)
             logger.debug(f"REQ  {request.method} {request.url.path} from {client_ip} [{req_id}]")
 
+        # L52: Track total request count — Forge (Sr. Backend Engineer)
+        from app import state as _state
+
+        _state.total_request_count += 1
+        # L56: Track request rate (RPM) — Forge (Sr. Backend Engineer)
+        _state.record_request_timestamp()
+
         try:
             response = await call_next(request)
         except Exception as e:

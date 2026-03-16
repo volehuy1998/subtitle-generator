@@ -1289,9 +1289,10 @@ class TestThreadInjectionOnCritical:
         from app.services.pipeline import process_video
 
         source = inspect.getsource(process_video)
-        # Find model loading and the critical check after it
-        model_load_idx = source.index("model_loaded")
-        # There should be a _check_critical call after model_loaded event
+        # Find model loading step and the critical check after it
+        # After refactoring (Sprint L61), the orchestrator calls _step_load_model then _check_critical
+        model_load_idx = source.index("_step_load_model")
+        # There should be a _check_critical call after the model load step
         check_after = source.index("_check_critical", model_load_idx)
         assert check_after > model_load_idx, "Must have _check_critical after model loading"
 

@@ -211,6 +211,46 @@ class TranscriptionProfiler:
         self.total_frames = 0
         self.frame_times = []  # (frames_delta, time_delta) for throughput calc
         self._milestone_logged = set()
+        # EMA smoothing for ETA calculation — Forge (Sr. Backend), Sprint L12
+        self._ema_speed = None  # Exponential moving average of speed
+        self._ema_alpha = 0.15  # Smoothing factor (lower = smoother)
+        self._warmup_count = 0  # Track warmup progress
+        self._recent_speeds = []  # Last 10 speed values for trend detection
+
+    def _update_ema_speed(self, current_speed: float):
+        """Update EMA speed, ignoring warmup period."""
+        self._warmup_count += 1
+        # Store in recent speeds for trend detection
+        self._recent_speeds.append(current_speed)
+        if len(self._recent_speeds) > 10:
+            self._recent_speeds = self._recent_speeds[-10:]
+        # Ignore first 3 updates (cold start bias)
+        if self._warmup_count <= 3:
+            return
+        if self._ema_speed is None:
+            self._ema_speed = current_speed
+        else:
+            self._ema_speed = self._ema_alpha * current_speed + (1 - self._ema_alpha) * self._ema_speed
+
+    def get_speed_trend(self) -> str:
+        """Return speed trend: 'improving', 'stable', 'declining', 'stalled'."""
+        if self._ema_speed is None:
+            return "unknown"
+        if len(self._recent_speeds) < 3:
+            return "unknown"
+
+        recent = self._recent_speeds[-3:]
+        avg_recent = sum(recent) / len(recent)
+
+        if avg_recent < 0.01:  # Less than 0.01x realtime
+            return "stalled"
+
+        ratio = avg_recent / self._ema_speed if self._ema_speed > 0 else 1.0
+        if ratio < 0.5:
+            return "declining"
+        elif ratio > 1.5:
+            return "improving"
+        return "stable"
 
     def on_progress(self, current_frames: int, total_frames: int) -> dict:
         """Called on each tqdm update. Returns metrics dict."""
@@ -246,9 +286,15 @@ class TranscriptionProfiler:
         # Overall throughput
         overall_throughput = audio_processed_sec / elapsed if elapsed > 0 else 0
 
-        # ETA from rolling average
+        # Update EMA with current instantaneous speed
+        if instant_throughput > 0:
+            self._update_ema_speed(instant_throughput)
+
+        # ETA: prefer EMA speed (smoother), fall back to rolling average
         remaining_sec = audio_total_sec - audio_processed_sec
-        eta = remaining_sec / avg_throughput if avg_throughput > 0 else -1
+        ema_eta = remaining_sec / self._ema_speed if self._ema_speed and self._ema_speed > 0 else -1
+        rolling_eta = remaining_sec / avg_throughput if avg_throughput > 0 else -1
+        eta = ema_eta if ema_eta > 0 else rolling_eta
 
         metrics = {
             "ratio": ratio,
@@ -259,6 +305,8 @@ class TranscriptionProfiler:
             "instant_speed_x": round(instant_throughput, 2),
             "avg_speed_x": round(avg_throughput, 2),
             "overall_speed_x": round(overall_throughput, 2),
+            "ema_speed_x": round(self._ema_speed, 2) if self._ema_speed else None,
+            "speed_trend": self.get_speed_trend(),
         }
 
         # Log at 10% milestones with resource snapshot

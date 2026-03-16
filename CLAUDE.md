@@ -294,9 +294,9 @@ If the pre-commit hook passes but CI fails, the hook is out of date. Fix the hoo
 Upload → probe (ffprobe) → extract audio (ffmpeg→WAV) → load model → transcribe (faster-whisper) → optional diarize (pyannote) → optional translate (Whisper or Argos) → format (line-breaking) → write SRT/VTT/JSON → optional auto-embed. Each step emits SSE events.
 
 ### Module Layout
-- **`app/routes/`** (29 modules) — FastAPI routers, one per feature domain
+- **`app/routes/`** (30 modules) — FastAPI routers, one per feature domain
 - **`app/services/`** (32 modules) — Business logic: pipeline, transcription, model_manager, translation, subtitle_embed, diarization, analytics, health_monitor, cleanup, rate_limiter, quarantine, audit, pubsub
-- **`app/middleware/`** (12 modules) — Auth, security headers, session, request logging, brute force, body limit, compression, CORS, rate limit, slow query logging, critical state
+- **`app/middleware/`** (13 modules) — Auth, security headers, session, request logging, brute force, body limit, compression, CORS, rate limit, slow query logging, critical state, version
 - **`app/db/`** — SQLAlchemy async models (14 tables), PostgreSQL via asyncpg, SQLite fallback via aiosqlite
 - **`app/utils/`** — SRT/VTT/JSON generation, line-breaking, media probing, file validation, security helpers
 - **`app/config.py`** — All constants, paths, env vars, limits

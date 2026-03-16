@@ -248,7 +248,8 @@ class TestErrorResponses:
         )
         assert response.status_code == 400
         detail = response.json()["detail"]
-        assert "small" in detail.lower() or "valid" in detail.lower()
+        detail_text = detail.get("message", "") if isinstance(detail, dict) else detail
+        assert "small" in detail_text.lower() or "valid" in detail_text.lower()
 
     def test_429_message_is_helpful(self):
         """429 should tell user to wait."""
@@ -264,7 +265,8 @@ class TestErrorResponses:
         )
         assert response.status_code == 400
         detail = response.json()["detail"]
-        assert "Unsupported" in detail or "Allowed" in detail
+        detail_text = detail.get("message", "") if isinstance(detail, dict) else detail
+        assert "Unsupported" in detail_text or "Allowed" in detail_text
 
     def test_system_info_includes_languages(self):
         """System info endpoint should be reachable alongside languages."""

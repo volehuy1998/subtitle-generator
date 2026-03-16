@@ -1,10 +1,27 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useTaskStore } from '@/store/taskStore'
 import { useUIStore } from '@/store/uiStore'
+import { useToastStore } from '@/store/toastStore'
+import { usePreferencesStore } from '@/store/preferencesStore'
 import { useSSE } from '@/hooks/useSSE'
 import { api } from '@/api/client'
 import { PipelineSteps } from './PipelineSteps'
 import { LivenessIndicator } from './LivenessIndicator'
+import { CancelConfirmationDialog } from './CancelConfirmationDialog'
+import { SubtitlePreview } from './SubtitlePreview'
+
+// Clock tick for stale detection — Pixel (Sr. Frontend), Sprint L13
+let staleClockListeners: Array<() => void> = [];
+let staleClockSnapshot = Date.now();
+setInterval(() => {
+  staleClockSnapshot = Date.now();
+  staleClockListeners.forEach((fn) => fn());
+}, 5000);
+function subscribeStale(cb: () => void) {
+  staleClockListeners.push(cb);
+  return () => { staleClockListeners = staleClockListeners.filter((fn) => fn !== cb); };
+}
+function getStaleSnapshot() { return staleClockSnapshot; }
 
 interface Props {
   taskId: string
@@ -35,20 +52,90 @@ export function ProgressView({ taskId }: Props) {
     filename, fileSize, status, percent, message, isPaused,
     isPauseRequesting, isCancelRequesting,
     isComplete, activeStep, stepTimings, liveSegments, warning,
-    isUploading, uploadPercent,
+    isUploading, uploadPercent, uploadEta,
   } = store
 
   const { processed_sec: processedSec, total_sec: totalSec, speed_x: speedX, eta, elapsed } = store
+  const { estimated_segments: estimatedSegments, current_segment: currentSegment, substage } = store
+
+  const [showCancelDialog, setShowCancelDialog] = useState(false)
+  const [queuePosition, setQueuePosition] = useState<number | null>(null)
+  const [queueEta, setQueueEta] = useState<string | null>(null)
+  const [previewMode, setPreviewMode] = useState<'segments' | 'srt'>('segments')
+  const addToast = useToastStore((s) => s.addToast)
 
   const isTranscribing = status === 'transcribing' && processedSec !== undefined && totalSec !== undefined && totalSec > 0
 
   const isActive = !isComplete && status !== 'error' && status !== 'cancelled'
   const anyRequesting = isPauseRequesting || isCancelRequesting
 
+  // Stale warning: show after 30s with no SSE event — Pixel (Sr. Frontend), Sprint L13
+  const now = useSyncExternalStore(subscribeStale, getStaleSnapshot)
+  const secSinceUpdate = (now - store.lastEventTime) / 1000
+  const isStale = isActive && !isUploading && secSinceUpdate > 30
+
   // Auto-scroll segments
   useEffect(() => {
     segmentsEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [liveSegments.length])
+
+  // Progress percentage in page title — Pixel (Sr. Frontend), Sprint L53
+  useEffect(() => {
+    if (status && percent > 0 && !isComplete) {
+      document.title = `(${percent}%) SubForge`
+    } else {
+      document.title = 'SubForge'
+    }
+    return () => { document.title = 'SubForge' }
+  }, [percent, status, isComplete])
+
+  // Auto-copy on completion when autoCopy preference is enabled — Pixel (Sr. Frontend), Sprint L49
+  useEffect(() => {
+    if (isComplete && liveSegments.length > 0) {
+      const prefs = usePreferencesStore.getState()
+      if (prefs.autoCopy) {
+        const text = liveSegments.map((s) => s.text).join('\n')
+        navigator.clipboard.writeText(text).then(() => {
+          addToast('info', 'Subtitles copied to clipboard')
+        }).catch(() => {})
+      }
+    }
+  }, [isComplete]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Poll queue position when task is queued — Pixel (Sr. Frontend), Sprint L44
+  useEffect(() => {
+    if (status !== 'queued' || !taskId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setQueuePosition(null)
+      setQueueEta(null)
+      return
+    }
+    let cancelled = false
+    const poll = () => {
+      fetch(`/tasks/${taskId}/position`)
+        .then((r) => r.json())
+        .then((data: { position?: number; estimated_wait?: string }) => {
+          if (cancelled) return
+          setQueuePosition(data.position ?? null)
+          setQueueEta(data.estimated_wait ?? null)
+        })
+        .catch(() => {})
+    }
+    poll()
+    const interval = setInterval(poll, 5000)
+    return () => { cancelled = true; clearInterval(interval) }
+  }, [status, taskId])
+
+  // Copy all segments to clipboard — Pixel (Sr. Frontend), Sprint L43
+  const handleCopyAll = async () => {
+    const text = liveSegments.map((seg) => seg.text).join('\n')
+    try {
+      await navigator.clipboard.writeText(text)
+      addToast('success', 'Copied to clipboard')
+    } catch {
+      addToast('error', 'Failed to copy to clipboard')
+    }
+  }
 
   const handlePauseResume = async () => {
     store.setPauseRequesting(true)
@@ -60,7 +147,11 @@ export function ProgressView({ taskId }: Props) {
   }
 
   const handleCancel = async () => {
-    if (!window.confirm('Cancel the transcription?')) return
+    setShowCancelDialog(true)
+  }
+
+  const handleCancelConfirm = async () => {
+    setShowCancelDialog(false)
     store.setCancelRequesting(true)
     await api.cancel(taskId).catch(() => { store.setCancelRequesting(false) })
   }
@@ -86,6 +177,8 @@ export function ProgressView({ taskId }: Props) {
     isCancelRequesting ? 'Cancelling...' :
     isPaused ? 'Paused' :
     isPauseRequesting ? 'Pausing after current segment...' :
+    substage === 'loading_model' ? 'Loading model...' :
+    substage === 'transcribing' ? 'Transcribing audio...' :
     message
 
   // Pause button label
@@ -101,11 +194,12 @@ export function ProgressView({ taskId }: Props) {
     : 0
 
   return (
-    <div className="flex flex-col gap-5 animate-fade-in">
+    <div className="flex flex-col gap-5 animate-fade-in" aria-live="polite">
       {/* Success celebration banner */}
       {isComplete && (
         <div
           className="animate-success-fade-in flex items-start gap-3 px-4 py-3 rounded-lg"
+          role="status"
           style={{
             background: 'var(--color-success-light)',
             border: '1px solid var(--color-success-border)',
@@ -188,23 +282,30 @@ export function ProgressView({ taskId }: Props) {
       <div className="flex flex-col gap-2">
         <div
           className="h-1.5 rounded-full overflow-hidden"
+          role="progressbar"
+          aria-valuenow={percent}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label="Task progress"
           style={{ background: 'var(--color-border)' }}
         >
           <div
-            className="h-full rounded-full transition-all duration-500"
+            className={`h-full rounded-full transition-all duration-500${isActive && !isPaused && !isComplete ? ' progress-bar-shimmer' : ''}`}
             style={{
               width: `${percent}%`,
-              background: progressBarColor,
+              ...((isActive && !isPaused && !isComplete) ? {} : { background: progressBarColor }),
             }}
           />
         </div>
 
         {/* Status / percent row */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between" aria-live="assertive">
           <span className="text-xs" style={{ color: statusColor }}>
-            {isTranscribing && !isPaused && !isCancelRequesting
-              ? 'Transcribing audio...'
-              : statusText}
+            {isUploading && uploadEta
+              ? `Uploading... ${uploadEta} remaining`
+              : isTranscribing && !isPaused && !isCancelRequesting
+                ? 'Transcribing audio...'
+                : statusText}
           </span>
           <span
             className="text-xs font-semibold tabular-nums"
@@ -281,7 +382,7 @@ export function ProgressView({ taskId }: Props) {
             )}
 
             {/* Segments found */}
-            {liveSegments.length > 0 && (
+            {(liveSegments.length > 0 || (currentSegment && currentSegment > 0)) && (
               <div className="flex items-center gap-1" title="Number of subtitle segments (sentences or phrases) detected so far.">
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
                   <rect x="1" y="2" width="8" height="1.5" rx="0.5" fill="var(--color-text-3)" />
@@ -289,7 +390,9 @@ export function ProgressView({ taskId }: Props) {
                   <rect x="1" y="7" width="7" height="1.5" rx="0.5" fill="var(--color-text-3)" />
                 </svg>
                 <span className="text-xs tabular-nums" style={{ color: 'var(--color-text-3)', cursor: 'help' }}>
-                  {liveSegments.length} segments
+                  {currentSegment && estimatedSegments
+                    ? `${currentSegment} of ~${estimatedSegments} segments`
+                    : `${liveSegments.length} segments`}
                 </span>
               </div>
             )}
@@ -301,6 +404,7 @@ export function ProgressView({ taskId }: Props) {
       {warning && (
         <div
           className="flex items-start gap-2 px-3 py-2 rounded-lg text-xs"
+          role="alert"
           style={{
             background: 'var(--color-warning-light)',
             border: '1px solid #FDE68A',
@@ -312,41 +416,165 @@ export function ProgressView({ taskId }: Props) {
         </div>
       )}
 
-      {/* Live subtitles panel */}
-      {liveSegments.length > 0 && (
-        <div className="flex flex-col gap-1.5">
-          <span
-            className="text-xs font-semibold tracking-wider"
-            style={{ color: 'var(--color-text-2)', letterSpacing: '0.07em' }}
-          >
-            LIVE PREVIEW
-          </span>
-          <div
-            className="flex flex-col gap-1 overflow-y-auto rounded-lg p-3"
-            role="log"
-            aria-live="polite"
-            aria-label="Live subtitle preview"
-            style={{
-              maxHeight: '200px',
-              background: 'var(--color-surface-2)',
-              border: '1px solid var(--color-border)',
-            }}
-          >
-            {liveSegments.map((seg, i) => (
-              <div key={i} className="flex items-start gap-2 text-xs">
-                <span
-                  className="font-mono flex-shrink-0"
-                  style={{ color: 'var(--color-primary)', fontSize: '11px' }}
-                >
-                  {formatTimestamp(seg.start)}
-                </span>
-                <span style={{ color: 'var(--color-text)' }}>{seg.text}</span>
-              </div>
-            ))}
-            <div ref={segmentsEndRef} />
+      {/* Stale warning — Pixel (Sr. Frontend), Sprint L13 */}
+      {isStale && (
+        <div
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
+          style={{
+            background: 'var(--color-warning-light)',
+            border: '1px solid #FDE68A',
+            color: 'var(--color-text)',
+          }}
+        >
+          <span style={{ color: 'var(--color-warning)' }}>⚠</span>
+          This is taking longer than expected. The system is still working.
+        </div>
+      )}
+
+      {/* Queue position indicator — Pixel (Sr. Frontend), Sprint L44 */}
+      {status === 'queued' && (
+        <div
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg"
+          style={{ background: 'var(--color-surface-2)', border: '1px solid var(--color-border)' }}
+        >
+          <svg className="animate-spin flex-shrink-0" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <circle cx="7" cy="7" r="5.5" stroke="var(--color-border-2)" strokeWidth="1.5" />
+            <path d="M12.5 7a5.5 5.5 0 00-5.5-5.5" stroke="var(--color-primary)" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs font-medium" style={{ color: 'var(--color-text)' }}>
+              {queuePosition !== null && queuePosition > 0
+                ? `Queued — position ${queuePosition}`
+                : 'Queued — waiting to start'}
+            </span>
+            {queueEta && (
+              <span className="text-xs" style={{ color: 'var(--color-text-3)' }}>
+                Estimated wait: {queueEta}
+              </span>
+            )}
           </div>
         </div>
       )}
+
+      {/* Live subtitles panel — with Segments / SRT Preview toggle (Sprint L45) */}
+      {liveSegments.length > 0 && (() => {
+        const maxVisible = 50
+        const visibleSegments = liveSegments.length > maxVisible
+          ? liveSegments.slice(-maxVisible)
+          : liveSegments
+        return (
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              {/* Tab toggle: Segments vs SRT Preview — Pixel (Sr. Frontend), Sprint L45 */}
+              <div className="flex items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => setPreviewMode('segments')}
+                  className="text-xs font-semibold tracking-wider px-2 py-1 rounded transition-colors"
+                  style={{
+                    letterSpacing: '0.07em',
+                    background: previewMode === 'segments' ? 'var(--color-surface-2)' : 'transparent',
+                    color: previewMode === 'segments' ? 'var(--color-primary)' : 'var(--color-text-3)',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  SEGMENTS
+                </button>
+                {isComplete && (
+                  <button
+                    type="button"
+                    onClick={() => setPreviewMode('srt')}
+                    className="text-xs font-semibold tracking-wider px-2 py-1 rounded transition-colors"
+                    style={{
+                      letterSpacing: '0.07em',
+                      background: previewMode === 'srt' ? 'var(--color-surface-2)' : 'transparent',
+                      color: previewMode === 'srt' ? 'var(--color-primary)' : 'var(--color-text-3)',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    SRT PREVIEW
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                {previewMode === 'segments' && liveSegments.length > maxVisible && (
+                  <span className="text-xs" style={{ color: 'var(--color-text-3)' }}>
+                    Showing last {maxVisible} of {liveSegments.length} segments
+                  </span>
+                )}
+                {/* Copy All button — Pixel (Sr. Frontend), Sprint L43 */}
+                {isComplete && liveSegments.length > 0 && previewMode === 'segments' && (
+                  <button
+                    type="button"
+                    onClick={handleCopyAll}
+                    className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium border transition-colors"
+                    style={{
+                      background: 'var(--color-surface)',
+                      borderColor: 'var(--color-border)',
+                      color: 'var(--color-text-2)',
+                      cursor: 'pointer',
+                    }}
+                    title="Copy all segment text to clipboard"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                      <rect x="4" y="4" width="6.5" height="6.5" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none" />
+                      <path d="M8 4V2.5A1 1 0 007 1.5H2.5A1 1 0 001.5 2.5V7a1 1 0 001 1H4" stroke="currentColor" strokeWidth="1.2" fill="none" />
+                    </svg>
+                    Copy All
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Segments view */}
+            {previewMode === 'segments' && (
+              <div
+                className="flex flex-col gap-1 overflow-y-auto rounded-lg p-3"
+                role="log"
+                aria-live="polite"
+                aria-label="Live subtitle preview"
+                style={{
+                  maxHeight: '200px',
+                  background: 'var(--color-surface-2)',
+                  border: '1px solid var(--color-border)',
+                }}
+              >
+                {visibleSegments.map((seg, i) => (
+                  <div key={i} className="flex items-start gap-2 text-xs">
+                    <span
+                      className="font-mono flex-shrink-0"
+                      style={{ color: 'var(--color-primary)', fontSize: '11px' }}
+                    >
+                      {formatTimestamp(seg.start)}
+                    </span>
+                    <span
+                      title={seg.text}
+                      style={{
+                        color: 'var(--color-text)',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical' as const,
+                        overflow: 'hidden',
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      {seg.text}
+                    </span>
+                  </div>
+                ))}
+                <div ref={segmentsEndRef} />
+              </div>
+            )}
+
+            {/* SRT Preview view — Pixel (Sr. Frontend), Sprint L45 */}
+            {previewMode === 'srt' && isComplete && (
+              <SubtitlePreview taskId={taskId} />
+            )}
+          </div>
+        )
+      })()}
 
       {/* Task controls (hide during upload) */}
       {isActive && !isUploading && (
@@ -403,6 +631,7 @@ export function ProgressView({ taskId }: Props) {
         <div className="flex flex-col gap-3 py-4">
           <div
             className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg"
+            role="alert"
             style={{
               background: 'var(--color-danger-light)',
               border: '1px solid var(--color-danger)',
@@ -475,6 +704,15 @@ export function ProgressView({ taskId }: Props) {
           </svg>
           Process Another File
         </button>
+      )}
+
+      {/* Cancel confirmation dialog — Pixel (Sr. Frontend Engineer), Sprint L8 */}
+      {showCancelDialog && (
+        <CancelConfirmationDialog
+          filename={filename ?? 'this file'}
+          onConfirm={handleCancelConfirm}
+          onCancel={() => setShowCancelDialog(false)}
+        />
       )}
     </div>
   )

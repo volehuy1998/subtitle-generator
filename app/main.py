@@ -117,6 +117,11 @@ async def lifespan(app: FastAPI):
         if models_to_load:
             asyncio.create_task(_preload_models_background(models_to_load))
 
+    # Start idle model preloader (loads next model after 5 min idle) — Forge (Sr. Backend Engineer)
+    idle_preload_task = None
+    if ROLE != "web":
+        idle_preload_task = asyncio.create_task(_idle_preload_loop())
+
     # Start background cleanup task
     cleanup_task = asyncio.create_task(periodic_cleanup())
 
@@ -136,6 +141,8 @@ async def lifespan(app: FastAPI):
     state.shutting_down = True
     cleanup_task.cancel()
     health_task.cancel()
+    if ROLE != "web" and idle_preload_task is not None:
+        idle_preload_task.cancel()
     try:
         await cleanup_task
     except asyncio.CancelledError:
@@ -144,12 +151,24 @@ async def lifespan(app: FastAPI):
         await health_task
     except asyncio.CancelledError:
         logger.debug("Health task cancelled")
+    if ROLE != "web" and idle_preload_task is not None:
+        try:
+            await idle_preload_task
+        except asyncio.CancelledError:
+            logger.debug("Idle preload task cancelled")
 
     # Drain in-flight tasks
     active = state.get_active_task_count()
     if active > 0:
         logger.info(f"SHUTDOWN Draining {active} in-flight task(s)...")
-        await asyncio.to_thread(state.drain_tasks, 60.0)
+        drained = await asyncio.to_thread(state.drain_tasks, 60.0)
+        if not drained:
+            # Mark remaining active tasks as error so clients know to retry
+            for tid, task in state.tasks.items():
+                if task.get("status") not in ("done", "error", "cancelled"):
+                    task["status"] = "error"
+                    task["message"] = "Server restarting. Please retry your transcription."
+                    logger.info(f"SHUTDOWN [{tid[:8]}] Marked active task as error")
 
     logger.info("SHUTDOWN Saving task history and analytics...")
 
@@ -233,6 +252,66 @@ async def _preload_models_background(models_to_load: list[str]):
     logger.info(f"PRELOAD All {len(models_to_load)} model(s) loaded successfully")
 
 
+async def _idle_preload_loop():
+    """After 5 min idle (no active tasks), preload the next most-used model.
+
+    Sprint L10: Smart idle preloading — Forge (Sr. Backend Engineer)
+    Checks every 60s. Skips if tasks are active or initial preload is running.
+    Loads one model per idle cycle in priority order: base, small, medium, tiny, large.
+    """
+    MODEL_PRIORITY = ["base", "small", "medium", "tiny", "large"]
+    IDLE_CHECK_INTERVAL = 60  # seconds between checks
+    IDLE_THRESHOLD = 300  # 5 minutes of inactivity before preloading
+
+    idle_seconds = 0
+
+    while True:
+        try:
+            await asyncio.sleep(IDLE_CHECK_INTERVAL)
+        except asyncio.CancelledError:
+            return
+
+        if state.shutting_down:
+            return
+
+        # Skip if initial preload still running
+        if state.model_preload.get("status") == "loading":
+            idle_seconds = 0
+            continue
+
+        # Skip if any tasks are active
+        active = sum(1 for t in state.tasks.values() if t.get("status") not in ("done", "error", "cancelled", None))
+        if active > 0:
+            idle_seconds = 0
+            continue
+
+        idle_seconds += IDLE_CHECK_INTERVAL
+
+        if idle_seconds < IDLE_THRESHOLD:
+            continue
+
+        # Find next unloaded model in priority order
+        for model_name in MODEL_PRIORITY:
+            key = (model_name, "cpu")
+            if key not in state.loaded_models:
+                try:
+                    logger.info(f"IDLE_PRELOAD Starting idle preload of '{model_name}'")
+                    from app.services.model_manager import get_model
+
+                    await asyncio.to_thread(get_model, model_name, "cpu")
+                    logger.info(f"IDLE_PRELOAD Loaded '{model_name}' successfully")
+                except Exception as e:
+                    logger.warning(f"IDLE_PRELOAD Failed to load '{model_name}': {e}")
+                break  # Only load one model per idle cycle
+        else:
+            # All models already loaded — stop checking
+            logger.info("IDLE_PRELOAD All priority models already loaded")
+            return
+
+        # Reset idle counter after a load attempt
+        idle_seconds = 0
+
+
 def _apply_tuning(tuning: dict):
     """Apply auto-tuned settings to runtime config."""
     import os
@@ -268,8 +347,17 @@ def create_app() -> FastAPI:
         {"name": "Tasks", "description": "Task queue management, retry, deduplication"},
         {"name": "Subtitles", "description": "Subtitle viewing and editing"},
         {"name": "Embedding", "description": "Embed subtitles into video files"},
+        {"name": "Combine", "description": "Combine external video and subtitle files"},
+        {"name": "Translation", "description": "Language translation for subtitles"},
         {"name": "Analytics", "description": "Usage analytics, charts, and data export"},
         {"name": "System", "description": "Health checks, system info, metrics"},
+        {"name": "Status", "description": "Public status page and incident tracking"},
+        {"name": "Monitoring", "description": "System monitoring and observability"},
+        {"name": "Auth", "description": "Authentication and API key management"},
+        {"name": "Admin", "description": "Administrative log viewing and management"},
+        {"name": "Logs", "description": "Application and task log viewing"},
+        {"name": "Query", "description": "Advanced task querying and filtering"},
+        {"name": "Tracking", "description": "Request and event tracking"},
         {"name": "User", "description": "Feedback, sessions, webhooks"},
     ]
 
@@ -335,7 +423,7 @@ def create_app() -> FastAPI:
     # CORS
     from starlette.middleware.cors import CORSMiddleware
 
-    from app.middleware.cors import CORS_ALLOW_HEADERS, CORS_ALLOW_METHODS, get_cors_origins
+    from app.middleware.cors import CORS_ALLOW_HEADERS, CORS_ALLOW_METHODS, CORS_EXPOSE_HEADERS, get_cors_origins
 
     app.add_middleware(
         CORSMiddleware,
@@ -343,7 +431,13 @@ def create_app() -> FastAPI:
         allow_credentials=True,
         allow_methods=CORS_ALLOW_METHODS,
         allow_headers=CORS_ALLOW_HEADERS,
+        expose_headers=CORS_EXPOSE_HEADERS,
     )
+
+    # API version header on all responses — Forge (Sr. Backend Engineer), Sprint L31
+    from app.middleware.version import VersionHeaderMiddleware
+
+    app.add_middleware(VersionHeaderMiddleware, version=app.version)
 
     # GZip compression (outermost, compresses all responses)
     if ENABLE_COMPRESSION:

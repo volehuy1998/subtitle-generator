@@ -113,40 +113,40 @@ export function SecurityPage() {
     <StaticPageLayout>
       {/* Hero */}
       <div style={{
-        background: 'linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 55%, #E8E0FF 100%)',
+        background: 'var(--gradient-hero-security)',
         borderRadius: '16px', padding: '44px 40px', marginBottom: '32px',
-        color: '#fff', display: 'flex', alignItems: 'flex-start', gap: '22px',
+        display: 'flex', alignItems: 'flex-start', gap: '22px',
         position: 'relative', overflow: 'hidden',
       }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 60% at 80% 50%, rgba(134,59,255,0.18) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ width: '48px', height: '48px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
+        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 60% 60% at 80% 50%, ${C.primaryLight} 0%, transparent 70%)`, pointerEvents: 'none' }} />
+        <div style={{ width: '48px', height: '48px', background: C.primaryLight, border: `1px solid ${C.primaryMid}`, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" stroke="white" strokeWidth="1.7" strokeLinejoin="round" fill="rgba(255,255,255,0.12)"/>
-            <path d="M9 12l2 2 4-4" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z" stroke="var(--color-primary)" strokeWidth="1.7" strokeLinejoin="round" fill={C.primaryLight}/>
+            <path d="M9 12l2 2 4-4" stroke="var(--color-primary)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
         <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: '1.45rem', fontWeight: 700, letterSpacing: '-0.5px', marginBottom: '6px' }}>Security</h1>
-          <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.6 }}>How SubForge protects your uploads, prevents attacks, and keeps the service safe.</p>
+          <h1 style={{ fontSize: '1.45rem', fontWeight: 700, letterSpacing: '-0.5px', marginBottom: '6px', color: C.text }}>Security</h1>
+          <p style={{ fontSize: '0.875rem', color: C.text2, lineHeight: 1.6 }}>How SubForge protects your uploads, prevents attacks, and keeps the service safe.</p>
           {assertions?.last_security_commit && (
-            <p style={{ marginTop: '10px', fontSize: '0.775rem', color: 'rgba(255,255,255,0.45)' }}>
+            <p style={{ marginTop: '10px', fontSize: '0.775rem', color: C.text3 }}>
               Last security update:{' '}
-              <strong style={{ color: 'rgba(255,255,255,0.75)' }}>{assertions.last_security_commit.datetime.slice(0, 10)}</strong>
+              <strong style={{ color: C.text2 }}>{assertions.last_security_commit.datetime.slice(0, 10)}</strong>
               {' \u2014 '}
               <em>{assertions.last_security_commit.message}</em>
               {' '}
               <a
                 href={`https://github.com/volehuy1998/subtitle-generator/commit/${assertions.last_security_commit.sha_full}`}
                 target="_blank" rel="noopener noreferrer"
-                style={{ color: 'rgba(134,59,255,0.8)', marginLeft: '4px', fontStyle: 'normal', fontFamily: 'monospace', fontSize: '0.72rem' }}
+                style={{ color: C.primary, marginLeft: '4px', fontStyle: 'normal', fontFamily: 'monospace', fontSize: '0.72rem' }}
               >
                 {assertions.last_security_commit.sha_full?.slice(0, 12)}
               </a>
             </p>
           )}
         </div>
-        <div style={{ marginLeft: 'auto', flexShrink: 0, background: 'var(--color-success-light)', border: '1px solid var(--color-success-border)', color: 'var(--color-success)', borderRadius: '20px', padding: '5px 14px', fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--color-success)', display: 'inline-block' }} />
+        <div style={{ marginLeft: 'auto', flexShrink: 0, background: C.successLight, border: `1px solid ${C.successBorder}`, color: C.success, borderRadius: '20px', padding: '5px 14px', fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: C.success, display: 'inline-block' }} />
           Risk Level: Low
         </div>
       </div>
@@ -240,7 +240,7 @@ export function SecurityPage() {
       <div style={{ marginBottom: '28px' }}>
         <SectionLabel>Responsible Disclosure</SectionLabel>
         <Card>
-          <div style={{ background: `linear-gradient(135deg, ${C.primaryLight}, #fff)`, borderBottom: `1px solid ${C.primaryMid}`, padding: '24px 28px', display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <div style={{ background: `linear-gradient(135deg, ${C.primaryLight}, var(--color-surface))`, borderBottom: `1px solid ${C.primaryMid}`, padding: '24px 28px', display: 'flex', gap: '16px', alignItems: 'center' }}>
             <div style={{ width: '42px', height: '42px', background: C.primary, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" stroke="white" strokeWidth="1.8" strokeLinejoin="round"/>

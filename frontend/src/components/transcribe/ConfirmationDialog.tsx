@@ -6,7 +6,28 @@
  * without consent.
  *
  * Pixel (Sr. Frontend Engineer) — Sprint L4
+ * Speed estimates added — Sprint L12
  */
+
+import { useFocusTrap } from '@/hooks/useFocusTrap'
+
+/** Approximate speed factors (realtime multiplier) per model/device combo */
+const SPEED_ESTIMATES: Record<string, Record<string, number>> = {
+  cpu: { tiny: 6, base: 4, small: 2, medium: 0.8, large: 0.3 },
+  cuda: { tiny: 30, base: 20, small: 10, medium: 5, large: 2 },
+};
+
+function formatSpeedEstimate(device: string, model: string): string | null {
+  const deviceKey = device === 'cuda' ? 'cuda' : 'cpu';
+  const factor = SPEED_ESTIMATES[deviceKey]?.[model];
+  if (factor == null) return null;
+  const label = device === 'cuda' ? 'GPU' : 'CPU';
+  const modelLabel = model.charAt(0).toUpperCase() + model.slice(1);
+  if (factor >= 1) {
+    return `~${factor}x realtime (${label}, ${modelLabel})`;
+  }
+  return `~${factor}x realtime (${label}, ${modelLabel}) — slower than realtime`;
+}
 
 interface ConfirmationDialogProps {
   file: File;
@@ -17,6 +38,12 @@ interface ConfirmationDialogProps {
   device: string;
   onConfirm: () => void;
   onCancel: () => void;
+  /** True when the selected model is not yet loaded in memory */
+  modelNotLoaded?: boolean;
+  /** Name of a ready model that the user can switch to */
+  readyModelName?: string;
+  /** Called when user opts to switch to the ready model */
+  onSwitchModel?: (model: string) => void;
 }
 
 const MODEL_LABELS: Record<string, string> = {
@@ -43,7 +70,12 @@ export function ConfirmationDialog({
   device,
   onConfirm,
   onCancel,
+  modelNotLoaded,
+  readyModelName,
+  onSwitchModel,
 }: ConfirmationDialogProps) {
+  const trapRef = useFocusTrap()
+
   return (
     <div
       style={{
@@ -56,11 +88,13 @@ export function ConfirmationDialog({
         zIndex: 50,
       }}
       onClick={onCancel}
+      onKeyDown={(e) => { if (e.key === 'Escape') onCancel() }}
       role="dialog"
       aria-modal="true"
       aria-label="Confirm transcription"
     >
       <div
+        ref={trapRef}
         style={{
           background: 'var(--color-bg)',
           border: '1px solid var(--color-border)',
@@ -142,9 +176,91 @@ export function ConfirmationDialog({
                   <td style={{ padding: '6px 0', color: 'var(--color-text)' }}>{translateTo}</td>
                 </tr>
               )}
+              {formatSpeedEstimate(device, model) && (
+                <tr>
+                  <td style={{ padding: '6px 0', color: 'var(--color-text-3)' }}>Processing speed</td>
+                  <td style={{ padding: '6px 0', color: 'var(--color-text)' }}>
+                    {formatSpeedEstimate(device, model)}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
+
+        {/* Large file warning — Pixel (Sr. Frontend), Sprint L54 */}
+        {file.size > 100 * 1024 * 1024 && (
+          <div
+            style={{
+              background: 'var(--color-warning-light)',
+              border: '1px solid #FDE68A',
+              borderRadius: 'var(--radius)',
+              padding: '8px 12px',
+              marginBottom: '16px',
+              fontSize: '13px',
+              color: 'var(--color-text)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            <span style={{ color: 'var(--color-warning)' }}>&#x26A0;</span>
+            Large file ({formatFileSize(file.size)}). Processing may take several minutes.
+          </div>
+        )}
+
+        {/* Model load warning — shown when selected model is not loaded */}
+        {modelNotLoaded && (
+          <div
+            style={{
+              background: 'var(--color-warning-light)',
+              border: '1px solid #FDE68A',
+              borderRadius: 'var(--radius)',
+              padding: '12px 16px',
+              marginBottom: '24px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M8 1.5l6.5 12H1.5L8 1.5z" stroke="#D97706" strokeWidth="1.3" strokeLinejoin="round" fill="none" />
+                <path d="M8 6.5v3" stroke="#D97706" strokeWidth="1.3" strokeLinecap="round" />
+                <circle cx="8" cy="11.5" r="0.6" fill="#D97706" />
+              </svg>
+              <span
+                style={{
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  color: 'var(--color-text)',
+                }}
+              >
+                The <strong>{model}</strong> model is not loaded yet. Loading may take 30–60 seconds.
+              </span>
+            </div>
+            {readyModelName && onSwitchModel && (
+              <button
+                type="button"
+                onClick={() => onSwitchModel(readyModelName)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  color: 'var(--color-primary)',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  textDecoration: 'underline',
+                  textUnderlineOffset: '2px',
+                }}
+              >
+                Use {readyModelName.charAt(0).toUpperCase() + readyModelName.slice(1)} instead (ready)
+              </button>
+            )}
+          </div>
+        )}
 
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
           <button
@@ -176,7 +292,7 @@ export function ConfirmationDialog({
               boxShadow: 'var(--shadow-sm)',
             }}
           >
-            Start Transcription
+            {modelNotLoaded ? 'Load & Transcribe' : 'Start Transcription'}
           </button>
         </div>
       </div>
