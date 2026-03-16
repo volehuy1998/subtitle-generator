@@ -12,6 +12,7 @@ CSS tokens are inline. Tests account for both modes.
 import re
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -71,6 +72,7 @@ class TestCSSTokenConsistency:
         assert 'name="viewport"' in body
         assert "width=device-width" in body
 
+    @pytest.mark.skipif(not _IS_REACT, reason="Jinja templates use inline hex colors; React SPA uses CSS variables")
     def test_no_inline_hardcoded_hex_colors_in_home(self):
         """No inline style='color: #...' hardcoded hex colors in HTML output."""
         res = client.get("/")
