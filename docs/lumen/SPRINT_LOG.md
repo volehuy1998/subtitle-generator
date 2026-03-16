@@ -847,3 +847,30 @@
 **Running total:** 2860 + 60 = **2920**
 
 ---
+
+## Sprints L45-L48: Export, Preferences, Retranscribe, Shortcuts (2026-03-16)
+
+**Goal:** Add export customization, user preferences, retranscription, and keyboard help.
+
+**Delivered:**
+
+### Frontend (Pixel)
+- **L45**: SubtitlePreview panel — SRT formatted view toggle in ProgressView
+- **L46**: Export format selector tabs (SRT/VTT/JSON/ZIP) with "Recommended" badge
+- **L47**: PreferencesPanel — slide-out settings (model/format/language/autoCopy), preferencesStore with localStorage
+- **L48**: KeyboardShortcutsDialog — `?` shortcut shows all keybindings
+
+### Backend (Forge)
+- **L45**: Custom `max_line_chars` parameter on SRT/VTT downloads (20-120, default 42)
+- **L46**: `POST /tasks/{task_id}/retranscribe` — retry with different model/language
+- **L47**: `GET/PUT /preferences` — session-scoped preference storage (6 validated keys)
+- **L48**: `POST /tasks/batch-delete` — delete up to 50 tasks with per-task results
+
+### Tests (Scout) — 59 new tests
+- `test_export_features.py` (31): Custom line length, retranscribe, batch delete
+- `test_preferences.py` (28): Preferences CRUD, API docs, cross-feature integration
+
+**Tests added:** 59
+**Running total:** 2920 + 59 = **2979**
+
+---

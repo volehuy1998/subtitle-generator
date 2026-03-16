@@ -7,6 +7,7 @@ import { api } from '@/api/client'
 import { PipelineSteps } from './PipelineSteps'
 import { LivenessIndicator } from './LivenessIndicator'
 import { CancelConfirmationDialog } from './CancelConfirmationDialog'
+import { SubtitlePreview } from './SubtitlePreview'
 
 // Clock tick for stale detection — Pixel (Sr. Frontend), Sprint L13
 let staleClockListeners: Array<() => void> = [];
@@ -59,6 +60,7 @@ export function ProgressView({ taskId }: Props) {
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [queuePosition, setQueuePosition] = useState<number | null>(null)
   const [queueEta, setQueueEta] = useState<string | null>(null)
+  const [previewMode, setPreviewMode] = useState<'segments' | 'srt'>('segments')
   const addToast = useToastStore((s) => s.addToast)
 
   const isTranscribing = status === 'transcribing' && processedSec !== undefined && totalSec !== undefined && totalSec > 0
@@ -429,7 +431,7 @@ export function ProgressView({ taskId }: Props) {
         </div>
       )}
 
-      {/* Live subtitles panel */}
+      {/* Live subtitles panel — with Segments / SRT Preview toggle (Sprint L45) */}
       {liveSegments.length > 0 && (() => {
         const maxVisible = 50
         const visibleSegments = liveSegments.length > maxVisible
@@ -438,20 +440,47 @@ export function ProgressView({ taskId }: Props) {
         return (
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
-              <span
-                className="text-xs font-semibold tracking-wider"
-                style={{ color: 'var(--color-text-2)', letterSpacing: '0.07em' }}
-              >
-                LIVE PREVIEW
-              </span>
+              {/* Tab toggle: Segments vs SRT Preview — Pixel (Sr. Frontend), Sprint L45 */}
+              <div className="flex items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => setPreviewMode('segments')}
+                  className="text-xs font-semibold tracking-wider px-2 py-1 rounded transition-colors"
+                  style={{
+                    letterSpacing: '0.07em',
+                    background: previewMode === 'segments' ? 'var(--color-surface-2)' : 'transparent',
+                    color: previewMode === 'segments' ? 'var(--color-primary)' : 'var(--color-text-3)',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  SEGMENTS
+                </button>
+                {isComplete && (
+                  <button
+                    type="button"
+                    onClick={() => setPreviewMode('srt')}
+                    className="text-xs font-semibold tracking-wider px-2 py-1 rounded transition-colors"
+                    style={{
+                      letterSpacing: '0.07em',
+                      background: previewMode === 'srt' ? 'var(--color-surface-2)' : 'transparent',
+                      color: previewMode === 'srt' ? 'var(--color-primary)' : 'var(--color-text-3)',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    SRT PREVIEW
+                  </button>
+                )}
+              </div>
               <div className="flex items-center gap-3">
-                {liveSegments.length > maxVisible && (
+                {previewMode === 'segments' && liveSegments.length > maxVisible && (
                   <span className="text-xs" style={{ color: 'var(--color-text-3)' }}>
                     Showing last {maxVisible} of {liveSegments.length} segments
                   </span>
                 )}
                 {/* Copy All button — Pixel (Sr. Frontend), Sprint L43 */}
-                {isComplete && liveSegments.length > 0 && (
+                {isComplete && liveSegments.length > 0 && previewMode === 'segments' && (
                   <button
                     type="button"
                     onClick={handleCopyAll}
@@ -473,42 +502,51 @@ export function ProgressView({ taskId }: Props) {
                 )}
               </div>
             </div>
-            <div
-              className="flex flex-col gap-1 overflow-y-auto rounded-lg p-3"
-              role="log"
-              aria-live="polite"
-              aria-label="Live subtitle preview"
-              style={{
-                maxHeight: '200px',
-                background: 'var(--color-surface-2)',
-                border: '1px solid var(--color-border)',
-              }}
-            >
-              {visibleSegments.map((seg, i) => (
-                <div key={i} className="flex items-start gap-2 text-xs">
-                  <span
-                    className="font-mono flex-shrink-0"
-                    style={{ color: 'var(--color-primary)', fontSize: '11px' }}
-                  >
-                    {formatTimestamp(seg.start)}
-                  </span>
-                  <span
-                    title={seg.text}
-                    style={{
-                      color: 'var(--color-text)',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical' as const,
-                      overflow: 'hidden',
-                      wordBreak: 'break-word',
-                    }}
-                  >
-                    {seg.text}
-                  </span>
-                </div>
-              ))}
-              <div ref={segmentsEndRef} />
-            </div>
+
+            {/* Segments view */}
+            {previewMode === 'segments' && (
+              <div
+                className="flex flex-col gap-1 overflow-y-auto rounded-lg p-3"
+                role="log"
+                aria-live="polite"
+                aria-label="Live subtitle preview"
+                style={{
+                  maxHeight: '200px',
+                  background: 'var(--color-surface-2)',
+                  border: '1px solid var(--color-border)',
+                }}
+              >
+                {visibleSegments.map((seg, i) => (
+                  <div key={i} className="flex items-start gap-2 text-xs">
+                    <span
+                      className="font-mono flex-shrink-0"
+                      style={{ color: 'var(--color-primary)', fontSize: '11px' }}
+                    >
+                      {formatTimestamp(seg.start)}
+                    </span>
+                    <span
+                      title={seg.text}
+                      style={{
+                        color: 'var(--color-text)',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical' as const,
+                        overflow: 'hidden',
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      {seg.text}
+                    </span>
+                  </div>
+                ))}
+                <div ref={segmentsEndRef} />
+              </div>
+            )}
+
+            {/* SRT Preview view — Pixel (Sr. Frontend), Sprint L45 */}
+            {previewMode === 'srt' && isComplete && (
+              <SubtitlePreview taskId={taskId} />
+            )}
           </div>
         )
       })()}

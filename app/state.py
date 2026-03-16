@@ -39,6 +39,9 @@ model_preload: dict = {
     "error": None,
 }
 
+# Session preferences: session_id -> {default_model, default_format, default_language, auto_copy}
+session_preferences: dict[str, dict] = {}
+
 # Shutdown flag - when True, no new tasks accepted
 shutting_down: bool = False
 

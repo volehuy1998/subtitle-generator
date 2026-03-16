@@ -1,13 +1,15 @@
-"""Task queue, history, retry, and management routes."""
+"""Task queue, history, retry, retranscribe, and management routes."""
 
+import asyncio
 import logging
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Query, Request
 
 from app import state
-from app.config import OUTPUT_DIR, UPLOAD_DIR
+from app.config import OUTPUT_DIR, UPLOAD_DIR, VALID_MODELS, SUPPORTED_LANGUAGES
 from app.logging_setup import log_task_event
 from app.utils.access import check_task_access
 
@@ -108,6 +110,97 @@ async def retry_task(task_id: str):
         "new_task_id": new_task_id,
         "message": "Retry registered. Please re-upload the file to start processing.",
         "original_task_id": task_id,
+    }
+
+
+@router.post("/tasks/{task_id}/retranscribe")
+async def retranscribe(task_id: str, request: Request):
+    """Re-transcribe with different parameters. Original file must still exist.
+
+    Accepts optional JSON body with overrides: model_size, language, beam_size.
+    Creates a new task pointing to the same uploaded file with new parameters.
+    """
+    # Sprint L46: Retranscribe with modified parameters — Forge (Sr. Backend Engineer)
+    if task_id not in state.tasks:
+        raise HTTPException(404, "Task not found")
+
+    task = state.tasks[task_id]
+    check_task_access(task, request)
+
+    if task.get("status") not in ("done", "error"):
+        raise HTTPException(400, "Task must be completed or failed to retranscribe")
+
+    # Find original uploaded file
+    original_file = None
+    if UPLOAD_DIR.exists():
+        for f in UPLOAD_DIR.iterdir():
+            if f.is_file() and f.stem == task_id:
+                original_file = f
+                break
+
+    if original_file is None or not original_file.exists():
+        raise HTTPException(410, "Original file no longer available. Please re-upload.")
+
+    # Parse overrides from request body
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+
+    new_model = body.get("model_size", task.get("model_size", "base"))
+    if new_model not in VALID_MODELS:
+        new_model = "base"
+    new_language = body.get("language", task.get("language_requested", "auto"))
+    if new_language not in SUPPORTED_LANGUAGES:
+        new_language = "auto"
+
+    # Create new task entry
+    new_task_id = str(uuid.uuid4())
+    session_id = getattr(request.state, "session_id", "")
+
+    from app.services.sse import create_event_queue
+
+    create_event_queue(new_task_id)
+
+    state.tasks[new_task_id] = {
+        "status": "queued",
+        "percent": 0,
+        "message": f"Retranscription of {task_id[:8]} queued...",
+        "filename": task.get("filename", "unknown"),
+        "language_requested": new_language,
+        "session_id": session_id,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "retranscribe_of": task_id,
+    }
+
+    # Copy file with new task_id stem so pipeline can find it
+    new_file = UPLOAD_DIR / f"{new_task_id}{original_file.suffix}"
+    import shutil
+
+    shutil.copy2(original_file, new_file)
+
+    # Dispatch pipeline
+    from app.services.pipeline import process_video
+
+    asyncio.create_task(
+        asyncio.to_thread(
+            process_video,
+            new_task_id,
+            new_file,
+            new_model,
+            task.get("device", "cpu"),
+            new_language,
+        )
+    )
+
+    logger.info(f"RETRANSCRIBE [{task_id[:8]}] -> [{new_task_id[:8]}] model={new_model} lang={new_language}")
+    log_task_event(new_task_id, "retranscribe", original_task_id=task_id, model_size=new_model, language=new_language)
+    return {
+        "new_task_id": new_task_id,
+        "message": "Retranscription started",
+        "original_task_id": task_id,
+        "model_size": new_model,
+        "language": new_language,
     }
 
 
@@ -248,6 +341,75 @@ def _delete_task_files(task_id: str, task: dict) -> dict:
             logger.warning(f"DELETE [{task_id[:8]}] Failed to remove {fpath.name}: {e}")
 
     return {"deleted_files": deleted, "errors": errors}
+
+
+@router.post("/tasks/batch-delete")
+async def batch_delete(request: Request):
+    """Delete multiple completed, failed, or cancelled tasks at once.
+
+    Accepts a JSON body with ``task_ids`` (list of up to 50 task IDs).
+    Active tasks are skipped. Returns per-task results.
+    """
+    # Sprint L48: Batch delete — Forge (Sr. Backend Engineer)
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(400, "Invalid JSON body")
+
+    task_ids = body.get("task_ids", [])
+    if not isinstance(task_ids, list) or len(task_ids) > 50:
+        raise HTTPException(400, "Provide a list of up to 50 task IDs")
+    if len(task_ids) == 0:
+        raise HTTPException(400, "No task IDs provided")
+
+    results: dict = {"deleted": [], "failed": []}
+    for tid in task_ids:
+        if not isinstance(tid, str):
+            results["failed"].append({"task_id": str(tid), "reason": "invalid task ID"})
+            continue
+        if tid not in state.tasks:
+            results["failed"].append({"task_id": tid, "reason": "not found"})
+            continue
+
+        task = state.tasks[tid]
+        status = task.get("status", "unknown")
+        if status not in _TERMINAL_STATUSES:
+            results["failed"].append({"task_id": tid, "reason": f"task still active (status: {status})"})
+            continue
+
+        # Session access check
+        try:
+            check_task_access(task, request)
+        except Exception:
+            results["failed"].append({"task_id": tid, "reason": "access denied"})
+            continue
+
+        # Delete files + remove from state
+        _delete_task_files(tid, task)
+        state.tasks.pop(tid, None)
+
+        # Remove from database backend
+        try:
+            from app.services.task_backend import get_task_backend
+
+            backend = get_task_backend()
+            backend.delete(tid)
+        except Exception:
+            pass
+
+        results["deleted"].append(tid)
+
+    if results["deleted"]:
+        state.save_task_history()
+        logger.info(f"BATCH-DELETE Deleted {len(results['deleted'])} task(s), {len(results['failed'])} failed")
+        log_task_event(
+            results["deleted"][0],
+            "batch_deleted",
+            deleted_count=len(results["deleted"]),
+            failed_count=len(results["failed"]),
+        )
+
+    return results
 
 
 @router.delete("/tasks/{task_id}")

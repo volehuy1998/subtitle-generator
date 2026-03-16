@@ -28,6 +28,7 @@ from app.routes.tasks import router as tasks_router
 from app.routes.tracking import router as tracking_router
 from app.routes.translation import router as translation_router
 from app.routes.upload import router as upload_router
+from app.routes.preferences import router as preferences_router
 from app.routes.webhooks import router as webhooks_router
 from app.routes.ws import router as ws_router
 
@@ -60,3 +61,4 @@ router.include_router(monitoring_router)
 router.include_router(combine_router)
 router.include_router(status_page_router)
 router.include_router(translation_router)
+router.include_router(preferences_router)

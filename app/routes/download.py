@@ -73,7 +73,18 @@ async def search_subtitles(
 
 
 @router.get("/download/{task_id}")
-async def download(task_id: str, request: Request, format: Literal["srt", "vtt", "json"] = Query("srt")):
+async def download(
+    task_id: str,
+    request: Request,
+    format: Literal["srt", "vtt", "json"] = Query("srt"),
+    max_line_chars: int = Query(42, ge=20, le=120),
+):
+    """Download subtitles with optional custom line length.
+
+    When max_line_chars differs from the default (42), SRT and VTT files are
+    regenerated on-the-fly from the stored JSON segments with the requested
+    line-breaking width. JSON downloads are unaffected by this parameter.
+    """
     task_data = _get_task_data(task_id)
     if task_data is None:
         raise HTTPException(404, "Task not found")
@@ -81,10 +92,37 @@ async def download(task_id: str, request: Request, format: Literal["srt", "vtt",
     if task_data.get("status") != "done":
         raise HTTPException(400, "Subtitles not ready yet")
 
-    filename = f"{task_id}.{format}"
     original_name = Path(task_data["filename"]).stem + f".{format}"
     media_types = {"srt": "text/plain", "vtt": "text/vtt", "json": "application/json"}
     media_type = media_types.get(format, "text/plain")
+
+    # Sprint L45: On-the-fly regeneration with custom line length — Forge (Sr. Backend Engineer)
+    if max_line_chars != 42 and format in ("srt", "vtt"):
+        json_path = safe_path(OUTPUT_DIR / f"{task_id}.json", allowed_dir=OUTPUT_DIR)
+        if not json_path.exists():
+            raise HTTPException(404, "JSON segments file not found for regeneration")
+
+        segments = json.load(open(json_path, "r", encoding="utf-8"))
+        from app.utils.subtitle_format import format_segments_with_linebreaks
+        from app.utils.srt import segments_to_srt, segments_to_vtt
+
+        formatted = format_segments_with_linebreaks(segments, max_chars=max_line_chars)
+        has_speakers = any(s.get("speaker") for s in formatted)
+        if format == "srt":
+            content = segments_to_srt(formatted, include_speakers=has_speakers)
+        else:
+            content = segments_to_vtt(formatted, include_speakers=has_speakers)
+
+        logger.info(f"DOWNLOAD [{task_id[:8]}] Regenerated {original_name} with max_line_chars={max_line_chars}")
+        log_task_event(task_id, "downloaded", filename=original_name, format=format, max_line_chars=max_line_chars)
+        return StreamingResponse(
+            iter([content.encode("utf-8")]),
+            media_type=media_type,
+            headers={"Content-Disposition": f'attachment; filename="{original_name}"'},
+        )
+
+    # Default: serve pre-generated file
+    filename = f"{task_id}.{format}"
 
     if STORAGE_BACKEND == "s3":
         from app.services.storage import get_storage

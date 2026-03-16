@@ -10,6 +10,7 @@
 import { useState, useEffect } from 'react'
 import { useUIStore } from '@/store/uiStore'
 import { useTheme } from '@/hooks/useTheme'
+import { PreferencesPanel } from '@/components/settings/PreferencesPanel'
 import type { Theme } from '@/hooks/useTheme'
 import type { HealthStatus } from '@/api/types'
 
@@ -90,9 +91,20 @@ function HealthDot({ status }: { status: HealthStatus['status'] | null }) {
   )
 }
 
+/** Gear icon for settings — Pixel (Sr. Frontend), Sprint L47 */
+function GearIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+    </svg>
+  )
+}
+
 export function AppHeader() {
   const { healthPanelOpen, setHealthPanelOpen, health } = useUIStore()
   const { theme, cycleTheme } = useTheme()
+  const [prefsOpen, setPrefsOpen] = useState(false)
 
   // Re-render on SPA navigation so active link underline stays correct
   const [currentPath, setCurrentPath] = useState(typeof window !== 'undefined' ? window.location.pathname : '/')
@@ -216,6 +228,27 @@ export function AppHeader() {
       {/* Spacer — pushes health to right */}
       <div className="flex-1" />
 
+      {/* Settings button — Pixel (Sr. Frontend), Sprint L47 */}
+      <button
+        type="button"
+        onClick={() => setPrefsOpen(true)}
+        aria-label="Open preferences"
+        title="Preferences"
+        className="flex items-center justify-center rounded-lg transition-colors"
+        style={{
+          width: '32px',
+          height: '32px',
+          color: 'var(--color-text-2)',
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-2)'; e.currentTarget.style.color = 'var(--color-text)' }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-2)' }}
+      >
+        <GearIcon />
+      </button>
+
       {/* Theme toggle — Pixel (Sr. Frontend), Sprint L30 */}
       <button
         type="button"
@@ -258,6 +291,9 @@ export function AppHeader() {
           {statusLabel}
         </span>
       </button>
+
+      {/* Preferences panel — Pixel (Sr. Frontend), Sprint L47 */}
+      <PreferencesPanel open={prefsOpen} onClose={() => setPrefsOpen(false)} />
     </header>
   )
 }

@@ -109,4 +109,12 @@ export const api = {
 
   deleteTask: (taskId: string) =>
     fetch(`/tasks/${taskId}`, { method: 'DELETE' }).then(r => json<{ message: string }>(r)),
+
+  preview: (taskId: string, limit = 50) =>
+    fetch(`/preview/${taskId}?limit=${limit}`).then(r => json<{
+      task_id: string
+      total_segments: number
+      preview_limit: number
+      segments: Array<{ start: number; end: number; text: string }>
+    }>(r)),
 }

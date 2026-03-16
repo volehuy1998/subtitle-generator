@@ -10,6 +10,7 @@ import { OutputPanel } from '@/components/output/OutputPanel'
 import { TaskHistory } from '@/components/tasks/TaskHistory'
 import { EmbedTab } from '@/components/embed/EmbedTab'
 import { ConfirmationDialog } from '@/components/transcribe/ConfirmationDialog'
+import { KeyboardShortcutsDialog } from '@/components/shortcuts/KeyboardShortcutsDialog'
 import { useTaskStore } from '@/store/taskStore'
 import { useUIStore } from '@/store/uiStore'
 import { api } from '@/api/client'
@@ -19,6 +20,9 @@ type AppTab = 'transcribe' | 'embed'
 export function App() {
   const { healthPanelOpen, setHealthPanelOpen, appMode, setAppMode, health } = useUIStore()
   const store = useTaskStore()
+
+  // Phase Lumen: keyboard shortcuts dialog — Pixel (Sr. Frontend), Sprint L48
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
 
   // Phase Lumen: pending upload awaiting user confirmation
   const [pendingUpload, setPendingUpload] = useState<{
@@ -161,7 +165,15 @@ export function App() {
       setAppMode('transcribe')
     } else if (e.key === '2') {
       setAppMode('embed')
+    } else if (e.key === '?') {
+      // Toggle keyboard shortcuts dialog — Pixel (Sr. Frontend), Sprint L48
+      setShortcutsOpen((prev) => !prev)
     } else if (e.key === 'Escape') {
+      // Close shortcuts dialog
+      if (shortcutsOpen) {
+        setShortcutsOpen(false)
+        return
+      }
       // Close pending upload confirmation dialog
       if (pendingUpload) {
         setPendingUpload(null)
@@ -171,7 +183,7 @@ export function App() {
         setHealthPanelOpen(false)
       }
     }
-  }, [pendingUpload, healthPanelOpen, setAppMode, setHealthPanelOpen])
+  }, [pendingUpload, healthPanelOpen, shortcutsOpen, setAppMode, setHealthPanelOpen])
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyboard)
@@ -292,6 +304,12 @@ export function App() {
 
       {/* Footer — Pixel (Sr. Frontend), Sprint L20 */}
       <Footer />
+
+      {/* Phase Lumen: Keyboard shortcuts dialog — Sprint L48 */}
+      <KeyboardShortcutsDialog
+        open={shortcutsOpen}
+        onClose={() => setShortcutsOpen(false)}
+      />
 
       {/* Phase Lumen: Confirmation dialog before transcription */}
       {pendingUpload && (

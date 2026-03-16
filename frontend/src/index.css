@@ -245,6 +245,15 @@ input:focus-visible {
   50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(99,102,241,0); }
 }
 
+/* Slide-in-right animation — Pixel (Sr. Frontend), Sprint L47 */
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+.animate-slide-in-right {
+  animation: slideInRight 0.25s ease-out;
+}
+
 /* Fade-in animation */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }
@@ -332,6 +341,7 @@ input:focus-visible {
   .animate-success-fade-in,
   .animate-page-enter,
   .animate-gentle-float,
+  .animate-slide-in-right,
   .progress-bar-shimmer,
   .dropzone-pulse,
   [style*="toast-fade-in"] {
