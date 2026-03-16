@@ -49,6 +49,21 @@ def validate_magic_bytes(file_path: Path) -> bool:
         return False
 
 
+def detect_mime_type(file_path: Path) -> str:
+    """Detect MIME type from file content using magic bytes.
+
+    Returns the detected MIME type string, or 'application/octet-stream' if unknown.
+    — Forge (Sr. Backend Engineer), Sprint L53
+    """
+    try:
+        kind = filetype.guess(str(file_path))
+        if kind is not None:
+            return kind.mime
+    except Exception:
+        pass
+    return "application/octet-stream"
+
+
 def validate_file_size(size: int) -> tuple[bool, str]:
     """Validate file is not too small (likely invalid)."""
     if size < MIN_FILE_SIZE:

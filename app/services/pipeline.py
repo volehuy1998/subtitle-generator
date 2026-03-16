@@ -644,6 +644,8 @@ def process_video(
 
         task["status"] = "done"
         task["percent"] = 100
+        # Sprint L54: Store wall-clock duration on task — Forge (Sr. Backend Engineer)
+        task["total_time_sec"] = round(pipeline_summary.get("total_time_sec", 0), 2)
         done_suffix = ""
         if translate_to and translate_to != "en" and translate_to != detected_lang:
             done_suffix = f", translated to {translate_to}"

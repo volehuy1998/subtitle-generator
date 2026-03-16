@@ -328,6 +328,16 @@ input:focus-visible {
   .model-col-pros { display: none !important; }
 }
 
+/* Mobile touch improvements — WCAG minimum 44px tap targets — Pixel (Sr. Frontend), Sprint L56 */
+@media (max-width: 768px) {
+  button,
+  a,
+  [role="button"] {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+}
+
 /* Reduced motion — WCAG 2.1 AA, Prism (UI/UX), Sprint L24 */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

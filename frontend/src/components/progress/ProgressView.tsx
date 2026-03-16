@@ -79,6 +79,16 @@ export function ProgressView({ taskId }: Props) {
     segmentsEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [liveSegments.length])
 
+  // Progress percentage in page title — Pixel (Sr. Frontend), Sprint L53
+  useEffect(() => {
+    if (status && percent > 0 && !isComplete) {
+      document.title = `(${percent}%) SubForge`
+    } else {
+      document.title = 'SubForge'
+    }
+    return () => { document.title = 'SubForge' }
+  }, [percent, status, isComplete])
+
   // Auto-copy on completion when autoCopy preference is enabled — Pixel (Sr. Frontend), Sprint L49
   useEffect(() => {
     if (isComplete && liveSegments.length > 0) {

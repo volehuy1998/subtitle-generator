@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { AppHeader } from '@/components/layout/AppHeader'
 import { Footer } from '@/components/layout/Footer'
 import { HealthPanel } from '@/components/system/HealthPanel'
@@ -24,11 +24,23 @@ export function App() {
   // Phase Lumen: keyboard shortcuts dialog — Pixel (Sr. Frontend), Sprint L48
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
 
+  // Phase Lumen: completed tasks counter badge — Pixel (Sr. Frontend), Sprint L55
+  const [completedCount, setCompletedCount] = useState(0)
+  const prevIsComplete = useRef(false)
+
   // Phase Lumen: pending upload awaiting user confirmation
   const [pendingUpload, setPendingUpload] = useState<{
     file: File;
     opts: { device: string; model: string; language: string; format: string; translateTo?: string; modelLoaded: boolean; firstReadyModel: string | null };
   } | null>(null)
+
+  // Track completed tasks when user is on Embed tab — Pixel (Sr. Frontend), Sprint L55
+  useEffect(() => {
+    if (store.isComplete && !prevIsComplete.current && appMode === 'embed') {
+      setCompletedCount((c) => c + 1)
+    }
+    prevIsComplete.current = store.isComplete
+  }, [store.isComplete, appMode])
 
   // Session restore: if a task was in progress, try to reconnect
   useEffect(() => {
@@ -251,7 +263,11 @@ export function App() {
                     id={`tab-${tab.id}`}
                     aria-selected={isActive}
                     aria-controls={`tabpanel-${tab.id}`}
-                    onClick={() => setAppMode(tab.id)}
+                    onClick={() => {
+                      setAppMode(tab.id)
+                      // Clear completed badge when switching to Transcribe — Sprint L55
+                      if (tab.id === 'transcribe') setCompletedCount(0)
+                    }}
                     className="relative flex flex-col px-3 sm:px-4 py-2 sm:py-2.5 rounded-t-lg transition-colors"
                     style={{
                       background: 'transparent',
@@ -265,6 +281,26 @@ export function App() {
                       style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-text-2)' }}
                     >
                       {tab.label}
+                      {/* Completed tasks badge — Sprint L55 */}
+                      {tab.id === 'transcribe' && completedCount > 0 && (
+                        <span
+                          style={{
+                            marginLeft: '6px',
+                            background: 'var(--color-primary)',
+                            color: 'white',
+                            borderRadius: '9999px',
+                            padding: '0 6px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            lineHeight: '18px',
+                            display: 'inline-block',
+                            minWidth: '18px',
+                            textAlign: 'center',
+                          }}
+                        >
+                          {completedCount}
+                        </span>
+                      )}
                     </span>
                     <span
                       className="text-xs"

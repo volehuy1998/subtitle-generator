@@ -41,7 +41,7 @@ from app.errors import (
 )
 from app.logging_setup import get_request_id
 from app.utils.formatting import format_bytes
-from app.utils.security import sanitize_filename, validate_file_extension, validate_magic_bytes
+from app.utils.security import detect_mime_type, sanitize_filename, validate_file_extension, validate_magic_bytes
 
 logger = logging.getLogger("subtitle-generator")
 
@@ -264,6 +264,12 @@ async def upload(
 
     from datetime import datetime, timezone
 
+    # Detect MIME type from file content — Forge (Sr. Backend Engineer), Sprint L53
+    mime_type = detect_mime_type(video_path)
+    from app.config import VIDEO_EXTENSIONS
+
+    is_video = ext in VIDEO_EXTENSIONS
+
     state.tasks[task_id] = {
         "status": "queued",
         "percent": 0,
@@ -272,6 +278,10 @@ async def upload(
         "language_requested": language,
         "session_id": session_id,
         "created_at": datetime.now(timezone.utc).isoformat(),
+        "file_size": size,
+        "file_extension": ext,
+        "mime_type": mime_type,
+        "is_video": is_video,
     }
 
     # Persist new task to DB

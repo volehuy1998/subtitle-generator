@@ -188,6 +188,27 @@ export function ConfirmationDialog({
           </table>
         </div>
 
+        {/* Large file warning — Pixel (Sr. Frontend), Sprint L54 */}
+        {file.size > 100 * 1024 * 1024 && (
+          <div
+            style={{
+              background: 'var(--color-warning-light)',
+              border: '1px solid #FDE68A',
+              borderRadius: 'var(--radius)',
+              padding: '8px 12px',
+              marginBottom: '16px',
+              fontSize: '13px',
+              color: 'var(--color-text)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            <span style={{ color: 'var(--color-warning)' }}>&#x26A0;</span>
+            Large file ({formatFileSize(file.size)}). Processing may take several minutes.
+          </div>
+        )}
+
         {/* Model load warning — shown when selected model is not loaded */}
         {modelNotLoaded && (
           <div

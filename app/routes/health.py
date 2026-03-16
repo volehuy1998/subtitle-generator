@@ -32,6 +32,7 @@ async def health():
         "status": "healthy",
         "uptime_sec": round(time.time() - _start_time, 1),
         "total_requests": getattr(state, "total_request_count", 0),
+        "requests_per_minute": state.get_requests_per_minute(),
         "peak_concurrent_tasks": getattr(state, "peak_concurrent_tasks", 0),
     }
 

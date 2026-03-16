@@ -36,6 +36,8 @@ class RequestLogMiddleware(BaseHTTPMiddleware):
         from app import state as _state
 
         _state.total_request_count += 1
+        # L56: Track request rate (RPM) — Forge (Sr. Backend Engineer)
+        _state.record_request_timestamp()
 
         try:
             response = await call_next(request)

@@ -899,3 +899,32 @@
 **Running total:** 2979 + 60 = **3039**
 
 ---
+
+## Sprints L53-L60: Final Feature Polish + Phase Wrap-Up (2026-03-16)
+
+**Goal:** Complete all remaining feature polish and close the phase.
+
+**Delivered:**
+
+### Frontend (Pixel)
+- **L53**: Progress % in browser tab title during transcription
+- **L54**: Large file warning (>100MB) in ConfirmationDialog
+- **L55**: Completed tasks counter badge on Transcribe tab
+- **L56**: Mobile touch improvements (44px min tap targets, no double-tap zoom)
+
+### Backend (Forge)
+- **L53**: File info enrichment: mime_type, file_extension, is_video stored on task
+- **L54**: Task duration: total_time_sec persisted on completion
+- **L55**: Periodic cleanup verified (runs every 30min, already implemented)
+- **L56**: Request rate metrics: requests_per_minute in health response (60s sliding window)
+
+### Tests (Scout) — 140 new tests
+- `test_feature_polish.py` (35): File info, duration tracking, cleanup, request metrics
+- `test_comprehensive_api.py` (105): All endpoints status codes, response times, content types, security headers, CORS, API version
+
+**Tests added:** 140
+**Running total:** 3039 + 140 = **3179**
+
+**FEATURE POLISH PHASE COMPLETE (L41-L60)**
+
+---
