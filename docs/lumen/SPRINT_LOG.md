@@ -427,3 +427,44 @@
 **Running total:** 2148 + 40 = **2188**
 
 ---
+
+## Sprint L14: VAD Optimization + Responsive Design (2026-03-16)
+
+**Goal:** Optimize transcription speed via VAD tuning, polish responsive design for mobile.
+
+**Delivered:**
+
+### Backend (Forge)
+- **VAD filter optimization** (`transcription.py`):
+  - Added explicit `speech_pad_ms=200` and `threshold=0.5` to VAD parameters
+  - Prevents speech clipping at segment boundaries
+- **Probe cache confirmation** (`pipeline.py`):
+  - Verified upload route already warms probe cache (L8)
+  - Added debug log with `cache_info()` for observability
+- **Compute type**: Already optimal (CPU→int8, GPU→float16/int8_float16) — documented
+
+### Frontend (Pixel)
+- **Responsive layout** (`App.tsx`):
+  - Mobile padding/gap adjustments: `px-3 sm:px-4`, `gap-4 sm:gap-5 lg:gap-6`
+  - Tab buttons compact on mobile: `px-3 sm:px-4 py-2 sm:py-2.5`
+- **Header mobile** (`AppHeader.tsx`):
+  - Nav always visible (`flex` instead of `hidden sm:flex`)
+  - Responsive spacing: `gap-0.5 sm:gap-1`, `px-2 sm:px-3`, `text-xs sm:text-sm`
+  - Health label hidden on mobile, dot remains visible
+- **Form responsive** (`TranscribeForm.tsx`):
+  - Model stats stack vertically on mobile: `flex-col sm:flex-row`
+  - Badge row wraps with `flex-wrap`
+
+### Tests (Scout) — 40 new tests
+- `test_transcription_config.py`:
+  - VAD configuration (10 tests)
+  - Compute type selection (10 tests)
+  - Transcription options (10 tests)
+  - API configuration (10 tests)
+
+**Tests added:** 40
+**Running total:** 2188 + 40 = **2228**
+
+**Performance phase progress:** L10-L14 complete (50% of L11-L20 range).
+
+---

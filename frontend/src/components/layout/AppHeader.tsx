@@ -79,7 +79,7 @@ export function AppHeader() {
 
   return (
     <header
-      className="sticky top-0 z-40 flex items-center px-6"
+      className="sticky top-0 z-40 flex items-center px-3 sm:px-6"
       style={{
         height: '52px',
         background: 'var(--color-bg)',
@@ -113,8 +113,8 @@ export function AppHeader() {
       {/* Spacer — pushes nav to center */}
       <div className="flex-1" />
 
-      {/* Nav links — center */}
-      <nav className="hidden sm:flex items-center gap-1">
+      {/* Nav links — center, visible at all breakpoints */}
+      <nav className="flex items-center gap-0.5 sm:gap-1">
         {navLinks.map(({ href, label }) => {
           const isActive = currentPath === href
           return (
@@ -127,7 +127,7 @@ export function AppHeader() {
                 history.pushState(null, '', href)
                 window.dispatchEvent(new Event('spa-navigate'))
               }}
-              className="relative px-3 py-1.5 text-sm font-medium transition-colors"
+              className="relative px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors"
               style={{
                 color: isActive ? 'var(--color-primary)' : 'var(--color-text-2)',
                 textDecoration: 'none',
@@ -148,8 +148,8 @@ export function AppHeader() {
                   style={{
                     position: 'absolute',
                     bottom: '-1px',
-                    left: '12px',
-                    right: '12px',
+                    left: '8px',
+                    right: '8px',
                     height: '2px',
                     borderRadius: '1px',
                     background: 'var(--color-primary)',
@@ -178,7 +178,7 @@ export function AppHeader() {
       >
         <HealthDot status={health?.status ?? null} />
         <span
-          className="text-xs font-medium"
+          className="hidden sm:inline text-xs font-medium"
           style={{ color: labelColor }}
         >
           {statusLabel}

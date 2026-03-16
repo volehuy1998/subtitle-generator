@@ -279,6 +279,10 @@ def process_video(
     try:
         # Step 1: Probe
         with StepTimer(task_id, "probe", task_log_func=log_task_event) as step_probe:
+            # Sprint L14: Log probe cache status — Forge (Sr. Backend Engineer)
+            from app.utils.media import _probe_file_cached
+
+            logger.debug(f"PIPELINE [{task_id[:8]}] Probe cache info: {_probe_file_cached.cache_info()}")
             duration = get_audio_duration(video_path)
             file_size = get_file_size(video_path)
             duration_str = format_time_display(duration) if duration > 0 else "unknown"

@@ -18,9 +18,17 @@ def get_optimal_transcribe_options(
     device: str, model_size: str, language: str = "auto", word_timestamps: bool = False, initial_prompt: str = ""
 ) -> dict:
     """Get optimal faster-whisper transcription settings."""
+    # Sprint L14: Optimized VAD parameters for faster processing — Forge (Sr. Backend Engineer)
+    # - min_silence_duration_ms=500: Skip silences longer than 500ms (aggressive enough to speed up, safe for speech)
+    # - speech_pad_ms=200: Pad detected speech segments by 200ms each side (prevents clipping)
+    # - threshold=0.5: VAD confidence threshold (balanced between false positives and missed speech)
     opts = {
         "vad_filter": True,
-        "vad_parameters": dict(min_silence_duration_ms=500),
+        "vad_parameters": dict(
+            min_silence_duration_ms=500,
+            speech_pad_ms=200,
+            threshold=0.5,
+        ),
         "word_timestamps": word_timestamps,
     }
     # Language: None means auto-detect in faster-whisper

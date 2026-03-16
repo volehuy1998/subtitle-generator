@@ -261,7 +261,7 @@ export function TranscribeForm({ onUpload }: Props) {
                   }}
                 >
                   {/* Row 1: Name + badges */}
-                  <div className="flex items-center gap-2 mb-1.5">
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                     {/* Radio dot */}
                     <div
                       className="w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 flex items-center justify-center"
@@ -340,7 +340,7 @@ export function TranscribeForm({ onUpload }: Props) {
                   </p>
 
                   {/* Row 3: Stat bars */}
-                  <div className="flex gap-4" style={{ marginLeft: '22px' }}>
+                  <div className="flex flex-col sm:flex-row gap-1.5 sm:gap-4" style={{ marginLeft: '22px' }}>
                     {/* Speed */}
                     <div className="flex items-center gap-1.5 flex-1">
                       <span className="text-xs flex-shrink-0" style={{ color: 'var(--color-text-3)', fontSize: '10px', width: '42px' }}>Speed</span>

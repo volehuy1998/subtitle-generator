@@ -171,7 +171,7 @@ export function App() {
       )}
 
       {/* Main layout */}
-      <main className="max-w-6xl mx-auto px-4 py-6 lg:py-8 flex flex-col lg:flex-row gap-5 lg:gap-6 items-start">
+      <main className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8 flex flex-col lg:flex-row gap-4 sm:gap-5 lg:gap-6 items-start">
         {/* Left column: input */}
         <div className="flex-1 min-w-0 w-full">
           <div
@@ -200,7 +200,7 @@ export function App() {
                     aria-selected={isActive}
                     aria-controls={`tabpanel-${tab.id}`}
                     onClick={() => setAppMode(tab.id)}
-                    className="relative flex flex-col px-4 py-2.5 rounded-t-lg transition-colors"
+                    className="relative flex flex-col px-3 sm:px-4 py-2 sm:py-2.5 rounded-t-lg transition-colors"
                     style={{
                       background: 'transparent',
                       border: 'none',
