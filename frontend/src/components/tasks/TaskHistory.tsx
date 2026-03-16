@@ -2,12 +2,13 @@ import { useEffect, useState, useCallback } from 'react'
 import { api } from '@/api/client'
 import type { TaskListItem } from '@/api/types'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { Dialog } from '@/components/ui/Dialog'
 import { useToastStore } from '@/store/toastStore'
 
 /**
  * TaskHistory — shows last 5 completed/failed tasks with quick access to downloads.
  * Polls GET /tasks?session_only=true on mount.
- * — Pixel (Sr. Frontend), Sprint L17 (loading skeletons: L18)
+ * — Pixel (Sr. Frontend), Sprint L17 (loading skeletons: L18, delete dialog: L41)
  */
 
 function timeAgo(dateStr: string): string {
@@ -59,6 +60,7 @@ export function TaskHistory() {
   const [tasks, setTasks] = useState<TaskListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{ taskId: string; filename: string } | null>(null)
   const addToast = useToastStore((s) => s.addToast)
 
   const fetchTasks = useCallback(() => {
@@ -80,11 +82,14 @@ export function TaskHistory() {
     fetchTasks()
   }, [fetchTasks])
 
-  const handleDelete = async (taskId: string, filename?: string) => {
-    const name = filename ?? taskId.slice(0, 8)
-    if (!window.confirm(`Delete task "${name}"? This will remove all associated files.`)) {
-      return
-    }
+  const handleDeleteClick = (taskId: string, filename?: string) => {
+    setDeleteTarget({ taskId, filename: filename ?? taskId.slice(0, 8) })
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return
+    const { taskId } = deleteTarget
+    setDeleteTarget(null)
     setDeleting(taskId)
     try {
       await api.deleteTask(taskId)
@@ -210,7 +215,7 @@ export function TaskHistory() {
               {/* Delete button */}
               <button
                 type="button"
-                onClick={() => handleDelete(task.task_id, task.filename)}
+                onClick={() => handleDeleteClick(task.task_id, task.filename)}
                 disabled={deleting === task.task_id}
                 className="flex-shrink-0 rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                 style={{
@@ -227,6 +232,46 @@ export function TaskHistory() {
           ))
         )}
       </div>
+
+      {/* Delete confirmation dialog — Pixel (Sr. Frontend), Sprint L41 */}
+      <Dialog
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        title="Delete task"
+        description={`Delete task and files for "${deleteTarget?.filename ?? ''}"? This action cannot be undone.`}
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={() => setDeleteTarget(null)}
+              className="px-4 py-2 rounded-lg text-sm font-medium border transition-colors"
+              style={{
+                background: 'var(--color-surface)',
+                borderColor: 'var(--color-border)',
+                color: 'var(--color-text)',
+                cursor: 'pointer',
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleDeleteConfirm}
+              className="px-4 py-2 rounded-lg text-sm font-medium border transition-colors"
+              style={{
+                background: 'var(--color-danger)',
+                borderColor: 'var(--color-danger)',
+                color: 'white',
+                cursor: 'pointer',
+              }}
+            >
+              Delete
+            </button>
+          </>
+        }
+      >
+        <div />
+      </Dialog>
     </div>
   )
 }

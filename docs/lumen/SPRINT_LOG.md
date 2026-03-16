@@ -820,3 +820,30 @@
 **DESIGN SYSTEM PHASE COMPLETE (L21-L40)**
 
 ---
+
+## Sprints L41-L44: Feature Polish — Search, Edit, Tags, UX (2026-03-16)
+
+**Goal:** Add subtitle search/edit, task metadata, and UX improvements.
+
+**Delivered:**
+
+### Frontend (Pixel)
+- **L41**: Delete confirmation via reusable Dialog (replaced window.confirm)
+- **L42**: Drag-drop enhancement: accept/reject states, pulsing border, overlay text
+- **L43**: Copy-to-clipboard button for subtitle segments with toast feedback
+- **L44**: Queue position display with polling + estimated wait time
+
+### Backend (Forge)
+- **L41**: `GET /search/{task_id}?q=...` — case-insensitive subtitle text search
+- **L42**: `PUT /subtitles/{task_id}/{index}` — edit segment text, regenerates SRT/VTT
+- **L43**: `PUT /tasks/{task_id}/tags` — task tagging (up to 10 tags, 50 chars each)
+- **L44**: `PUT /tasks/{task_id}/note` — task notes (up to 1000 chars)
+
+### Tests (Scout) — 60 new tests
+- `test_subtitle_search.py` (30): Search endpoint + edit endpoint
+- `test_task_metadata.py` (30): Tags endpoint + notes endpoint
+
+**Tests added:** 60
+**Running total:** 2860 + 60 = **2920**
+
+---

@@ -181,6 +181,39 @@ async def task_stats(request: Request):
     }
 
 
+@router.put("/tasks/{task_id}/tags")
+async def update_task_tags(task_id: str, request: Request):
+    """Update tags/labels for a task."""
+    if task_id not in state.tasks:
+        raise HTTPException(404, "Task not found")
+
+    body = await request.json()
+    tags = body.get("tags", [])
+    if not isinstance(tags, list) or len(tags) > 10:
+        raise HTTPException(400, "Tags must be a list of up to 10 strings")
+    tags = [str(t).strip()[:50] for t in tags if str(t).strip()]
+
+    state.tasks[task_id]["tags"] = tags
+    logger.info(f"TAGS [{task_id[:8]}] Updated tags: {tags}")
+    log_task_event(task_id, "tags_updated", tags=tags)
+    return {"task_id": task_id, "tags": tags}
+
+
+@router.put("/tasks/{task_id}/note")
+async def update_task_note(task_id: str, request: Request):
+    """Attach or update a note on a task."""
+    if task_id not in state.tasks:
+        raise HTTPException(404, "Task not found")
+
+    body = await request.json()
+    note = str(body.get("note", "")).strip()[:1000]  # Max 1000 chars
+
+    state.tasks[task_id]["note"] = note
+    logger.info(f"NOTE [{task_id[:8]}] Note {'set' if note else 'cleared'}")
+    log_task_event(task_id, "note_updated", note_length=len(note))
+    return {"task_id": task_id, "note": note}
+
+
 # Terminal statuses — tasks that are no longer processing
 _TERMINAL_STATUSES = frozenset({"done", "error", "cancelled"})
 

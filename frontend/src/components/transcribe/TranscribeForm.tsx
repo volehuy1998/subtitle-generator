@@ -113,7 +113,7 @@ export function TranscribeForm({ onUpload }: Props) {
     onUpload(file, { device, model, language, format, translateTo, modelLoaded: isModelLoaded, firstReadyModel: firstReady })
   }, [onUpload, device, model, language, format, translateTo, preload])
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
     onDrop,
     accept: { 'video/*': [], 'audio/*': [] },
     multiple: false,
@@ -479,32 +479,68 @@ export function TranscribeForm({ onUpload }: Props) {
         </div>
       </div>
 
-      {/* Drop zone */}
+      {/* Drop zone — enhanced drag states, Pixel (Sr. Frontend), Sprint L42 */}
       <div
         {...getRootProps()}
         aria-label="Upload media file"
-        className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-6 sm:p-8 cursor-pointer transition-all"
+        className={`relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-6 sm:p-8 cursor-pointer transition-all${isDragActive && !isDragReject ? ' dropzone-pulse' : ''}`}
         style={{
-          borderColor: isDragActive ? 'var(--color-primary)' : 'var(--color-border)',
-          background: isDragActive ? 'var(--color-primary-light)' : 'var(--color-surface-2)',
+          borderColor: isDragReject ? 'var(--color-danger)' : isDragActive ? 'var(--color-primary)' : 'var(--color-border)',
+          background: isDragReject ? 'var(--color-danger-light)' : isDragActive ? 'var(--color-primary-light)' : 'var(--color-surface-2)',
         }}
       >
         <input {...getInputProps()} />
+
+        {/* Drag-over overlay — Pixel (Sr. Frontend), Sprint L42 */}
+        {isDragActive && (
+          <div
+            className="absolute inset-0 flex items-center justify-center rounded-xl z-10"
+            style={{ background: isDragReject ? 'rgba(239,68,68,0.06)' : 'rgba(99,102,241,0.06)' }}
+          >
+            <div
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg"
+              style={{
+                background: 'var(--color-bg)',
+                border: `1px solid ${isDragReject ? 'var(--color-danger)' : 'var(--color-primary)'}`,
+                boxShadow: 'var(--shadow-md)',
+              }}
+            >
+              {isDragReject ? (
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <circle cx="8" cy="8" r="7" stroke="var(--color-danger)" strokeWidth="1.5" fill="none" />
+                  <path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="var(--color-danger)" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M8 11V3M5 6l3-3 3 3" stroke="var(--color-primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M2 11v1.5a1.5 1.5 0 001.5 1.5h9a1.5 1.5 0 001.5-1.5V11" stroke="var(--color-primary)" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              )}
+              <span
+                className="text-sm font-medium"
+                style={{ color: isDragReject ? 'var(--color-danger)' : 'var(--color-primary)' }}
+              >
+                {isDragReject ? 'Unsupported format' : 'Drop to upload'}
+              </span>
+            </div>
+          </div>
+        )}
+
         <div
           className="w-10 h-10 rounded-xl flex items-center justify-center"
-          style={{ background: isDragActive ? 'var(--color-primary)' : 'var(--color-border)' }}
+          style={{ background: isDragReject ? 'var(--color-danger)' : isDragActive ? 'var(--color-primary)' : 'var(--color-border)' }}
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
             <path
               d="M10 13V4M6 8l4-4 4 4"
-              stroke={isDragActive ? 'white' : 'var(--color-text-2)'}
+              stroke={isDragActive || isDragReject ? 'white' : 'var(--color-text-2)'}
               strokeWidth="1.75"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
             <path
               d="M3 14v1a2 2 0 002 2h10a2 2 0 002-2v-1"
-              stroke={isDragActive ? 'white' : 'var(--color-text-2)'}
+              stroke={isDragActive || isDragReject ? 'white' : 'var(--color-text-2)'}
               strokeWidth="1.75"
               strokeLinecap="round"
             />
@@ -514,9 +550,9 @@ export function TranscribeForm({ onUpload }: Props) {
         <div className="flex flex-col items-center gap-1 text-center">
           <span
             className="text-sm font-medium"
-            style={{ color: isDragActive ? 'var(--color-primary)' : 'var(--color-text)' }}
+            style={{ color: isDragReject ? 'var(--color-danger)' : isDragActive ? 'var(--color-primary)' : 'var(--color-text)' }}
           >
-            {isDragActive ? 'Release to upload' : 'Drop a file here or click to browse'}
+            {isDragReject ? 'Unsupported format' : isDragActive ? 'Release to upload' : 'Drop a file here or click to browse'}
           </span>
           <span
             className="text-xs"

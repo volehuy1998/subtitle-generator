@@ -40,6 +40,38 @@ def _get_task_data(task_id: str) -> dict | None:
     return None
 
 
+@router.get("/search/{task_id}")
+async def search_subtitles(
+    task_id: str, request: Request, q: str = Query(..., min_length=1), limit: int = Query(20, ge=1, le=200)
+):
+    """Search within a transcription's segments for matching text."""
+    task_data = _get_task_data(task_id)
+    if task_data is None:
+        raise HTTPException(404, "Task not found")
+    check_task_access(task_data, request)
+    if task_data.get("status") != "done":
+        raise HTTPException(400, "Task not yet complete")
+
+    json_path = safe_path(OUTPUT_DIR / f"{task_id}.json", allowed_dir=OUTPUT_DIR)
+    if not json_path.exists():
+        raise HTTPException(404, "Output file not found")
+
+    with open(json_path, "r", encoding="utf-8") as f:
+        segments = json.load(f)
+
+    query_lower = q.lower()
+    matches = [s for s in segments if query_lower in s.get("text", "").lower()]
+
+    logger.info(f"SEARCH [{task_id[:8]}] query={q!r} found {len(matches)} match(es)")
+    log_task_event(task_id, "searched", query=q, total_matches=len(matches), limit=limit)
+    return {
+        "task_id": task_id,
+        "query": q,
+        "total_matches": len(matches),
+        "matches": matches[:limit],
+    }
+
+
 @router.get("/download/{task_id}")
 async def download(task_id: str, request: Request, format: Literal["srt", "vtt", "json"] = Query("srt")):
     task_data = _get_task_data(task_id)

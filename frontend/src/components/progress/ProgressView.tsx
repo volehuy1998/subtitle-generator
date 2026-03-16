@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useTaskStore } from '@/store/taskStore'
 import { useUIStore } from '@/store/uiStore'
+import { useToastStore } from '@/store/toastStore'
 import { useSSE } from '@/hooks/useSSE'
 import { api } from '@/api/client'
 import { PipelineSteps } from './PipelineSteps'
@@ -56,6 +57,9 @@ export function ProgressView({ taskId }: Props) {
   const { estimated_segments: estimatedSegments, current_segment: currentSegment, substage } = store
 
   const [showCancelDialog, setShowCancelDialog] = useState(false)
+  const [queuePosition, setQueuePosition] = useState<number | null>(null)
+  const [queueEta, setQueueEta] = useState<string | null>(null)
+  const addToast = useToastStore((s) => s.addToast)
 
   const isTranscribing = status === 'transcribing' && processedSec !== undefined && totalSec !== undefined && totalSec > 0
 
@@ -71,6 +75,40 @@ export function ProgressView({ taskId }: Props) {
   useEffect(() => {
     segmentsEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [liveSegments.length])
+
+  // Poll queue position when task is queued — Pixel (Sr. Frontend), Sprint L44
+  useEffect(() => {
+    if (status !== 'queued' || !taskId) {
+      setQueuePosition(null)
+      setQueueEta(null)
+      return
+    }
+    let cancelled = false
+    const poll = () => {
+      fetch(`/tasks/${taskId}/position`)
+        .then((r) => r.json())
+        .then((data: { position?: number; estimated_wait?: string }) => {
+          if (cancelled) return
+          setQueuePosition(data.position ?? null)
+          setQueueEta(data.estimated_wait ?? null)
+        })
+        .catch(() => {})
+    }
+    poll()
+    const interval = setInterval(poll, 5000)
+    return () => { cancelled = true; clearInterval(interval) }
+  }, [status, taskId])
+
+  // Copy all segments to clipboard — Pixel (Sr. Frontend), Sprint L43
+  const handleCopyAll = async () => {
+    const text = liveSegments.map((seg) => seg.text).join('\n')
+    try {
+      await navigator.clipboard.writeText(text)
+      addToast('success', 'Copied to clipboard')
+    } catch {
+      addToast('error', 'Failed to copy to clipboard')
+    }
+  }
 
   const handlePauseResume = async () => {
     store.setPauseRequesting(true)
@@ -366,6 +404,31 @@ export function ProgressView({ taskId }: Props) {
         </div>
       )}
 
+      {/* Queue position indicator — Pixel (Sr. Frontend), Sprint L44 */}
+      {status === 'queued' && (
+        <div
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg"
+          style={{ background: 'var(--color-surface-2)', border: '1px solid var(--color-border)' }}
+        >
+          <svg className="animate-spin flex-shrink-0" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <circle cx="7" cy="7" r="5.5" stroke="var(--color-border-2)" strokeWidth="1.5" />
+            <path d="M12.5 7a5.5 5.5 0 00-5.5-5.5" stroke="var(--color-primary)" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs font-medium" style={{ color: 'var(--color-text)' }}>
+              {queuePosition !== null && queuePosition > 0
+                ? `Queued — position ${queuePosition}`
+                : 'Queued — waiting to start'}
+            </span>
+            {queueEta && (
+              <span className="text-xs" style={{ color: 'var(--color-text-3)' }}>
+                Estimated wait: {queueEta}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Live subtitles panel */}
       {liveSegments.length > 0 && (() => {
         const maxVisible = 50
@@ -381,11 +444,34 @@ export function ProgressView({ taskId }: Props) {
               >
                 LIVE PREVIEW
               </span>
-              {liveSegments.length > maxVisible && (
-                <span className="text-xs" style={{ color: 'var(--color-text-3)' }}>
-                  Showing last {maxVisible} of {liveSegments.length} segments
-                </span>
-              )}
+              <div className="flex items-center gap-3">
+                {liveSegments.length > maxVisible && (
+                  <span className="text-xs" style={{ color: 'var(--color-text-3)' }}>
+                    Showing last {maxVisible} of {liveSegments.length} segments
+                  </span>
+                )}
+                {/* Copy All button — Pixel (Sr. Frontend), Sprint L43 */}
+                {isComplete && liveSegments.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleCopyAll}
+                    className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium border transition-colors"
+                    style={{
+                      background: 'var(--color-surface)',
+                      borderColor: 'var(--color-border)',
+                      color: 'var(--color-text-2)',
+                      cursor: 'pointer',
+                    }}
+                    title="Copy all segment text to clipboard"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                      <rect x="4" y="4" width="6.5" height="6.5" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none" />
+                      <path d="M8 4V2.5A1 1 0 007 1.5H2.5A1 1 0 001.5 2.5V7a1 1 0 001 1H4" stroke="currentColor" strokeWidth="1.2" fill="none" />
+                    </svg>
+                    Copy All
+                  </button>
+                )}
+              </div>
             </div>
             <div
               className="flex flex-col gap-1 overflow-y-auto rounded-lg p-3"
