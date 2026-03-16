@@ -1,4 +1,4 @@
-// @ts-nocheck
+/// <reference types="node" />
 /**
  * Responsive validation tests — Sprint L76
  *
@@ -9,7 +9,7 @@
  * — Pixel (Sr. Frontend Engineer)
  */
 
-import { describe, it, expect, beforeAll } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import fs from 'fs'
 import path from 'path'
 

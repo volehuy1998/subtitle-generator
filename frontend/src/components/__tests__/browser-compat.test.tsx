@@ -1,4 +1,4 @@
-// @ts-nocheck
+/// <reference types="node" />
 /**
  * Cross-browser validation tests — Sprint L77
  *
@@ -9,8 +9,7 @@
  * — Pixel (Sr. Frontend Engineer)
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect } from 'vitest'
 import fs from 'fs'
 import path from 'path'
 

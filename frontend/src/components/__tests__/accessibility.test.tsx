@@ -1,4 +1,4 @@
-// @ts-nocheck
+/// <reference types="node" />
 /**
  * Accessibility audit tests — Sprint L78
  *
@@ -9,8 +9,8 @@
  * — Pixel (Sr. Frontend Engineer)
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { describe, it, expect } from 'vitest'
+import { render, screen } from '@testing-library/react'
 import fs from 'fs'
 import path from 'path'
 
@@ -20,13 +20,10 @@ const readSource = (relPath: string) =>
 
 // ---- Component imports for render-based tests ----
 import { Button } from '../ui/Button'
-import { Badge } from '../ui/Badge'
 import { Input } from '../ui/Input'
 import { Select } from '../ui/Select'
 import { Dialog } from '../ui/Dialog'
 import { Icon } from '../ui/Icon'
-import { StatusIndicator } from '../ui/StatusIndicator'
-import { Tooltip } from '../ui/Tooltip'
 
 describe('L78: Accessibility — buttons have accessible names', () => {
   it('Button with text content has accessible name', () => {
