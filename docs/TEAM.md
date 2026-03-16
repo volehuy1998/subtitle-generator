@@ -418,12 +418,11 @@ Every new engineer must complete ALL of the following before they are assigned a
 | 2.2 | Atlas | **Create agent prompt template** — following the existing format: BACKGROUND, SKILLS, SCOPE, CHECKLIST, IDENTITY | Agent template written | Template in `docs/AGENT_TEMPLATES_*.md` |
 | 2.3 | Atlas | **Update `docs/AGENT_TEMPLATES_*.md`** — add engineer to the appropriate team file (team_structure.md or team_dvs.md) | Team file updated | `git diff` shows new entry |
 | 2.4 | Atlas | **Update `docs/TEAM.md`** — add to roster table, code ownership, profiles section, change log | TEAM.md updated | All 4 sections updated |
-| 2.5 | Atlas | **Update `CLAUDE.md`** — ensure memory index reflects the new team composition if needed | Memory synced | Index entry accurate |
-| 2.6 | Atlas | **Update local memory** — sync `~/.claude/projects/.../memory/` files | Local memory synced | Memory file updated |
-| 2.7 | Atlas | **Commit and push** — all changes in a single commit on an appropriate branch | Commit pushed | `git log` shows commit |
-| 2.8 | Atlas | **Create GitHub announcement issue** — introduce the new engineer publicly | Issue created | Issue URL recorded |
-| 2.9 | Atlas | **Update GitHub issue #112** — or create successor issue if #112 is closed | Org chart current | Issue reflects new headcount |
-| 2.10 | Atlas | **Verify consistency** — run final check that all artifacts match | Verification passed | Headcount matches everywhere |
+| 2.5 | Atlas | **Update `CLAUDE.md`** — ensure team roster and engineer count reflect the new composition | CLAUDE.md updated | Headcount accurate |
+| 2.6 | Atlas | **Commit and push** — all changes in a single commit on an appropriate branch | Commit pushed | `git log` shows commit |
+| 2.7 | Atlas | **Create GitHub announcement issue** — introduce the new engineer publicly | Issue created | Issue URL recorded |
+| 2.8 | Atlas | **Update GitHub issue #112** — or create successor issue if #112 is closed | Org chart current | Issue reflects new headcount |
+| 2.9 | Atlas | **Verify consistency** — run final check that all artifacts match | Verification passed | Headcount matches everywhere |
 
 ### Phase 3 — Activation (First Task)
 
@@ -459,8 +458,8 @@ Every new engineer must complete ALL of the following before they are assigned a
 
 | Action | Steps |
 |--------|-------|
-| **Remove engineer** | Remove from TEAM.md roster + profile, remove from `docs/AGENT_TEMPLATES_*.md`, update MEMORY.md, update org chart issue, commit + push, add to TEAM.md change log |
-| **Change role** | Update role in all locations (TEAM.md, docs/, memory), update agent prompt template scope/checklist, add to TEAM.md change log |
+| **Remove engineer** | Remove from TEAM.md roster + profile, remove from `docs/AGENT_TEMPLATES_*.md`, update CLAUDE.md, update org chart issue, commit + push, add to TEAM.md change log |
+| **Change role** | Update role in all locations (TEAM.md, CLAUDE.md, docs/), update agent prompt template scope/checklist, add to TEAM.md change log |
 | **Transfer between teams** | Full offboarding from source team + full onboarding to target team |
 
 ### Why This Process Exists
