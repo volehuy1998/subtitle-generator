@@ -359,6 +359,8 @@ def process_video(
         from app import state as _state
 
         _model_cached = (model_size, device) in _state.loaded_models
+
+        # Sprint L11: Sub-stage SSE — loading_model substage — Forge (Sr. Backend Engineer)
         task["message"] = (
             f"Starting transcription with {model_size} model..."
             if _model_cached
@@ -373,9 +375,12 @@ def process_video(
             "step_change",
             {
                 "step": 2,
-                "status": "transcribing",
+                "status": "loading_model",
+                "substage": "loading_model",
                 "percent": 15,
-                "message": task["message"],
+                "message": f"Loading {model_size} model..."
+                if not _model_cached
+                else f"Loading {model_size} model (cached)...",
                 "step_timing": task["step_timing"],
                 "step_started_at": _time.time(),
                 "model_size": model_size,
@@ -401,7 +406,22 @@ def process_video(
             raise CancelledError("Task cancelled by user")
         _check_critical(task_id)
 
+        # Sprint L11: Sub-stage SSE — transcribing substage — Forge (Sr. Backend Engineer)
         task["message"] = f"Transcribing on {device.upper()} ({model_size} model, {compute_type})..."
+        emit_event(
+            task_id,
+            "step_change",
+            {
+                "step": 2,
+                "status": "transcribing",
+                "substage": "transcribing",
+                "percent": 15,
+                "message": task["message"],
+                "step_started_at": _time.time(),
+                "model_size": model_size,
+                "device": device.upper(),
+            },
+        )
 
         # Step 4: Transcribe
         with StepTimer(task_id, "transcribe", task_log_func=log_task_event) as step_transcribe:

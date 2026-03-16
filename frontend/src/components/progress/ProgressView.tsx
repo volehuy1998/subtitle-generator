@@ -36,10 +36,11 @@ export function ProgressView({ taskId }: Props) {
     filename, fileSize, status, percent, message, isPaused,
     isPauseRequesting, isCancelRequesting,
     isComplete, activeStep, stepTimings, liveSegments, warning,
-    isUploading, uploadPercent,
+    isUploading, uploadPercent, uploadEta,
   } = store
 
   const { processed_sec: processedSec, total_sec: totalSec, speed_x: speedX, eta, elapsed } = store
+  const { estimated_segments: estimatedSegments, current_segment: currentSegment, substage } = store
 
   const [showCancelDialog, setShowCancelDialog] = useState(false)
 
@@ -93,6 +94,8 @@ export function ProgressView({ taskId }: Props) {
     isCancelRequesting ? 'Cancelling...' :
     isPaused ? 'Paused' :
     isPauseRequesting ? 'Pausing after current segment...' :
+    substage === 'loading_model' ? 'Loading model...' :
+    substage === 'transcribing' ? 'Transcribing audio...' :
     message
 
   // Pause button label
@@ -209,9 +212,11 @@ export function ProgressView({ taskId }: Props) {
         {/* Status / percent row */}
         <div className="flex items-center justify-between">
           <span className="text-xs" style={{ color: statusColor }}>
-            {isTranscribing && !isPaused && !isCancelRequesting
-              ? 'Transcribing audio...'
-              : statusText}
+            {isUploading && uploadEta
+              ? `Uploading... ${uploadEta} remaining`
+              : isTranscribing && !isPaused && !isCancelRequesting
+                ? 'Transcribing audio...'
+                : statusText}
           </span>
           <span
             className="text-xs font-semibold tabular-nums"
@@ -288,7 +293,7 @@ export function ProgressView({ taskId }: Props) {
             )}
 
             {/* Segments found */}
-            {liveSegments.length > 0 && (
+            {(liveSegments.length > 0 || (currentSegment && currentSegment > 0)) && (
               <div className="flex items-center gap-1" title="Number of subtitle segments (sentences or phrases) detected so far.">
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
                   <rect x="1" y="2" width="8" height="1.5" rx="0.5" fill="var(--color-text-3)" />
@@ -296,7 +301,9 @@ export function ProgressView({ taskId }: Props) {
                   <rect x="1" y="7" width="7" height="1.5" rx="0.5" fill="var(--color-text-3)" />
                 </svg>
                 <span className="text-xs tabular-nums" style={{ color: 'var(--color-text-3)', cursor: 'help' }}>
-                  {liveSegments.length} segments
+                  {currentSegment && estimatedSegments
+                    ? `${currentSegment} of ~${estimatedSegments} segments`
+                    : `${liveSegments.length} segments`}
                 </span>
               </div>
             )}
@@ -320,40 +327,65 @@ export function ProgressView({ taskId }: Props) {
       )}
 
       {/* Live subtitles panel */}
-      {liveSegments.length > 0 && (
-        <div className="flex flex-col gap-1.5">
-          <span
-            className="text-xs font-semibold tracking-wider"
-            style={{ color: 'var(--color-text-2)', letterSpacing: '0.07em' }}
-          >
-            LIVE PREVIEW
-          </span>
-          <div
-            className="flex flex-col gap-1 overflow-y-auto rounded-lg p-3"
-            role="log"
-            aria-live="polite"
-            aria-label="Live subtitle preview"
-            style={{
-              maxHeight: '200px',
-              background: 'var(--color-surface-2)',
-              border: '1px solid var(--color-border)',
-            }}
-          >
-            {liveSegments.map((seg, i) => (
-              <div key={i} className="flex items-start gap-2 text-xs">
-                <span
-                  className="font-mono flex-shrink-0"
-                  style={{ color: 'var(--color-primary)', fontSize: '11px' }}
-                >
-                  {formatTimestamp(seg.start)}
+      {liveSegments.length > 0 && (() => {
+        const maxVisible = 50
+        const visibleSegments = liveSegments.length > maxVisible
+          ? liveSegments.slice(-maxVisible)
+          : liveSegments
+        return (
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <span
+                className="text-xs font-semibold tracking-wider"
+                style={{ color: 'var(--color-text-2)', letterSpacing: '0.07em' }}
+              >
+                LIVE PREVIEW
+              </span>
+              {liveSegments.length > maxVisible && (
+                <span className="text-xs" style={{ color: 'var(--color-text-3)' }}>
+                  Showing last {maxVisible} of {liveSegments.length} segments
                 </span>
-                <span style={{ color: 'var(--color-text)' }}>{seg.text}</span>
-              </div>
-            ))}
-            <div ref={segmentsEndRef} />
+              )}
+            </div>
+            <div
+              className="flex flex-col gap-1 overflow-y-auto rounded-lg p-3"
+              role="log"
+              aria-live="polite"
+              aria-label="Live subtitle preview"
+              style={{
+                maxHeight: '200px',
+                background: 'var(--color-surface-2)',
+                border: '1px solid var(--color-border)',
+              }}
+            >
+              {visibleSegments.map((seg, i) => (
+                <div key={i} className="flex items-start gap-2 text-xs">
+                  <span
+                    className="font-mono flex-shrink-0"
+                    style={{ color: 'var(--color-primary)', fontSize: '11px' }}
+                  >
+                    {formatTimestamp(seg.start)}
+                  </span>
+                  <span
+                    title={seg.text}
+                    style={{
+                      color: 'var(--color-text)',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical' as const,
+                      overflow: 'hidden',
+                      wordBreak: 'break-word',
+                    }}
+                  >
+                    {seg.text}
+                  </span>
+                </div>
+              ))}
+              <div ref={segmentsEndRef} />
+            </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* Task controls (hide during upload) */}
       {isActive && !isUploading && (

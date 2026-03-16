@@ -67,6 +67,10 @@ def transcribe_with_progress(
     profiler.total_frames = total_frames
     task["transcription_profiler"] = profiler
 
+    # Estimate segment count: ~1 segment per 4 seconds of speech — Forge (Sr. Backend Engineer)
+    estimated_segments = max(1, int(total_duration / 4.0)) if total_duration > 0 else 0
+    task["estimated_segments"] = estimated_segments
+
     emit_event(
         task_id,
         "transcribe_start",
@@ -74,6 +78,7 @@ def transcribe_with_progress(
             "total_frames": total_frames,
             "audio_duration_sec": round(total_duration, 1),
             "word_timestamps": word_timestamps,
+            "estimated_segments": estimated_segments,
         },
     )
 
@@ -171,8 +176,15 @@ def transcribe_with_progress(
             ),
         }
 
+        progress_data["current_segment"] = seg_count
+        progress_data["estimated_segments"] = estimated_segments
+
         task.update(progress_data)
         emit_event(task_id, "progress", progress_data)
-        emit_event(task_id, "segment", {"segment": seg_preview, "segment_count": seg_count})
+        emit_event(
+            task_id,
+            "segment",
+            {"segment": seg_preview, "segment_count": seg_count, "estimated_segments": estimated_segments},
+        )
 
     return {"segments": all_segments, "language": info.language}

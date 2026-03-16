@@ -53,12 +53,20 @@ export interface TaskState {
   // Warning
   warning: string | null
 
+  // Upload ETA
+  uploadEta?: string
+
   // SSE transcription progress fields (populated by applyProgressData)
   processed_sec?: number
   total_sec?: number
   speed_x?: number
   eta?: string
   elapsed?: string
+
+  // Segment estimation + substage
+  estimated_segments?: number
+  current_segment?: number
+  substage?: string
 
   // Phase Lumen: liveness tracking
   lastEventTime: number
@@ -68,6 +76,7 @@ interface TaskActions {
   setTaskId: (id: string) => void
   setUploading: (uploading: boolean, percent?: number) => void
   setUploadPercent: (percent: number) => void
+  setUploadEta: (eta: string) => void
   applyProgressData: (data: Partial<TaskState>) => void
   addSegment: (seg: SegmentEvent) => void
   setLiveSegments: (segs: LiveSegment[]) => void
@@ -93,7 +102,9 @@ const initial: TaskState = {
   liveSegments: [],
   downloadReady: false, embedDownloadUrl: null,
   warning: null,
+  uploadEta: undefined,
   processed_sec: undefined, total_sec: undefined, speed_x: undefined, eta: undefined, elapsed: undefined,
+  estimated_segments: undefined, current_segment: undefined, substage: undefined,
   lastEventTime: Date.now(),
 }
 
@@ -105,6 +116,8 @@ export const useTaskStore = create<TaskState & TaskActions>((set) => ({
   setUploading: (uploading, percent) => set({ isUploading: uploading, uploadPercent: percent ?? 0 }),
 
   setUploadPercent: (percent) => set({ uploadPercent: percent }),
+
+  setUploadEta: (eta) => set({ uploadEta: eta }),
 
   applyProgressData: (data) => set((s) => ({ ...s, ...data, lastEventTime: Date.now() })),
 

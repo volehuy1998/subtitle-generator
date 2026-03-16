@@ -306,3 +306,46 @@
 **Phase transition:** Foundation (L1-L10) → Performance (L11-L20) now in progress.
 
 ---
+
+## Sprint L11: Performance UX — Segment Prediction, Upload ETA, Virtualization (2026-03-16)
+
+**Goal:** Improve real-time UX during transcription: segment count prediction, upload ETA, sub-stage indicators, segment list performance.
+
+**Delivered:**
+
+### Backend (Forge)
+- **Segment count prediction** (`transcription.py`):
+  - Heuristic: `estimated_segments = max(1, int(audio_duration / 4.0))` (~1 per 4s)
+  - `estimated_segments` + `current_segment` added to progress and segment SSE events
+  - Frontend can now show "Segment 14 of ~29"
+- **Sub-stage SSE events** (`pipeline.py`):
+  - Step 2 now emits `substage: "loading_model"` before model load
+  - Emits `substage: "transcribing"` after model loaded, before transcription
+  - Enables frontend to distinguish "Loading model..." from "Transcribing audio..."
+
+### Frontend (Pixel)
+- **Upload ETA** (`App.tsx` + `taskStore.ts`):
+  - Tracks upload start time, calculates speed and remaining time per progress event
+  - Shows "Uploading... ~15s remaining" during upload phase
+- **Segment list virtualization** (`ProgressView.tsx`):
+  - Only renders last 50 segments (prevents DOM thrashing on 500+ segment files)
+  - "Showing last 50 of {total} segments" indicator when truncated
+- **Segment text truncation** (`ProgressView.tsx`):
+  - 2-line clamp with ellipsis overflow, word-break handling
+  - Full text on hover via title attribute
+- **Estimated segments + substage display** (`taskStore.ts` + `ProgressView.tsx`):
+  - Shows "X of ~Y segments" during transcription
+  - Status text respects substage for model loading vs transcribing
+
+### Tests (Scout) — 41 new tests
+- `test_progress_events.py`:
+  - Pipeline progress events (15 tests)
+  - Segment event structure (10 tests)
+  - Profiler & ETA (10 tests)
+  - Event queue management (5 tests)
+  - Cancel and error events (1 test)
+
+**Tests added:** 41
+**Running total:** 2067 + 41 = **2108**
+
+---

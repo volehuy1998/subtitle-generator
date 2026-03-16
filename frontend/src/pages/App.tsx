@@ -107,11 +107,27 @@ export function App() {
       fd.append('translate_to', opts.translateTo)
     }
 
+    const uploadStartTime = Date.now()
     try {
       const { promise } = api.uploadWithProgress(fd, (pct) => {
         store.setUploadPercent(pct)
+        // Calculate upload ETA
+        let etaText = ''
+        if (pct > 0 && pct < 100) {
+          const elapsed = (Date.now() - uploadStartTime) / 1000
+          const speed = (pct / 100) / elapsed  // fraction per second
+          if (speed > 0) {
+            const remainingSec = Math.ceil(((100 - pct) / 100) / speed)
+            etaText = remainingSec >= 60
+              ? `~${Math.floor(remainingSec / 60)}m ${remainingSec % 60}s`
+              : `~${remainingSec}s`
+          }
+        }
+        store.setUploadEta(etaText)
         store.applyProgressData({
-          message: pct < 100 ? `Uploading… ${pct}%` : 'Upload complete, starting processing…',
+          message: pct < 100
+            ? `Uploading… ${pct}%${etaText ? ` — ${etaText} remaining` : ''}`
+            : 'Upload complete, starting processing…',
           percent: pct,
         })
       })
