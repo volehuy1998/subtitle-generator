@@ -1,6 +1,6 @@
 # Phase Lumen — Design System
 
-> **Version:** 1.0 · **Owner:** Pixel (Sr. Frontend Engineer) · **Reference:** Microsoft 365, Claude AI, Google Workspace
+> **Version:** 2.0 · **Owner:** Pixel (Sr. Frontend Engineer) · **Reference:** Microsoft 365, Claude AI, Google Workspace
 
 ---
 
@@ -141,3 +141,48 @@ transition: border-color 0.15s;
 border-color: var(--color-primary);
 box-shadow: 0 0 0 3px var(--color-primary-light);
 ```
+
+---
+
+## Component Library
+
+All reusable UI components live in `frontend/src/components/ui/`. Each component follows the design tokens defined above and supports consistent sizing, spacing, and color usage.
+
+| Component | File | Description |
+|-----------|------|-------------|
+| **Badge** | `Badge.tsx` | Status labels and tags with color variants (success, warning, danger, neutral). Uses `--radius-xs` for compact pill shape. |
+| **Button** | `Button.tsx` | Primary, secondary, ghost, and danger variants. Supports disabled state, loading spinner, and icon slots. |
+| **Card** | `Card.tsx` | Container with surface background, border, and shadow. Supports header, body, and footer slots. |
+| **Dialog** | `Dialog.tsx` | Modal overlay with backdrop, title, body, and action buttons. Confirmation dialogs use this as base. |
+| **Icon** | `Icon.tsx` | SVG icon wrapper with consistent sizing (sm/md/lg) and color inheritance from parent text color. |
+| **Input** | `Input.tsx` | Text input with label, placeholder, error state, and focus ring. Integrates with form validation. |
+| **Select** | `Select.tsx` | Dropdown select with custom styling matching Input. Supports option groups and disabled state. |
+| **Skeleton** | `Skeleton.tsx` | Loading placeholder with pulse animation. Available as line, circle, and rectangle variants. |
+| **StatusIndicator** | `StatusIndicator.tsx` | Colored dot indicator for health/connection status (healthy, warning, critical, unknown). |
+| **ToastContainer** | `ToastContainer.tsx` | Notification toast system with auto-dismiss. Supports success, error, warning, and info types. |
+| **Tooltip** | `Tooltip.tsx` | Hover-triggered tooltip with configurable placement (top, bottom, left, right). |
+
+**Utility:**
+
+| File | Description |
+|------|-------------|
+| `cn.ts` | Class name merge utility (combines Tailwind classes with conflict resolution). |
+
+---
+
+## Dark Mode Color Tokens
+
+While Phase Lumen is light-first by design, dark mode tokens are defined for future use and for components that render in dark contexts (e.g., code blocks, terminal output).
+
+| Token | Light Value | Dark Value | Usage |
+|-------|-------------|------------|-------|
+| `--color-bg` | `#FFFFFF` | `#0F172A` | Page background |
+| `--color-surface` | `#F8FAFC` | `#1E293B` | Card/panel backgrounds |
+| `--color-surface-2` | `#F1F5F9` | `#334155` | Elevated surfaces |
+| `--color-border` | `#E2E8F0` | `#334155` | Subtle borders |
+| `--color-border-2` | `#CBD5E1` | `#475569` | Emphasis borders |
+| `--color-text` | `#0F172A` | `#F8FAFC` | Primary text |
+| `--color-text-2` | `#475569` | `#CBD5E1` | Secondary text |
+| `--color-text-3` | `#94A3B8` | `#64748B` | Muted text |
+
+Dark mode is toggled via a `data-theme="dark"` attribute on the root `<html>` element. All design tokens resolve through CSS custom properties, so switching themes requires no component changes.

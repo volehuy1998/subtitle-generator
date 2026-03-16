@@ -788,3 +788,35 @@
 **Running total:** 2738 + 60 = **2798**
 
 ---
+
+## Sprints L37-L40: Final Components + Health + Integration (2026-03-16)
+
+**Goal:** Complete component library, enhance health monitoring, final integration tests.
+
+**Delivered:**
+
+### L37: Input + Select (Pixel)
+- `Input.tsx`: Label, error, helperText, all design tokens
+- `Select.tsx`: Label, options array, placeholder, error, custom chevron
+
+### L38: Divider (Pixel)
+- `Divider.tsx`: Horizontal rule with optional centered label, 3 spacing sizes
+
+### L39: Component Health (Forge)
+- `GET /health/components`: Per-component status (database, ffmpeg, ffprobe, models, storage, translation)
+- Disk space thresholds: critical <100MB, warning <1GB
+- Overall status derived from worst component
+
+### L40: Design System Docs (Forge)
+- `DESIGN_SYSTEM.md` v2.0: Component Library table (11 components), Dark Mode tokens section
+
+### Tests (Scout) — 62 new tests
+- `test_component_health.py` (31): Component health endpoint, health monitoring
+- `test_final_integration.py` (31): End-to-end flow, cross-cutting concerns
+
+**Tests added:** 62
+**Running total:** 2798 + 62 = **2860**
+
+**DESIGN SYSTEM PHASE COMPLETE (L21-L40)**
+
+---

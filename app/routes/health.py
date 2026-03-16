@@ -102,6 +102,84 @@ async def ready(response: Response):
     }
 
 
+@router.get("/health/components")
+async def component_health():
+    """Detailed per-component health status.
+
+    Returns individual health status for each critical subsystem:
+    database, ffmpeg, ffprobe, models, storage, and translation.
+    Overall status is derived from the worst component status.
+    """
+    components = {}
+
+    # Database check
+    try:
+        from app.services.query_layer import check_db_health
+
+        db_result = await check_db_health()
+        db_ok = db_result.get("ok", False)
+        components["database"] = {
+            "status": "healthy" if db_ok else "unhealthy",
+            "latency_ms": db_result.get("latency_ms"),
+        }
+    except Exception as e:
+        components["database"] = {"status": "unhealthy", "error": str(e)}
+
+    # FFmpeg check
+    from app.config import FFMPEG_AVAILABLE, FFPROBE_AVAILABLE
+
+    components["ffmpeg"] = {"status": "healthy" if FFMPEG_AVAILABLE else "unavailable"}
+    components["ffprobe"] = {"status": "healthy" if FFPROBE_AVAILABLE else "unavailable"}
+
+    # Model status
+    models_loaded = len(state.loaded_models)
+    components["models"] = {
+        "status": "healthy",
+        "loaded_count": models_loaded,
+        "preload": state.model_preload,
+    }
+
+    # Storage / disk space
+    try:
+        usage = shutil.disk_usage(str(UPLOAD_DIR))
+        free_gb = usage.free / (1024**3)
+        total_gb = usage.total / (1024**3)
+        if free_gb < 0.1:
+            disk_status = "critical"
+        elif free_gb < 1:
+            disk_status = "warning"
+        else:
+            disk_status = "healthy"
+        components["storage"] = {
+            "status": disk_status,
+            "free_gb": round(free_gb, 2),
+            "total_gb": round(total_gb, 2),
+            "used_percent": round((usage.used / usage.total) * 100, 1) if usage.total else None,
+        }
+    except Exception:
+        components["storage"] = {"status": "unknown"}
+
+    # Translation models
+    translation_count = len(state.translation_models)
+    components["translation"] = {
+        "status": "healthy",
+        "loaded_pairs": translation_count,
+    }
+
+    # Overall status
+    overall = "healthy"
+    if any(c.get("status") == "critical" for c in components.values()):
+        overall = "critical"
+    elif any(c.get("status") in ("unhealthy", "warning") for c in components.values()):
+        overall = "degraded"
+
+    return {
+        "status": overall,
+        "components": components,
+        "uptime_sec": round(time.time() - _start_time, 1),
+    }
+
+
 @router.get("/api/model-status")
 async def model_status():
     """Get model preload and per-model readiness for frontend display.
