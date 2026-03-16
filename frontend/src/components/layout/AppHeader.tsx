@@ -9,7 +9,58 @@
 
 import { useState, useEffect } from 'react'
 import { useUIStore } from '@/store/uiStore'
+import { useTheme } from '@/hooks/useTheme'
+import type { Theme } from '@/hooks/useTheme'
 import type { HealthStatus } from '@/api/types'
+
+/** Sun icon — shown in dark mode (click to go light) — Pixel (Sr. Frontend), Sprint L30 */
+function SunIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="1" x2="12" y2="3"/>
+      <line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/>
+      <line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+  )
+}
+
+/** Moon icon — shown in light mode (click to go dark) — Pixel (Sr. Frontend), Sprint L30 */
+function MoonIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+  )
+}
+
+/** Monitor icon — shown in system mode — Pixel (Sr. Frontend), Sprint L30 */
+function MonitorIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+      <line x1="8" y1="21" x2="16" y2="21"/>
+      <line x1="12" y1="17" x2="12" y2="21"/>
+    </svg>
+  )
+}
+
+function ThemeIcon({ theme }: { theme: Theme }) {
+  if (theme === 'dark') return <SunIcon />
+  if (theme === 'light') return <MoonIcon />
+  return <MonitorIcon />
+}
+
+const themeLabels: Record<Theme, string> = {
+  system: 'System theme',
+  dark: 'Dark mode (click for light)',
+  light: 'Light mode (click for system)',
+}
 
 function HealthDot({ status }: { status: HealthStatus['status'] | null }) {
   if (status === 'ok' || status === 'healthy') return (
@@ -41,6 +92,7 @@ function HealthDot({ status }: { status: HealthStatus['status'] | null }) {
 
 export function AppHeader() {
   const { healthPanelOpen, setHealthPanelOpen, health } = useUIStore()
+  const { theme, cycleTheme } = useTheme()
 
   // Re-render on SPA navigation so active link underline stays correct
   const [currentPath, setCurrentPath] = useState(typeof window !== 'undefined' ? window.location.pathname : '/')
@@ -163,6 +215,28 @@ export function AppHeader() {
 
       {/* Spacer — pushes health to right */}
       <div className="flex-1" />
+
+      {/* Theme toggle — Pixel (Sr. Frontend), Sprint L30 */}
+      <button
+        type="button"
+        onClick={cycleTheme}
+        aria-label={themeLabels[theme]}
+        title={themeLabels[theme]}
+        className="flex items-center justify-center rounded-lg transition-colors"
+        style={{
+          width: '32px',
+          height: '32px',
+          color: 'var(--color-text-2)',
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          marginRight: '4px',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-2)'; e.currentTarget.style.color = 'var(--color-text)' }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-2)' }}
+      >
+        <ThemeIcon theme={theme} />
+      </button>
 
       {/* Health indicator — simplified dot + label, right */}
       <button

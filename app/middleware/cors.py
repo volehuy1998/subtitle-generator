@@ -24,3 +24,6 @@ CORS_ALLOW_HEADERS = [
     "Origin",
     "X-API-Key",
 ]
+CORS_EXPOSE_HEADERS = [
+    "X-API-Version",
+]

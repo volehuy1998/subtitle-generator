@@ -727,3 +727,36 @@
 **Running total:** 2582 + 87 = **2669**
 
 ---
+
+## Sprints L29-L32: Dark Mode + API Versioning (2026-03-16)
+
+**Goal:** Add dark mode theme system and enhance API organization.
+
+**Delivered:**
+
+### L29: Dark Mode CSS (Pixel)
+- 22 dark-variant CSS custom properties (`--color-bg: #0F172A`, etc.)
+- `@media (prefers-color-scheme: dark)` with `data-theme` override
+- Slate scale backgrounds, indigo primary, adjusted semantic colors
+
+### L30: Theme Toggle (Pixel)
+- `useTheme.ts` hook: light/dark/system with localStorage persistence
+- Toggle button in AppHeader: sun/moon/monitor icons, cycles through modes
+- `data-theme` attribute on `<html>` for manual override
+
+### L31: API Version Header (Forge)
+- `VersionHeaderMiddleware`: `X-API-Version` header on all responses
+- Exposed in CORS for cross-origin access
+
+### L32: OpenAPI Tags (Forge)
+- Extended from 9→18 tag descriptions covering all route modules
+- Tags added to `logs.py` route
+
+### Tests (Scout) — 69 new tests
+- `test_api_versioning.py` (39): Version header, OpenAPI tags, API consistency
+- `test_theme_support.py` (30): CSS variables, HTML structure, response quality
+
+**Tests added:** 69
+**Running total:** 2669 + 69 = **2738**
+
+---

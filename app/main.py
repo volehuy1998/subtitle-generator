@@ -347,8 +347,17 @@ def create_app() -> FastAPI:
         {"name": "Tasks", "description": "Task queue management, retry, deduplication"},
         {"name": "Subtitles", "description": "Subtitle viewing and editing"},
         {"name": "Embedding", "description": "Embed subtitles into video files"},
+        {"name": "Combine", "description": "Combine external video and subtitle files"},
+        {"name": "Translation", "description": "Language translation for subtitles"},
         {"name": "Analytics", "description": "Usage analytics, charts, and data export"},
         {"name": "System", "description": "Health checks, system info, metrics"},
+        {"name": "Status", "description": "Public status page and incident tracking"},
+        {"name": "Monitoring", "description": "System monitoring and observability"},
+        {"name": "Auth", "description": "Authentication and API key management"},
+        {"name": "Admin", "description": "Administrative log viewing and management"},
+        {"name": "Logs", "description": "Application and task log viewing"},
+        {"name": "Query", "description": "Advanced task querying and filtering"},
+        {"name": "Tracking", "description": "Request and event tracking"},
         {"name": "User", "description": "Feedback, sessions, webhooks"},
     ]
 
@@ -414,7 +423,7 @@ def create_app() -> FastAPI:
     # CORS
     from starlette.middleware.cors import CORSMiddleware
 
-    from app.middleware.cors import CORS_ALLOW_HEADERS, CORS_ALLOW_METHODS, get_cors_origins
+    from app.middleware.cors import CORS_ALLOW_HEADERS, CORS_ALLOW_METHODS, CORS_EXPOSE_HEADERS, get_cors_origins
 
     app.add_middleware(
         CORSMiddleware,
@@ -422,7 +431,13 @@ def create_app() -> FastAPI:
         allow_credentials=True,
         allow_methods=CORS_ALLOW_METHODS,
         allow_headers=CORS_ALLOW_HEADERS,
+        expose_headers=CORS_EXPOSE_HEADERS,
     )
+
+    # API version header on all responses — Forge (Sr. Backend Engineer), Sprint L31
+    from app.middleware.version import VersionHeaderMiddleware
+
+    app.add_middleware(VersionHeaderMiddleware, version=app.version)
 
     # GZip compression (outermost, compresses all responses)
     if ENABLE_COMPRESSION:
