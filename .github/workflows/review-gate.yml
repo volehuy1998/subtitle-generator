@@ -66,10 +66,15 @@ jobs:
           fi
 
           # Write comments JSON to temp files for Python to read
+          # Use --jq to flatten paginated arrays into a single JSON array
+          echo '[' > /tmp/issue_comments.json
           gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
-            --paginate 2>/dev/null > /tmp/issue_comments.json || echo "[]" > /tmp/issue_comments.json
+            --paginate --jq '.[] | @json' 2>/dev/null | paste -sd',' >> /tmp/issue_comments.json || true
+          echo ']' >> /tmp/issue_comments.json
+          echo '[' > /tmp/pr_reviews.json
           gh api "repos/${REPO}/pulls/${PR_NUMBER}/reviews" \
-            --paginate 2>/dev/null > /tmp/pr_reviews.json || echo "[]" > /tmp/pr_reviews.json
+            --paginate --jq '.[] | @json' 2>/dev/null | paste -sd',' >> /tmp/pr_reviews.json || true
+          echo ']' >> /tmp/pr_reviews.json
 
           echo "::endgroup::"
 
