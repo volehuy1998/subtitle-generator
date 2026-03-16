@@ -531,25 +531,46 @@ Three pillars:
 
 ---
 
-## Project Status (as of 2026-03-15)
+## Project Status (as of 2026-03-17)
 
 ### Completed
-- 30 sprints complete (1328 tests, CI green)
+- 30 legacy sprints (S1-S30) + 80 Lumen sprints (L1-L80) = 110 sprints complete
+- 3,667 tests passing (3,295 backend + 372 frontend), CI green
 - v2.3.0 released
-- 0 open PRs, 0 open issues
+- Phase Lumen integration + hardening complete (L61-L80):
+  - `process_video()` refactored into 8 step functions with `_PipelineContext` dataclass
+  - Backend test gaps closed: audit HMAC, brute force, quarantine, S3, pub/sub, Redis, model manager, slow query, session, rate limiting
+  - Frontend test coverage: 372 tests across 27 files (stores, hooks, UI primitives, components, responsive, cross-browser, WCAG 2.1 AA accessibility)
+  - E2E tests: 129 Playwright tests (upload flow, embed flow, SPA navigation)
 - Team Sentinel (12) + DVS (6) fully operational
-- CI pipeline: lint, test, CodeQL, secret scan, PR attributes, memory backup, deploy validation, consistency checks
-- Docs-only PRs skip full CI (instant pass via stub jobs)
-- All Meridian references removed from repo
+- CI pipeline: lint, test, CodeQL, secret scan, PR attributes, deploy validation, consistency checks
+
+### Current Deployment
+- **openlabs.club** — production (container: `subforge-prod`, port 8000, old interface)
+- **newui.openlabs.club** — Lumen preview (container: `subtitle-generator-newui`, port 8001, `PRELOAD_MODEL=large`)
+- Both are on **localhost** (hostname: `subtitle-generator-engine`, IP: `124.197.31.48`)
+- Nginx reverse proxies both domains to their respective containers
+- Docker requires `sudo` (user `claude-user` not in docker group)
+- Deploy newui: `sudo docker compose --profile newui up -d --build --force-recreate`
+- Deploy prod: `sudo docker compose --profile cpu up -d --build` (ONLY after investor approves newui)
+- **NEVER touch prod when deploying newui** — always update newui first, promote after approval
+
+### Deployment Flow (MANDATORY)
+1. Code changes → merge to main
+2. Rebuild newui container only: `sudo docker compose --profile newui up -d --build --force-recreate`
+3. Verify: `curl -s http://127.0.0.1:8001/health`
+4. Investor reviews on `newui.openlabs.club`
+5. If approved → rebuild prod: `sudo docker compose --profile cpu up -d --build`
+6. **NEVER** deploy directly to prod without investor approval on newui first
 
 ### Open Work (Backlog)
 - Distributed deployment (5-server plan — not started)
 - API key hash migration (blocker for prod deploy)
 - Pin TruffleHog action SHA
-- `process_video()` refactoring (514 lines → step functions)
 - SLOs definition
 - mypy/pyright in CI
 - 7 CodeQL residual annotations from PR #86
+- review-gate.yml pagination bug (--paginate produces concatenated JSON arrays)
 
 ---
 
