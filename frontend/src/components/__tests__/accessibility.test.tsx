@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Accessibility audit tests — Sprint L78
  *

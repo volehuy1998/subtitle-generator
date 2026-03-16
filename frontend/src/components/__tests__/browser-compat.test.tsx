@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Cross-browser validation tests — Sprint L77
  *

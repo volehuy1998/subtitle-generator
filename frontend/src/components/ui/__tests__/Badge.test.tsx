@@ -15,7 +15,7 @@ describe('Badge', () => {
     // First inner span is the dot
     const dotSpan = spans[0]
     expect(dotSpan).toBeInTheDocument()
-    expect(dotSpan.style.borderRadius).toBe('50%')
+    expect((dotSpan as HTMLElement).style.borderRadius).toBe('50%')
   })
 
   it('dot=false renders no dot', () => {

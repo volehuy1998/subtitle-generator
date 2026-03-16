@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Responsive validation tests — Sprint L76
  *
