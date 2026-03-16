@@ -699,3 +699,31 @@
 **Running total:** 2522 + 60 = **2582**
 
 ---
+
+## Sprints L25-L28: Component Library + Icon System (2026-03-16)
+
+**Goal:** Build reusable UI primitives for the component library.
+
+**Delivered:**
+
+### L25: Badge Component (Pixel)
+- `Badge.tsx`: 5 variants (default/success/warning/danger/info), 2 sizes, optional dot indicator
+
+### L26: StatusIndicator (Pixel)
+- `StatusIndicator.tsx`: 5 statuses (online/offline/warning/loading/idle), pulse animation, label
+
+### L27: Icon System (Prism)
+- `Icon.tsx`: 11 SVG icons (check, x, warning, download, upload, trash, play, pause, settings, info), customizable size
+
+### L28: Button Component (Prism)
+- `Button.tsx`: 4 variants (primary/secondary/danger/ghost), 3 sizes, loading spinner, icon slot
+- `@keyframes spin` added to index.css
+
+### Tests (Scout) — 87 new tests
+- `test_embed_endpoints.py` (39): Embed presets, quick embed, combine status/download, style validation
+- `test_auth_security.py` (48): No-auth access, session cookies, path traversal, filename sanitization, security headers, brute force, audit log, file extension security
+
+**Tests added:** 87
+**Running total:** 2582 + 87 = **2669**
+
+---

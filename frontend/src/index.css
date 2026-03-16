@@ -261,6 +261,11 @@ input:focus-visible {
   }
 }
 
+/* Button spinner — Prism (UI/UX), Sprint L28 */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Print styles — Prism (UI/UX), Sprint L24 */
 @media print {
   header, footer, nav, .health-panel, .btn-interactive {
