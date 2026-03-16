@@ -129,11 +129,12 @@ export function ProgressView({ taskId }: Props) {
     : 0
 
   return (
-    <div className="flex flex-col gap-5 animate-fade-in">
+    <div className="flex flex-col gap-5 animate-fade-in" aria-live="polite">
       {/* Success celebration banner */}
       {isComplete && (
         <div
           className="animate-success-fade-in flex items-start gap-3 px-4 py-3 rounded-lg"
+          role="status"
           style={{
             background: 'var(--color-success-light)',
             border: '1px solid var(--color-success-border)',
@@ -216,6 +217,11 @@ export function ProgressView({ taskId }: Props) {
       <div className="flex flex-col gap-2">
         <div
           className="h-1.5 rounded-full overflow-hidden"
+          role="progressbar"
+          aria-valuenow={percent}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label="Task progress"
           style={{ background: 'var(--color-border)' }}
         >
           <div
@@ -228,7 +234,7 @@ export function ProgressView({ taskId }: Props) {
         </div>
 
         {/* Status / percent row */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between" aria-live="assertive">
           <span className="text-xs" style={{ color: statusColor }}>
             {isUploading && uploadEta
               ? `Uploading... ${uploadEta} remaining`
@@ -333,6 +339,7 @@ export function ProgressView({ taskId }: Props) {
       {warning && (
         <div
           className="flex items-start gap-2 px-3 py-2 rounded-lg text-xs"
+          role="alert"
           style={{
             background: 'var(--color-warning-light)',
             border: '1px solid #FDE68A',
@@ -475,6 +482,7 @@ export function ProgressView({ taskId }: Props) {
         <div className="flex flex-col gap-3 py-4">
           <div
             className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg"
+            role="alert"
             style={{
               background: 'var(--color-danger-light)',
               border: '1px solid var(--color-danger)',

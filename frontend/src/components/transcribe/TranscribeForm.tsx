@@ -405,7 +405,6 @@ export function TranscribeForm({ onUpload }: Props) {
               background: 'var(--color-surface)',
               border: '1px solid var(--color-border)',
               color: 'var(--color-text)',
-              outline: 'none',
             }}
           >
             <option value="auto">Auto-detect</option>
@@ -437,7 +436,6 @@ export function TranscribeForm({ onUpload }: Props) {
               background: 'var(--color-surface)',
               border: '1px solid var(--color-border)',
               color: 'var(--color-text)',
-              outline: 'none',
             }}
           >
             <option value="">No translation</option>
@@ -483,6 +481,7 @@ export function TranscribeForm({ onUpload }: Props) {
       {/* Drop zone */}
       <div
         {...getRootProps()}
+        aria-label="Upload media file"
         className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-6 sm:p-8 cursor-pointer transition-all"
         style={{
           borderColor: isDragActive ? 'var(--color-primary)' : 'var(--color-border)',

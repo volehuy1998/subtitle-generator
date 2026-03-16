@@ -44,9 +44,12 @@ def _create_task(task_id="test-sse-task"):
 
 
 def _cleanup_task(task_id):
-    """Remove a fake task."""
+    """Remove a fake task and its sequence counter."""
     state.tasks.pop(task_id, None)
     state.task_event_queues.pop(task_id, None)
+    from app.services.sse import _event_sequences
+
+    _event_sequences.pop(task_id, None)
 
 
 # ══════════════════════════════════════════════════════════════════════════════

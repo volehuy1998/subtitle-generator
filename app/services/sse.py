@@ -17,6 +17,10 @@ logger = logging.getLogger("subtitle-generator")
 # Lock for managing subscriber lists
 _subscribers_lock = threading.Lock()
 
+# Per-task event sequence counters — Forge (Sr. Backend), Sprint L15
+_event_sequences: dict[str, int] = {}
+_seq_lock = threading.Lock()
+
 
 def create_event_queue(task_id: str, maxsize: int = 1000):
     """Create an SSE subscriber list for a task (standalone mode only)."""
@@ -46,14 +50,29 @@ def unsubscribe(task_id: str, q: queue.Queue):
             subs.remove(q)
 
 
+def cleanup_task_events(task_id: str):
+    """Clean up event queues and sequence counter for a task."""
+    with _seq_lock:
+        _event_sequences.pop(task_id, None)
+    with _subscribers_lock:
+        state.task_event_queues.pop(task_id, None)
+
+
 def emit_event(task_id: str, event_type: str, data: dict = None):
     """Thread-safe event emission to all SSE subscribers and task state.
 
     In standalone mode: broadcasts to all subscriber queues.
     In multi-server mode: publishes to Redis Pub/Sub.
+    Every event includes a monotonically increasing ``seq`` number per task
+    so consumers can detect gaps or reorder.
     """
     if data is None:
         data = {}
+
+    # Attach sequence number — Forge (Sr. Backend), Sprint L15
+    with _seq_lock:
+        _event_sequences[task_id] = _event_sequences.get(task_id, 0) + 1
+        data["seq"] = _event_sequences[task_id]
 
     # Always update local task state for polling fallback
     if task_id in state.tasks:
@@ -87,3 +106,8 @@ def emit_event(task_id: str, event_type: str, data: dict = None):
                     q.put_nowait(event)
                 except queue.Full:
                     pass  # drop event if queue is full
+
+    # Clean up sequence counter on terminal events to prevent memory leak
+    if event_type in ("done", "error", "cancelled"):
+        with _seq_lock:
+            _event_sequences.pop(task_id, None)

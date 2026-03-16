@@ -18,7 +18,7 @@
   --color-border-2:  #CBD5E1;
   --color-text:      #0F172A;
   --color-text-2:    #475569;
-  --color-text-3:    #94A3B8;
+  --color-text-3:    #64748B;
 
   --color-primary:         #6366F1;
   --color-primary-hover:   #4F46E5;
@@ -68,11 +68,54 @@ html { overflow-y: scroll; scrollbar-width: thin; scrollbar-color: var(--color-b
 ::-webkit-scrollbar-thumb { background: var(--color-border-2); border-radius: 9999px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-text-3); }
 
-/* Focus ring */
+/* WCAG 2.1 AA — visible focus indicators — Prism (UI/UX), Sprint L15 */
 :focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   border-radius: var(--radius-xs);
+}
+
+button:focus-visible,
+a:focus-visible,
+select:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--color-primary) !important;
+  outline-offset: 2px !important;
+}
+
+/* WCAG 2.1 AA — screen-reader-only utility — Prism (UI/UX), Sprint L15 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Skip navigation link — visible on focus — Prism (UI/UX), Sprint L15 */
+.skip-nav:focus {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 9999;
+  width: auto;
+  height: auto;
+  padding: 8px 16px;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  background: var(--color-primary);
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  box-shadow: var(--shadow-md);
 }
 
 /* Monospace class — used for timestamps, task IDs, technical data */

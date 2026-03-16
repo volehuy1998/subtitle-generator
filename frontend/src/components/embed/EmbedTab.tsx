@@ -357,12 +357,12 @@ export function EmbedTab() {
         <select
           value={translateTo}
           onChange={(e) => setTranslateTo(e.target.value)}
+          aria-label="Select translation language"
           className="w-full px-3 py-2.5 rounded-lg text-sm appearance-none"
           style={{
             background: 'var(--color-bg)',
             border: '1px solid var(--color-border)',
             color: 'var(--color-text)',
-            outline: 'none',
           }}
         >
           <option value="">No translation</option>
@@ -378,6 +378,7 @@ export function EmbedTab() {
       {embedState === 'error' && errorMsg && (
         <div
           className="flex items-center gap-2.5 px-4 py-3 rounded-lg text-xs animate-fade-in"
+          role="alert"
           style={{
             background: 'var(--color-danger-light)',
             color: 'var(--color-danger)',
@@ -405,6 +406,11 @@ export function EmbedTab() {
           </div>
           <div
             className="h-2 rounded-full overflow-hidden"
+            role="progressbar"
+            aria-valuenow={progress}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="Embedding progress"
             style={{ background: 'var(--color-surface-2)' }}
           >
             <div
@@ -425,7 +431,7 @@ export function EmbedTab() {
 
       {/* Success result — Prism (UI/UX Engineer) */}
       {embedState === 'done' && downloadUrl && (
-        <div className="flex flex-col gap-3 animate-success-fade-in">
+        <div className="flex flex-col gap-3 animate-success-fade-in" role="status">
           <div
             className="flex items-center gap-2.5 px-4 py-3 rounded-lg"
             style={{

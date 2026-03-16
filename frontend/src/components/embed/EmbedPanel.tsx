@@ -155,7 +155,6 @@ export function EmbedPanel({ taskId, alreadyTranslated }: Props) {
             background: 'var(--color-surface)',
             border: '1px solid var(--color-border)',
             color: 'var(--color-text)',
-            outline: 'none',
           }}
         >
           <option value="">No translation</option>

@@ -160,6 +160,10 @@ export function App() {
       className="min-h-screen"
       style={{ background: 'var(--color-bg)', fontFamily: 'var(--font-family-sans)' }}
     >
+      {/* WCAG 2.1 AA — Skip navigation link — Prism (UI/UX), Sprint L15 */}
+      <a href="#main-content" className="sr-only skip-nav">
+        Skip to main content
+      </a>
       <ConnectionBanner />
       <AppHeader />
 
@@ -171,7 +175,7 @@ export function App() {
       )}
 
       {/* Main layout */}
-      <main className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8 flex flex-col lg:flex-row gap-4 sm:gap-5 lg:gap-6 items-start">
+      <main id="main-content" className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8 flex flex-col lg:flex-row gap-4 sm:gap-5 lg:gap-6 items-start">
         {/* Left column: input */}
         <div className="flex-1 min-w-0 w-full">
           <div

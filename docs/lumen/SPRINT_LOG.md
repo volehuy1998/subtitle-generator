@@ -468,3 +468,44 @@
 **Performance phase progress:** L10-L14 complete (50% of L11-L20 range).
 
 ---
+
+## Sprint L15: Accessibility (WCAG 2.1 AA) + SSE Event Sequencing (2026-03-16)
+
+**Goal:** Achieve WCAG 2.1 AA compliance and add SSE event ordering.
+
+**Delivered:**
+
+### Accessibility (Prism)
+- **Focus visible styles** (`index.css`):
+  - `:focus-visible` with `outline: 2px solid var(--color-primary)` on all interactive elements
+  - Removed `outline: none` from selects in TranscribeForm, EmbedTab, EmbedPanel
+- **Color contrast fix** (`index.css`):
+  - `--color-text-3`: #94A3B8 (3.0:1, fails AA) → #64748B (5.5:1, passes AA)
+- **Form labels + ARIA** (TranscribeForm, EmbedTab):
+  - `aria-label="Upload media file"` on drop zone
+  - `aria-label="Select translation language"` on embed translate select
+- **Skip navigation** (`App.tsx` + `index.css`):
+  - "Skip to main content" link, visible on keyboard focus
+  - `id="main-content"` on `<main>` element
+- **ARIA live regions** (ProgressView, EmbedTab):
+  - `aria-live="polite"` on progress container
+  - `aria-live="assertive"` on status row
+  - `role="alert"` on errors/warnings
+  - `role="status"` on success banners
+  - `role="progressbar"` with `aria-valuenow/min/max` on progress bars
+
+### Backend (Forge)
+- **SSE event sequencing** (`sse.py`):
+  - Per-task `seq` counter (monotonically increasing from 1)
+  - Thread-safe via `_seq_lock`
+  - Auto-cleanup on terminal events (done/error/cancelled)
+  - `cleanup_task_events()` removes sequence + subscriber queues
+
+### Tests (Scout) — 48 new tests
+- `test_accessibility.py` (23 tests): HTML responses, security headers, API accessibility
+- `test_event_sequencing.py` (25 tests): Event structure, ordering, queue behavior
+
+**Tests added:** 48
+**Running total:** 2228 + 48 = **2276**
+
+---
