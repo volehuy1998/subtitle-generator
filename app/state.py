@@ -53,6 +53,12 @@ system_critical_reasons: list[str] = []
 # Main asyncio event loop reference (set during startup for thread-safe scheduling)
 main_event_loop: object | None = None
 
+# Request counter — incremented by request logging middleware
+total_request_count: int = 0
+
+# Peak concurrent tasks — updated when tasks are created
+peak_concurrent_tasks: int = 0
+
 
 def set_critical(reasons: list[str]):
     """Activate critical state with one or more reasons.
@@ -170,7 +176,11 @@ def get_task_semaphore(max_tasks: int = 3) -> threading.Semaphore:
 
 def get_active_task_count() -> int:
     """Count currently processing tasks."""
-    return sum(1 for t in tasks.values() if t.get("status") not in ("done", "error", "cancelled", "queued"))
+    global peak_concurrent_tasks
+    count = sum(1 for t in tasks.values() if t.get("status") not in ("done", "error", "cancelled", "queued"))
+    if count > peak_concurrent_tasks:
+        peak_concurrent_tasks = count
+    return count
 
 
 def drain_tasks(timeout: float = 60.0) -> bool:

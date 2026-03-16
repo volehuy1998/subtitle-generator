@@ -147,6 +147,11 @@ export function App() {
         message: 'Processing started…',
       })
       localStorage.setItem('sg_currentTaskId', result.task_id)
+      // Increment session task counter — Pixel (Sr. Frontend), Sprint L50
+      try {
+        const count = parseInt(sessionStorage.getItem('sg_session_task_count') ?? '0', 10) || 0
+        sessionStorage.setItem('sg_session_task_count', String(count + 1))
+      } catch { /* sessionStorage unavailable */ }
     } catch (err) {
       store.setUploading(false)
       store.setError(err instanceof Error ? err.message : 'Upload failed')

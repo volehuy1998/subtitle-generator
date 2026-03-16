@@ -874,3 +874,28 @@
 **Running total:** 2920 + 59 = **2979**
 
 ---
+
+## Sprints L49-L52: Auto-Copy, Search, Filtering, Monitoring (2026-03-16)
+
+**Delivered:**
+
+### Frontend (Pixel)
+- **L49**: Auto-copy on completion (when preference enabled), info toast
+- **L50**: Session info in footer (task count + connection status dot)
+- **L51**: Search/filter input in TaskHistory with match count
+- **L52**: Connection banner: reconnect countdown + "Reconnect Now" button + success flash
+
+### Backend (Forge)
+- **L49**: Enhanced stats: average_duration, languages_used, total_file_size_mb
+- **L50**: Task sorting: sort_by (created_at/filename/status) + sort_order (asc/desc)
+- **L51**: Task filtering: status_filter (done/error/cancelled/active)
+- **L52**: Health metrics: total_requests + peak_concurrent_tasks counters
+
+### Tests (Scout) — 60 new tests
+- `test_task_filtering.py` (30): Sort/filter/stats
+- `test_health_extended.py` (30): Request counter, system info, monitoring
+
+**Tests added:** 60
+**Running total:** 2979 + 60 = **3039**
+
+---

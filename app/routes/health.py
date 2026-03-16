@@ -28,7 +28,12 @@ async def health():
     Returns 200 if the process is alive. Suitable for Kubernetes liveness probes,
     AWS ALB health checks, and HAProxy checks.
     """
-    return {"status": "healthy", "uptime_sec": round(time.time() - _start_time, 1)}
+    return {
+        "status": "healthy",
+        "uptime_sec": round(time.time() - _start_time, 1),
+        "total_requests": getattr(state, "total_request_count", 0),
+        "peak_concurrent_tasks": getattr(state, "peak_concurrent_tasks", 0),
+    }
 
 
 @router.get("/health/live")

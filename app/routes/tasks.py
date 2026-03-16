@@ -41,13 +41,38 @@ def _estimate_queue_position(task_id: str) -> dict:
 
 
 @router.get("/tasks")
-async def list_tasks(request: Request, session_only: bool = Query(False)):
-    """List tasks with queue position estimates. Use session_only=true for your tasks only."""
+async def list_tasks(
+    request: Request,
+    session_only: bool = Query(False),
+    sort_by: str = Query("created_at"),
+    sort_order: str = Query("desc"),
+    status_filter: str = Query(""),
+):
+    """List tasks with queue position estimates.
+
+    Use session_only=true for your tasks only.
+    sort_by: created_at, filename, status (default: created_at).
+    sort_order: asc, desc (default: desc).
+    status_filter: done, error, cancelled, active (default: all).
+    """
+    # L51: Terminal vs active status sets for filtering — Forge (Sr. Backend Engineer)
+    _terminal = {"done", "error", "cancelled"}
+
     session_id = getattr(request.state, "session_id", "") if session_only else ""
     result = []
     for tid, t in state.tasks.items():
         if session_only and t.get("session_id") != session_id:
             continue
+
+        # L51: Apply status filter
+        if status_filter:
+            task_status = t.get("status", "unknown")
+            if status_filter == "active":
+                if task_status in _terminal:
+                    continue
+            elif task_status != status_filter:
+                continue
+
         queue_info = _estimate_queue_position(tid) if t.get("status") == "queued" else {}
         result.append(
             {
@@ -65,8 +90,13 @@ async def list_tasks(request: Request, session_only: bool = Query(False)):
                 **queue_info,
             }
         )
-    # Sort newest first, limit to last 100
-    result.sort(key=lambda x: x.get("created_at") or "", reverse=True)
+
+    # L50: Configurable sorting — Forge (Sr. Backend Engineer)
+    valid_sort_fields = {"created_at", "filename", "status"}
+    if sort_by not in valid_sort_fields:
+        sort_by = "created_at"
+    reverse = sort_order != "asc"
+    result.sort(key=lambda x: x.get(sort_by) or "", reverse=reverse)
     result = result[:100]
     return {"tasks": result}
 
@@ -262,6 +292,19 @@ async def task_stats(request: Request):
         elif status == "cancelled":
             cancelled += 1
 
+    # L49: Additional session statistics — Forge (Sr. Backend Engineer)
+    languages_used: dict[str, int] = {}
+    total_file_size = 0.0
+
+    for tid, t in state.tasks.items():
+        if session_id and t.get("session_id") != session_id:
+            continue
+        status = t.get("status", "")
+        if status == "done":
+            lang = t.get("language", "unknown") or "unknown"
+            languages_used[lang] = languages_used.get(lang, 0) + 1
+            total_file_size += t.get("file_size", 0) or 0
+
     return {
         "total_tasks": total,
         "completed": done,
@@ -271,6 +314,9 @@ async def task_stats(request: Request):
         "total_segments": total_segments,
         "total_audio_duration_sec": round(total_duration_sec, 1),
         "models_used": models_used,
+        "average_duration_sec": round(total_duration_sec / max(done, 1), 1),
+        "languages_used": languages_used,
+        "total_file_size_mb": round(total_file_size / (1024 * 1024), 1),
     }
 
 

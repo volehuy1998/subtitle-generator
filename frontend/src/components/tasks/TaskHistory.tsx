@@ -61,6 +61,7 @@ export function TaskHistory() {
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ taskId: string; filename: string } | null>(null)
+  const [filterText, setFilterText] = useState('')
   const addToast = useToastStore((s) => s.addToast)
 
   const fetchTasks = useCallback(() => {
@@ -136,6 +137,13 @@ export function TaskHistory() {
     )
   }
 
+  // Filter tasks by filename — Pixel (Sr. Frontend), Sprint L51
+  const filteredTasks = filterText.trim()
+    ? tasks.filter((t) =>
+        (t.filename ?? t.task_id).toLowerCase().includes(filterText.trim().toLowerCase())
+      )
+    : tasks
+
   return (
     <div
       className="rounded-xl overflow-hidden"
@@ -147,7 +155,7 @@ export function TaskHistory() {
     >
       {/* Header */}
       <div
-        className="px-4 py-3"
+        className="px-4 py-3 flex flex-col gap-2"
         style={{ borderBottom: '1px solid var(--color-border)' }}
       >
         <h2
@@ -156,18 +164,42 @@ export function TaskHistory() {
         >
           RECENT TASKS
         </h2>
+        {/* Search filter — Pixel (Sr. Frontend), Sprint L51 */}
+        {tasks.length > 0 && (
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={filterText}
+              onChange={(e) => setFilterText(e.target.value)}
+              placeholder="Filter tasks..."
+              className="flex-1 text-xs px-2.5 py-1.5 rounded-md outline-none transition-colors"
+              style={{
+                background: 'var(--color-surface-2)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-text)',
+              }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)' }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)' }}
+            />
+            {filterText && (
+              <span className="text-xs flex-shrink-0" style={{ color: 'var(--color-text-3)' }}>
+                {filteredTasks.length} of {tasks.length} task{tasks.length !== 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Body */}
       <div className="flex flex-col">
-        {tasks.length === 0 ? (
+        {filteredTasks.length === 0 ? (
           <div className="px-4 py-6 text-center">
             <p className="text-xs" style={{ color: 'var(--color-text-3)' }}>
-              No recent tasks
+              {filterText ? 'No matching tasks' : 'No recent tasks'}
             </p>
           </div>
         ) : (
-          tasks.map((task) => (
+          filteredTasks.map((task) => (
             <div
               key={task.task_id}
               className="flex items-center gap-3 px-4 py-2.5 group"

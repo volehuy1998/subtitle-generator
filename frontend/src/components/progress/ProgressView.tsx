@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useTaskStore } from '@/store/taskStore'
 import { useUIStore } from '@/store/uiStore'
 import { useToastStore } from '@/store/toastStore'
+import { usePreferencesStore } from '@/store/preferencesStore'
 import { useSSE } from '@/hooks/useSSE'
 import { api } from '@/api/client'
 import { PipelineSteps } from './PipelineSteps'
@@ -77,6 +78,19 @@ export function ProgressView({ taskId }: Props) {
   useEffect(() => {
     segmentsEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [liveSegments.length])
+
+  // Auto-copy on completion when autoCopy preference is enabled — Pixel (Sr. Frontend), Sprint L49
+  useEffect(() => {
+    if (isComplete && liveSegments.length > 0) {
+      const prefs = usePreferencesStore.getState()
+      if (prefs.autoCopy) {
+        const text = liveSegments.map((s) => s.text).join('\n')
+        navigator.clipboard.writeText(text).then(() => {
+          addToast('info', 'Subtitles copied to clipboard')
+        }).catch(() => {})
+      }
+    }
+  }, [isComplete]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Poll queue position when task is queued — Pixel (Sr. Frontend), Sprint L44
   useEffect(() => {

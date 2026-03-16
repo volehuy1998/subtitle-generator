@@ -88,6 +88,8 @@ class HealthResponse(BaseModel):
 
     status: Literal["healthy"]
     uptime_sec: float
+    total_requests: int = 0
+    peak_concurrent_tasks: int = 0
 
 
 class AlertItem(BaseModel):
