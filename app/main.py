@@ -161,7 +161,14 @@ async def lifespan(app: FastAPI):
     active = state.get_active_task_count()
     if active > 0:
         logger.info(f"SHUTDOWN Draining {active} in-flight task(s)...")
-        await asyncio.to_thread(state.drain_tasks, 60.0)
+        drained = await asyncio.to_thread(state.drain_tasks, 60.0)
+        if not drained:
+            # Mark remaining active tasks as error so clients know to retry
+            for tid, task in state.tasks.items():
+                if task.get("status") not in ("done", "error", "cancelled"):
+                    task["status"] = "error"
+                    task["message"] = "Server restarting. Please retry your transcription."
+                    logger.info(f"SHUTDOWN [{tid[:8]}] Marked active task as error")
 
     logger.info("SHUTDOWN Saving task history and analytics...")
 

@@ -10,7 +10,7 @@ import logging
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app import state
-from app.config import REDIS_URL
+from app.config import REDIS_URL, SSE_HEARTBEAT_INTERVAL
 
 logger = logging.getLogger("subtitle-generator")
 router = APIRouter(tags=["Progress"])
@@ -91,8 +91,8 @@ async def task_websocket(websocket: WebSocket, task_id: str):
                 while True:
                     try:
                         event = await asyncio.wait_for(
-                            asyncio.to_thread(q.get, timeout=1),
-                            timeout=2,
+                            asyncio.to_thread(q.get, timeout=SSE_HEARTBEAT_INTERVAL),
+                            timeout=SSE_HEARTBEAT_INTERVAL + 1,
                         )
                         await websocket.send_json(event)
                         if event.get("type") in ("done", "error", "cancelled"):

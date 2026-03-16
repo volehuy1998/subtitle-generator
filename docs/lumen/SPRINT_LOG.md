@@ -627,3 +627,38 @@
 **Running total:** 2356 + 62 = **2418**
 
 ---
+
+## Sprint L20: Performance Phase Wrap-Up (2026-03-16)
+
+**Goal:** Close out the Performance phase with connection resilience, final UI polish, and comprehensive test coverage.
+
+**Delivered:**
+
+### Backend (Forge)
+- **SSE heartbeat config** (`config.py` + `events.py` + `ws.py`):
+  - `SSE_HEARTBEAT_INTERVAL` configurable via env var (default 15s)
+  - Used in both SSE and WebSocket heartbeat loops
+- **Graceful shutdown cleanup** (`main.py`):
+  - Active tasks marked as "error" with "Server restarting" message after drain timeout
+  - Automatically included in persistence pass
+
+### Frontend (Pixel)
+- **Footer redesign** (`Footer.tsx` — NEW):
+  - "SubForge" branding + "Powered by Whisper" tagline
+  - Status/About/Security/Contact links with SPA navigation
+  - Responsive: stacks on mobile, inline on desktop
+- **Health panel polish** (`HealthPanel.tsx`):
+  - All hardcoded colors replaced with CSS design tokens
+- **Model card tooltips** (`TranscribeForm.tsx`):
+  - Title attributes: model description, VRAM, speed estimate
+
+### Tests (Scout) — 104 new tests
+- `test_api_endpoints_comprehensive.py` (57 tests): All endpoint status codes, response times, content types, error structures, OpenAPI schema
+- `test_config_validation.py` (47 tests): All config constants, file sizes, concurrency, models, languages, extensions, ffmpeg, defaults
+
+**Tests added:** 104
+**Running total:** 2418 + 104 = **2522**
+
+**PERFORMANCE PHASE COMPLETE (L10-L20)**
+
+---

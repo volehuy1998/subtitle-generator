@@ -252,6 +252,7 @@ export function TranscribeForm({ onUpload }: Props) {
                   role="radio"
                   aria-checked={isActive}
                   onClick={() => setModel(m)}
+                  title={`${m.charAt(0).toUpperCase() + m.slice(1)}: ${info.desc} ${info.vram} VRAM, ${info.speed} realtime`}
                   className="w-full text-left rounded-lg border transition-all"
                   style={{
                     padding: '10px 12px',

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { AppHeader } from '@/components/layout/AppHeader'
+import { Footer } from '@/components/layout/Footer'
 import { HealthPanel } from '@/components/system/HealthPanel'
 import { ConnectionBanner } from '@/components/system/ConnectionBanner'
 import { TaskQueuePanel } from '@/components/system/TaskQueuePanel'
@@ -289,13 +290,8 @@ export function App() {
       {/* Task Queue */}
       <TaskQueuePanel />
 
-      {/* Footer */}
-      <footer
-        className="text-center py-6 text-xs"
-        style={{ color: 'var(--color-text-3)' }}
-      >
-        ↑ SubForge · Python 3.12 · FastAPI · faster-whisper (CTranslate2) · pyannote.audio · FFmpeg · React 19 · TypeScript · Tailwind CSS · Open Source
-      </footer>
+      {/* Footer — Pixel (Sr. Frontend), Sprint L20 */}
+      <Footer />
 
       {/* Phase Lumen: Confirmation dialog before transcription */}
       {pendingUpload && (

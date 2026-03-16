@@ -66,6 +66,9 @@ MAX_CONCURRENT_TASKS_EXPLICIT = bool(_max_tasks_env)  # True if user set it expl
 UPLOAD_RATE_LIMIT = "5/minute"
 API_RATE_LIMIT = "60/minute"
 
+# --- SSE / Real-time ---
+SSE_HEARTBEAT_INTERVAL = int(os.environ.get("SSE_HEARTBEAT_INTERVAL", "15"))  # seconds
+
 # --- Performance ---
 PRELOAD_MODEL = os.environ.get("PRELOAD_MODEL", "")  # e.g., "medium", "tiny,base,large", or "all"
 ENABLE_COMPRESSION = os.environ.get("ENABLE_COMPRESSION", "true").lower() == "true"

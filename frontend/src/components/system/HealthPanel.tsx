@@ -166,17 +166,17 @@ export function HealthPanel({ health, onClose }: Props) {
         <div
           className="flex items-start gap-2 px-2.5 py-2.5 rounded-lg"
           style={{
-            background: 'rgba(245,158,11,0.10)',
-            border: '1px solid rgba(245,158,11,0.35)',
+            background: 'var(--color-warning-light)',
+            border: '1px solid var(--color-warning)',
           }}
         >
           <svg width="14" height="14" viewBox="0 0 12 12" fill="none" aria-hidden="true" className="mt-0.5 flex-shrink-0">
-            <path d="M6 1.5L11 10.5H1L6 1.5Z" stroke="#F59E0B" strokeWidth="1.2" strokeLinejoin="round" />
-            <path d="M6 5v2.5" stroke="#F59E0B" strokeWidth="1.2" strokeLinecap="round" />
-            <circle cx="6" cy="9" r="0.5" fill="#F59E0B" />
+            <path d="M6 1.5L11 10.5H1L6 1.5Z" stroke="var(--color-warning)" strokeWidth="1.2" strokeLinejoin="round" />
+            <path d="M6 5v2.5" stroke="var(--color-warning)" strokeWidth="1.2" strokeLinecap="round" />
+            <circle cx="6" cy="9" r="0.5" fill="var(--color-warning)" />
           </svg>
           <div className="flex flex-col gap-0.5">
-            <span className="text-xs font-semibold" style={{ color: '#F59E0B' }}>No GPU detected</span>
+            <span className="text-xs font-semibold" style={{ color: 'var(--color-warning)' }}>No GPU detected</span>
             <span className="text-xs" style={{ color: 'var(--color-text-2)' }}>
               Transcription runs on CPU — significantly slower. For best performance, use a server with an NVIDIA GPU.
             </span>
@@ -210,7 +210,7 @@ export function HealthPanel({ health, onClose }: Props) {
               style={{
                 background: 'var(--color-warning-light)',
                 color: 'var(--color-warning)',
-                border: '1px solid #FDE68A',
+                border: '1px solid var(--color-warning)',
               }}
             >
               <span className="mt-0.5 flex-shrink-0">⚠</span>
