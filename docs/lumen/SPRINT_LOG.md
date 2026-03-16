@@ -509,3 +509,40 @@
 **Running total:** 2228 + 48 = **2276**
 
 ---
+
+## Sprint L16: Keyboard Shortcuts + Focus Trap + Download API (2026-03-16)
+
+**Goal:** Complete keyboard accessibility and add download API improvements.
+
+**Delivered:**
+
+### Frontend (Pixel)
+- **Keyboard shortcuts** (`App.tsx`):
+  - `1`/`2` switches Transcribe/Embed tabs
+  - `Escape` closes open dialogs + health panel
+  - Suppressed in input/textarea/select and with modifier keys
+- **Focus trap hook** (`hooks/useFocusTrap.ts`):
+  - Shared hook: auto-focuses first element, traps Tab/Shift+Tab cycling
+  - Applied to all 3 dialogs: ConfirmationDialog, CancelConfirmationDialog, EmbedConfirmationDialog
+  - Added Escape key handlers on overlay for ConfirmationDialog + EmbedConfirmationDialog
+
+### Backend (Forge)
+- **Subtitle preview** (`GET /preview/{task_id}?limit=10`):
+  - Returns first N segments (1-100) from JSON output
+  - Includes total_segments count for pagination
+- **Bulk download** (`GET /download/{task_id}/all`):
+  - ZIP archive with SRT + VTT + JSON using original filename stems
+  - Handles partial outputs (e.g., only SRT exists)
+
+### Tests (Scout) — 40 new tests
+- `test_download_advanced.py`:
+  - Preview endpoint (14 tests)
+  - Bulk download (15 tests)
+  - Download completeness (11 tests)
+
+**Tests added:** 40
+**Running total:** 2276 + 40 = **2316**
+
+**Performance phase progress:** L10-L16 complete (70% of L11-L20 range).
+
+---

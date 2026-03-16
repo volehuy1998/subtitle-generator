@@ -8,6 +8,7 @@
  * — Prism (UI/UX Engineer) — Sprint L8
  */
 
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 import type { EmbedMode } from '@/store/uiStore'
 
 interface EmbedConfirmationDialogProps {
@@ -43,6 +44,8 @@ export function EmbedConfirmationDialog({
   onConfirm,
   onCancel,
 }: EmbedConfirmationDialogProps) {
+  const trapRef = useFocusTrap()
+
   return (
     <div
       style={{
@@ -55,11 +58,13 @@ export function EmbedConfirmationDialog({
         zIndex: 50,
       }}
       onClick={onCancel}
+      onKeyDown={(e) => { if (e.key === 'Escape') onCancel() }}
       role="dialog"
       aria-modal="true"
       aria-label="Confirm subtitle embedding"
     >
       <div
+        ref={trapRef}
         style={{
           background: 'var(--color-bg)',
           border: '1px solid var(--color-border)',

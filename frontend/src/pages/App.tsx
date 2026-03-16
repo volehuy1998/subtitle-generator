@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { AppHeader } from '@/components/layout/AppHeader'
 import { HealthPanel } from '@/components/system/HealthPanel'
 import { ConnectionBanner } from '@/components/system/ConnectionBanner'
@@ -146,6 +146,35 @@ export function App() {
       store.setError(err instanceof Error ? err.message : 'Upload failed')
     }
   }
+
+  // Phase Lumen: global keyboard shortcuts — Pixel (Sr. Frontend), Sprint L16
+  const handleKeyboard = useCallback((e: KeyboardEvent) => {
+    // Don't trigger shortcuts when user is typing in form fields
+    const tag = (e.target as HTMLElement).tagName
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+    // Also skip if any modifier key is held (Ctrl+1 for browser tabs, etc.)
+    if (e.metaKey || e.ctrlKey || e.altKey) return
+
+    if (e.key === '1') {
+      setAppMode('transcribe')
+    } else if (e.key === '2') {
+      setAppMode('embed')
+    } else if (e.key === 'Escape') {
+      // Close pending upload confirmation dialog
+      if (pendingUpload) {
+        setPendingUpload(null)
+      }
+      // Close health panel
+      if (healthPanelOpen) {
+        setHealthPanelOpen(false)
+      }
+    }
+  }, [pendingUpload, healthPanelOpen, setAppMode, setHealthPanelOpen])
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyboard)
+    return () => window.removeEventListener('keydown', handleKeyboard)
+  }, [handleKeyboard])
 
   const activeTaskId = store.taskId
   const isProcessing = activeTaskId !== null && !store.isComplete && store.status !== 'cancelled' && store.status !== 'error'

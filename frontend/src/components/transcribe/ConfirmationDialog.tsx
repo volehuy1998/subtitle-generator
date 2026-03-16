@@ -9,6 +9,8 @@
  * Speed estimates added — Sprint L12
  */
 
+import { useFocusTrap } from '@/hooks/useFocusTrap'
+
 /** Approximate speed factors (realtime multiplier) per model/device combo */
 const SPEED_ESTIMATES: Record<string, Record<string, number>> = {
   cpu: { tiny: 6, base: 4, small: 2, medium: 0.8, large: 0.3 },
@@ -72,6 +74,8 @@ export function ConfirmationDialog({
   readyModelName,
   onSwitchModel,
 }: ConfirmationDialogProps) {
+  const trapRef = useFocusTrap()
+
   return (
     <div
       style={{
@@ -84,11 +88,13 @@ export function ConfirmationDialog({
         zIndex: 50,
       }}
       onClick={onCancel}
+      onKeyDown={(e) => { if (e.key === 'Escape') onCancel() }}
       role="dialog"
       aria-modal="true"
       aria-label="Confirm transcription"
     >
       <div
+        ref={trapRef}
         style={{
           background: 'var(--color-bg)',
           border: '1px solid var(--color-border)',

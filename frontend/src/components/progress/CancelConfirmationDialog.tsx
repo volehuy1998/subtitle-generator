@@ -7,7 +7,7 @@
  * — Pixel (Sr. Frontend Engineer)
  */
 
-import { useEffect, useRef } from 'react'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 
 interface CancelConfirmationDialogProps {
   filename: string;
@@ -20,17 +20,10 @@ export function CancelConfirmationDialog({
   onConfirm,
   onCancel,
 }: CancelConfirmationDialogProps) {
-  const backdropRef = useRef<HTMLDivElement>(null)
-
-  // Focus the dialog on mount so keyboard events (Escape) work
-  useEffect(() => {
-    backdropRef.current?.focus()
-  }, [])
+  const trapRef = useFocusTrap()
 
   return (
     <div
-      ref={backdropRef}
-      tabIndex={-1}
       style={{
         position: 'fixed',
         inset: 0,
@@ -39,7 +32,6 @@ export function CancelConfirmationDialog({
         justifyContent: 'center',
         backgroundColor: 'rgba(0, 0, 0, 0.4)',
         zIndex: 50,
-        outline: 'none',
       }}
       onClick={onCancel}
       onKeyDown={(e) => { if (e.key === 'Escape') onCancel() }}
@@ -48,6 +40,7 @@ export function CancelConfirmationDialog({
       aria-label="Cancel transcription confirmation"
     >
       <div
+        ref={trapRef}
         style={{
           background: 'var(--color-bg)',
           border: '1px solid var(--color-border)',
