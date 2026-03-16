@@ -311,7 +311,7 @@ function IncidentsSection({ data }: { data: StatusPage }) {
                   Affected: {compMap[inc.component] ?? inc.component}
                 </div>
                 {inc.updates && inc.updates.length > 0 && (
-                  <div style={{ borderLeft: '2px solid #E2E8F0', paddingLeft: '12px' }}>
+                  <div style={{ borderLeft: `2px solid ${C.border}`, paddingLeft: '12px' }}>
                     {inc.updates.map((u, j) => (
                       <div key={j} style={{ marginBottom: '8px' }}>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '2px' }}>
@@ -401,7 +401,7 @@ function CommitCard({ commit, idx, expanded, onToggle }: {
       {expanded && (
         <div
           onClick={(e) => e.stopPropagation()}
-          style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #F1F5F9' }}
+          style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${C.border}` }}
         >
           {body && (
             <pre style={{

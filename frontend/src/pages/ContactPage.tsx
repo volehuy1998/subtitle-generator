@@ -58,20 +58,20 @@ export function ContactPage() {
     <StaticPageLayout>
       {/* Hero */}
       <div style={{
-        background: 'linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 55%, #E0F2FE 100%)',
+        background: 'var(--gradient-hero-contact)',
         borderRadius: '16px', padding: '44px 40px', marginBottom: '32px',
-        color: '#fff', display: 'flex', alignItems: 'flex-start', gap: '22px',
+        display: 'flex', alignItems: 'flex-start', gap: '22px',
         position: 'relative', overflow: 'hidden',
       }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 50% 70% at 85% 50%, rgba(16,185,129,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ width: '48px', height: '48px', background: 'rgba(16,185,129,0.18)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
+        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 50% 70% at 85% 50%, ${C.successLight} 0%, transparent 70%)`, pointerEvents: 'none' }} />
+        <div style={{ width: '48px', height: '48px', background: C.successLight, border: `1px solid ${C.successBorder}`, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" stroke="#6ee7b7" strokeWidth="1.8" strokeLinejoin="round"/>
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" stroke="var(--color-success)" strokeWidth="1.8" strokeLinejoin="round"/>
           </svg>
         </div>
         <div>
-          <h1 style={{ fontSize: '1.45rem', fontWeight: 700, letterSpacing: '-0.5px', marginBottom: '6px' }}>Contact SubForge</h1>
-          <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.6 }}>Bug reports, feature requests, questions — we're responsive and open to contributions.</p>
+          <h1 style={{ fontSize: '1.45rem', fontWeight: 700, letterSpacing: '-0.5px', marginBottom: '6px', color: C.text }}>Contact SubForge</h1>
+          <p style={{ fontSize: '0.875rem', color: C.text2, lineHeight: 1.6 }}>Bug reports, feature requests, questions — we're responsive and open to contributions.</p>
         </div>
       </div>
 

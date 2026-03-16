@@ -36,6 +36,11 @@
   --color-danger-light:    rgba(239,68,68,0.08);
   --color-danger-border:   rgba(239,68,68,0.20);
 
+  /* Hero gradients — tokenized for consistency across static pages */
+  --gradient-hero-about:    linear-gradient(135deg, var(--color-surface) 0%, rgba(99,102,241,0.06) 55%, rgba(99,102,241,0.10) 100%);
+  --gradient-hero-security: linear-gradient(135deg, var(--color-surface) 0%, rgba(99,102,241,0.06) 55%, rgba(99,102,241,0.10) 100%);
+  --gradient-hero-contact:  linear-gradient(135deg, var(--color-surface) 0%, rgba(99,102,241,0.06) 55%, rgba(16,185,129,0.06) 100%);
+
   /* Radius — slightly softer for light theme */
   --radius-xs: 4px;
   --radius-sm: 6px;
@@ -207,6 +212,11 @@ input:focus-visible {
 }
 
 /* Progress bar shimmer — animated gradient during active processing, Prism (UI/UX), Sprint L19 */
+@keyframes toast-fade-in {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
@@ -230,4 +240,39 @@ input:focus-visible {
 @media (min-width: 640px) and (max-width: 849px) {
   .model-grid { grid-template-columns: 90px 1fr 60px !important; }
   .model-col-pros { display: none !important; }
+}
+
+/* Reduced motion — WCAG 2.1 AA, Prism (UI/UX), Sprint L24 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .animate-pulse,
+  .animate-fade-in,
+  .animate-success-fade-in,
+  .animate-page-enter,
+  .animate-gentle-float,
+  .progress-bar-shimmer,
+  [style*="toast-fade-in"] {
+    animation: none !important;
+  }
+}
+
+/* Print styles — Prism (UI/UX), Sprint L24 */
+@media print {
+  header, footer, nav, .health-panel, .btn-interactive {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  * {
+    box-shadow: none !important;
+  }
 }

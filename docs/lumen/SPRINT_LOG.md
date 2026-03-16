@@ -662,3 +662,40 @@
 **PERFORMANCE PHASE COMPLETE (L10-L20)**
 
 ---
+
+## Sprints L21-L24: Design System — Toast, Dialog, Pages, a11y (2026-03-16)
+
+**Goal:** Build notification system, reusable dialog, polish pages, add reduced motion + print styles.
+
+**Delivered:**
+
+### L21: Toast Notification System (Pixel)
+- `toastStore.ts`: Zustand store with `addToast(type, message, duration)`, auto-dismiss
+- `ToastContainer.tsx`: Fixed bottom-right, type-specific icons/colors, max 5, `aria-live="polite"`
+- Integrated in TaskHistory (delete success/error) and DownloadButtons (download info)
+- `@keyframes toast-fade-in` animation
+
+### L22: Reusable Dialog (Pixel)
+- `Dialog.tsx`: Generic wrapper with `open/onClose/title/description/children/actions` props
+- Uses `useFocusTrap`, Escape-to-close, overlay click, all Lumen tokens
+- Available for future dialogs (existing 3 left unchanged)
+
+### L23: Static Page Polish (Prism)
+- `AboutPage.tsx`: Hero gradient → CSS token, icon backgrounds → `C.primaryLight`
+- `SecurityPage.tsx`: Hero gradient → token, shield icon → `var(--color-primary)`
+- `ContactPage.tsx`: Hero gradient → token, icon → `C.successLight`
+- `StatusPage.tsx`: Timeline border → `C.border` token
+- 3 hero gradient CSS custom properties added to `index.css`
+
+### L24: Reduced Motion + Print Styles (Prism)
+- `@media (prefers-reduced-motion: reduce)`: disables all animations/transitions globally
+- `@media print`: hides interactive elements, white bg, black text, no shadows
+
+### Tests (Scout) — 60 new tests
+- `test_design_system.py` (30): CSS tokens, page structure, static assets
+- `test_design_tokens.py` (30): API formatting, response headers, data consistency
+
+**Tests added:** 60
+**Running total:** 2522 + 60 = **2582**
+
+---

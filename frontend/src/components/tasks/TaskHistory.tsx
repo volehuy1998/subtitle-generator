@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { api } from '@/api/client'
 import type { TaskListItem } from '@/api/types'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { useToastStore } from '@/store/toastStore'
 
 /**
  * TaskHistory — shows last 5 completed/failed tasks with quick access to downloads.
@@ -58,6 +59,7 @@ export function TaskHistory() {
   const [tasks, setTasks] = useState<TaskListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const addToast = useToastStore((s) => s.addToast)
 
   const fetchTasks = useCallback(() => {
     api.tasksBySession()
@@ -87,8 +89,9 @@ export function TaskHistory() {
     try {
       await api.deleteTask(taskId)
       setTasks((prev) => prev.filter((t) => t.task_id !== taskId))
+      addToast('success', 'Task deleted')
     } catch {
-      // Failed to delete — refresh list
+      addToast('error', 'Failed to delete task')
       fetchTasks()
     } finally {
       setDeleting(null)
@@ -195,6 +198,7 @@ export function TaskHistory() {
                   className="flex-shrink-0 btn-interactive rounded p-1"
                   style={{ color: 'var(--color-primary)' }}
                   title="Download SRT"
+                  onClick={() => addToast('info', 'Download started')}
                 >
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
                     <path d="M7 2v7M4 6.5L7 9.5 10 6.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
