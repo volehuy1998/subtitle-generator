@@ -41,6 +41,7 @@ def _get_home_html() -> str:
 # ══════════════════════════════════════════════════════════════════════════════
 
 
+@pytest.mark.skipif(not _IS_REACT, reason="CSS variable tests require React SPA build (frontend/dist/)")
 class TestCSSVariables:
     """CSS design tokens and theme variables are properly defined."""
 
