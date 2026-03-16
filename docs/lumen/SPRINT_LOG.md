@@ -227,3 +227,39 @@
 - "Input validation" — audio stream + duration checks prevent bad uploads
 
 ---
+
+## Sprint L9: 2000 Tests + Error Hardening (2026-03-16)
+
+**Goal:** Cross the 2000-test threshold and harden error handling per spec 1.2.
+
+**Delivered:**
+
+### Error Handling Hardening (Forge)
+- **pipeline.py** — expanded `_ERROR_MAP` from 8→22 patterns:
+  - Disk/storage: ENOSPC, "No space left", quota exceeded
+  - Memory: MemoryError, ENOMEM, CUDA OOM, "out of memory"
+  - Model loading: timeout, download failures, corrupt weights
+  - Media/FFmpeg: decode errors, corrupt files, invalid streams
+  - File/permission: permission denied, read-only filesystem
+  - Network: connection timeouts, DNS failures
+- **Zero segments handling**: when transcription produces 0 segments, generates valid SRT/VTT with `[No speech detected in this file.]` placeholder instead of erroring
+- **model_manager.py** — model loading timeout:
+  - `MODEL_LOAD_TIMEOUT = 120` seconds
+  - `ModelLoadTimeoutError` exception for clear diagnostics
+  - `_load_model_with_timeout()` via daemon thread with join timeout
+  - Lock acquisition timeout prevents deadlocks on concurrent model switches
+
+### Tests (Scout) — 170 new tests
+- `test_subtitle_embedding.py` — 40 tests (embed presets, combine endpoints, style validation)
+- `test_session_management.py` — 23 tests (cookies, persistence, session-scoped access)
+- `test_rate_limiting.py` — 33 tests (rate limiter, headers, brute force, quotas)
+- `test_cleanup_service.py` — 22 tests (file cleanup, retention, dry-run, error handling)
+- `test_webhook_routes.py` — 24 tests (register, SSRF validation, CRUD)
+- `test_download_routes.py` — 28 tests (SRT/VTT/JSON download, content headers, errors)
+
+**Tests added:** 170
+**Running total:** 1830 + 170 = **2000** (target achieved!)
+
+**Lumen Pillar 1 milestone:** 2000+ tests reached. Foundation phase (L1-L10) substantially complete.
+
+---

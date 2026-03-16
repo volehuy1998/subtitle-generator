@@ -28,15 +28,38 @@ from profiler import PipelineSummary, ResourceMonitor, StepTimer
 logger = logging.getLogger("subtitle-generator")
 
 # Known exception patterns → user-friendly messages — Forge (Senior Backend Engineer)
+# Order matters: more specific patterns must come before general ones.
+# Sprint L9: Error Handling Hardening — expanded with Lumen-quality messages — Forge (Sr. Backend Engineer)
 _ERROR_MAP: list[tuple[str, str]] = [
-    ("No such file or directory", "A required file could not be found. Please try again."),
-    ("ffmpeg", "Media processing failed. The file may be corrupted or unsupported."),
-    ("out of memory", "Server ran out of memory. Try a smaller model or shorter file."),
-    ("CUDA out of memory", "GPU memory exhausted. Try a smaller model."),
-    ("Connection refused", "A required service is unavailable. Please try again later."),
-    ("Permission denied", "Server encountered a file permission error."),
+    # Disk/storage errors (check before general IOError patterns)
+    ("No space left on device", "Storage is full. Please free space or reduce file size."),
+    ("ENOSPC", "Storage is full. Please free space or reduce file size."),
+    ("disk quota exceeded", "Storage is full. Please free space or reduce file size."),
+    # Memory errors (specific before general)
+    ("CUDA out of memory", "GPU memory exhausted. Please try a smaller model."),
+    ("out of memory", "Not enough memory for this model. Please try a smaller model or reduce file size."),
+    ("MemoryError", "Not enough memory for this model. Please try a smaller model or reduce file size."),
+    ("Cannot allocate memory", "Not enough memory for this model. Please try a smaller model or reduce file size."),
+    # Model loading errors (specific before general "model" match)
+    ("Model loading timed out", "Model loading timed out. The server may be overloaded. Please try again later."),
+    ("failed to load model", "The transcription model could not be loaded. Please try a smaller model."),
+    ("model download", "The transcription model could not be downloaded. Please try a smaller model."),
     ("model", "Failed to load the transcription model. Please try again."),
+    # Media/ffmpeg errors (specific before general)
+    ("Invalid data found when processing input", "This file appears to be damaged or is not a supported media format."),
+    ("Decoder", "This file appears to be damaged or is not a supported media format."),
+    ("decode", "This file appears to be damaged or is not a supported media format."),
+    ("corrupt", "This file appears to be damaged or is not a supported media format."),
+    ("moov atom not found", "This file appears to be damaged or is not a supported media format."),
+    ("ffmpeg", "Media processing failed. The file may be corrupted or unsupported."),
     ("codec", "Unsupported media codec. Try converting to a standard format."),
+    # File/permission errors
+    ("No such file or directory", "A required file could not be found. Please try again."),
+    ("Permission denied", "Server encountered a file permission error."),
+    # Network errors
+    ("Connection refused", "A required service is unavailable. Please try again later."),
+    ("Connection timed out", "A required service is unavailable. Please try again later."),
+    ("timed out", "The operation timed out. Please try again."),
 ]
 
 _PATH_PATTERN = re.compile(r"(/[a-zA-Z0-9_./-]+)+")
@@ -45,8 +68,22 @@ _PATH_PATTERN = re.compile(r"(/[a-zA-Z0-9_./-]+)+")
 def _sanitize_error_for_user(exc: Exception) -> str:
     """Map raw exceptions to user-friendly messages, stripping paths and internals.
 
-    Detailed errors remain in logs. — Forge (Senior Backend Engineer)
+    Handles errno-based OSError (e.g., ENOSPC) and pattern matching.
+    Detailed errors remain in logs. — Forge (Sr. Backend Engineer)
     """
+    import errno
+
+    # Handle errno-based OSError directly — Forge (Sr. Backend Engineer)
+    if isinstance(exc, OSError) and hasattr(exc, "errno") and exc.errno is not None:
+        if exc.errno == errno.ENOSPC:
+            return "Storage is full. Please free space or reduce file size."
+        if exc.errno == errno.ENOMEM:
+            return "Not enough memory for this model. Please try a smaller model or reduce file size."
+
+    # Handle MemoryError type directly
+    if isinstance(exc, MemoryError):
+        return "Not enough memory for this model. Please try a smaller model or reduce file size."
+
     raw = str(exc)
     # Check known patterns
     raw_lower = raw.lower()
@@ -384,6 +421,12 @@ def process_video(
 
         segments = result["segments"]
 
+        # Sprint L9: Log zero-segments detection early — Forge (Sr. Backend Engineer)
+        if not segments:
+            logger.info(f"TASK [{task_id[:8]}] No speech segments detected in audio")
+            log_task_event(task_id, "no_speech_detected", audio_duration_sec=round(duration, 2))
+            emit_event(task_id, "warning", {"message": "No speech detected in this file."})
+
         # Step 4b: Speaker diarization (optional)
         if diarize and is_diarization_available()["available"]:
             task["message"] = "Identifying speakers..."
@@ -508,16 +551,23 @@ def process_video(
         has_speakers = any("speaker" in s for s in result["segments"])
 
         with StepTimer(task_id, "write_srt", task_log_func=log_task_event) as step_srt:
-            srt_content = segments_to_srt(result["segments"], include_speakers=has_speakers)
+            # Sprint L9: Generate valid subtitle files even with 0 segments — Forge (Sr. Backend Engineer)
+            if not result["segments"]:
+                # Write SRT with a header comment indicating no speech was detected
+                srt_content = "1\n00:00:00,000 --> 00:00:01,000\n[No speech detected in this file.]\n"
+                vtt_content = "WEBVTT\nNOTE No speech detected in this file.\n\n1\n00:00:00.000 --> 00:00:01.000\n[No speech detected in this file.]\n"
+                json_content = segments_to_json([])
+            else:
+                srt_content = segments_to_srt(result["segments"], include_speakers=has_speakers)
+                vtt_content = segments_to_vtt(result["segments"], include_speakers=has_speakers)
+                json_content = segments_to_json(result["segments"])
+
             srt_path = OUTPUT_DIR / f"{task_id}.srt"
             srt_path.write_text(srt_content, encoding="utf-8")
 
-            vtt_content = segments_to_vtt(result["segments"], include_speakers=has_speakers)
             vtt_path = OUTPUT_DIR / f"{task_id}.vtt"
             vtt_path.write_text(vtt_content, encoding="utf-8")
 
-            # Always save JSON — empty results are more informative than 404
-            json_content = segments_to_json(result["segments"])
             json_path = OUTPUT_DIR / f"{task_id}.json"
             json_path.write_text(json_content, encoding="utf-8")
 
