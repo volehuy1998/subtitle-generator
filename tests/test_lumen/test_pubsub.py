@@ -10,7 +10,6 @@ import json
 import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
-
 # Mock redis modules so app.services.redis_client can be imported
 if "redis" not in sys.modules:
     _redis_mock = MagicMock()

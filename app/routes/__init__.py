@@ -19,6 +19,7 @@ from app.routes.logs import router as logs_router
 from app.routes.metrics import router as metrics_router
 from app.routes.monitoring import router as monitoring_router
 from app.routes.pages import router as pages_router
+from app.routes.preferences import router as preferences_router
 from app.routes.query import router as query_router
 from app.routes.security import router as security_router
 from app.routes.status_page import router as status_page_router
@@ -28,7 +29,6 @@ from app.routes.tasks import router as tasks_router
 from app.routes.tracking import router as tracking_router
 from app.routes.translation import router as translation_router
 from app.routes.upload import router as upload_router
-from app.routes.preferences import router as preferences_router
 from app.routes.webhooks import router as webhooks_router
 from app.routes.ws import router as ws_router
 

@@ -8,8 +8,8 @@ stack ordering across the full HTTP pipeline.
 import struct
 import uuid
 import wave
-from io import BytesIO
 from concurrent.futures import ThreadPoolExecutor
+from io import BytesIO
 
 from fastapi.testclient import TestClient
 

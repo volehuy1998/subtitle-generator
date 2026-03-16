@@ -10,7 +10,6 @@ from unittest.mock import MagicMock, patch
 
 from app.middleware.slow_query import SLOW_QUERY_MS, register_slow_query_logging
 
-
 # ======================================================================
 # REGISTER SLOW QUERY LOGGING
 # ======================================================================

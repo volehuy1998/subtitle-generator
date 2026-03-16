@@ -26,7 +26,6 @@ from app.utils.subtitle_format import (
     words_to_segments,
 )
 
-
 # ── Helper segments ──────────────────────────────────────────────────────────
 
 

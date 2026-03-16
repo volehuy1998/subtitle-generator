@@ -9,7 +9,6 @@ import asyncio
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
-
 from app.utils.security_infra import (
     create_signed_audit_entry,
     verify_audit_entry,

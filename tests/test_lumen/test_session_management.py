@@ -203,8 +203,9 @@ class TestSessionMiddlewareBehavior:
         assert str(parsed) == sid
 
     def test_empty_session_returns_empty_string(self):
-        from app.middleware.session import get_session_id
         from unittest.mock import MagicMock
+
+        from app.middleware.session import get_session_id
 
         req = MagicMock()
         req.cookies = {}
@@ -212,8 +213,9 @@ class TestSessionMiddlewareBehavior:
         assert result == ""
 
     def test_known_session_returns_value(self):
-        from app.middleware.session import get_session_id
         from unittest.mock import MagicMock
+
+        from app.middleware.session import get_session_id
 
         req = MagicMock()
         req.cookies = {SESSION_COOKIE: "test-session-123"}

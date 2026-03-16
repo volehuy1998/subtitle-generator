@@ -363,6 +363,7 @@ class TestFFprobeCaching:
 
     def test_get_audio_duration_returns_float(self):
         from pathlib import Path
+
         from app.utils.media import get_audio_duration
 
         result = get_audio_duration(Path("/nonexistent/file.wav"))
@@ -370,6 +371,7 @@ class TestFFprobeCaching:
 
     def test_get_audio_duration_missing_file_returns_zero(self):
         from pathlib import Path
+
         from app.utils.media import get_audio_duration
 
         result = get_audio_duration(Path("/nonexistent/file.wav"))
@@ -377,6 +379,7 @@ class TestFFprobeCaching:
 
     def test_has_audio_stream_returns_bool(self):
         from pathlib import Path
+
         from app.utils.media import has_audio_stream
 
         result = has_audio_stream(Path("/nonexistent/file.wav"))
@@ -384,6 +387,7 @@ class TestFFprobeCaching:
 
     def test_has_audio_stream_missing_file_returns_false(self):
         from pathlib import Path
+
         from app.utils.media import has_audio_stream
 
         result = has_audio_stream(Path("/nonexistent/file.wav"))
@@ -412,6 +416,7 @@ class TestFFprobeCaching:
 
     def test_get_file_size_missing_file_returns_zero(self):
         from pathlib import Path
+
         from app.utils.media import get_file_size
 
         assert get_file_size(Path("/nonexistent/file.wav")) == 0

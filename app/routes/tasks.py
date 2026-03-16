@@ -9,7 +9,7 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException, Query, Request
 
 from app import state
-from app.config import OUTPUT_DIR, UPLOAD_DIR, VALID_MODELS, SUPPORTED_LANGUAGES
+from app.config import OUTPUT_DIR, SUPPORTED_LANGUAGES, UPLOAD_DIR, VALID_MODELS
 from app.logging_setup import log_task_event
 from app.utils.access import check_task_access
 

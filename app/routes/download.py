@@ -103,8 +103,8 @@ async def download(
             raise HTTPException(404, "JSON segments file not found for regeneration")
 
         segments = json.load(open(json_path, "r", encoding="utf-8"))
-        from app.utils.subtitle_format import format_segments_with_linebreaks
         from app.utils.srt import segments_to_srt, segments_to_vtt
+        from app.utils.subtitle_format import format_segments_with_linebreaks
 
         formatted = format_segments_with_linebreaks(segments, max_chars=max_line_chars)
         has_speakers = any(s.get("speaker") for s in formatted)

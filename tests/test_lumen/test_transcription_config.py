@@ -22,7 +22,6 @@ from app.config import (
 from app.services.model_manager import get_compute_type
 from app.services.transcription import get_optimal_transcribe_options
 
-
 # ─────────────────────────────────────────────────────────────
 # VAD Configuration (10 tests)
 # ─────────────────────────────────────────────────────────────

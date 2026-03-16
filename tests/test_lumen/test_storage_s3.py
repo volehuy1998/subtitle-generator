@@ -9,7 +9,6 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-
 # Mock boto3 and botocore before any app imports that reference them
 if "botocore" not in sys.modules:
     _botocore_mock = MagicMock()

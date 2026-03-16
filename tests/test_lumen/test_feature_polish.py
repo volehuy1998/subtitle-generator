@@ -9,11 +9,12 @@ performance.
 import os
 import time
 from datetime import datetime, timezone
+
 from fastapi.testclient import TestClient
 
+from app import state as _state
 from app.main import app
 from app.services.cleanup import DEFAULT_RETENTION_SECONDS, cleanup_old_files
-from app import state as _state
 
 client = TestClient(app, base_url="https://testserver")
 

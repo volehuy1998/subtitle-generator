@@ -8,7 +8,6 @@ and quarantine_file edge cases.
 import sys
 from unittest.mock import MagicMock, patch
 
-
 # ══════════════════════════════════════════════════════════════════════════════
 # SCAN WITH CLAMAV — IMPORT MISSING
 # ══════════════════════════════════════════════════════════════════════════════

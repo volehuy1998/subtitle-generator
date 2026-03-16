@@ -36,15 +36,17 @@ class TestPathTraversal:
         assert str(p).startswith(str(UPLOAD_DIR.resolve()))
 
     def test_path_traversal_blocked(self):
-        from app.config import UPLOAD_DIR
         import pytest
+
+        from app.config import UPLOAD_DIR
 
         with pytest.raises(ValueError, match="traversal"):
             safe_path(UPLOAD_DIR / "../../etc/passwd", allowed_dir=UPLOAD_DIR)
 
     def test_path_traversal_double_dots(self):
-        from app.config import UPLOAD_DIR
         import pytest
+
+        from app.config import UPLOAD_DIR
 
         with pytest.raises(ValueError):
             safe_path("../../etc/shadow", allowed_dir=UPLOAD_DIR)
@@ -436,8 +438,9 @@ class TestFileValidation:
         assert valid is True
 
     def test_checksum_computation(self):
-        from app.utils.validation import compute_checksum
         import tempfile
+
+        from app.utils.validation import compute_checksum
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as f:
             f.write(b"test data")
@@ -447,8 +450,9 @@ class TestFileValidation:
             assert len(checksum) == 64  # SHA-256 hex length
 
     def test_checksum_verification(self):
-        from app.utils.validation import compute_checksum, verify_checksum
         import tempfile
+
+        from app.utils.validation import compute_checksum, verify_checksum
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as f:
             f.write(b"test data")

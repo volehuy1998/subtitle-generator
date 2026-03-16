@@ -17,15 +17,6 @@ from app.config import (
     UPLOAD_DIR,
     VALID_MODELS,
 )
-from app.logging_setup import log_task_event
-from app.routes.metrics import inc
-from app.schemas import UploadResponse
-from app.services.analytics import record_upload
-from app.services.audit import log_audit_event
-from app.services.gpu import auto_select_model
-from app.services.pipeline import process_video
-from app.services.quarantine import quarantine_file, scan_with_clamav
-from app.services.sse import create_event_queue
 from app.errors import (
     DURATION_EXCEEDED,
     FFMPEG_UNAVAILABLE,
@@ -39,7 +30,15 @@ from app.errors import (
     VIRUS_DETECTED,
     api_error,
 )
-from app.logging_setup import get_request_id
+from app.logging_setup import get_request_id, log_task_event
+from app.routes.metrics import inc
+from app.schemas import UploadResponse
+from app.services.analytics import record_upload
+from app.services.audit import log_audit_event
+from app.services.gpu import auto_select_model
+from app.services.pipeline import process_video
+from app.services.quarantine import quarantine_file, scan_with_clamav
+from app.services.sse import create_event_queue
 from app.utils.formatting import format_bytes
 from app.utils.security import detect_mime_type, sanitize_filename, validate_file_extension, validate_magic_bytes
 

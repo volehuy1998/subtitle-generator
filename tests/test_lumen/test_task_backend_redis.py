@@ -9,7 +9,6 @@ import json
 import sys
 from unittest.mock import MagicMock, patch
 
-
 # Mock redis modules so app.services.redis_client can be imported
 if "redis" not in sys.modules:
     _redis_mock = MagicMock()
@@ -17,8 +16,7 @@ if "redis" not in sys.modules:
     sys.modules["redis.asyncio"] = _redis_mock.asyncio
 
 
-from app.services.task_backend_redis import _serialize, _deserialize, _SKIP_FIELDS
-
+from app.services.task_backend_redis import _SKIP_FIELDS, _deserialize, _serialize
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SERIALIZATION
