@@ -26,6 +26,7 @@ export function ConnectionBanner() {
       wasDisconnected.current = true
     } else if (wasDisconnected.current) {
       wasDisconnected.current = false
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFlashSuccess(true)
       const timer = setTimeout(() => setFlashSuccess(false), 2000)
       return () => clearTimeout(timer)
@@ -35,6 +36,7 @@ export function ConnectionBanner() {
   // Countdown timer when disconnected
   useEffect(() => {
     if (sseConnected && !isDbDown) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCountdown(RECONNECT_INTERVAL)
       return
     }

@@ -103,6 +103,18 @@ export function TranscribeForm({ onUpload }: Props) {
     return () => { if (preloadPoll.current) clearInterval(preloadPoll.current) }
   }, [preload?.status])
 
+  const modelPreloadState = useCallback((m: string): 'ready' | 'loading' | null => {
+    if (!preload) return null
+    if (preload.loaded?.includes(m)) return 'ready'
+    if (preload.status === 'loading' && preload.current_model === m) return 'loading'
+    return null
+  }, [preload])
+
+  const modelFitsGpu = (m: string) => {
+    const rec = systemInfo?.model_recommendations?.[m]
+    return rec === 'ok' || rec === 'tight' ? true : rec === 'too_large' ? false : null
+  }
+
   const onDrop = useCallback((accepted: File[]) => {
     const file = accepted[0]
     if (!file) return
@@ -111,7 +123,7 @@ export function TranscribeForm({ onUpload }: Props) {
     // Find first ready model that isn't the selected one
     const firstReady = preload?.loaded?.find((m) => m !== model) ?? null
     onUpload(file, { device, model, language, format, translateTo, modelLoaded: isModelLoaded, firstReadyModel: firstReady })
-  }, [onUpload, device, model, language, format, translateTo, preload])
+  }, [onUpload, device, model, language, format, translateTo, preload, modelPreloadState])
 
   const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
     onDrop,
@@ -119,18 +131,6 @@ export function TranscribeForm({ onUpload }: Props) {
     multiple: false,
     maxSize: 500 * 1024 * 1024,
   })
-
-  const modelFitsGpu = (m: string) => {
-    const rec = systemInfo?.model_recommendations?.[m]
-    return rec === 'ok' || rec === 'tight' ? true : rec === 'too_large' ? false : null
-  }
-
-  const modelPreloadState = (m: string): 'ready' | 'loading' | null => {
-    if (!preload) return null
-    if (preload.loaded?.includes(m)) return 'ready'
-    if (preload.status === 'loading' && preload.current_model === m) return 'loading'
-    return null
-  }
 
   const chipBase = 'px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer select-none'
 

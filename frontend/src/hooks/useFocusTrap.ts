@@ -22,7 +22,6 @@ export function useFocusTrap() {
 
     const focusables = el.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
     const first = focusables[0]
-    const last = focusables[focusables.length - 1]
 
     first?.focus()
 

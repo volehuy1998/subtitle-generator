@@ -56,7 +56,7 @@ describe('AppHeader', () => {
   })
 
   it('renders health status button', () => {
-    useUIStore.setState({ health: { status: 'healthy' } as any })
+    useUIStore.setState({ health: { status: 'healthy', uptime_sec: 0 } })
     render(<AppHeader />)
     expect(screen.getByText('Healthy')).toBeInTheDocument()
   })

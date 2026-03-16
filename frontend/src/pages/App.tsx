@@ -37,6 +37,7 @@ export function App() {
   // Track completed tasks when user is on Embed tab — Pixel (Sr. Frontend), Sprint L55
   useEffect(() => {
     if (store.isComplete && !prevIsComplete.current && appMode === 'embed') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCompletedCount((c) => c + 1)
     }
     prevIsComplete.current = store.isComplete

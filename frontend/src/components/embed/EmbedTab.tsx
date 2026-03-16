@@ -100,15 +100,6 @@ const SubtitleIcon = () => (
   </svg>
 )
 
-const STYLE_PRESET_LABELS: Record<string, string> = {
-  default: 'Default',
-  youtube_white: 'YouTube White',
-  youtube_yellow: 'YouTube Yellow',
-  cinema: 'Cinema',
-  large_bold: 'Large Bold',
-  top: 'Top Position',
-}
-
 export function EmbedTab() {
   const { dbOk } = useUIStore()
   const [videoFile, setVideoFile] = useState<File | null>(null)

@@ -105,6 +105,7 @@ export function ProgressView({ taskId }: Props) {
   // Poll queue position when task is queued — Pixel (Sr. Frontend), Sprint L44
   useEffect(() => {
     if (status !== 'queued' || !taskId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setQueuePosition(null)
       setQueueEta(null)
       return
