@@ -29,18 +29,25 @@ def get_optimal_transcribe_options(
     # Custom vocabulary / domain prompt
     if initial_prompt and initial_prompt.strip():
         opts["initial_prompt"] = initial_prompt.strip()
+    # Sprint L13: Adaptive beam size per model for optimal speed/quality — Forge (Sr. Backend Engineer)
+    # Smaller models benefit less from wider beam search; larger models need it for quality.
+    _BEAM_SIZES = {
+        "tiny": 1,  # Speed priority — greedy is sufficient
+        "base": 3,  # Balanced
+        "small": 5,  # Default
+        "medium": 5,  # Quality
+        "large": 5,  # Quality priority
+    }
     if device == "cuda":
         vram_check = check_vram_for_model(model_size)
         if vram_check.get("tight") or not vram_check.get("fits", True):
             opts["beam_size"] = 1
             logger.info(f"OPTS VRAM tight for {model_size}, using beam_size=1 (greedy)")
         else:
-            opts["beam_size"] = 5
+            opts["beam_size"] = _BEAM_SIZES.get(model_size, 5)
     else:
-        if model_size in ("large", "medium"):
-            opts["beam_size"] = 3
-        else:
-            opts["beam_size"] = 5
+        opts["beam_size"] = _BEAM_SIZES.get(model_size, 5)
+    logger.info(f"OPTS beam_size={opts['beam_size']} for model={model_size} device={device}")
     return opts
 
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useTaskStore } from '@/store/taskStore'
 import { useUIStore } from '@/store/uiStore'
 import { useSSE } from '@/hooks/useSSE'
@@ -6,6 +6,19 @@ import { api } from '@/api/client'
 import { PipelineSteps } from './PipelineSteps'
 import { LivenessIndicator } from './LivenessIndicator'
 import { CancelConfirmationDialog } from './CancelConfirmationDialog'
+
+// Clock tick for stale detection — Pixel (Sr. Frontend), Sprint L13
+let staleClockListeners: Array<() => void> = [];
+let staleClockSnapshot = Date.now();
+setInterval(() => {
+  staleClockSnapshot = Date.now();
+  staleClockListeners.forEach((fn) => fn());
+}, 5000);
+function subscribeStale(cb: () => void) {
+  staleClockListeners.push(cb);
+  return () => { staleClockListeners = staleClockListeners.filter((fn) => fn !== cb); };
+}
+function getStaleSnapshot() { return staleClockSnapshot; }
 
 interface Props {
   taskId: string
@@ -48,6 +61,11 @@ export function ProgressView({ taskId }: Props) {
 
   const isActive = !isComplete && status !== 'error' && status !== 'cancelled'
   const anyRequesting = isPauseRequesting || isCancelRequesting
+
+  // Stale warning: show after 30s with no SSE event — Pixel (Sr. Frontend), Sprint L13
+  const now = useSyncExternalStore(subscribeStale, getStaleSnapshot)
+  const secSinceUpdate = (now - store.lastEventTime) / 1000
+  const isStale = isActive && !isUploading && secSinceUpdate > 30
 
   // Auto-scroll segments
   useEffect(() => {
@@ -323,6 +341,21 @@ export function ProgressView({ taskId }: Props) {
         >
           <span style={{ color: 'var(--color-warning)' }}>⚠</span>
           {warning}
+        </div>
+      )}
+
+      {/* Stale warning — Pixel (Sr. Frontend), Sprint L13 */}
+      {isStale && (
+        <div
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
+          style={{
+            background: 'var(--color-warning-light)',
+            border: '1px solid #FDE68A',
+            color: 'var(--color-text)',
+          }}
+        >
+          <span style={{ color: 'var(--color-warning)' }}>⚠</span>
+          This is taking longer than expected. The system is still working.
         </div>
       )}
 

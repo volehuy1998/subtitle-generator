@@ -1,10 +1,12 @@
 """Video processing pipeline: orchestrates probe -> extract -> load -> transcribe -> SRT."""
 
 import logging
+import os
 import re
 import threading
 import time as _time
 import traceback
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from app import state
@@ -330,7 +332,14 @@ def process_video(
         )
 
         with StepTimer(task_id, "extract_audio", task_log_func=log_task_event) as step_extract:
-            extract_audio(video_path, audio_path, task_id=task_id)
+            # Sprint L13: Skip extraction when input is already WAV — Forge (Sr. Backend Engineer)
+            input_ext = os.path.splitext(str(video_path))[1].lower()
+            if input_ext == ".wav":
+                audio_path = video_path
+                logger.info(f"PIPELINE [{task_id[:8]}] Input is WAV, skipping extraction")
+                log_task_event(task_id, "extract_skipped", reason="input_is_wav")
+            else:
+                extract_audio(video_path, audio_path, task_id=task_id)
             audio_size = get_file_size(audio_path)
             task["audio_size_fmt"] = format_bytes(audio_size)
             pipeline.audio_size = audio_size
@@ -583,13 +592,21 @@ def process_video(
                 json_content = segments_to_json(result["segments"])
 
             srt_path = OUTPUT_DIR / f"{task_id}.srt"
-            srt_path.write_text(srt_content, encoding="utf-8")
-
             vtt_path = OUTPUT_DIR / f"{task_id}.vtt"
-            vtt_path.write_text(vtt_content, encoding="utf-8")
-
             json_path = OUTPUT_DIR / f"{task_id}.json"
-            json_path.write_text(json_content, encoding="utf-8")
+
+            # Sprint L13: Write all output formats in parallel — Forge (Sr. Backend Engineer)
+            def _write_output(path, content):
+                path.write_text(content, encoding="utf-8")
+
+            with ThreadPoolExecutor(max_workers=3) as pool:
+                futures = [
+                    pool.submit(_write_output, srt_path, srt_content),
+                    pool.submit(_write_output, vtt_path, vtt_content),
+                    pool.submit(_write_output, json_path, json_content),
+                ]
+                for f in futures:
+                    f.result()
 
             srt_size = get_file_size(srt_path)
             pipeline.srt_size = srt_size
@@ -662,7 +679,9 @@ def process_video(
         record_completion(total_time, model=model_size)
         inc("transcriptions_completed")
 
-        audio_path.unlink(missing_ok=True)
+        # Sprint L13: Don't delete audio if it IS the original WAV input — Forge (Sr. Backend Engineer)
+        if audio_path != video_path:
+            audio_path.unlink(missing_ok=True)
 
         # Auto-embed subtitles if requested
         if auto_embed and video_path.exists():
@@ -695,7 +714,8 @@ def process_video(
         record_cancellation()
         inc("transcriptions_cancelled")
         video_path.unlink(missing_ok=True)
-        audio_path.unlink(missing_ok=True)
+        if audio_path != video_path:
+            audio_path.unlink(missing_ok=True)
         _persist_task(task_id, task)
 
     except CriticalAbortError as e:
@@ -723,7 +743,8 @@ def process_video(
         record_error_category("CriticalAbort")
         inc("transcriptions_failed")
         video_path.unlink(missing_ok=True)
-        audio_path.unlink(missing_ok=True)
+        if audio_path != video_path:
+            audio_path.unlink(missing_ok=True)
         _persist_task(task_id, task)
 
     except Exception as e:
@@ -742,7 +763,8 @@ def process_video(
         record_error_category(type(e).__name__)
         inc("transcriptions_failed")
         video_path.unlink(missing_ok=True)
-        audio_path.unlink(missing_ok=True)
+        if audio_path != video_path:
+            audio_path.unlink(missing_ok=True)
         _persist_task(task_id, task)
 
     finally:

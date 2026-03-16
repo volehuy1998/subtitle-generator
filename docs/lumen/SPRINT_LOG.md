@@ -388,3 +388,42 @@
 **Running total:** 2108 + 40 = **2148**
 
 ---
+
+## Sprint L13: Pipeline Optimization + Active Step Animation (2026-03-16)
+
+**Goal:** Optimize pipeline throughput and add remaining UX polish.
+
+**Delivered:**
+
+### Backend (Forge)
+- **WAV skip extraction** (`pipeline.py`):
+  - WAV input files bypass ffmpeg extraction entirely
+  - `audio_path = video_path` when extension is `.wav`
+  - Cleanup logic updated to avoid deleting original WAV
+- **Parallel file writes** (`pipeline.py`):
+  - SRT/VTT/JSON written concurrently via `ThreadPoolExecutor(max_workers=3)`
+- **Beam size auto-tuning** (`transcription.py`):
+  - Per-model lookup: tiny=1, base=3, small/medium/large=5
+  - VRAM-tight override to beam_size=1 preserved
+  - Logged for observability
+
+### Frontend (Pixel)
+- **Active step pulse animation** (`PipelineSteps.tsx` + `index.css`):
+  - `@keyframes stepPulse` with opacity fade + expanding box-shadow ring
+  - Applied to active step circle, disabled when paused
+- **Stale warning** (`ProgressView.tsx`):
+  - Yellow "This is taking longer than expected" banner after 30s no SSE event
+  - Only during active processing (not upload)
+- **Time-since-update**: Already implemented in LivenessIndicator (L5) — no changes needed
+
+### Tests (Scout) — 40 new tests
+- `test_pipeline_optimization.py`:
+  - WAV skip extraction (10 tests)
+  - Beam size auto-tuning (10 tests)
+  - Output file writing (10 tests)
+  - Pipeline error handling (10 tests)
+
+**Tests added:** 40
+**Running total:** 2148 + 40 = **2188**
+
+---
