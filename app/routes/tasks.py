@@ -2,10 +2,14 @@
 
 import logging
 import uuid
+from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Query, Request
 
 from app import state
+from app.config import OUTPUT_DIR, UPLOAD_DIR
+from app.logging_setup import log_task_event
+from app.utils.access import check_task_access
 
 logger = logging.getLogger("subtitle-generator")
 router = APIRouter(tags=["Tasks"])
@@ -133,4 +137,99 @@ async def check_duplicates(filename: str = Query(...), file_size: int = Query(0)
     return {
         "duplicates_found": len(matches) > 0,
         "matches": matches,
+    }
+
+
+# Terminal statuses — tasks that are no longer processing
+_TERMINAL_STATUSES = frozenset({"done", "error", "cancelled"})
+
+
+def _delete_task_files(task_id: str, task: dict) -> dict:
+    """Delete all files associated with a task. Returns summary of deletions."""
+    deleted = []
+    errors = []
+
+    # Collect candidate file paths: uploaded file, extracted audio, outputs
+    candidates: list[Path] = []
+
+    # Uploaded files: {task_id}.{ext} in UPLOAD_DIR
+    if UPLOAD_DIR.exists():
+        for f in UPLOAD_DIR.iterdir():
+            if f.is_file() and f.stem == task_id:
+                candidates.append(f)
+
+    # Output files: {task_id}.{ext} in OUTPUT_DIR (srt, vtt, json, embedded video)
+    if OUTPUT_DIR.exists():
+        for f in OUTPUT_DIR.iterdir():
+            if f.is_file() and f.stem == task_id:
+                candidates.append(f)
+
+    for fpath in candidates:
+        try:
+            fpath.unlink()
+            deleted.append(fpath.name)
+            logger.debug(f"DELETE [{task_id[:8]}] Removed file: {fpath.name}")
+        except Exception as e:
+            errors.append({"file": fpath.name, "error": str(e)})
+            logger.warning(f"DELETE [{task_id[:8]}] Failed to remove {fpath.name}: {e}")
+
+    return {"deleted_files": deleted, "errors": errors}
+
+
+@router.delete("/tasks/{task_id}")
+async def delete_task(task_id: str, request: Request):
+    """Delete a completed, failed, or cancelled task and its associated files.
+
+    Only tasks in terminal state (done, error, cancelled) can be deleted.
+    Active tasks must be cancelled first.
+    """
+    if task_id not in state.tasks:
+        raise HTTPException(404, "Task not found")
+
+    task = state.tasks[task_id]
+
+    # Session access check (same pattern as cancel endpoint)
+    check_task_access(task, request)
+
+    # Only allow deletion of terminal tasks
+    status = task.get("status", "unknown")
+    if status not in _TERMINAL_STATUSES:
+        raise HTTPException(
+            400,
+            f"Cannot delete an active task (status: {status}). Cancel the task first.",
+        )
+
+    # Delete associated files
+    file_summary = _delete_task_files(task_id, task)
+
+    # Remove from in-memory state
+    state.tasks.pop(task_id, None)
+
+    # Remove from database backend
+    try:
+        from app.services.task_backend import get_task_backend
+
+        backend = get_task_backend()
+        backend.delete(task_id)
+    except Exception as e:
+        logger.warning(f"DELETE [{task_id[:8]}] Backend delete failed: {e}")
+
+    # Persist updated task history
+    state.save_task_history()
+
+    logger.info(
+        f"DELETE [{task_id[:8]}] Task deleted (was: {status}, files_removed: {len(file_summary['deleted_files'])})"
+    )
+    log_task_event(
+        task_id,
+        "deleted",
+        previous_status=status,
+        deleted_files=file_summary["deleted_files"],
+        file_errors=file_summary["errors"],
+    )
+
+    return {
+        "message": "Task deleted",
+        "task_id": task_id,
+        "deleted_files": file_summary["deleted_files"],
     }

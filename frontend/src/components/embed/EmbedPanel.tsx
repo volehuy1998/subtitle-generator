@@ -182,7 +182,7 @@ export function EmbedPanel({ taskId, alreadyTranslated }: Props) {
       {embedState === 'error' && errorMsg && (
         <div
           className="px-3 py-2 rounded-lg text-xs"
-          style={{ background: 'var(--color-danger-light)', color: 'var(--color-danger)', border: '1px solid #FECACA' }}
+          style={{ background: 'var(--color-danger-light)', color: 'var(--color-danger)', border: '1px solid var(--color-danger-border)' }}
         >
           {errorMsg}
         </div>

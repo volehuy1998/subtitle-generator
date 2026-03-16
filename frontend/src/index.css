@@ -34,6 +34,7 @@
 
   --color-danger:          #EF4444;
   --color-danger-light:    rgba(239,68,68,0.08);
+  --color-danger-border:   rgba(239,68,68,0.20);
 
   /* Radius — slightly softer for light theme */
   --radius-xs: 4px;

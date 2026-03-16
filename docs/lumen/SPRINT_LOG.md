@@ -150,3 +150,80 @@
 **Running total:** 1354
 
 ---
+
+## Sprint L8: Full Foundation Completion (2026-03-16)
+
+**Goal:** Complete all remaining Foundation items — header redesign, confirmation dialogs, delete endpoint, input validation, embed tab redesign, and major test push toward 2000+.
+
+**Delivered:**
+
+### Frontend
+- **AppHeader.tsx** — Lumen redesign (Pixel):
+  - Removed GPU/CPU badge (distracting, non-essential)
+  - Simplified nav to App/Status/About with brand-color underline on active page
+  - Health indicator simplified to colored dot + text label (no load bar)
+  - White background with subtle border, all CSS design tokens
+  - Fixed stale active-page closure via `spa-navigate` event listener
+- **CancelConfirmationDialog.tsx** — NEW component (Pixel):
+  - Replaces `window.confirm()` with styled modal
+  - Warning icon, filename display, "Any progress will be lost" message
+  - "Keep Going" (secondary) + "Cancel Transcription" (destructive red) buttons
+  - Keyboard accessible: `role="dialog"`, `aria-modal`, Escape key, auto-focus
+- **EmbedConfirmationDialog.tsx** — NEW component (Prism):
+  - Summary table: video/subtitle files, mode, style settings, translation
+  - Hard burn warning about re-encoding time
+  - Matches ConfirmationDialog pattern from Sprint L4
+- **EmbedTab.tsx** — Lumen redesign (Prism):
+  - Grouped form into card sections (Source Files, Embed Mode, Subtitle Style, Translate)
+  - Added confirmation step before embedding
+  - Fixed polling leak on unmount via cleanup ref
+  - Custom file pickers with icons and success indicators
+  - All colors via CSS design tokens (indigo primary, no hardcoded colors)
+- **StyleOptions.tsx** — Dark preview strip intentional for video simulation
+- **EmbedPanel.tsx** — Replaced hardcoded error border with `--color-danger-border` token
+- **index.css** — Added `--color-danger-border` design token
+
+### Backend
+- **DELETE /tasks/{task_id}** endpoint (Forge):
+  - Terminal-only guard (done/error/cancelled)
+  - Session access check via `check_task_access`
+  - File cleanup from UPLOAD_DIR and OUTPUT_DIR
+  - Database backend removal + history persistence
+  - Structured logging with `log_task_event`
+- **Audio stream detection** in upload flow (Forge):
+  - Rejects files with no audio track (HTTP 400)
+  - Uses `has_audio_stream()` from `app/utils/media`
+  - Gated on `FFPROBE_AVAILABLE`
+- **Duration validation** in upload flow (Forge):
+  - Rejects files > 4 hours (HTTP 400)
+  - Uses `MAX_AUDIO_DURATION = 14400` from config
+
+### Tests (Scout)
+- 10 new test files in `tests/test_lumen/`:
+  - `test_format_output.py` — 80 tests (SRT/VTT/JSON format, timestamps, line breaking)
+  - `test_upload_validation.py` — 66 tests (extensions, sizes, sanitization, params)
+  - `test_sse_events.py` — 34 tests (event queues, subscribers, ordering)
+  - `test_pipeline_steps.py` — 42 tests (step progression, cancel/error per step)
+  - `test_task_management.py` — 60 tests (list, progress, cancel, retry, DELETE endpoint)
+  - `test_health_system.py` — 59 tests (health, readiness, metrics, capabilities)
+  - `test_security_validation.py` — 71 tests (path traversal, XSS, sanitization, headers)
+  - `test_translation_flow.py` — 40 tests (languages, translation params, Whisper/Argos)
+  - `test_api_integration.py` — 88 tests (downloads, editing, formatting, model management)
+  - `test_edge_cases.py` — 57 tests (extreme values, Unicode, boundaries, errors)
+
+### Code Review (Hawk)
+- Fixed 4 issues found during review:
+  1. CancelConfirmationDialog Escape key handler (added `tabIndex` + `useRef` + `useEffect`)
+  2. EmbedTab polling leak on unmount (added cleanup ref + cancelled flag)
+  3. DELETE endpoint test coverage (added 11 new tests)
+  4. AppHeader stale active-page closure (added `spa-navigate`/`popstate` listener)
+
+**Tests added:** 487 (586 new from Scout + 11 from Hawk review fix - 110 overlapping with existing)
+**Running total:** 1354 + 476 = 1830
+
+**Investor requirements addressed:**
+- "Every action requires confirmation" — cancel and embed now have styled dialogs
+- "Professional UI" — header matches enterprise standards, no GPU badge clutter
+- "Input validation" — audio stream + duration checks prevent bad uploads
+
+---

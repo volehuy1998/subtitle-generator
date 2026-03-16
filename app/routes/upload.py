@@ -131,6 +131,27 @@ async def upload(
         logger.warning(f"UPLOAD [{task_id[:8]}] Rejected: magic bytes don't match a media file")
         raise HTTPException(400, "File content does not match a recognized media format.")
 
+    # Validate audio stream presence (reject video-only or corrupt files early)
+    from app.config import FFPROBE_AVAILABLE, MAX_AUDIO_DURATION
+
+    if FFPROBE_AVAILABLE:
+        from app.utils.media import get_audio_duration, has_audio_stream
+
+        if not has_audio_stream(video_path):
+            video_path.unlink(missing_ok=True)
+            logger.warning(f"UPLOAD [{task_id[:8]}] Rejected: no audio stream in '{safe_filename}'")
+            raise HTTPException(400, "This file has no audio track. Please upload a file with audio.")
+
+        # Validate duration limit
+        duration = get_audio_duration(video_path)
+        if duration > MAX_AUDIO_DURATION:
+            video_path.unlink(missing_ok=True)
+            logger.warning(
+                f"UPLOAD [{task_id[:8]}] Rejected: duration {duration:.0f}s exceeds "
+                f"{MAX_AUDIO_DURATION}s limit for '{safe_filename}'"
+            )
+            raise HTTPException(400, "File duration exceeds the 4-hour limit. Please upload a shorter file.")
+
     # ClamAV virus scan (optional — graceful if ClamAV is not installed/running)
     client_ip = request.client.host if request.client else "unknown"
     av_result = scan_with_clamav(str(video_path))

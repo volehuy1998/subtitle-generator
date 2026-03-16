@@ -1,10 +1,11 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTaskStore } from '@/store/taskStore'
 import { useUIStore } from '@/store/uiStore'
 import { useSSE } from '@/hooks/useSSE'
 import { api } from '@/api/client'
 import { PipelineSteps } from './PipelineSteps'
 import { LivenessIndicator } from './LivenessIndicator'
+import { CancelConfirmationDialog } from './CancelConfirmationDialog'
 
 interface Props {
   taskId: string
@@ -40,6 +41,8 @@ export function ProgressView({ taskId }: Props) {
 
   const { processed_sec: processedSec, total_sec: totalSec, speed_x: speedX, eta, elapsed } = store
 
+  const [showCancelDialog, setShowCancelDialog] = useState(false)
+
   const isTranscribing = status === 'transcribing' && processedSec !== undefined && totalSec !== undefined && totalSec > 0
 
   const isActive = !isComplete && status !== 'error' && status !== 'cancelled'
@@ -60,7 +63,11 @@ export function ProgressView({ taskId }: Props) {
   }
 
   const handleCancel = async () => {
-    if (!window.confirm('Cancel the transcription?')) return
+    setShowCancelDialog(true)
+  }
+
+  const handleCancelConfirm = async () => {
+    setShowCancelDialog(false)
     store.setCancelRequesting(true)
     await api.cancel(taskId).catch(() => { store.setCancelRequesting(false) })
   }
@@ -475,6 +482,15 @@ export function ProgressView({ taskId }: Props) {
           </svg>
           Process Another File
         </button>
+      )}
+
+      {/* Cancel confirmation dialog — Pixel (Sr. Frontend Engineer), Sprint L8 */}
+      {showCancelDialog && (
+        <CancelConfirmationDialog
+          filename={filename ?? 'this file'}
+          onConfirm={handleCancelConfirm}
+          onCancel={() => setShowCancelDialog(false)}
+        />
       )}
     </div>
   )
