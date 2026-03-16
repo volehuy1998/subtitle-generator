@@ -17,6 +17,12 @@ interface ConfirmationDialogProps {
   device: string;
   onConfirm: () => void;
   onCancel: () => void;
+  /** True when the selected model is not yet loaded in memory */
+  modelNotLoaded?: boolean;
+  /** Name of a ready model that the user can switch to */
+  readyModelName?: string;
+  /** Called when user opts to switch to the ready model */
+  onSwitchModel?: (model: string) => void;
 }
 
 const MODEL_LABELS: Record<string, string> = {
@@ -43,6 +49,9 @@ export function ConfirmationDialog({
   device,
   onConfirm,
   onCancel,
+  modelNotLoaded,
+  readyModelName,
+  onSwitchModel,
 }: ConfirmationDialogProps) {
   return (
     <div
@@ -146,6 +155,59 @@ export function ConfirmationDialog({
           </table>
         </div>
 
+        {/* Model load warning — shown when selected model is not loaded */}
+        {modelNotLoaded && (
+          <div
+            style={{
+              background: 'var(--color-warning-light)',
+              border: '1px solid #FDE68A',
+              borderRadius: 'var(--radius)',
+              padding: '12px 16px',
+              marginBottom: '24px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M8 1.5l6.5 12H1.5L8 1.5z" stroke="#D97706" strokeWidth="1.3" strokeLinejoin="round" fill="none" />
+                <path d="M8 6.5v3" stroke="#D97706" strokeWidth="1.3" strokeLinecap="round" />
+                <circle cx="8" cy="11.5" r="0.6" fill="#D97706" />
+              </svg>
+              <span
+                style={{
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  color: 'var(--color-text)',
+                }}
+              >
+                The <strong>{model}</strong> model is not loaded yet. Loading may take 30–60 seconds.
+              </span>
+            </div>
+            {readyModelName && onSwitchModel && (
+              <button
+                type="button"
+                onClick={() => onSwitchModel(readyModelName)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  color: 'var(--color-primary)',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  textDecoration: 'underline',
+                  textUnderlineOffset: '2px',
+                }}
+              >
+                Use {readyModelName.charAt(0).toUpperCase() + readyModelName.slice(1)} instead (ready)
+              </button>
+            )}
+          </div>
+        )}
+
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
           <button
             onClick={onCancel}
@@ -176,7 +238,7 @@ export function ConfirmationDialog({
               boxShadow: 'var(--shadow-sm)',
             }}
           >
-            Start Transcription
+            {modelNotLoaded ? 'Load & Transcribe' : 'Start Transcription'}
           </button>
         </div>
       </div>

@@ -117,6 +117,11 @@ async def lifespan(app: FastAPI):
         if models_to_load:
             asyncio.create_task(_preload_models_background(models_to_load))
 
+    # Start idle model preloader (loads next model after 5 min idle) — Forge (Sr. Backend Engineer)
+    idle_preload_task = None
+    if ROLE != "web":
+        idle_preload_task = asyncio.create_task(_idle_preload_loop())
+
     # Start background cleanup task
     cleanup_task = asyncio.create_task(periodic_cleanup())
 
@@ -136,6 +141,8 @@ async def lifespan(app: FastAPI):
     state.shutting_down = True
     cleanup_task.cancel()
     health_task.cancel()
+    if ROLE != "web" and idle_preload_task is not None:
+        idle_preload_task.cancel()
     try:
         await cleanup_task
     except asyncio.CancelledError:
@@ -144,6 +151,11 @@ async def lifespan(app: FastAPI):
         await health_task
     except asyncio.CancelledError:
         logger.debug("Health task cancelled")
+    if ROLE != "web" and idle_preload_task is not None:
+        try:
+            await idle_preload_task
+        except asyncio.CancelledError:
+            logger.debug("Idle preload task cancelled")
 
     # Drain in-flight tasks
     active = state.get_active_task_count()
@@ -231,6 +243,66 @@ async def _preload_models_background(models_to_load: list[str]):
     state.model_preload["status"] = "ready"
     state.model_preload["current_model"] = None
     logger.info(f"PRELOAD All {len(models_to_load)} model(s) loaded successfully")
+
+
+async def _idle_preload_loop():
+    """After 5 min idle (no active tasks), preload the next most-used model.
+
+    Sprint L10: Smart idle preloading — Forge (Sr. Backend Engineer)
+    Checks every 60s. Skips if tasks are active or initial preload is running.
+    Loads one model per idle cycle in priority order: base, small, medium, tiny, large.
+    """
+    MODEL_PRIORITY = ["base", "small", "medium", "tiny", "large"]
+    IDLE_CHECK_INTERVAL = 60  # seconds between checks
+    IDLE_THRESHOLD = 300  # 5 minutes of inactivity before preloading
+
+    idle_seconds = 0
+
+    while True:
+        try:
+            await asyncio.sleep(IDLE_CHECK_INTERVAL)
+        except asyncio.CancelledError:
+            return
+
+        if state.shutting_down:
+            return
+
+        # Skip if initial preload still running
+        if state.model_preload.get("status") == "loading":
+            idle_seconds = 0
+            continue
+
+        # Skip if any tasks are active
+        active = sum(1 for t in state.tasks.values() if t.get("status") not in ("done", "error", "cancelled", None))
+        if active > 0:
+            idle_seconds = 0
+            continue
+
+        idle_seconds += IDLE_CHECK_INTERVAL
+
+        if idle_seconds < IDLE_THRESHOLD:
+            continue
+
+        # Find next unloaded model in priority order
+        for model_name in MODEL_PRIORITY:
+            key = (model_name, "cpu")
+            if key not in state.loaded_models:
+                try:
+                    logger.info(f"IDLE_PRELOAD Starting idle preload of '{model_name}'")
+                    from app.services.model_manager import get_model
+
+                    await asyncio.to_thread(get_model, model_name, "cpu")
+                    logger.info(f"IDLE_PRELOAD Loaded '{model_name}' successfully")
+                except Exception as e:
+                    logger.warning(f"IDLE_PRELOAD Failed to load '{model_name}': {e}")
+                break  # Only load one model per idle cycle
+        else:
+            # All models already loaded — stop checking
+            logger.info("IDLE_PRELOAD All priority models already loaded")
+            return
+
+        # Reset idle counter after a load attempt
+        idle_seconds = 0
 
 
 def _apply_tuning(tuning: dict):

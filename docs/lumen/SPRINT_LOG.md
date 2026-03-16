@@ -263,3 +263,46 @@
 **Lumen Pillar 1 milestone:** 2000+ tests reached. Foundation phase (L1-L10) substantially complete.
 
 ---
+
+## Sprint L10: Performance — FFprobe Cache, Idle Preload, Model UX (2026-03-16)
+
+**Goal:** Begin Performance pillar (Lumen 2.1-2.3). Optimize probe speed, add smart idle preloading, improve model selection UX.
+
+**Delivered:**
+
+### Backend Performance (Forge)
+- **FFprobe result caching** (`app/utils/media.py`):
+  - `_probe_file_cached()` with `@lru_cache(maxsize=256)`
+  - `get_audio_duration()` and `has_audio_stream()` now share cached probe results
+  - `clear_probe_cache()` utility for explicit invalidation
+  - Impact: ffprobe runs once per file instead of 2-3 times (upload validation + pipeline)
+- **Smart idle preloading** (`app/main.py`):
+  - `_idle_preload_loop()` checks every 60s for idle state
+  - After 5 min no active tasks, preloads next model in priority: base→small→medium→tiny→large
+  - Skips during initial preload or active processing
+  - Loads one model per cycle, graceful error handling
+  - Registered in lifespan startup, cancelled on shutdown
+
+### Frontend UX (Pixel)
+- **Model load confirmation** (`ConfirmationDialog.tsx` + `TranscribeForm.tsx` + `App.tsx`):
+  - When selected model is not loaded, shows yellow warning: "The {model} model is not loaded yet. Loading may take 30-60 seconds."
+  - Button changes from "Start Transcription" to "Load & Transcribe"
+  - "Use {ReadyModel} instead (ready)" link switches to first loaded model
+  - TranscribeForm passes model readiness + first ready model through upload options
+  - App.tsx handles model switch in pending upload state
+
+### Tests (Scout) — 67 new tests
+- `test_performance.py`:
+  - Model readiness API (15 tests)
+  - Model manager constants/structure (17 tests)
+  - Compute type selection (5 tests)
+  - System capability (10 tests)
+  - System tuning (5 tests)
+  - FFprobe caching (15 tests)
+
+**Tests added:** 67
+**Running total:** 2000 + 67 = **2067**
+
+**Phase transition:** Foundation (L1-L10) → Performance (L11-L20) now in progress.
+
+---

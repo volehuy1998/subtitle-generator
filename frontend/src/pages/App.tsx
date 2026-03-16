@@ -21,7 +21,7 @@ export function App() {
   // Phase Lumen: pending upload awaiting user confirmation
   const [pendingUpload, setPendingUpload] = useState<{
     file: File;
-    opts: { device: string; model: string; language: string; format: string; translateTo?: string };
+    opts: { device: string; model: string; language: string; format: string; translateTo?: string; modelLoaded: boolean; firstReadyModel: string | null };
   } | null>(null)
 
   // Session restore: if a task was in progress, try to reconnect
@@ -75,7 +75,7 @@ export function App() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Phase Lumen: user must confirm before transcription starts
-  const handleFileSelected = (file: File, opts: { device: string; model: string; language: string; format: string; translateTo?: string }) => {
+  const handleFileSelected = (file: File, opts: { device: string; model: string; language: string; format: string; translateTo?: string; modelLoaded: boolean; firstReadyModel: string | null }) => {
     setPendingUpload({ file, opts })
   }
 
@@ -83,7 +83,7 @@ export function App() {
     setPendingUpload(null)
   }
 
-  const startUpload = async (file: File, opts: { device: string; model: string; language: string; format: string; translateTo?: string }) => {
+  const startUpload = async (file: File, opts: { device: string; model: string; language: string; format: string; translateTo?: string; modelLoaded?: boolean; firstReadyModel?: string | null }) => {
     // Switch to progress screen immediately
     store.reset()
     store.setTaskId('uploading')
@@ -255,6 +255,14 @@ export function App() {
           format={pendingUpload.opts.format}
           device={pendingUpload.opts.device}
           translateTo={pendingUpload.opts.translateTo}
+          modelNotLoaded={!pendingUpload.opts.modelLoaded}
+          readyModelName={pendingUpload.opts.firstReadyModel ?? undefined}
+          onSwitchModel={(newModel) => {
+            setPendingUpload((prev) => prev ? {
+              ...prev,
+              opts: { ...prev.opts, model: newModel, modelLoaded: true, firstReadyModel: null },
+            } : null)
+          }}
           onConfirm={() => {
             if (!pendingUpload) return
             const { file, opts } = pendingUpload

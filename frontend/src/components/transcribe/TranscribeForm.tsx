@@ -10,6 +10,10 @@ export interface UploadOptions {
   language: string
   format: string
   translateTo: string
+  /** Model preload state at the time of upload — used by ConfirmationDialog */
+  modelLoaded: boolean
+  /** First ready model name, if any — used for "Use X Instead" option */
+  firstReadyModel: string | null
 }
 
 interface Props {
@@ -102,8 +106,12 @@ export function TranscribeForm({ onUpload }: Props) {
   const onDrop = useCallback((accepted: File[]) => {
     const file = accepted[0]
     if (!file) return
-    onUpload(file, { device, model, language, format, translateTo })
-  }, [onUpload, device, model, language, format, translateTo])
+    const selectedModelState = modelPreloadState(model)
+    const isModelLoaded = selectedModelState === 'ready' || selectedModelState === 'loading'
+    // Find first ready model that isn't the selected one
+    const firstReady = preload?.loaded?.find((m) => m !== model) ?? null
+    onUpload(file, { device, model, language, format, translateTo, modelLoaded: isModelLoaded, firstReadyModel: firstReady })
+  }, [onUpload, device, model, language, format, translateTo, preload])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
