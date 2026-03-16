@@ -548,7 +548,7 @@ Three pillars:
 ### Current Deployment
 - **openlabs.club** — production (container: `subforge-prod`, port 8000, old interface)
 - **newui.openlabs.club** — Lumen preview (container: `subtitle-generator-newui`, port 8001, `PRELOAD_MODEL=large`)
-- Both are on **localhost** (hostname: `subtitle-generator-engine`, IP: `124.197.31.48`)
+- Both are on **localhost** (hostname: `subtitle-generator-engine`, DNS resolves both domains)
 - Nginx reverse proxies both domains to their respective containers
 - Docker requires `sudo` (user `claude-user` not in docker group)
 - Deploy newui: `sudo docker compose --profile newui up -d --build --force-recreate`

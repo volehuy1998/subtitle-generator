@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "51a27f3",
-    "sha_full": "51a27f3ca3e53798745ce9dc45604fd4eedc8787",
-    "datetime": "2026-03-16T23:26:36+07:00",
-    "message": "fix(test): resolve ESLint errors in L76-L78 CSS validation tests"
+    "sha": "3f3ba22",
+    "sha_full": "3f3ba22c0b13c74038de131b12fdd8810130c01f",
+    "datetime": "2026-03-17T06:44:50+07:00",
+    "message": "security: remove public IP from CLAUDE.md to pass sensitive data scan"
   },
   "assertions": [
     {
