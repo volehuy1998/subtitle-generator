@@ -68,6 +68,9 @@ export interface TaskState {
   current_segment?: number
   substage?: string
 
+  // Speed trend from backend progress events
+  speed_trend?: string
+
   // Phase Lumen: liveness tracking
   lastEventTime: number
 }
@@ -105,6 +108,7 @@ const initial: TaskState = {
   uploadEta: undefined,
   processed_sec: undefined, total_sec: undefined, speed_x: undefined, eta: undefined, elapsed: undefined,
   estimated_segments: undefined, current_segment: undefined, substage: undefined,
+  speed_trend: undefined,
   lastEventTime: Date.now(),
 }
 

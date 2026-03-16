@@ -6,7 +6,26 @@
  * without consent.
  *
  * Pixel (Sr. Frontend Engineer) — Sprint L4
+ * Speed estimates added — Sprint L12
  */
+
+/** Approximate speed factors (realtime multiplier) per model/device combo */
+const SPEED_ESTIMATES: Record<string, Record<string, number>> = {
+  cpu: { tiny: 6, base: 4, small: 2, medium: 0.8, large: 0.3 },
+  cuda: { tiny: 30, base: 20, small: 10, medium: 5, large: 2 },
+};
+
+function formatSpeedEstimate(device: string, model: string): string | null {
+  const deviceKey = device === 'cuda' ? 'cuda' : 'cpu';
+  const factor = SPEED_ESTIMATES[deviceKey]?.[model];
+  if (factor == null) return null;
+  const label = device === 'cuda' ? 'GPU' : 'CPU';
+  const modelLabel = model.charAt(0).toUpperCase() + model.slice(1);
+  if (factor >= 1) {
+    return `~${factor}x realtime (${label}, ${modelLabel})`;
+  }
+  return `~${factor}x realtime (${label}, ${modelLabel}) — slower than realtime`;
+}
 
 interface ConfirmationDialogProps {
   file: File;
@@ -149,6 +168,14 @@ export function ConfirmationDialog({
                 <tr>
                   <td style={{ padding: '6px 0', color: 'var(--color-text-3)' }}>Translate</td>
                   <td style={{ padding: '6px 0', color: 'var(--color-text)' }}>{translateTo}</td>
+                </tr>
+              )}
+              {formatSpeedEstimate(device, model) && (
+                <tr>
+                  <td style={{ padding: '6px 0', color: 'var(--color-text-3)' }}>Processing speed</td>
+                  <td style={{ padding: '6px 0', color: 'var(--color-text)' }}>
+                    {formatSpeedEstimate(device, model)}
+                  </td>
                 </tr>
               )}
             </tbody>

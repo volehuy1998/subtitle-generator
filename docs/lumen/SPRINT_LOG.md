@@ -349,3 +349,42 @@
 **Running total:** 2067 + 41 = **2108**
 
 ---
+
+## Sprint L12: Performance — ETA Smoothing, Speed Trends, Speed Estimates (2026-03-16)
+
+**Goal:** Stabilize ETA predictions and add speed-aware indicators.
+
+**Delivered:**
+
+### Backend (Forge)
+- **ETA smoothing** (`profiler.py`):
+  - Exponential Moving Average (EMA) with α=0.15 for speed tracking
+  - 3-update warmup period (cold start bias ignored)
+  - `_recent_speeds` list (last 10) for trend analysis
+  - EMA-based ETA replaces simple rolling average (smoother, less jitter)
+- **Speed trend detection** (`profiler.py`):
+  - `get_speed_trend()` returns: improving/stable/declining/stalled/unknown
+  - Based on ratio of recent 3-sample average to EMA speed
+  - Stalled threshold: <0.01x realtime
+  - `speed_trend` + `ema_speed_x` added to progress SSE events
+
+### Frontend (Pixel)
+- **Speed estimate in ConfirmationDialog** (`ConfirmationDialog.tsx`):
+  - Shows "Processing speed: ~2x realtime (GPU, Small)" before transcription
+  - Speed lookup table for all model/device combinations
+- **Speed-aware LivenessIndicator** (`LivenessIndicator.tsx` + `taskStore.ts`):
+  - `speed_trend` field in TaskState (auto-populated from SSE)
+  - When running >30s: "Stalled" (red) overrides time-based, "Slowing down" (yellow) for declining
+  - Stable/improving fall through to existing time-based logic
+
+### Tests (Scout) — 40 new tests
+- `test_profiler_advanced.py`:
+  - EMA speed (16 tests)
+  - Speed trend detection (15 tests)
+  - Warmup handling (5 tests)
+  - Integration (5 tests — note: 1 shared with EMA category)
+
+**Tests added:** 40
+**Running total:** 2108 + 40 = **2148**
+
+---

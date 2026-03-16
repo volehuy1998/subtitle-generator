@@ -169,6 +169,8 @@ def transcribe_with_progress(
             "elapsed": format_time_display(elapsed_sec),
             "speed_x": metrics.get("avg_speed_x", 0),
             "instant_speed_x": metrics.get("instant_speed_x", 0),
+            "ema_speed_x": metrics.get("ema_speed_x"),
+            "speed_trend": metrics.get("speed_trend", "unknown"),
             "message": (
                 f"Transcribing: {format_time_display(processed_sec)} / {format_time_display(total_duration)} "
                 f"| {format_bytes(bytes_processed)} / {format_bytes(bytes_total)} "
