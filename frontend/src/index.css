@@ -279,6 +279,12 @@ input:focus-visible {
   to { opacity: 1; transform: translateX(0); }
 }
 
+/* Tooltip fade-in — Pixel (Sr. Frontend), Sprint L33 */
+@keyframes tooltip-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }

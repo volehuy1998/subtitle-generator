@@ -26,6 +26,20 @@ from app.services.gpu import auto_select_model
 from app.services.pipeline import process_video
 from app.services.quarantine import quarantine_file, scan_with_clamav
 from app.services.sse import create_event_queue
+from app.errors import (
+    DURATION_EXCEEDED,
+    FFMPEG_UNAVAILABLE,
+    FILE_TOO_LARGE,
+    FILE_TOO_SMALL,
+    MAGIC_BYTES_MISMATCH,
+    NO_AUDIO_STREAM,
+    SYSTEM_CRITICAL,
+    TASK_LIMIT_REACHED,
+    UNSUPPORTED_FORMAT,
+    VIRUS_DETECTED,
+    api_error,
+)
+from app.logging_setup import get_request_id
 from app.utils.formatting import format_bytes
 from app.utils.security import sanitize_filename, validate_file_extension, validate_magic_bytes
 
@@ -60,7 +74,14 @@ async def upload(
     ext = validate_file_extension(file.filename or "")
     if ext is None:
         logger.warning(f"UPLOAD Rejected: unsupported extension for '{file.filename}'")
-        raise HTTPException(400, "Unsupported format. Allowed: .mp4, .mkv, .avi, .webm, .mov, .mp3, .wav, .flac")
+        raise HTTPException(
+            400,
+            detail=api_error(
+                UNSUPPORTED_FORMAT,
+                "Unsupported format. Allowed: .mp4, .mkv, .avi, .webm, .mov, .mp3, .wav, .flac",
+                request_id=get_request_id(),
+            ),
+        )
 
     # Reject video files when FFmpeg is not available
     from app.config import FFMPEG_AVAILABLE, VIDEO_EXTENSIONS
@@ -68,8 +89,12 @@ async def upload(
     if ext in VIDEO_EXTENSIONS and not FFMPEG_AVAILABLE:
         raise HTTPException(
             503,
-            "FFmpeg is not installed. Video files require FFmpeg for audio extraction. "
-            "Please upload an audio file (.mp3, .wav, .flac) instead.",
+            detail=api_error(
+                FFMPEG_UNAVAILABLE,
+                "FFmpeg is not installed. Video files require FFmpeg for audio extraction. "
+                "Please upload an audio file (.mp3, .wav, .flac) instead.",
+                request_id=get_request_id(),
+            ),
         )
 
     # Device fallback
@@ -87,7 +112,14 @@ async def upload(
     # Check concurrent task limit
     active = sum(1 for t in state.tasks.values() if t.get("status") not in ("done", "error", "cancelled"))
     if active >= MAX_CONCURRENT_TASKS:
-        raise HTTPException(429, f"Too many active tasks ({active}). Please wait for a task to complete.")
+        raise HTTPException(
+            429,
+            detail=api_error(
+                TASK_LIMIT_REACHED,
+                f"Too many active tasks ({active}). Please wait for a task to complete.",
+                request_id=get_request_id(),
+            ),
+        )
 
     task_id = str(uuid.uuid4())
     safe_filename = sanitize_filename(file.filename or "unknown")
@@ -107,19 +139,36 @@ async def upload(
             if state.system_critical:
                 video_path.unlink(missing_ok=True)
                 logger.warning(f"UPLOAD [{task_id[:8]}] Aborted mid-upload: system critical")
-                raise HTTPException(503, "Upload aborted — system in critical state.")
+                raise HTTPException(
+                    503,
+                    detail=api_error(
+                        SYSTEM_CRITICAL, "Upload aborted — system in critical state.", request_id=get_request_id()
+                    ),
+                )
             size += len(chunk)
             if size > MAX_FILE_SIZE:
                 video_path.unlink(missing_ok=True)
                 logger.warning(f"UPLOAD [{task_id[:8]}] Rejected: file too large ({format_bytes(size)})")
-                raise HTTPException(413, "File too large. Maximum size is 2 GB.")
+                raise HTTPException(
+                    413,
+                    detail=api_error(
+                        FILE_TOO_LARGE, "File too large. Maximum size is 2 GB.", request_id=get_request_id()
+                    ),
+                )
             f.write(chunk)
 
     # Validate minimum file size
     if size < MIN_FILE_SIZE:
         video_path.unlink(missing_ok=True)
         logger.warning(f"UPLOAD [{task_id[:8]}] Rejected: file too small ({size} bytes)")
-        raise HTTPException(400, f"File too small ({size} bytes). Is this a valid media file?")
+        raise HTTPException(
+            400,
+            detail=api_error(
+                FILE_TOO_SMALL,
+                f"File too small ({size} bytes). Is this a valid media file?",
+                request_id=get_request_id(),
+            ),
+        )
 
     # Validate magic bytes (actual file content, not just extension)
     if not validate_magic_bytes(video_path):
@@ -129,7 +178,14 @@ async def upload(
         )
         quarantine_file(video_path, reason="magic_bytes_mismatch", ip=client_ip)
         logger.warning(f"UPLOAD [{task_id[:8]}] Rejected: magic bytes don't match a media file")
-        raise HTTPException(400, "File content does not match a recognized media format.")
+        raise HTTPException(
+            400,
+            detail=api_error(
+                MAGIC_BYTES_MISMATCH,
+                "File content does not match a recognized media format.",
+                request_id=get_request_id(),
+            ),
+        )
 
     # Validate audio stream presence (reject video-only or corrupt files early)
     from app.config import FFPROBE_AVAILABLE, MAX_AUDIO_DURATION
@@ -140,7 +196,14 @@ async def upload(
         if not has_audio_stream(video_path):
             video_path.unlink(missing_ok=True)
             logger.warning(f"UPLOAD [{task_id[:8]}] Rejected: no audio stream in '{safe_filename}'")
-            raise HTTPException(400, "This file has no audio track. Please upload a file with audio.")
+            raise HTTPException(
+                400,
+                detail=api_error(
+                    NO_AUDIO_STREAM,
+                    "This file has no audio track. Please upload a file with audio.",
+                    request_id=get_request_id(),
+                ),
+            )
 
         # Validate duration limit
         duration = get_audio_duration(video_path)
@@ -150,7 +213,14 @@ async def upload(
                 f"UPLOAD [{task_id[:8]}] Rejected: duration {duration:.0f}s exceeds "
                 f"{MAX_AUDIO_DURATION}s limit for '{safe_filename}'"
             )
-            raise HTTPException(400, "File duration exceeds the 4-hour limit. Please upload a shorter file.")
+            raise HTTPException(
+                400,
+                detail=api_error(
+                    DURATION_EXCEEDED,
+                    "File duration exceeds the 4-hour limit. Please upload a shorter file.",
+                    request_id=get_request_id(),
+                ),
+            )
 
     # ClamAV virus scan (optional — graceful if ClamAV is not installed/running)
     client_ip = request.client.host if request.client else "unknown"
@@ -161,7 +231,10 @@ async def upload(
         )
         quarantine_file(video_path, reason="virus_detected", ip=client_ip, threat=av_result.get("threat"))
         logger.warning(f"UPLOAD [{task_id[:8]}] Rejected: ClamAV detected threat '{av_result.get('threat')}'")
-        raise HTTPException(400, "File rejected: virus or malware detected.")
+        raise HTTPException(
+            400,
+            detail=api_error(VIRUS_DETECTED, "File rejected: virus or malware detected.", request_id=get_request_id()),
+        )
 
     upload_time = time.time() - t0
     logger.info(f"UPLOAD [{task_id[:8]}] Saved: {format_bytes(size)} in {upload_time:.1f}s -> {video_path.name}")

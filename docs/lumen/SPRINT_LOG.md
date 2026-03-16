@@ -760,3 +760,31 @@
 **Running total:** 2669 + 69 = **2738**
 
 ---
+
+## Sprints L33-L36: Tooltip, Card, Error Codes, Request ID (2026-03-16)
+
+**Goal:** Add UI primitives and structured error handling.
+
+**Delivered:**
+
+### L33: Tooltip (Pixel)
+- `Tooltip.tsx`: 4 positions, configurable delay, dark bg, arrow, `role="tooltip"`, `aria-describedby`
+
+### L34: Card (Pixel)
+- `Card.tsx`: 3 variants (default/bordered/elevated), 3 padding sizes, optional title/subtitle
+
+### L35: Structured Error Codes (Forge)
+- `app/errors.py`: 16 error code constants + `api_error()` helper
+- All 10 upload.py HTTPExceptions converted to structured `{code, message, request_id}` format
+
+### L36: Request ID Propagation (Forge)
+- Error responses include `request_id` for frontend-to-backend log correlation
+
+### Tests (Scout) — 60 new tests
+- `test_error_codes.py` (30): Error module, response quality, upload error handling
+- `test_request_lifecycle.py` (30): Request ID flow, request lifecycle, middleware order
+
+**Tests added:** 60
+**Running total:** 2738 + 60 = **2798**
+
+---
