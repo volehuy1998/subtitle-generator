@@ -1,11 +1,12 @@
 import { useEffect, useState, useCallback } from 'react'
 import { api } from '@/api/client'
 import type { TaskListItem } from '@/api/types'
+import { Skeleton } from '@/components/ui/Skeleton'
 
 /**
  * TaskHistory — shows last 5 completed/failed tasks with quick access to downloads.
  * Polls GET /tasks?session_only=true on mount.
- * — Pixel (Sr. Frontend), Sprint L17
+ * — Pixel (Sr. Frontend), Sprint L17 (loading skeletons: L18)
  */
 
 function timeAgo(dateStr: string): string {
@@ -97,21 +98,31 @@ export function TaskHistory() {
   if (loading) {
     return (
       <div
-        className="rounded-xl overflow-hidden p-4"
+        className="rounded-xl overflow-hidden"
         style={{
           background: 'var(--color-surface)',
           border: '1px solid var(--color-border)',
           boxShadow: 'var(--shadow-sm)',
         }}
       >
-        <div className="flex items-center gap-2">
-          <div
-            className="w-3 h-3 rounded-full animate-pulse"
-            style={{ background: 'var(--color-border-2)' }}
-          />
-          <span className="text-xs" style={{ color: 'var(--color-text-3)' }}>
-            Loading recent tasks...
-          </span>
+        <div
+          className="px-4 py-3"
+          style={{ borderBottom: '1px solid var(--color-border)' }}
+        >
+          <Skeleton width="100px" height="10px" />
+        </div>
+        <div className="flex flex-col">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="flex items-center gap-3 px-4 py-2.5"
+              style={{ borderBottom: '1px solid var(--color-border)' }}
+            >
+              <Skeleton width="14px" height="14px" borderRadius="50%" />
+              <Skeleton width={`${70 - i * 10}%`} height="12px" />
+              <Skeleton width="32px" height="10px" />
+            </div>
+          ))}
         </div>
       </div>
     )

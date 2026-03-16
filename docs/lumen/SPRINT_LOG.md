@@ -579,3 +579,51 @@
 **Running total:** 2316 + 40 = **2356**
 
 ---
+
+## Sprint L18: Error Boundary + Loading States (2026-03-16)
+
+**Goal:** Catch rendering crashes gracefully and polish loading experiences.
+
+**Delivered:**
+
+### Frontend (Pixel)
+- **ErrorBoundary upgrade** (`ErrorBoundary.tsx`):
+  - Upgraded fallback UI: centered danger icon, "Something went wrong" heading, "Refresh Page" button
+  - Already wired in main.tsx
+- **Skeleton loading states** (`ui/Skeleton.tsx` — NEW):
+  - Reusable `Skeleton` + `SkeletonLine` components
+  - Applied to TaskHistory loading state (3 skeleton rows mimicking task layout)
+- **Empty state**: TranscribeForm drop zone already well-styled — no changes needed
+
+**Tests added:** 0 (frontend-only sprint)
+**Running total:** 2356
+
+---
+
+## Sprint L19: Animation + Micro-interactions (2026-03-16)
+
+**Goal:** Add polish animations and micro-interactions throughout the UI.
+
+**Delivered:**
+
+### Frontend (Prism)
+- **Page transitions** (`index.css` + `App.tsx`):
+  - `@keyframes pageEnter`: fade-in + translateY(8px→0) on tab switch
+  - `key={appMode}` triggers re-mount animation
+- **Button hover effects** (`index.css`):
+  - Enhanced `.btn-interactive`: brightness(1.05) + translateY(-1px) on hover
+  - Active: brightness(0.95) + translateY(0)
+- **Progress bar shimmer** (`index.css` + `ProgressView.tsx`):
+  - `@keyframes shimmer`: animated gradient sweep on active progress bar
+  - Disabled when paused or complete
+- **Success celebration** (`index.css`):
+  - Enhanced `animate-success-fade-in`: scale 0.95→1.02→1.0 bounce + opacity
+
+### Tests (Scout) — 62 new tests
+- `test_static_pages.py` (36 tests): HTML pages, API docs, health, system, security headers
+- `test_middleware_stack.py` (26 tests): Security headers, request ID, compression, error handling
+
+**Tests added:** 62
+**Running total:** 2356 + 62 = **2418**
+
+---

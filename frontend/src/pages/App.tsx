@@ -260,7 +260,7 @@ export function App() {
             </div>
 
             {/* Tab content */}
-            <div className="p-4 md:p-5" role="tabpanel" id={`tabpanel-${appMode}`} aria-labelledby={`tab-${appMode}`}>
+            <div key={appMode} className="p-4 md:p-5 animate-page-enter" role="tabpanel" id={`tabpanel-${appMode}`} aria-labelledby={`tab-${appMode}`}>
               {appMode === 'transcribe' ? (
                 isProcessing && activeTaskId ? (
                   <ProgressView taskId={activeTaskId} />

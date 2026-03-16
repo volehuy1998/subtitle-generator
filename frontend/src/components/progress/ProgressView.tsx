@@ -225,10 +225,10 @@ export function ProgressView({ taskId }: Props) {
           style={{ background: 'var(--color-border)' }}
         >
           <div
-            className="h-full rounded-full transition-all duration-500"
+            className={`h-full rounded-full transition-all duration-500${isActive && !isPaused && !isComplete ? ' progress-bar-shimmer' : ''}`}
             style={{
               width: `${percent}%`,
-              background: progressBarColor,
+              ...((isActive && !isPaused && !isComplete) ? {} : { background: progressBarColor }),
             }}
           />
         </div>

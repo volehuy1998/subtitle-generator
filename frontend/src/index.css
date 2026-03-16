@@ -128,16 +128,18 @@ input:focus-visible {
   font-family: var(--font-family-display);
 }
 
-/* Interactive button lift effect */
+/* Interactive button lift effect — Prism (UI/UX), Sprint L19 */
 .btn-interactive {
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
 }
 .btn-interactive:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(99,102,241,0.15);
+  filter: brightness(1.05);
 }
 .btn-interactive:active {
   transform: translateY(0);
+  filter: brightness(0.95);
 }
 
 /* Download button primary style */
@@ -176,13 +178,14 @@ input:focus-visible {
   animation: fadeIn 0.2s ease-out;
 }
 
-/* Success celebration fade-in */
-@keyframes successFadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Success celebration fade-in — enhanced with scale bounce, Prism (UI/UX), Sprint L19 */
+@keyframes successEnter {
+  0% { opacity: 0; transform: scale(0.95); }
+  50% { transform: scale(1.02); }
+  100% { opacity: 1; transform: scale(1); }
 }
 .animate-success-fade-in {
-  animation: successFadeIn 0.3s ease-out;
+  animation: successEnter 0.4s ease-out;
 }
 
 /* Gentle float animation for empty state */
@@ -192,6 +195,31 @@ input:focus-visible {
 }
 .animate-gentle-float {
   animation: gentleFloat 3s ease-in-out infinite;
+}
+
+/* Page transition — fade-in with subtle upward slide, Prism (UI/UX), Sprint L19 */
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-page-enter {
+  animation: pageEnter 0.2s ease-out;
+}
+
+/* Progress bar shimmer — animated gradient during active processing, Prism (UI/UX), Sprint L19 */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.progress-bar-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-primary) 0%,
+    var(--color-primary-light) 50%,
+    var(--color-primary) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
 }
 
 /* Responsive model table: hide middle columns on narrow screens */
