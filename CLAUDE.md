@@ -565,7 +565,7 @@ Investor-approved priorities:
 2. Rebuild newui container only: `sudo docker compose --profile newui up -d --build --force-recreate`
 3. Verify: `curl -s http://127.0.0.1:8001/health`
 4. Investor reviews on `newui.openlabs.club`
-5. If approved → rebuild prod: `sudo docker compose --profile cpu up -d --build`
+5. If approved → rebuild prod: `sudo docker compose --profile cpu up -d --build --force-recreate`
 6. **NEVER** deploy directly to prod without investor approval on newui first
 
 ### Open Work (Backlog)
