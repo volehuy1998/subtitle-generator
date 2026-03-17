@@ -1,6 +1,6 @@
 # Subtitle Generator — Architecture & Functional Flow
 
-> **Version**: Sprint 30 · **Updated**: 2026-03-11 · **Tests**: 1166 passing
+> **Version**: Lumen L80 · **Updated**: 2026-03-17 · **Tests**: 3,667 passing
 
 ---
 
@@ -172,7 +172,7 @@ REQUEST
 │                                                                 │
 │  ┌─── UI PAGES ─────────────────────────────────────────────┐  │
 │  │                                                           │  │
-│  │  GET / ────────────────── Main app (Jinja2 template)      │  │
+│  │  GET / ────────────────── Main app (React SPA / Lumen UI) │  │
 │  │  GET /dashboard ───────── Built-in monitoring dashboard   │  │
 │  │  GET /analytics ───────── Chart.js analytics page         │  │
 │  │                                                           │  │

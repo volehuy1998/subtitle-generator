@@ -602,3 +602,16 @@
 - [x] Sprint 29: Monitoring & Observability (30 tests)
 - [x] Sprint 30: UX Flow, Stage Timing & Live Status (44 tests)
 - **1130 total tests passing, 0 regressions**
+
+---
+
+## Phase Lumen (L1-L80) — Active Development Phase
+
+> **Full spec**: `docs/lumen/PHASE_LUMEN.md` · **Status**: 80 sprints complete · **Tests**: 3,667 total
+
+Phase Lumen follows the legacy 30 sprints with a focus on stability, performance, and professional design:
+- **L1-L6**: Foundation, design system (light theme), model readiness API, confirmation dialogs, liveness indicators, component styling
+- **L7-L60**: Performance optimization, feature polish, design refinements
+- **L61-L80**: Integration + hardening — pipeline refactored (8 step functions), backend test gaps closed, 372 frontend tests, 129 E2E Playwright tests
+
+**Current UI**: Lumen light theme (Inter font, preferences, theme toggle) — promoted to production on 2026-03-17.

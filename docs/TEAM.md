@@ -1,6 +1,6 @@
 # SubForge Engineering Team
 
-> **Last updated**: 2026-03-15 · **Total headcount**: 18 engineers · **Maintainer**: Atlas (Tech Lead)
+> **Last updated**: 2026-03-17 · **Total headcount**: 18 engineers · **Maintainer**: Atlas (Tech Lead)
 
 ---
 
