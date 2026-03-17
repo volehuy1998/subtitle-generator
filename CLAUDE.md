@@ -529,6 +529,12 @@ Three pillars:
 
 **Full spec:** `docs/lumen/PHASE_LUMEN.md`
 
+## Long-Term Development Plan (`docs/DEVELOPMENT_PLAN.md`)
+Investor-approved priorities:
+1. **UX Principles:** User confirmation before any process, brighter/lighter UI (use `feature-dev` plugin), process liveness indicators
+2. **Performance:** Model loading optimization (60-120s → preloaded), transcription speed improvements
+3. **Infrastructure:** Distributed workers, API key migration, security hardening
+
 ---
 
 ## Project Status (as of 2026-03-17)
