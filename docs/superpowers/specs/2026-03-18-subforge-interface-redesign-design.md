@@ -1,8 +1,9 @@
-# SubForge Interface Redesign — Full Rebuild
+# SubForge Interface Redesign — "Drop, See, Refine"
 
 **Date:** 2026-03-18
 **Author:** Atlas (Tech Lead), Team Sentinel
 **Status:** Approved (brainstorming complete)
+**Replaces:** Previous workspace/step-bar spec (anchored on old UI — discarded)
 **Deployment target:** `newui.openlabs.club` (promote to production after investor approval)
 
 ---
@@ -12,42 +13,62 @@
 1. [Design Philosophy](#1-design-philosophy)
 2. [Visual Identity](#2-visual-identity)
 3. [Information Architecture](#3-information-architecture)
-4. [Component System](#4-component-system)
-5. [Feature Logic & Relationships](#5-feature-logic--relationships)
-6. [Backend Integration Notes](#6-backend-integration-notes)
+4. [Landing Page](#4-landing-page)
+5. [Editor Page](#5-editor-page)
+6. [Component Architecture](#6-component-architecture)
 7. [State Architecture](#7-state-architecture)
-8. [Layout Specifications](#8-layout-specifications)
-9. [Key Screen Designs](#9-key-screen-designs)
-10. [Responsive Behavior](#10-responsive-behavior)
-11. [Animation System](#11-animation-system)
-12. [Accessibility](#12-accessibility)
-13. [Component API Reference](#13-component-api-reference)
-14. [Interaction Patterns](#14-interaction-patterns)
-15. [Required API Additions](#15-required-api-additions)
+8. [Backend Integration](#8-backend-integration)
+9. [Responsive Behavior](#9-responsive-behavior)
+10. [Animations & Interactions](#10-animations--interactions)
+11. [Accessibility](#11-accessibility)
 
 ---
 
 ## 1. Design Philosophy
 
-### "Guided Confidence"
+### "Drop, See, Refine"
 
-Every design decision is filtered through one question: **"Does this help the user feel confident about what's happening?"**
+Three principles derived from research, not from the existing UI:
 
-**Principles:**
+**1. Zero friction to first result**
 
-- **Smart defaults** — The interface pre-selects the best option so users can just click "Go." Preferences are remembered across sessions.
-- **Contextual guidance** — Hints, tooltips, and inline explanations appear where decisions are made, not buried in documentation.
-- **Visible progress** — Every process shows exactly what stage it's at, what's next, and how long it will take.
-- **Confirmation before action** — Destructive or costly actions always ask first via a confirmation dialog.
-- **Completion signals** — Clear success states that tell the user "you're done, here's what you got."
+Drop a file, see subtitles. No configuration, no model selection, no account required. Smart defaults handle everything. Refine after you see results, not before.
 
-**Design direction:** Cool Professional — inspired by GitHub, Atlassian, Microsoft 365. Trustworthy, technical, information-dense when needed but spacious by default.
+Research basis:
+- 70% of new users churn before engaging with core features (Rubyroid Labs 2026)
+- Users who experience value in <5 minutes show 40% higher 30-day retention (Rework 2026)
+- "It's difficult for users to decide on preferences before they've even used the product" (Rubyroid Labs 2026)
+- Each Required Decision costs 2 friction points (Baymard Institute)
 
-**Theme:** Light only. One perfectly polished experience. No dark mode.
+**2. The editor is the product**
+
+After transcription, the user lands in a subtitle editor. Every action (download, translate, embed, re-transcribe) is accessible from the editor. The editor is the hub, not a side feature.
+
+Research basis:
+- Every successful competitor (Descript, Sonix, VEED, Kapwing, Happy Scribe, Simon Says) makes the editor the core post-transcription experience
+- Subtitle editors have evolved into core features in 2026 transcription SaaS, particularly for enterprise
+- Descript's entire product IS the transcript editor
+
+**3. Adaptive, not modal**
+
+The interface adapts to what the user gives it. No mode selection, no tabs, no explicit workflow choice. The upload zone IS the router.
+
+Research basis:
+- 2026 UX shift to Orchestrated User Interfaces (OUI) — system detects intent, assembles interface dynamically (UX Collective 2026)
+- Kapwing, VEED, Descript all auto-detect file type and adapt workflow
+- "The concept of a static interface where every user sees the same menu options is becoming obsolete" (UX Collective 2026)
+
+### SubForge's unique advantage
+
+`POST /tasks/{task_id}/retranscribe` — re-transcribe with different parameters without re-uploading. No competitor offers this for free. This makes "smart defaults first, upgrade later" zero-risk: bad model choice? One click to redo. The UI must exploit this.
 
 ---
 
 ## 2. Visual Identity
+
+### "Cool Professional"
+
+Investor criteria: not too bright, not dark, enterprise-grade. Matches GitHub, Atlassian, Microsoft 365.
 
 ### Color System
 
@@ -55,9 +76,8 @@ Every design decision is filtered through one question: **"Does this help the us
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| `--color-bg` | `#F3F4F6` (gray-100) | Page foundation background |
-| `--color-surface` | `#FFFFFF` | Cards, panels |
-| `--color-surface-raised` | `#FFFFFF` | Modals, popovers (same color as surface; differentiated via shadow-lg/shadow-xl only) |
+| `--color-bg` | `#F3F4F6` (gray-100) | Page foundation |
+| `--color-surface` | `#FFFFFF` | Cards, panels, editor |
 | `--color-border` | `#E5E7EB` (gray-200) | Subtle borders |
 | `--color-border-strong` | `#D1D5DB` (gray-300) | Dividers, active borders |
 
@@ -66,1249 +86,784 @@ Every design decision is filtered through one question: **"Does this help the us
 | Token | Value | Usage |
 |-------|-------|-------|
 | `--color-text` | `#111827` (gray-900) | Primary text |
-| `--color-text-secondary` | `#4B5563` (gray-600) | Labels, supporting text |
-| `--color-text-muted` | `#6B7280` (gray-500) | Hints, timestamps, metadata |
+| `--color-text-secondary` | `#4B5563` (gray-600) | Labels, supporting |
+| `--color-text-muted` | `#6B7280` (gray-500) | Timestamps, metadata |
 | `--color-text-placeholder` | `#9CA3AF` (gray-400) | Input placeholders |
 
-**Brand & Accent:**
+**Brand:**
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| `--color-primary` | `#2563EB` (blue-600) | Primary actions, links, active states |
-| `--color-primary-hover` | `#1D4ED8` (blue-700) | Hover state for primary elements |
-| `--color-primary-light` | `rgba(37,99,235,0.08)` | Tinted backgrounds for active/selected |
-| `--color-primary-border` | `rgba(37,99,235,0.20)` | Tinted borders for active elements |
+| `--color-primary` | `#2563EB` (blue-600) | CTAs, active states, links |
+| `--color-primary-hover` | `#1D4ED8` (blue-700) | Hover |
+| `--color-primary-light` | `rgba(37,99,235,0.08)` | Active backgrounds |
+| `--color-primary-border` | `rgba(37,99,235,0.20)` | Active borders |
 
 **Status:**
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| `--color-success` | `#059669` (emerald-600) | Completed states, confirmations |
+| `--color-success` | `#059669` (emerald-600) | Completions |
 | `--color-success-light` | `rgba(5,150,105,0.08)` | Success backgrounds |
-| `--color-warning` | `#D97706` (amber-600) | Attention needed |
+| `--color-warning` | `#D97706` (amber-600) | Attention |
 | `--color-warning-light` | `rgba(217,119,6,0.08)` | Warning backgrounds |
-| `--color-danger` | `#DC2626` (red-600) | Errors, destructive actions |
+| `--color-danger` | `#DC2626` (red-600) | Errors |
 | `--color-danger-light` | `rgba(220,38,38,0.08)` | Error backgrounds |
+| `--color-info-light` | `rgba(37,99,235,0.06)` | Smart suggestion backgrounds |
 
 ### Typography
-
-**Font Stack:**
 
 ```
 --font-sans:  'Inter', system-ui, -apple-system, sans-serif
 --font-mono:  'JetBrains Mono', 'Fira Code', ui-monospace, monospace
 ```
 
-**Type Scale:**
+| Token | Size / Line Height | Usage |
+|-------|--------------------|-------|
+| text-xs | 12px / 16px | Captions, badges |
+| text-sm | 14px / 20px | Labels, secondary |
+| text-base | 16px / 24px | Body, editor text |
+| text-lg | 18px / 28px | Section headers |
+| text-xl | 20px / 28px | Page titles |
+| text-2xl | 24px / 32px | Hero text |
 
-| Token | Size / Line Height | Weight | Usage |
-|-------|--------------------|--------|-------|
-| `text-xs` | 12px / 16px | 400–500 | Captions, badges |
-| `text-sm` | 14px / 20px | 400–500 | Labels, secondary text |
-| `text-base` | 16px / 24px | 400 | Body text |
-| `text-lg` | 18px / 28px | 600 | Section headers |
-| `text-xl` | 20px / 28px | 600 | Page section titles |
-| `text-2xl` | 24px / 32px | 700 | Page titles |
-| `text-3xl` | 30px / 36px | 700 | Hero headings |
+### Spacing, Radius, Shadows
 
-**Font Weights:**
-
-| Token | Value |
-|-------|-------|
-| `weight-normal` | 400 |
-| `weight-medium` | 500 |
-| `weight-semibold` | 600 |
-| `weight-bold` | 700 |
-
-### Spacing
-
-4px base grid:
-
-| Token | Value |
-|-------|-------|
-| `1` | 4px |
-| `2` | 8px |
-| `3` | 12px |
-| `4` | 16px |
-| `5` | 20px |
-| `6` | 24px |
-| `8` | 32px |
-| `10` | 40px |
-| `12` | 48px |
-| `16` | 64px |
-
-### Border Radius
+Spacing: 4px base grid (1=4px through 16=64px).
 
 | Token | Value | Usage |
 |-------|-------|-------|
 | `--radius-sm` | 4px | Badges, tags |
 | `--radius-md` | 6px | Buttons, inputs |
-| `--radius-lg` | 8px | Cards |
-| `--radius-xl` | 12px | Modals, panels |
-
-### Shadows
+| `--radius` | 8px | Cards |
+| `--radius-lg` | 12px | Modals, panels |
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| `--shadow-sm` | `0 1px 2px rgb(0 0 0 / 0.05)` | Buttons, inputs |
+| `--shadow-sm` | `0 1px 2px rgb(0 0 0 / 0.05)` | Buttons |
 | `--shadow-md` | `0 2px 4px rgb(0 0 0 / 0.06), 0 1px 2px rgb(0 0 0 / 0.04)` | Cards |
-| `--shadow-lg` | `0 8px 16px rgb(0 0 0 / 0.08), 0 2px 4px rgb(0 0 0 / 0.04)` | Dropdowns, popovers |
+| `--shadow-lg` | `0 8px 16px rgb(0 0 0 / 0.08), 0 2px 4px rgb(0 0 0 / 0.04)` | Dropdowns |
 | `--shadow-xl` | `0 16px 32px rgb(0 0 0 / 0.10), 0 4px 8px rgb(0 0 0 / 0.05)` | Modals |
 
-### Transitions
+### Theme
 
-| Token | Value |
-|-------|-------|
-| `--transition-fast` | 150ms ease |
-| `--transition-normal` | 200ms ease |
-| `--transition-slow` | 300ms ease |
-
-### Visual Personality
-
-- Clean but not sterile — subtle shadows and spacing create warmth
-- Information-dense when needed (stats, timecodes) but spacious by default
-- Blue accent used sparingly — primarily for CTAs and active states, not decoration
-- Gray scale does the heavy lifting for hierarchy; color is for meaning
+Light only. One polished experience. No dark mode.
 
 ---
 
 ## 3. Information Architecture
 
-### Core Concept: File → Project → Workspace
-
-Every uploaded file becomes a **project**. A project is a persistent workspace where all tools operate on that file. The user never leaves their workspace to access a related feature.
-
 ### Page Map
 
 | Page | Path | Purpose |
 |------|------|---------|
-| Home | `/` | Upload zone (primary CTA) + project drawer (collapsible) |
-| Workspace | `/project/:id` | Step bar + main panel + context panel. `:id` maps to backend `task_id`. |
-| Status | `/status` | System status with incident detection |
-| About | `/about` | Feature showcase |
-| Security | `/security` | Security information |
+| Landing | `/` | Upload zone + recent projects grid |
+| Editor | `/editor/:id` | Subtitle editor workspace (`:id` = backend `task_id`) |
+| Status | `/status` | System health |
+| About | `/about` | Product info |
+| Security | `/security` | Security info |
 | Contact | `/contact` | Contact form |
 
-**Routing note:** The current custom router (`Router.tsx`) only supports static paths. It must be extended to support parameterized routes (`:id` extraction) for the workspace. No external router library required — add a simple path-matching regex to the existing router.
+### Adaptive Upload Detection
 
-### Workspace Step Bar
+The upload zone detects what the user gives it and routes to the appropriate flow:
 
-The horizontal step bar is the primary navigation within a workspace:
+| User drops... | Detected as | Backend call | Editor shows |
+|--------------|-------------|-------------|--------------|
+| Single video (.mp4/.mkv/.avi/.webm/.mov) | Transcription | `POST /upload` | Full editor: edit, translate, embed, download |
+| Single audio (.mp3/.wav/.flac) | Transcription | `POST /upload` | Editor without embed option |
+| Video + subtitle (.srt/.vtt) | Combine | `POST /combine` | Combine progress, download embedded video |
+| Subtitle alone (.srt/.vtt) | Edit existing | Client-side parse | Subtitle editor (edit, re-export) |
 
-| Step | Name | Description | Available When |
-|------|------|-------------|----------------|
-| 1 | **Upload** | File info, format, duration, size | Always (completed on entry) |
-| 2 | **Transcribe** | Model selection, language, progress | After upload |
-| 3 | **Translate** | Source/target language, progress | After transcription (optional, skippable) |
-| 4 | **Embed** | Soft mux or hard burn, styles | After transcription + video input (optional, skippable) |
-| 5 | **Export** | Download SRT/VTT/JSON, preview, stats | After transcription |
+No mode selector. No tabs. The file type IS the router.
 
-**Step bar behaviors:**
+### User Flows
 
-- Completed steps show a **checkmark** and are always clickable (revisit)
-- Active step shows a **blue dot with pulse animation**
-- Future applicable steps are **grayed out** but visible (user knows what's coming)
-- Optional steps (Translate, Embed) show a "Skip" affordance when active
-- **Non-applicable steps are fully hidden** (e.g., Embed is not shown at all for audio-only files). This is distinct from grayed-out: hidden means removed from the step bar entirely.
-
-### Project Drawer
-
-A collapsible right-side section on the home screen:
-
-- **Recent projects** — Last 20, sorted by recency: filename, date, status (completed/in-progress), duration
-- **Quick resume** — Click a project to re-enter its workspace at the last active step
-- **Search** — Filter by filename
-- **Bulk actions** — Delete old projects, download all subtitles
-
-### Navigation Flow
-
+**Flow 1 -- Transcription (primary):**
 ```
-Landing (Upload zone + Project drawer)
-    |
-    +-- Upload file --> Workspace opens at Step 2 (Transcribe)
-    |       |
-    |       +-- Transcription completes --> Step 3 (Translate) or Step 5 (Export)
-    |       +-- User clicks Translate --> Step 3
-    |       +-- User clicks Embed --> Step 4
-    |       +-- User clicks Export --> Step 5
-    |
-    +-- Click existing project --> Workspace opens at last step
+Drop file on /
+  -> POST /upload (auto: best model, auto language, no diarization)
+  -> Navigate to /editor/:task_id
+  -> SSE /events/:task_id drives progress view
+  -> Transcription completes -> editor view
+  -> User edits, downloads, translates, embeds from editor
 ```
 
-### Context Panel (Right Sidebar in Workspace)
+**Flow 2 -- Combine (detected from input):**
+```
+Drop video + SRT/VTT on /
+  -> POST /combine (auto: soft mode)
+  -> Navigate to /editor/:task_id
+  -> Progress view (embedding)
+  -> Complete -> download embedded video
+```
 
-Always visible on desktop, content adapts to active step:
+**Flow 3 -- Re-transcribe (from editor):**
+```
+User clicks "Re-transcribe" in editor
+  -> POST /tasks/:id/retranscribe (no re-upload)
+  -> New task_id -> navigate to /editor/:new_id
+  -> SSE drives progress -> new results
+```
 
-| Active Step | Context Panel Shows |
-|-------------|-------------------|
-| Upload | File metadata: format, codec, duration, size, resolution |
-| Transcribe | Live subtitle preview, segment count, elapsed time |
-| Translate | Side-by-side original vs translated preview |
-| Embed | Video preview thumbnail, selected style preview |
-| Export | File sizes, timing breakdown, quality stats |
+**Flow 4 -- Session restore (bookmark/refresh):**
+```
+User navigates to /editor/:id directly
+  -> GET /progress/:id -> determine state
+  -> If processing -> connect SSE, show progress
+  -> If done -> show editor with results
+  -> If failed -> show error with retry
+```
+
+### Duplicate Detection
+
+Before uploading, frontend calls `GET /tasks/duplicates?filename=...&file_size=...`. If duplicates found, shows dialog: "This file was already transcribed. Open existing results?" with options to open existing or transcribe again.
 
 ---
 
-## 4. Component System
+## 4. Landing Page
 
-### Component Inventory
-
-**Layout Components:**
-
-| Component | Purpose | Variants |
-|-----------|---------|----------|
-| `AppShell` | Root layout — header + content + optional drawer | — |
-| `Header` | Sticky top bar — logo, nav, actions | — |
-| `Workspace` | Step bar + main panel + context panel | — |
-| `StepBar` | Horizontal pipeline navigation | — |
-| `MainPanel` | Primary content area | padded, flush |
-| `ContextPanel` | Right sidebar, adapts to step | collapsible on mobile |
-| `ProjectDrawer` | Collapsible section on home | open, closed |
-| `PageLayout` | Wrapper for static pages | narrow, wide |
-
-**UI Primitives:**
-
-| Component | Variants | Sizes | States |
-|-----------|----------|-------|--------|
-| `Button` | primary, secondary, ghost, danger, success | sm, md, lg | default, hover, active, disabled, loading |
-| `IconButton` | primary, secondary, ghost | sm, md, lg | default, hover, disabled |
-| `Input` | text, password, search | sm, md | default, focus, error, disabled |
-| `Select` | default | sm, md | default, focus, error, disabled |
-| `Textarea` | default | sm, md | default, focus, error, disabled |
-| `Checkbox` | default | — | unchecked, checked, indeterminate, disabled |
-| `Toggle` | default | sm, md | off, on, disabled |
-| `Badge` | default, success, warning, danger, info | sm, md | — |
-| `Tag` | default, removable | — | default, hover |
-
-**Feedback Components:**
-
-| Component | Purpose |
-|-----------|---------|
-| `Toast` | Temporary notifications (success, error, warning, info) |
-| `Alert` | Inline persistent messages with icon |
-| `ProgressBar` | Determinate/indeterminate progress |
-| `Spinner` | Loading indicator |
-| `Skeleton` | Content placeholder during load |
-| `EmptyState` | Illustrated placeholder when no content |
-| `StepIndicator` | Numbered step with status (pending, active, done, skipped) |
-
-**Overlay Components:**
-
-| Component | Purpose |
-|-----------|---------|
-| `Dialog` | Modal with title, body, actions. Focus trapped. |
-| `ConfirmDialog` | Specialized Dialog for confirm/cancel actions |
-| `Tooltip` | Hover hint (Radix-based) |
-| `Popover` | Click-triggered floating content |
-| `Drawer` | Slide-in panel from edge |
-
-**Data Display:**
-
-| Component | Purpose |
-|-----------|---------|
-| `Card` | Container with optional header, border, shadow |
-| `Table` | Data rows with optional sorting |
-| `KeyValue` | Label-value pair display |
-| `FileInfo` | File metadata card (name, size, duration, format) |
-| `SubtitlePreview` | Scrollable timecoded subtitle segments |
-| `TimingBreakdown` | Pipeline step timing table |
-| `StatCard` | Metric display (number + label + trend) |
-
-**Domain Components:**
-
-| Component | Step | Purpose |
-|-----------|------|---------|
-| `UploadZone` | Home | Drag-and-drop file upload with progress |
-| `ProjectCard` | Drawer | Project summary in drawer list |
-| `ModelSelector` | Transcribe | Model selection with descriptions |
-| `LanguageSelect` | Transcribe | Language picker with search |
-| `TranscribeOptions` | Transcribe | Advanced options (diarization, timestamps) |
-| `TranscribeProgress` | Transcribe | Live progress with segment preview |
-| `TranslatePanel` | Translate | Source/target language + progress |
-| `EmbedPanel` | Embed | Mux mode, style options, preview |
-| `ExportPanel` | Export | Format buttons, download, copy |
-| `HealthIndicator` | Header | System health dot + tooltip |
-| `ConnectionStatus` | Header | SSE connection state banner |
-
----
-
-## 5. Feature Logic & Relationships
-
-### Feature Relationship Map
-
-```
-                    [UPLOAD]
-                       |
-                       v
-                  [TRANSCRIBE]
-                   /        \
-                  v          v
-            [TRANSLATE]   (audio-only
-            (optional)     skips embed)
-                  |          |
-                  v          |
-              [EMBED]        |
-            (optional,       |
-             video only)     |
-                  |          |
-                  v          v
-               [EXPORT] <----+
-```
-
-### Step-by-Step Feature Logic
-
-#### Step 1 — Upload
-
-- User drops or selects a file on the home screen
-- System validates: file type (audio/video), size limit, magic bytes
-- System probes with ffprobe: extracts duration, codec, resolution, bitrate
-- If valid: project created, workspace opens at Step 2
-- If invalid: inline error with specific reason ("File too large", "Unsupported format")
-- Context panel shows: file card with all metadata
-- Guided confidence: "Your file is ready. Choose a model to begin transcription."
-
-#### Step 2 — Transcribe
-
-**Pre-transcription form:**
-- Model selector (tiny to large) with descriptions, accuracy hints, speed estimates
-- Language: auto-detect (default) or manual selection
-- Advanced options (collapsed by default): speaker diarization, word-level timestamps
-- Smart defaults from user preferences (localStorage)
-
-**Confirmation dialog:** Shows summary — file name, model, language, estimated time
-
-**During transcription:**
-- Progress bar with percentage and ETA
-- Step bar shows Step 2 as active (blue pulse)
-- Context panel shows live subtitle preview (segments appear in real-time via SSE)
-- Liveness indicator: pulsing dot confirms SSE is active
-- Cancel button with confirmation dialog
-
-**On completion:**
-- Step 2 shows checkmark
-- Toast: "Transcription complete — X segments in Y seconds"
-- Auto-advances to next relevant step with smart suggestion:
-  - Video file: "Embed subtitles into your video?" or "Translate?" or "Go to Export"
-  - Audio file: "Translate subtitles?" or "Go to Export"
-
-#### Step 3 — Translate (Optional)
-
-**Backend integration:** Translation can happen two ways: (a) bundled with transcription at Step 2 via `translate_to_english` / `translate_to` params in `POST /upload`, or (b) as a separate post-hoc action via `POST /translate/{task_id}` (new endpoint — see Section 15). The Step 2 form includes an optional "Translate after transcription" toggle; if the user skips it there, they can still translate at Step 3.
-
-- Only appears in step bar if subtitles exist to translate
-- Source language auto-detected from transcription
-- Two translation engines as radio cards:
-  - **Whisper translate** (any to English): "Higher quality, limited to English"
-  - **Argos translate** (any to any): "Supports 30+ languages"
-  - System recommends the best option based on target language
-- During translation: progress bar, batch progress events
-- Context panel: side-by-side original vs translated preview
-- Skip: "Skip" link below step title advances to Embed or Export
-
-#### Step 4 — Embed (Optional)
-
-- Only appears for video inputs
-- Mode selector as radio cards:
-  - **Soft embed (mux):** "Adds subtitle track. No re-encoding. Fast." (Recommended badge)
-  - **Hard burn:** "Renders text onto video. Permanent. Slow."
-- Style options (hard burn only): preset selector + custom (font, color, position, opacity)
-- Context panel: style preview thumbnail
-- Confirmation dialog: mode, style, estimated time
-
-#### Step 5 — Export
-
-- Always the final step, available as soon as transcription completes
-- **Download section:** SRT, VTT, JSON buttons with file sizes. Video download if embedded. "Download All" zip.
-- **Preview section:** Full subtitle text with timecodes, copy-to-clipboard
-- **Stats section:** Total segments, duration, processing time, per-step timing breakdown
-- **Next actions:** "New Transcription", "Re-transcribe with different model", "Translate to another language"
-
-### Cross-Feature Triggers
-
-| When this happens... | ...the system suggests: |
-|---------------------|------------------------|
-| Transcription completes on video file | "Embed subtitles into your video?" |
-| Transcription completes with non-English source | "Translate to English?" |
-| Translation completes on video file | "Embed translated subtitles?" |
-| User revisits Step 2 from Export | If `File` object is still in memory (same session): pre-fills same file, offers "Try a different model" which re-submits to `POST /upload` creating a new task. If page was refreshed: shows "Upload the file again to re-transcribe" |
-| User has preferences saved | All forms pre-fill with saved defaults |
-| Model not loaded | "This model needs ~30s to load. Proceed?" + option to pick loaded model |
-| System under load | "Queue position: 3. Estimated wait: ~2 minutes" |
-
-### Error Recovery
-
-| Error | User sees | Recovery |
-|-------|-----------|----------|
-| Upload fails (size/type) | Inline error on upload zone | "Try a different file" |
-| SSE disconnects | Yellow banner: "Connection lost. Reconnecting..." | Auto-reconnect with backoff |
-| Transcription fails | Red alert with error detail | "Retry" or "Try different model" |
-| Translation fails | Red alert with reason | "Retry" or "Skip translation" |
-| Embed fails (ffmpeg) | Red alert with reason | "Retry" or "Download subtitles without embedding" |
-| Server critical | Full-width red banner | "System is recovering. Your project is saved." |
-
----
-
-## 6. Backend Integration Notes
-
-The workspace step model is a **frontend abstraction** over the backend's pipeline-based API. The backend has no "project" entity — it has **tasks**. Each task is created by `POST /upload` which accepts file + all options and runs the full pipeline. The frontend must bridge this gap.
-
-### Step-to-API Mapping
-
-| Workspace Step | Backend API Call | Notes |
-|----------------|-----------------|-------|
-| **Step 1: Upload** | Client-side only | File is selected and validated (type, size) on the client. `ffprobe` metadata is obtained via `POST /upload` response. No separate "upload without processing" endpoint exists. |
-| **Step 2: Transcribe** | `POST /upload` (multipart form: file + model + language + options) | This is the main API call. Upload and transcription are bundled. The file is sent along with model selection, language, diarization, and translation options. Returns `task_id`. |
-| **Step 3: Translate** | Included in `POST /upload` via `translate_to_english` or `translate_to` params, OR new `POST /translate/{task_id}` endpoint (see Section 15) | If the user selects translation at Step 2, it runs as part of the pipeline. For post-hoc translation (user decides after seeing results), a new backend endpoint is required. |
-| **Step 4: Embed** | `POST /embed/{task_id}/quick` (soft mux) or `POST /combine` (hard burn) | These endpoints already exist and operate on completed tasks. No changes needed. |
-| **Step 5: Export** | `GET /download/{task_id}/{format}`, `GET /download/{task_id}/all` | Existing endpoints. No changes needed. |
-
-### Key Integration Decisions
-
-1. **"Project" = `task_id`**: The frontend route `/project/:id` uses `task_id` as `:id`. There is no separate project entity.
-
-2. **Step 1 is client-side only**: File selection, validation, and preview happen before any API call. The `UploadZone` component holds the `File` object in memory. The actual upload happens when the user clicks "Begin Transcription" at Step 2.
-
-3. **Translation at Step 2 vs Step 3**: The user can optionally select translation at Step 2 (pre-transcription), which runs as part of the pipeline. If they skip it at Step 2 and later want to translate at Step 3, the new `POST /translate/{task_id}` endpoint is called (see Section 15).
-
-4. **Re-transcription**: "Re-transcribe with different model" (from Export) works by keeping the `File` object in the workspace store's memory. The client re-submits to `POST /upload` with the same file and new options, creating a new `task_id`. The old project remains in history.
-
-5. **SSE connection**: `GET /events/{task_id}` is connected as soon as `POST /upload` returns the `task_id`. Progress events drive Step 2's progress display.
-
-6. **Session restore**: When navigating to `/project/:id` directly (bookmark, page refresh):
-   - Poll `GET /progress/{task_id}` for current task state
-   - If task status is `processing`: connect SSE via `GET /events/{task_id}`, render Step 2 in-progress view
-   - If task status is `completed`: render Export step with results
-   - If task status is `failed`: render error state at Step 2 with retry option
-   - File metadata is restored from the task's stored info (no need to re-probe)
-
-### Project Drawer Data Source
-
-Recent projects are sourced from:
-1. **localStorage** — `recentProjects[]` array of `{ taskId, filename, createdAt, status, duration }` (max 20 entries, client-managed)
-2. **Backend validation** — On load, batch-validate task IDs still exist via `GET /progress/{task_id}` (prune stale entries)
-3. **Search/filter** — Client-side filtering on the localStorage list (no backend search endpoint needed)
-
----
-
-## 7. State Architecture
-
-### Design for Parallel Development
-
-Stores are split so that each workspace step has its own store file. Multiple developers can work on different steps simultaneously without merge conflicts.
-
-### Zustand Stores (8 stores, split by ownership)
-
-```typescript
-// ─── ORCHESTRATION STORES ───
-
-// workspaceStore.ts — Thin orchestration layer (navigation + project identity only)
-// Owner: Layout/Shell developer
-interface WorkspaceState {
-  // Project identity
-  projectId: string | null;           // task_id from backend
-  file: File | null;                  // Held in memory for re-transcription
-  fileMetadata: {
-    filename: string;
-    duration: number;                 // seconds
-    format: string;                   // "H.264/AAC"
-    resolution: string | null;        // "1920x1080" or null for audio
-    size: number;                     // bytes
-    codec: string;
-    isVideo: boolean;
-  } | null;
-
-  // Step navigation
-  currentStep: 'upload' | 'transcribe' | 'translate' | 'embed' | 'export';
-  stepStatuses: {
-    upload: 'pending' | 'completed';
-    transcribe: 'pending' | 'active' | 'completed' | 'failed';
-    translate: 'pending' | 'active' | 'completed' | 'skipped' | 'hidden';
-    embed: 'pending' | 'active' | 'completed' | 'skipped' | 'hidden';
-    export: 'pending' | 'active' | 'completed';
-  };
-
-  // Actions
-  initFromUpload: (file: File, metadata: FileMetadata) => void;
-  setProjectId: (id: string) => void;
-  setCurrentStep: (step: StepName) => void;
-  completeStep: (step: StepName) => void;
-  skipStep: (step: StepName) => void;
-  failStep: (step: StepName) => void;
-  reset: () => void;
-  restoreFromTask: (taskData: TaskProgress) => void;
-}
-
-// uiStore.ts — App chrome state
-// Owner: Layout/Shell developer
-interface UIState {
-  // Navigation
-  currentPage: string;                // '/', '/project/:id', '/status', etc.
-
-  // Layout
-  contextPanelOpen: boolean;          // mobile: collapsible
-  projectDrawerOpen: boolean;         // home: collapsible
-
-  // Connection
-  sseConnected: boolean;
-  sseReconnecting: boolean;
-  lastEventTime: number | null;
-
-  // System
-  systemHealth: 'healthy' | 'degraded' | 'critical';
-  modelPreloadStatus: Record<string, 'loaded' | 'loading' | 'unloaded'>;
-
-  // Actions
-  navigate: (path: string) => void;
-  toggleContextPanel: () => void;
-  toggleProjectDrawer: () => void;
-  setSSEConnected: (connected: boolean) => void;
-  setSystemHealth: (health: string) => void;
-}
-
-// ─── STEP-SPECIFIC STORES (one per workspace step) ───
-
-// transcribeStore.ts — Step 2 state
-// Owner: Transcribe step developer
-interface TranscribeState {
-  options: {
-    model: string;
-    language: string;
-    diarization: boolean;
-    wordTimestamps: boolean;
-    translateToEnglish: boolean;
-    translateTo: string | null;
-  };
-  progress: {
-    percentage: number;
-    segmentCount: number;
-    totalSegments: number;
-    eta: number | null;               // seconds
-    currentPipelineStep: string;      // "extracting_audio", "transcribing", etc.
-    elapsed: number;                  // seconds
-    speed: number | null;             // e.g. 3.2 (realtime multiplier)
-  } | null;
-  segments: Array<{
-    index: number;
-    start: number;
-    end: number;
-    text: string;
-    speaker?: string;
-  }>;
-
-  // Actions
-  setOptions: (options: Partial<TranscribeOptions>) => void;
-  updateProgress: (progress: Partial<TranscribeProgress>) => void;
-  addSegment: (segment: Segment) => void;
-  setSegments: (segments: Segment[]) => void;
-  reset: () => void;
-}
-
-// translateStore.ts — Step 3 state
-// Owner: Translate step developer
-interface TranslateState {
-  targetLanguage: string | null;
-  engine: 'whisper' | 'argos' | null;
-  progress: {
-    percentage: number;
-    batchesCompleted: number;
-    totalBatches: number;
-  } | null;
-  translatedSegments: Array<{
-    index: number;
-    start: number;
-    end: number;
-    text: string;
-  }>;
-
-  // Actions
-  setTargetLanguage: (lang: string) => void;
-  setEngine: (engine: 'whisper' | 'argos') => void;
-  updateProgress: (progress: Partial<TranslateProgress>) => void;
-  setTranslatedSegments: (segments: TranslatedSegment[]) => void;
-  reset: () => void;
-}
-
-// embedStore.ts — Step 4 state
-// Owner: Embed step developer
-interface EmbedState {
-  mode: 'soft' | 'hard' | null;
-  style: string | null;              // preset name
-  customStyle: {
-    fontSize: number;
-    color: string;
-    position: string;
-    backgroundOpacity: number;
-  } | null;
-  progress: number | null;           // 0-100
-
-  // Actions
-  setMode: (mode: 'soft' | 'hard') => void;
-  setStyle: (style: string) => void;
-  setCustomStyle: (style: Partial<CustomStyle>) => void;
-  updateProgress: (progress: number) => void;
-  reset: () => void;
-}
-
-// exportStore.ts — Step 5 state
-// Owner: Export step developer
-interface ExportState {
-  downloadUrls: {
-    srt: string | null;
-    vtt: string | null;
-    json: string | null;
-    video: string | null;
-    all: string | null;
-  };
-  timingBreakdown: Array<{ step: string; duration: number }>;
-  totalSegments: number;
-  detectedLanguage: string | null;
-
-  // Actions
-  setDownloadUrls: (urls: Partial<DownloadUrls>) => void;
-  setTimingBreakdown: (breakdown: TimingEntry[]) => void;
-  reset: () => void;
-}
-
-// ─── PERSISTENCE STORES ───
-
-// preferencesStore.ts — User defaults (persisted to localStorage)
-// Owner: Settings developer
-interface PreferencesState {
-  defaultModel: string;               // default: 'medium'
-  defaultLanguage: string;            // default: 'auto'
-  defaultFormat: string;              // default: 'srt'
-  autoCopyOnComplete: boolean;        // default: false
-  confirmBeforeTranscribe: boolean;   // default: true
-  dismissedSuggestions: string[];     // suggestion IDs dismissed this session
-
-  // Actions
-  updatePreference: (key: string, value: any) => void;
-  resetDefaults: () => void;
-}
-
-// toastStore.ts — Notification state
-// Owner: UI Primitives developer
-interface ToastState {
-  toasts: Array<{
-    id: string;
-    type: 'success' | 'error' | 'warning' | 'info';
-    title: string;
-    description?: string;
-    duration: number;
-    action?: { label: string; onClick: () => void };
-  }>;
-
-  // Actions
-  addToast: (toast: Omit<Toast, 'id'>) => void;
-  removeToast: (id: string) => void;
-}
-
-// recentProjectsStore.ts — Project history (persisted to localStorage)
-// Owner: Upload/Home developer
-interface RecentProjectsState {
-  projects: Array<{
-    taskId: string;
-    filename: string;
-    createdAt: string;                // ISO date
-    status: 'processing' | 'completed' | 'failed';
-    duration: number | null;          // file duration in seconds
-    lastStep: string;                 // last active step for quick resume
-  }>;
-
-  // Actions
-  addProject: (project: RecentProject) => void;
-  updateProject: (taskId: string, updates: Partial<RecentProject>) => void;
-  removeProject: (taskId: string) => void;
-  pruneStale: (validIds: string[]) => void;
-}
-```
-
-### Shared Types (types.ts — common interfaces used across stores)
-
-```typescript
-// types.ts — Shared types. All stores import from here, never from each other.
-export interface FileMetadata {
-  filename: string;
-  duration: number;
-  format: string;
-  resolution: string | null;
-  size: number;
-  codec: string;
-  isVideo: boolean;
-}
-
-export interface Segment {
-  index: number;
-  start: number;
-  end: number;
-  text: string;
-  speaker?: string;
-}
-
-export interface TranslatedSegment {
-  index: number;
-  start: number;
-  end: number;
-  text: string;
-}
-
-export type StepName = 'upload' | 'transcribe' | 'translate' | 'embed' | 'export';
-export type StepStatus = 'pending' | 'active' | 'completed' | 'failed' | 'skipped' | 'hidden';
-```
-
-### Store Relationships
-
-```
-recentProjectsStore (localStorage)
-        |
-        v (user clicks project)
-workspaceStore (navigation + identity)
-        |
-        +-- step stores read workspaceStore.currentStep to know if they're active
-        |   +-- transcribeStore (Step 2 state)
-        |   +-- translateStore (Step 3 state)
-        |   +-- embedStore (Step 4 state)
-        |   +-- exportStore (Step 5 state)
-        |
-        +-- reads --> preferencesStore (smart defaults)
-        +-- triggers --> toastStore (notifications)
-        +-- reads/writes --> uiStore (navigation, SSE status)
-```
-
-### Parallel Development Ownership
-
-| Store File | Owner | Can develop independently? |
-|------------|-------|---------------------------|
-| `workspaceStore.ts` | Layout/Shell dev | Yes — only navigation, no step logic |
-| `uiStore.ts` | Layout/Shell dev | Yes — app chrome only |
-| `transcribeStore.ts` | Transcribe dev | Yes — isolated step state |
-| `translateStore.ts` | Translate dev | Yes — isolated step state |
-| `embedStore.ts` | Embed dev | Yes — isolated step state |
-| `exportStore.ts` | Export dev | Yes — isolated step state |
-| `preferencesStore.ts` | Settings dev | Yes — user defaults only |
-| `toastStore.ts` | UI Primitives dev | Yes — notification queue only |
-| `recentProjectsStore.ts` | Home/Upload dev | Yes — project history only |
-| `types.ts` | Defined once upfront | Shared contract — frozen early |
-
----
-
-## 8. Layout Specifications
-
-### Global Layout
-
-| Property | Value |
-|----------|-------|
-| Max content width | 1280px, centered |
-| Header height | 56px, sticky top, white, border-bottom gray-200 |
-| Page padding | 24px horizontal (desktop), 16px (mobile) |
-| Foundation bg | #F3F4F6 (gray-100) |
-
-### Home Screen Layout
-
-| Element | Desktop | Mobile |
-|---------|---------|--------|
-| Upload card | flex-1 (fills remaining space), white card, shadow-md | Full width |
-| Project drawer | 320px fixed width, white card | Collapsible accordion below upload |
-| Gap | 24px (spacing-6) | 16px vertical |
-| Feature cards | 3-column row below | Stacked vertical |
-
-### Workspace Layout
-
-| Element | Desktop (>=1024px) | Mobile (<1024px) |
-|---------|-------------------|-------------------|
-| Step bar | Full width, single line, white bg, border-bottom | Horizontally scrollable |
-| Main panel | flex-1 (fills remaining space), white card | Full width |
-| Context panel | 360px fixed width, white card | Below main panel, collapsible |
-| Gap between panels | 24px | 16px vertical |
-
----
-
-## 9. Key Screen Designs
-
-### Home (Quick-Start)
+### Layout
 
 ```
 +--------------------------------------------------------------+
-| HEADER  [SubForge logo]     Home  Status  About    [Prefs]   |
+| HEADER  SubForge     [Status] [About]           [Health *]   |
 +--------------------------------------------------------------+
 | bg: gray-100                                                  |
 |                                                               |
-|  +-----------------------------------+  +-------------------+|
-|  | white card, shadow-md              |  | PROJECTS [search] ||
-|  |                                    |  | white card        ||
-|  |  +------------------------------+ |  |                   ||
-|  |  | Upload Zone                   | |  | +---------------+||
-|  |  | dashed border gray-300        | |  | | interview.mp4 |||
-|  |  | bg: gray-50                   | |  | | 2m ago - Done  |||
-|  |  |                               | |  | +---------------+||
-|  |  | [cloud upload icon]           | |  | +---------------+||
-|  |  | "Drop your file here"         | |  | | lecture.wav   |||
-|  |  | "or click to browse"          | |  | | 1h ago - Done  |||
-|  |  |                               | |  | +---------------+||
-|  |  | Supports MP4, MKV, WAV,       | |  |                   ||
-|  |  | MP3, FLAC and more            | |  |                   ||
-|  |  +------------------------------+ |  |                   ||
-|  |  Max file size: 2GB               |  |                   ||
-|  +-----------------------------------+  +-------------------+|
+|  +----------------------------------------------------------+|
+|  | Upload Zone (full width, prominent)                        ||
+|  | bg: white, shadow-md, rounded-lg, padding-lg              ||
+|  |                                                            ||
+|  |  +------------------------------------------------------+ ||
+|  |  |  dashed border gray-300, bg: gray-50, rounded         | ||
+|  |  |                                                       | ||
+|  |  |  [cloud-upload icon, 48px, blue-600]                  | ||
+|  |  |                                                       | ||
+|  |  |  "Drop your file to start"           text-lg, bold    | ||
+|  |  |  "or click to browse"                text-sm, muted   | ||
+|  |  |                                                       | ||
+|  |  |  MP4, MKV, WAV, MP3, SRT and more -- Up to 2GB       | ||
+|  |  +------------------------------------------------------+ ||
+|  |                                                            ||
+|  |  "Transcription starts automatically -- no setup needed"   ||
+|  +----------------------------------------------------------+||
 |                                                               |
-|  +-----------------------------------------------------------+|
-|  | 3 feature cards:                                           ||
-|  | [Accurate] [30+ Languages] [Fast Processing]               ||
-|  +-----------------------------------------------------------+|
+|  Recent Projects                                    [Clear]  |
+|  +------------+ +------------+ +------------+ +------------+|
+|  | interview  | | podcast    | | lecture    | | meeting    ||
+|  | .mp4       | | .mp3       | | .wav      | | .mp4       ||
+|  | 12:34      | | 45:01      | | 1:02:33   | | 32:10      ||
+|  | Done       | | Done       | | Failed    | | Done       ||
+|  | 2m ago     | | Yesterday  | | 3d ago    | | 1w ago     ||
+|  +------------+ +------------+ +------------+ +------------+|
+|                                                               |
++--------------------------------------------------------------+
+| Footer                                                        |
 +--------------------------------------------------------------+
 ```
 
-### Workspace — Transcribe (Form)
+### Key decisions
+
+- **Upload zone is the entire focus** -- no sidebar, no drawer, no dashboard. One action: drop a file.
+- **"Transcription starts automatically"** -- tells user there's no configuration step
+- **No model selection, no language picker, no options** -- smart defaults, refine later
+- **Recent projects as grid** -- cards show filename, duration, status badge, relative time. Click navigates to `/editor/:id`
+- **Multi-file drop** -- video + SRT together detected as combine flow
+- **Upload progress** -- after drop, zone transforms into progress bar. On XHR complete, auto-navigates to editor.
+
+### Recent projects data source
+
+- `localStorage` array of `{taskId, filename, createdAt, status, duration}` (max 20)
+- Validated on load via `GET /progress/:id` -- prune stale entries
+- "Clear" button removes all
+
+---
+
+## 5. Editor Page
+
+The core of the product. Two states: **progress** (during transcription) and **editing** (after completion).
+
+### State 1: Progress View
 
 ```
 +--------------------------------------------------------------+
 | HEADER                                                        |
 +--------------------------------------------------------------+
-| STEP BAR                                                      |
-| [v Upload] -- [* Transcribe] -- [ Translate ] -- [ Embed ]   |
-|              -- [ Export ]                                     |
-| file: interview.mp4 - 12:34 - 1080p - 245 MB        [Home]  |
+| bg: gray-100                                                  |
+|                                                               |
+|  +----------------------------------------------------------+|
+|  | white card, full width                                     ||
+|  |                                                            ||
+|  |  Transcribing interview.mp4                                ||
+|  |  Model: large -- Language: detecting...                    ||
+|  |                                                            ||
+|  |  =============================---------  78%               ||
+|  |  142 / ~180 segments -- ETA: ~25s -- 3.2x realtime        ||
+|  |                                                            ||
+|  |  * Live                              Elapsed: 1:23         ||
+|  |                                                            ||
+|  |  Pipeline:                                                 ||
+|  |  v Audio extracted        0.8s                             ||
+|  |  v Model loaded           0.2s                             ||
+|  |  * Transcribing...        1:22                             ||
+|  |  o Writing output                                          ||
+|  |                                                            ||
+|  |                          [Pause] [Cancel]                  ||
+|  +----------------------------------------------------------+||
+|                                                               |
+|  Live Preview                                                |
+|  +----------------------------------------------------------+|
+|  | 00:00:01 -> 00:00:04  Welcome to today's interview...     ||
+|  | 00:00:04 -> 00:00:08  Thank you for having me here.       ||
+|  | 00:00:08 -> 00:00:12  Let's start with the basics...      ||
+|  | [auto-scrolling]                                           ||
+|  +----------------------------------------------------------+|
++--------------------------------------------------------------+
+```
+
+**SSE events drive the entire view:**
+
+| SSE event | UI update |
+|-----------|-----------|
+| `progress` | Updates percentage, ETA, speed, segment count |
+| `segment` | Appends to live preview |
+| `step_change` | Updates pipeline steps |
+| `done` | Transitions to editing state |
+| `error` | Shows error alert with retry |
+| `paused` / `resumed` | Updates pause button |
+| `cancelled` | Shows cancelled state with re-try |
+
+### State 2: Editing View
+
+```
++--------------------------------------------------------------+
+| HEADER                                                        |
++--------------------------------------------------------------+
+| TOOLBAR                                                       |
+| [Download v] [Translate] [Embed] [Re-transcribe]             |
+| [Search...]                         interview.mp4 -- 12:34   |
 +--------------------------------------------------------------+
 |                                                               |
-|  MAIN PANEL (65%)               | CONTEXT PANEL (35%)        |
-|  white card                     | white card                  |
-|                                 |                             |
-|  Transcription Model            | FILE INFO                   |
-|  +---------------------------+  | +-------------------------+ |
-|  | o Tiny    - Fastest       |  | | interview.mp4           | |
-|  | o Base    - Fast          |  | | Duration: 12:34         | |
-|  | o Small   - Balanced      |  | | Format: H.264/AAC       | |
-|  | * Medium  - Recommended   |  | | Resolution: 1080p       | |
-|  | o Large   - Most accurate |  | | Size: 245 MB            | |
-|  +---------------------------+  | +-------------------------+ |
-|                                 |                             |
-|  Language                       | HINTS                       |
-|  [Auto-detect            v]    | "Medium model offers the    |
-|                                 |  best balance of speed      |
-|  > Advanced Options             |  and accuracy for most      |
-|    [ ] Speaker diarization      |  content."                  |
-|    [ ] Word-level timestamps    |                             |
-|                                 |                             |
-|  [Begin Transcription ->]      |                             |
-|                                 |                             |
-+---------------------------------+-----------------------------+
+|  EDITOR (flex-1)                   |  PANEL (360px)          |
+|  white card                        |  white card              |
+|                                    |                          |
+|  1  00:00:01 -> 00:00:04          |  FILE INFO               |
+|  Welcome to today's interview     |  interview.mp4            |
+|  about artificial intelligence.    |  Duration: 12:34          |
+|  [click to edit]                   |  Format: H.264/AAC        |
+|                                    |  Size: 245 MB             |
+|  2  00:00:04 -> 00:00:08          |  Language: English         |
+|  Speaker 1                         |  Segments: 212            |
+|  Thank you for having me here.     |                          |
+|  [click to edit]                   |  STATS                    |
+|                                    |  Speed: 5.8x realtime     |
+|  3  00:00:08 -> 00:00:12          |  Model: large             |
+|  Speaker 2                         |  Processing: 2:08         |
+|  Let's start with the basics       |                          |
+|  of machine learning.              |  SUGGESTION               |
+|  [click to edit]                   |  "Want to translate to     |
+|                                    |   another language?"       |
+|  ...212 segments                   |  [Translate ->]           |
+|                                    |                          |
++------------------------------------+--------------------------+
 ```
 
-### Workspace — Transcribe (In Progress)
+### Editor features
+
+**Inline editing:**
+- Click any segment text to edit. On blur: `PUT /subtitles/:id/:index`
+- Timecodes editable (click timecode, input fields appear)
+- SRT/VTT auto-regenerated on every edit
+- Speaker labels shown if diarization was enabled (always visible, not hidden)
+
+**Search:**
+- Search bar in toolbar: `GET /search/:id?q=...`
+- Results highlighted in editor, scroll to match
+- Match count: "3 matches for 'machine learning'"
+
+**Download (dropdown):**
+- SRT, VTT, JSON, ZIP
+- Custom line length option (20-120 chars via `max_line_chars`)
+- `GET /download/:id?format=srt`, `GET /download/:id/all`
+
+**Translate (right panel):**
+- Source language (auto-detected, read-only)
+- Target language dropdown (from `GET /translation/languages`, 147 pairs)
+- Engine: Whisper (English-only, higher quality) or Argos (any language)
+- Progress bar (SSE `translate_progress` events)
+- Side-by-side preview: original | translated
+
+**Embed (right panel, video inputs only):**
+- Mode: Soft mux (recommended, fast) vs Hard burn (re-encodes)
+- Style presets from `GET /embed/presets` (default, youtube_white, youtube_yellow, cinema, large_bold, top)
+- Custom: font, size, color, position, opacity
+- Progress bar, then download embedded video
+- Uses `POST /embed/:id/quick`
+
+**Re-transcribe:**
+- One-click: `POST /tasks/:id/retranscribe`
+- Optional expand: change model, language, enable diarization
+- Creates new task, navigates to `/editor/:new_id`
+- No re-upload needed
+
+### Right panel -- adaptive content
+
+| Context | Panel shows |
+|---------|-------------|
+| Just completed | File info + stats + smart suggestion |
+| Translating | Translation progress + side-by-side preview |
+| Embedding | Embed progress + style preview |
+| Searching | Search results with context snippets |
+| Default | File info + stats |
+
+### Smart suggestions
+
+Contextual prompts after transcription completes:
+
+| Condition | Suggestion |
+|-----------|-----------|
+| Video file, not embedded | "Add subtitles to your video? [Embed]" |
+| Non-English source | "Translate to English? [Translate]" |
+| Used medium model, large available | "Want higher accuracy? [Re-transcribe with Large]" |
+| First time user | "Your subtitles are ready. [Download SRT]" |
+
+Dismissable. Don't reappear in same session.
+
+### State 3: Combine View (video + SRT upload)
+
+When the user drops a video + subtitle file together, the editor shows a simplified view:
 
 ```
 +--------------------------------------------------------------+
-| STEP BAR                                                      |
-| [v Upload] -- [* Transcribe @] -- [ Translate ] -- [ Embed ] |
+| TOOLBAR                                                       |
+| [Download]                          video.mp4 + subs.srt      |
 +--------------------------------------------------------------+
 |                                                               |
-|  MAIN PANEL                     | CONTEXT PANEL               |
-|                                 |                             |
-|  Transcribing...                | LIVE PREVIEW                |
-|  Model: medium - Language: en   | +-------------------------+ |
-|                                 | | 00:00:01 -> 00:00:04    | |
-|  ============----  67%          | | "Welcome to today's     | |
-|  142 / 212 segments             | |  interview about..."    | |
-|  ETA: ~45 seconds               | |                         | |
-|                                 | | 00:00:04 -> 00:00:08    | |
-|  * Live  -  Elapsed: 1:23      | | "Thank you for          | |
-|                                 | |  having me here."       | |
-|  Pipeline Steps:                | |                         | |
-|  v Audio extraction   0.8s      | | 00:00:08 -> 00:00:12    | |
-|  v Model loaded       0.2s      | | "Let's start with       | |
-|  * Transcribing...    1:22      | |  the basics..."         | |
-|  o Formatting                   | |                         | |
-|  o Writing output               | | [auto-scrolling]        | |
-|                                 | +-------------------------+ |
-|       [Cancel]                  |                             |
-|                                 | Segments: 142               |
-|                                 | Speed: 3.2x realtime        |
-+---------------------------------+-----------------------------+
+|  MAIN                              |  PANEL                   |
+|                                    |                          |
+|  Embedding subtitles...            |  FILE INFO               |
+|  Mode: Soft mux (lossless)        |  video.mp4               |
+|  ====================------  65%   |  Duration: 12:34         |
+|                                    |  Subtitles: subs.srt     |
+|  [Cancel]                          |  Mode: Soft              |
+|                                    |                          |
+|  --- OR after completion ---       |                          |
+|                                    |                          |
+|  Subtitles embedded successfully   |  DOWNLOAD                |
+|  [Download Video]  245 MB          |  video_subtitled.mkv     |
+|  [Back to Home]                    |  Soft embed              |
+|                                    |                          |
++------------------------------------+--------------------------+
 ```
 
-### Workspace — Export
+No subtitle editor in combine mode -- there are no segments to edit (the SRT was provided by the user). The editor shows progress and download only.
 
+### State 4: SRT-Only Edit Mode (subtitle file dropped alone)
+
+When the user drops only an SRT/VTT file, the editor parses it client-side and shows the editing view:
+
+**Available features:**
+- View and edit segment text (client-side)
+- View and edit timecodes (client-side)
+- Download edited version (client-side SRT/VTT generation)
+
+**NOT available (no backend task_id):**
+- Translate (requires backend task)
+- Embed (requires video file)
+- Re-transcribe (no media file)
+- Search (requires backend endpoint)
+
+The toolbar shows only the [Download] button. Translate, Embed, Re-transcribe are hidden. A subtle note: "Editing local file -- upload media to access full features."
+
+---
+
+## 6. Component Architecture
+
+### Layout Components
+
+| Component | Purpose |
+|-----------|---------|
+| `AppShell` | Root: header + main content + footer |
+| `Header` | Sticky top: logo, nav, health indicator |
+| `Footer` | Static links |
+| `PageLayout` | Wrapper for static pages (narrow max-width) |
+
+### Landing Components
+
+| Component | Purpose |
+|-----------|---------|
+| `UploadZone` | Drag-and-drop with adaptive file detection |
+| `UploadProgress` | Progress bar during XHR upload |
+| `ProjectGrid` | Grid of recent project cards |
+| `ProjectCard` | Single project: filename, duration, status, time |
+
+### Editor Components
+
+| Component | Purpose |
+|-----------|---------|
+| `EditorToolbar` | Action bar: download, translate, embed, re-transcribe, search |
+| `ProgressView` | Real-time transcription progress (SSE-driven) |
+| `PipelineSteps` | Step list with checkmarks and spinner |
+| `LivePreview` | Auto-scrolling segment preview during transcription |
+| `SegmentList` | Scrollable list of editable segments |
+| `SegmentRow` | Single segment: index, timecodes, speaker label, editable text |
+| `SearchBar` | Full-text search within transcript |
+| `ContextPanel` | Right sidebar: adaptive content |
+| `DownloadMenu` | Dropdown: SRT, VTT, JSON, ZIP |
+| `TranslatePanel` | Language picker, engine selector, progress, preview |
+| `EmbedPanel` | Mode selector, style presets, custom options, progress |
+| `RetranscribeDialog` | Model/language/options picker for re-transcription |
+| `SmartSuggestion` | Contextual action card (blue-tinted, dismissable) |
+
+### System Components
+
+| Component | Purpose |
+|-----------|---------|
+| `HealthIndicator` | Colored dot in header + tooltip |
+| `ConnectionBanner` | Full-width banner for SSE disconnect/reconnect |
+| `ErrorBoundary` | React error boundary with styled fallback |
+
+### UI Primitives
+
+Button, IconButton, Card, Input, Select, Textarea, Checkbox, Toggle, Badge, Tag, Dialog, ConfirmDialog, Tooltip, Toast, ToastContainer, Alert, ProgressBar, Spinner, Skeleton, EmptyState, Divider
+
+---
+
+## 7. State Architecture
+
+### 5 Stores
+
+```typescript
+// editorStore.ts -- Core editor state
+interface EditorState {
+  // Project
+  taskId: string | null
+  fileMetadata: FileMetadata | null
+
+  // Phase
+  phase: 'idle' | 'uploading' | 'processing' | 'editing' | 'error'
+
+  // Upload
+  uploadPercent: number
+
+  // Transcription progress (SSE-driven)
+  progress: {
+    percent: number
+    segmentCount: number
+    estimatedSegments: number
+    eta: number | null
+    elapsed: number
+    speed: number | null
+    pipelineStep: string
+    message: string
+  } | null
+  liveSegments: Segment[]
+
+  // Completed results
+  segments: Segment[]
+  language: string | null
+  modelUsed: string | null
+  timings: Record<string, number>
+  isVideo: boolean
+
+  // Editing
+  searchQuery: string
+  searchResults: SearchResult[]
+  editingSegmentIndex: number | null
+
+  // Actions
+  startUpload: (file: File) => void
+  setTaskId: (id: string) => void
+  updateProgress: (data: ProgressData) => void
+  addLiveSegment: (segment: Segment) => void
+  setComplete: (data: CompleteData) => void
+  setError: (message: string) => void
+  updateSegment: (index: number, text: string) => void
+  setSearchQuery: (query: string) => void
+  setSearchResults: (results: SearchResult[]) => void
+  reset: () => void
+}
+
+// uiStore.ts -- App chrome
+interface UIState {
+  currentPage: string
+  contextPanelContent: 'info' | 'translate' | 'embed' | 'search'
+  sseConnected: boolean
+  sseReconnecting: boolean
+  systemHealth: 'healthy' | 'degraded' | 'critical'
+  modelPreloadStatus: Record<string, string>
+  dismissedSuggestions: string[]
+
+  setCurrentPage: (page: string) => void
+  setContextPanel: (content: string) => void
+  setSSEConnected: (connected: boolean) => void
+  setSystemHealth: (health: string) => void
+  dismissSuggestion: (id: string) => void
+}
+
+// preferencesStore.ts -- User defaults (localStorage)
+interface PreferencesState {
+  preferredFormat: 'srt' | 'vtt' | 'json'
+  maxLineChars: number
+
+  setPreference: (key: string, value: any) => void
+  resetDefaults: () => void
+}
+
+// toastStore.ts -- Notifications
+interface ToastState {
+  toasts: Toast[]
+  addToast: (toast: ToastInput) => void
+  removeToast: (id: string) => void
+}
+
+// recentProjectsStore.ts -- Project history (localStorage)
+interface RecentProjectsState {
+  projects: RecentProject[]
+  addProject: (project: RecentProject) => void
+  updateProject: (taskId: string, updates: Partial<RecentProject>) => void
+  removeProject: (taskId: string) => void
+  clearAll: () => void
+}
 ```
-+--------------------------------------------------------------+
-| STEP BAR                                                      |
-| [v Upload] -- [v Transcribe] -- [- Translate] -- [v Embed]   |
-|              -- [* Export]                                     |
-+--------------------------------------------------------------+
-|                                                               |
-|  MAIN PANEL                     | CONTEXT PANEL               |
-|                                 |                             |
-|  v Your subtitles are ready     | SUBTITLE PREVIEW            |
-|                                 | +-------------------------+ |
-|  Download Subtitles             | | 1                       | |
-|  +--------+ +--------+ +-----+ | | 00:00:01 -> 00:00:04    | |
-|  | SRT    | | VTT    | | JSON| | | Welcome to today's      | |
-|  | 12 KB  | | 14 KB  | |89KB | | | interview about...      | |
-|  +--------+ +--------+ +-----+ | |                         | |
-|                                 | | 2                       | |
-|  Download Video (embedded)      | | 00:00:04 -> 00:00:08    | |
-|  +----------------------------+ | | Thank you for           | |
-|  | interview_subtitled.mkv    | | | having me here.         | |
-|  | 247 MB - Soft embed        | | |                         | |
-|  +----------------------------+ | | ...212 segments         | |
-|                                 | | [Copy all]              | |
-|  [Download All (.zip)]         | +-------------------------+ |
-|                                 |                             |
-|  > Timing Breakdown             | STATS                       |
-|    Audio extraction:  0.8s      | Segments: 212               |
-|    Model loading:     0.2s      | Duration: 12:34             |
-|    Transcription:     2:05      | Model: medium               |
-|    Embedding:         1.2s      | Language: English            |
-|    Total:             2:08      | Speed: 5.8x realtime        |
-|                                 |                             |
-|  What's next?                   |                             |
-|  [New Transcription]            |                             |
-|  [Re-transcribe with Large]     |                             |
-|  [Translate to another lang]    |                             |
-+---------------------------------+-----------------------------+
+
+### Translation and embed state (component-local, not in stores)
+
+These are small, panel-scoped state that lives in the component, not in a global store:
+
+```typescript
+// TranslatePanel local state
+const [targetLanguage, setTargetLanguage] = useState<string>('')
+const [engine, setEngine] = useState<'whisper' | 'argos'>('argos')
+const [translating, setTranslating] = useState(false)
+const [translatePercent, setTranslatePercent] = useState(0)
+const [translatedSegments, setTranslatedSegments] = useState<Segment[]>([])
+
+// EmbedPanel local state
+const [mode, setMode] = useState<'soft' | 'hard'>('soft')
+const [preset, setPreset] = useState('default')
+const [customStyle, setCustomStyle] = useState<CustomStyle | null>(null)
+const [embedding, setEmbedding] = useState(false)
+const [embedPercent, setEmbedPercent] = useState(0)
+const [embedDownloadUrl, setEmbedDownloadUrl] = useState<string | null>(null)
+```
+
+These are component-local because: (a) they're only relevant while the panel is open, (b) they don't need to survive panel close, (c) they're never read by other components.
+
+### Why 5 stores, not 9
+
+The old spec split into 9 stores (workspace, transcribe, translate, embed, export, etc.) for "parallel development." But that was anchored on a step-bar architecture with separate pages per step. The new editor-centric design has one workspace with one concern. Translation state is 3 fields. Embed state is 4 fields. These live as local component state or sections of `editorStore`, not separate stores.
+
+### Shared types (types.ts)
+
+```typescript
+export interface FileMetadata {
+  filename: string
+  duration: number
+  format: string
+  resolution: string | null
+  size: number
+  codec: string
+  isVideo: boolean
+}
+
+export interface Segment {
+  index: number
+  start: number    // seconds (float)
+  end: number      // seconds (float)
+  text: string
+  speaker?: string
+}
+
+export interface SearchResult {
+  segmentIndex: number
+  text: string
+  matchStart: number
+  matchEnd: number
+}
+
+export interface RecentProject {
+  taskId: string
+  filename: string
+  createdAt: string
+  status: 'processing' | 'completed' | 'failed'
+  duration: number | null
+}
+
+export type EditorPhase = 'idle' | 'uploading' | 'processing' | 'editing' | 'error'
+
+// Utilities
+export function formatTimecode(seconds: number): string { ... }
+export function formatFileSize(bytes: number): string { ... }
+export function formatDuration(seconds: number): string { ... }
 ```
 
 ---
 
-## 10. Responsive Behavior
+## 8. Backend Integration
 
-| Breakpoint | Layout Change |
-|------------|--------------|
-| < 640px (mobile) | Single column. Context panel below main. Step bar scrolls horizontally. Project drawer becomes collapsible accordion. |
-| 640–1023px (tablet) | Single column. Context panel collapsible (toggle button). Step bar wraps to 2 lines if needed. |
-| >= 1024px (desktop) | Two columns: main 65% + context 35%. Step bar single line. Full project drawer. |
-| >= 1280px (wide) | Same as desktop, content max-width 1280px, centered. |
+### API mapping
 
-**Touch targets:** 44px minimum on mobile (WCAG 2.5.5).
+| Editor action | API call | Notes |
+|--------------|----------|-------|
+| Drop file | `POST /upload` (file only, auto defaults) | No model/language params |
+| Drop file + SRT | `POST /combine` (video + subtitle) | Auto-detected |
+| View progress | `GET /events/:id` (SSE) | 18+ event types |
+| Session restore | `GET /progress/:id` | Determines phase |
+| Edit segment | `PUT /subtitles/:id/:index` | Auto-regenerates SRT/VTT |
+| Bulk edit | `PUT /subtitles/:id` | Full segment array |
+| Search | `GET /search/:id?q=...&limit=20` | Full-text, case-insensitive |
+| Download | `GET /download/:id?format=srt` | Also max_line_chars |
+| Download all | `GET /download/:id/all` | ZIP archive |
+| Translate | `POST /upload` with `translate_to`, OR new `POST /translate/:id` | Pre or post-hoc |
+| Embed (soft) | `POST /embed/:id/quick` | Original video |
+| Embed (hard) | `POST /embed/:id/quick` mode=hard + style | Re-encodes |
+| Embed presets | `GET /embed/presets` | 6 presets |
+| Re-transcribe | `POST /tasks/:id/retranscribe` | No re-upload |
+| Cancel | `POST /cancel/:id` | During transcription |
+| Pause/Resume | `POST /pause/:id`, `POST /resume/:id` | During transcription |
+| Delete | `DELETE /tasks/:id` | Terminal state only |
+| System info | `GET /system-info` | Models, GPU |
+| Health stream | `GET /health/stream` (SSE) | Every 3s |
+| Languages | `GET /languages` | 99 languages |
+| Translation langs | `GET /translation/languages` | 147 pairs |
+| Model status | `GET /api/model-status` | Preload status |
+| Duplicates | `GET /tasks/duplicates?filename=...&file_size=...` | Before upload |
+| Task stats | `GET /tasks/stats` | Aggregates |
+
+### Smart defaults (server-side)
+
+`POST /upload` with minimal params -- server handles defaults:
+- `model_size: "auto"` -- server picks best model based on GPU/VRAM
+- `language: "auto"` -- Whisper auto-detects
+- `diarize: false` -- off by default
+- `word_timestamps: false` -- off by default
+
+Frontend sends only the `file` form field. All other form params (`model_size`, `language`, `device`, `diarize`, etc.) use server defaults (`"auto"`, `"auto"`, `"cuda"` with CPU fallback, `false`, etc.). The server handles all decision-making.
+
+### max_line_chars discrepancy
+
+The upload route clamps `max_line_chars` to 20-80. The download route accepts 20-120. The frontend should use the download route's range (20-120) for the "custom line length" option since it applies to the download, not the original transcription. This discrepancy exists in the backend and is not a frontend concern.
+
+### Required backend addition: POST /translate/{task_id}
+
+Post-hoc translation of a completed task's subtitles. This is the single biggest implementation dependency.
+
+**Request:**
+```
+POST /translate/{task_id}
+Content-Type: application/json
+
+{
+  "target_language": "es",
+  "engine": "argos"          // "whisper" (English-only) or "argos" (any)
+}
+```
+
+**Response:**
+```json
+{
+  "task_id": "original-task-id",
+  "message": "Translation started",
+  "target_language": "es",
+  "engine": "argos"
+}
+```
+
+**SSE events (via existing /events/{task_id}):**
+- `translate_start` -- `{target_language, engine}`
+- `translate_progress` -- `{percent, translated, total, message}`
+- `translate_done` -- `{segments: [...translated segments...]}`
+
+**Without this endpoint**, the TranslatePanel falls back to showing a message: "To translate, re-transcribe with translation enabled" with a one-click re-transcribe action that passes `translate_to` to `POST /upload`. This fallback works but requires re-transcription.
+
+### Client-side file validation
+
+Before upload, the frontend validates:
+- File extension is in accepted list (from `GET /api/capabilities`)
+- File size <= 2GB and >= 1KB
+- If file too large: "File exceeds 2GB limit. Try a shorter clip or compressed format."
+- If wrong type: "Unsupported format. We accept MP4, MKV, WAV, MP3, and more."
+- If upload fails mid-stream (network): "Upload interrupted. [Retry]"
+
+Backend rejections (magic bytes, duration, ClamAV) show the error message from the API response directly.
+
+### Network and critical state handling
+
+- Upload fails mid-stream: show "Upload interrupted" with retry button. File reference kept in memory.
+- API calls fail (500/503): toast with error message + retry option
+- `GET /health/stream` reports `critical`: full-width red banner "System recovering. Uploads paused." Upload zone disabled.
+- SSE disconnect: yellow banner "Reconnecting..." with exponential backoff (1s, 2s, 4s, 8s, max 30s)
+
+### Recent projects validation strategy
+
+On landing page load, validate recent projects **lazily**:
+- Render cards immediately from localStorage (show cached status)
+- Fire `GET /progress/:id` for each project in a staggered queue (100ms apart, max 3 concurrent)
+- Update card status as responses arrive (done/failed/processing/404)
+- 404 responses → remove from list silently
+- Timeout after 5s → keep cached status, mark as "unknown"
+
+### Session restore for edge cases
+
+- Task deleted (404): redirect to `/` with toast "Project not found or deleted"
+- Task in terminal error state: show error view with "Re-try" and "Back to home" buttons
+- Partial failure (transcription done, translation fails): show editor with available segments + error alert for the failed step
 
 ---
 
-## 11. Animation System
+## 9. Responsive Behavior
 
-| Animation | Where | Behavior | Duration |
-|-----------|-------|----------|----------|
-| Step pulse | Active step dot | Gentle blue pulse | 2s cycle |
-| Progress shimmer | Progress bar | Left-to-right gradient sweep | Continuous |
-| Segment slide-in | Live preview | New segments slide from bottom | 200ms |
-| Success bounce | Completion checkmark | Scale 0 -> 1.1 -> 1 | 300ms |
-| Card hover lift | Project cards | translateY(-1px) + shadow increase | 150ms |
-| Panel transition | Step change | Fade out -> fade in | 150ms + 150ms |
-| Drawer slide | Project drawer | SlideInRight | 200ms |
-| Toast enter/exit | Notifications | Slide in from top-right, fade out | 200ms / 300ms |
+| Breakpoint | Layout |
+|------------|--------|
+| < 640px (mobile) | Single column. Editor full-width. Context panel collapses to bottom sheet. Toolbar hamburger menu. Upload zone stacked above project grid. |
+| 640-1023px (tablet) | Single column. Context panel collapsible (toggle). Toolbar condensed (icons, labels on hover). |
+| >= 1024px (desktop) | Two columns: editor flex-1 + context panel 360px. Full toolbar. |
+| >= 1280px (wide) | Same as desktop, max-width 1280px, centered. |
 
-All animations respect `prefers-reduced-motion: reduce`.
+Touch targets: 44px minimum on mobile.
 
 ---
 
-## 12. Accessibility
+## 10. Animations & Interactions
 
-### Standards
-- **WCAG 2.1 AA** compliance across all components
-- **Keyboard navigation** — all interactive elements reachable via Tab, operable via Enter/Space
-- **Focus management** — visible focus rings (2px blue outline, 2px offset), `:focus-visible` only
-- **Focus trapping** — dialogs and modals trap focus within
-- **Skip navigation** — hidden link to skip to main content
-- **Screen reader support** — semantic HTML, ARIA labels, live regions for dynamic content
-- **Reduced motion** — all animations disabled when `prefers-reduced-motion: reduce`
-- **Color contrast** — minimum 4.5:1 for text, 3:1 for large text and UI components
-- **Touch targets** — 44px minimum on mobile
+| Animation | Where | Duration |
+|-----------|-------|----------|
+| Upload pulse | Drag-over state on drop zone | 2s cycle |
+| Progress shimmer | Progress bar fill | Continuous |
+| Segment slide-in | Live preview during transcription | 200ms |
+| Phase transition | Progress view to editor view | Fade 200ms |
+| Suggestion enter | Smart suggestion card appears | Slide-up 200ms |
+| Toast enter/exit | Notifications | Slide-in 200ms, fade-out 300ms |
+| Card hover lift | Project cards | translateY(-1px), 150ms |
+| Search highlight | Matched text in segments | Background flash 300ms |
 
-### ARIA Patterns
-- Step bar: `role="navigation"` with `aria-label="Pipeline steps"`, `aria-current="step"` on active
+All respect `prefers-reduced-motion: reduce`.
+
+---
+
+## 11. Accessibility
+
+- **WCAG 2.1 AA** compliance
+- **Keyboard navigation** -- Tab through segments, Enter to edit, Escape to cancel
+- **Focus management** -- visible focus rings (2px blue, `:focus-visible` only)
+- **Focus trapping** -- dialogs and panels
+- **Skip navigation** -- hidden link to skip to editor content
+- **Screen reader** -- ARIA labels, `aria-live="polite"` on live preview and progress
+- **Color contrast** -- minimum 4.5:1 text, 3:1 UI components
+- **Touch targets** -- 44px minimum on mobile
+- **Reduced motion** -- all animations disabled when `prefers-reduced-motion: reduce`
+
+### ARIA patterns
+
 - Progress bar: `role="progressbar"` with `aria-valuenow`, `aria-valuemin`, `aria-valuemax`
 - Live preview: `aria-live="polite"` for new segments
 - Toast: `role="status"` with `aria-live="polite"`
 - Dialogs: `role="dialog"`, `aria-modal="true"`, `aria-labelledby`
 - Connection banner: `role="alert"` for connection loss
-
----
-
-## 13. Component API Reference
-
-### Button
-
-```typescript
-interface ButtonProps {
-  variant: 'primary' | 'secondary' | 'ghost' | 'danger' | 'success';
-  size: 'sm' | 'md' | 'lg';
-  loading?: boolean;
-  disabled?: boolean;
-  icon?: ReactNode;       // Leading icon
-  iconRight?: ReactNode;  // Trailing icon
-  fullWidth?: boolean;
-  children: ReactNode;
-  onClick?: () => void;
-}
-```
-
-**Dimensions:**
-- sm: h-32px, px-12px, text-sm
-- md: h-36px, px-16px, text-sm
-- lg: h-40px, px-20px, text-base
-
-### Card
-
-```typescript
-interface CardProps {
-  padding?: 'sm' | 'md' | 'lg';  // 12px, 16px, 24px
-  shadow?: boolean;                // default true
-  border?: boolean;                // default false
-  header?: {
-    title: string;
-    subtitle?: string;
-    action?: ReactNode;
-  };
-  children: ReactNode;
-}
-```
-
-### Input
-
-```typescript
-interface InputProps {
-  type?: 'text' | 'password' | 'search';
-  size?: 'sm' | 'md';
-  label?: string;
-  placeholder?: string;
-  error?: string;
-  helperText?: string;
-  disabled?: boolean;
-  icon?: ReactNode;         // Leading icon
-  value: string;
-  onChange: (value: string) => void;
-}
-```
-
-### Select
-
-```typescript
-interface SelectProps {
-  size?: 'sm' | 'md';
-  label?: string;
-  placeholder?: string;
-  error?: string;
-  disabled?: boolean;
-  options: Array<{ value: string; label: string; group?: string }>;
-  value: string;
-  onChange: (value: string) => void;
-}
-```
-
-### Dialog
-
-```typescript
-interface DialogProps {
-  open: boolean;
-  onClose: () => void;
-  title: string;
-  description?: string;
-  children: ReactNode;
-  actions?: ReactNode;     // Footer buttons
-  size?: 'sm' | 'md' | 'lg';  // 400px, 500px, 640px
-}
-```
-
-### ConfirmDialog
-
-```typescript
-interface ConfirmDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  title: string;
-  message: string;
-  confirmLabel?: string;   // default "Confirm"
-  cancelLabel?: string;    // default "Cancel"
-  variant?: 'default' | 'danger';
-  loading?: boolean;
-}
-```
-
-### Toast
-
-```typescript
-interface ToastProps {
-  type: 'success' | 'error' | 'warning' | 'info';
-  title: string;
-  description?: string;
-  duration?: number;       // ms, default 5000
-  action?: {
-    label: string;
-    onClick: () => void;
-  };
-}
-```
-
-### StepIndicator
-
-```typescript
-interface StepIndicatorProps {
-  steps: Array<{
-    id: string;
-    label: string;
-    status: 'pending' | 'active' | 'completed' | 'skipped';
-    optional?: boolean;
-    hidden?: boolean;      // true for non-applicable steps
-  }>;
-  onStepClick: (stepId: string) => void;
-}
-```
-
-### ProgressBar
-
-```typescript
-interface ProgressBarProps {
-  value: number;           // 0-100
-  indeterminate?: boolean;
-  label?: string;
-  showPercentage?: boolean;
-  size?: 'sm' | 'md';     // 4px, 8px height
-}
-```
-
-### UploadZone
-
-```typescript
-interface UploadZoneProps {
-  onFileAccepted: (file: File) => void;
-  onError: (error: string) => void;
-  maxSize?: number;        // bytes, default 2GB
-  accept?: string[];       // MIME types
-  uploading?: boolean;
-  uploadProgress?: number; // 0-100
-}
-```
-
-### SubtitlePreview
-
-```typescript
-interface SubtitlePreviewProps {
-  segments: Array<{
-    index: number;
-    start: number;         // seconds (float), e.g. 1.0 — component formats to "00:00:01" internally
-    end: number;           // seconds (float), e.g. 4.0 — matches backend SegmentEvent format
-    text: string;
-  }>;
-  autoScroll?: boolean;
-  highlightIndex?: number;
-  onCopyAll?: () => void;
-}
-```
-
-### FileInfo
-
-```typescript
-interface FileInfoProps {
-  filename: string;
-  duration?: string;
-  format?: string;
-  resolution?: string;
-  size: string;
-  codec?: string;
-}
-```
-
-### ModelSelector
-
-```typescript
-interface ModelSelectorProps {
-  models: Array<{
-    id: string;
-    name: string;
-    description: string;
-    speed: string;
-    accuracy: string;
-    recommended?: boolean;
-    loaded?: boolean;        // true if model is ready in memory
-    preloading?: boolean;    // true if model is currently being loaded
-  }>;
-  value: string;
-  onChange: (modelId: string) => void;
-}
-```
-
-**Model status display:** Models marked `loaded: true` show a green "Ready" badge. Models with `preloading: true` show a spinner + "Loading..." badge. Unloaded models show "~30s to load" hint. Status polled from `GET /api/model-status`.
-
----
-
-## 14. Interaction Patterns
-
-### Hover
-- Background shift: transparent to gray-50 (150ms)
-- Cards: translateY(-1px) + shadow increase
-- Buttons: background darkens one shade
-- Links: underline appears
-
-### Focus
-- 2px blue (#2563EB) outline with 2px offset
-- `:focus-visible` only (no outline on mouse click)
-- Tab order follows visual layout
-
-### Loading States
-- **Button loading:** Spinner replaces icon, text changes to "Processing...", button disabled
-- **Page loading:** Skeleton placeholders for cards, text blocks, and media
-- **Data loading:** Spinner centered in empty area with "Loading..." text
-- **Model loading:** Connection banner: "Loading model... This may take up to 30 seconds"
-
-### Error States
-- **Field error:** Red border on input, error message below (text-sm, danger color)
-- **Form error:** Toast notification with error summary
-- **System error:** Red alert inline with retry action
-- **Critical error:** Full-width red banner with status message
-
-### Empty States
-- **No projects:** Illustrated icon + "No projects yet. Upload a file to get started." + Upload CTA
-- **No subtitles:** "Transcription hasn't started. Choose a model above."
-- **No translations:** "Original subtitles only. Add a translation?"
-
-### Confirmation Pattern
-All actions that start a process or are destructive use `ConfirmDialog`:
-- Starting transcription: summary of file + model + language + estimated time
-- Cancelling transcription: "Are you sure? Progress will be lost."
-- Deleting a project: "This will remove the file and all subtitles."
-- Starting embed (hard burn): "This will re-encode your video. Estimated time: X"
-
-### Smart Suggestions
-After each step completes, the system offers contextual next actions:
-- Displayed as a light blue tinted card (`primary-light` background)
-- Contains 2-3 action buttons for the most likely next steps
-- Dismissable — "Skip" or "Later" option always available
-- Remembers dismissed suggestions per session
-
-### Session Restore
-
-When a user navigates to `/project/:id` directly (bookmark, page refresh, or clicking a project in the drawer):
-
-1. **Fetch task state:** `GET /progress/{task_id}` returns current status, progress, and results
-2. **Restore workspace store:** `workspaceStore.restoreFromTask(taskData)` populates all fields
-3. **Determine current step:**
-   - If `status === 'processing'`: set `currentStep` to `transcribe`, connect SSE via `GET /events/{task_id}`, render in-progress view
-   - If `status === 'completed'`: set `currentStep` to `export`, populate download URLs and segments from task data
-   - If `status === 'failed'`: set `currentStep` to `transcribe`, render error state with retry option
-4. **File metadata:** Restored from the task's stored probe data (no need to re-probe). The `File` object is NOT available after refresh — "Re-transcribe" requires re-uploading.
-5. **SSE reconnection:** Exponential backoff (1s, 2s, 4s, 8s, 16s, max 30s). Yellow banner shown during reconnection. Auto-recovers when server comes back.
-
----
-
-## 15. Required API Additions
-
-New backend endpoints needed to support the workspace model:
-
-| Endpoint | Method | Purpose | Priority |
-|----------|--------|---------|----------|
-| `POST /translate/{task_id}` | POST | Post-hoc translation of an already-completed task's subtitles. Accepts `target_language` and `engine` (whisper/argos). Returns task progress via SSE. | **Required** — enables Step 3 as a separate action after transcription |
-| `DELETE /tasks/bulk` | DELETE | Bulk delete tasks by ID list. Body: `{ "task_ids": ["id1", "id2"] }`. | **Nice-to-have** — for project drawer bulk actions. Workaround: loop `DELETE /tasks/{id}` |
-| `GET /download/{task_id}/all` | GET | Download all subtitle formats as zip. | **Verify** — may already exist. If not, required for Export "Download All" button |
-
-**Endpoints already sufficient (no changes needed):**
-- `POST /upload` — handles file + transcription + optional translation in one call
-- `POST /embed/{task_id}/quick` — soft mux embedding
-- `POST /combine` — hard burn embedding
-- `GET /download/{task_id}/{format}` — individual format download
-- `GET /progress/{task_id}` — task status and progress
-- `GET /events/{task_id}` — SSE stream for real-time updates
-- `GET /api/model-status` — model preload status
-- `GET /health/stream` — system health SSE
-- `DELETE /tasks/{task_id}` — single task deletion
+- Segment list: `role="list"` with `role="listitem"` per segment
+- Search results: `aria-live="polite"` for match count updates
 
 ---
 
@@ -1322,7 +877,7 @@ New backend endpoints needed to support the workspace model:
 | Styling | Tailwind CSS v4 (CSS-in-CSS config) |
 | State | Zustand 5 |
 | Icons | Lucide React |
-| UI Primitives | Radix UI (Tooltip, Collapsible, Progress, Separator) |
+| UI Primitives | Radix UI (Tooltip, Collapsible, Progress) |
 | Drag & Drop | react-dropzone |
 | Variant Management | class-variance-authority |
 | Class Merging | clsx + tailwind-merge |
