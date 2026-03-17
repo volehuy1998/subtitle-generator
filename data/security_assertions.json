@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "3f3ba22",
-    "sha_full": "3f3ba22c0b13c74038de131b12fdd8810130c01f",
-    "datetime": "2026-03-17T06:44:50+07:00",
-    "message": "security: remove public IP from CLAUDE.md to pass sensitive data scan"
+    "sha": "12cfa73",
+    "sha_full": "12cfa732038446faa8a39130101a449e797f84a2",
+    "datetime": "2026-03-17T14:00:42+07:00",
+    "message": "fix(docker): cpu profile uses nginx reverse proxy instead of direct TLS"
   },
   "assertions": [
     {
