@@ -54,7 +54,8 @@ services:
       - s3
 
   # ── Single-server (CPU) ─────────────────────────────────────────────────────
-  # Usage: docker compose --profile cpu up -d
+  # Usage: docker compose --profile cpu up -d --build
+  # Serves on 127.0.0.1:8000 behind nginx reverse proxy (TLS terminated by nginx)
 
   subtitle-generator:
     image: subtitle-generator-prod:${PROD_IMAGE_TAG:-latest}
@@ -62,16 +63,13 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "443:8000"
-      - "80:8080"
+      - "127.0.0.1:8000:8000"
     volumes:
       - ./uploads:/app/uploads
       - ./outputs:/app/outputs
       - ./logs:/app/logs
-      - /etc/letsencrypt/live/${DOMAIN}/fullchain.pem:/certs/fullchain.pem:ro
-      - /etc/letsencrypt/live/${DOMAIN}/privkey.pem:/certs/privkey.pem:ro
     environment:
-      - ENVIRONMENT=prod
+      - ENVIRONMENT=dev
       - ROLE=standalone
       - DATABASE_URL=postgresql+asyncpg://subtitle:subtitle@postgres:5432/subtitle_generator
       - REDIS_URL=redis://redis:6379/0
