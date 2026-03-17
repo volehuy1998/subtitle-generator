@@ -492,12 +492,17 @@ Recent projects are sourced from:
 
 ## 7. State Architecture
 
-### Zustand Stores
+### Design for Parallel Development
 
-The rebuild replaces all existing stores with a new architecture:
+Stores are split so that each workspace step has its own store file. Multiple developers can work on different steps simultaneously without merge conflicts.
+
+### Zustand Stores (8 stores, split by ownership)
 
 ```typescript
-// workspaceStore.ts — Core workspace state
+// ─── ORCHESTRATION STORES ───
+
+// workspaceStore.ts — Thin orchestration layer (navigation + project identity only)
+// Owner: Layout/Shell developer
 interface WorkspaceState {
   // Project identity
   projectId: string | null;           // task_id from backend
@@ -522,73 +527,19 @@ interface WorkspaceState {
     export: 'pending' | 'active' | 'completed';
   };
 
-  // Transcription state
-  transcribeOptions: {
-    model: string;
-    language: string;
-    diarization: boolean;
-    wordTimestamps: boolean;
-    translateToEnglish: boolean;
-    translateTo: string | null;
-  };
-  transcribeProgress: {
-    percentage: number;
-    segmentCount: number;
-    totalSegments: number;
-    eta: number | null;               // seconds
-    currentStep: string;              // "extracting_audio", "transcribing", etc.
-    elapsed: number;                  // seconds
-    speed: number | null;             // e.g. 3.2 (realtime multiplier)
-  } | null;
-  segments: Array<{
-    index: number;
-    start: number;
-    end: number;
-    text: string;
-    speaker?: string;
-  }>;
-
-  // Translation state
-  translationProgress: {
-    percentage: number;
-    batchesCompleted: number;
-    totalBatches: number;
-  } | null;
-  translatedSegments: Array<{
-    index: number;
-    start: number;
-    end: number;
-    text: string;
-  }>;
-
-  // Embed state
-  embedMode: 'soft' | 'hard' | null;
-  embedStyle: string | null;
-  embedProgress: number | null;
-
-  // Export data
-  downloadUrls: {
-    srt: string | null;
-    vtt: string | null;
-    json: string | null;
-    video: string | null;
-    all: string | null;
-  };
-  timingBreakdown: Array<{ step: string; duration: number }>;
-
   // Actions
   initFromUpload: (file: File, metadata: FileMetadata) => void;
   setProjectId: (id: string) => void;
-  setCurrentStep: (step: string) => void;
-  updateTranscribeProgress: (progress: Partial<TranscribeProgress>) => void;
-  addSegment: (segment: Segment) => void;
-  completeStep: (step: string) => void;
-  skipStep: (step: string) => void;
+  setCurrentStep: (step: StepName) => void;
+  completeStep: (step: StepName) => void;
+  skipStep: (step: StepName) => void;
+  failStep: (step: StepName) => void;
   reset: () => void;
   restoreFromTask: (taskData: TaskProgress) => void;
 }
 
 // uiStore.ts — App chrome state
+// Owner: Layout/Shell developer
 interface UIState {
   // Navigation
   currentPage: string;                // '/', '/project/:id', '/status', etc.
@@ -614,7 +565,114 @@ interface UIState {
   setSystemHealth: (health: string) => void;
 }
 
+// ─── STEP-SPECIFIC STORES (one per workspace step) ───
+
+// transcribeStore.ts — Step 2 state
+// Owner: Transcribe step developer
+interface TranscribeState {
+  options: {
+    model: string;
+    language: string;
+    diarization: boolean;
+    wordTimestamps: boolean;
+    translateToEnglish: boolean;
+    translateTo: string | null;
+  };
+  progress: {
+    percentage: number;
+    segmentCount: number;
+    totalSegments: number;
+    eta: number | null;               // seconds
+    currentPipelineStep: string;      // "extracting_audio", "transcribing", etc.
+    elapsed: number;                  // seconds
+    speed: number | null;             // e.g. 3.2 (realtime multiplier)
+  } | null;
+  segments: Array<{
+    index: number;
+    start: number;
+    end: number;
+    text: string;
+    speaker?: string;
+  }>;
+
+  // Actions
+  setOptions: (options: Partial<TranscribeOptions>) => void;
+  updateProgress: (progress: Partial<TranscribeProgress>) => void;
+  addSegment: (segment: Segment) => void;
+  setSegments: (segments: Segment[]) => void;
+  reset: () => void;
+}
+
+// translateStore.ts — Step 3 state
+// Owner: Translate step developer
+interface TranslateState {
+  targetLanguage: string | null;
+  engine: 'whisper' | 'argos' | null;
+  progress: {
+    percentage: number;
+    batchesCompleted: number;
+    totalBatches: number;
+  } | null;
+  translatedSegments: Array<{
+    index: number;
+    start: number;
+    end: number;
+    text: string;
+  }>;
+
+  // Actions
+  setTargetLanguage: (lang: string) => void;
+  setEngine: (engine: 'whisper' | 'argos') => void;
+  updateProgress: (progress: Partial<TranslateProgress>) => void;
+  setTranslatedSegments: (segments: TranslatedSegment[]) => void;
+  reset: () => void;
+}
+
+// embedStore.ts — Step 4 state
+// Owner: Embed step developer
+interface EmbedState {
+  mode: 'soft' | 'hard' | null;
+  style: string | null;              // preset name
+  customStyle: {
+    fontSize: number;
+    color: string;
+    position: string;
+    backgroundOpacity: number;
+  } | null;
+  progress: number | null;           // 0-100
+
+  // Actions
+  setMode: (mode: 'soft' | 'hard') => void;
+  setStyle: (style: string) => void;
+  setCustomStyle: (style: Partial<CustomStyle>) => void;
+  updateProgress: (progress: number) => void;
+  reset: () => void;
+}
+
+// exportStore.ts — Step 5 state
+// Owner: Export step developer
+interface ExportState {
+  downloadUrls: {
+    srt: string | null;
+    vtt: string | null;
+    json: string | null;
+    video: string | null;
+    all: string | null;
+  };
+  timingBreakdown: Array<{ step: string; duration: number }>;
+  totalSegments: number;
+  detectedLanguage: string | null;
+
+  // Actions
+  setDownloadUrls: (urls: Partial<DownloadUrls>) => void;
+  setTimingBreakdown: (breakdown: TimingEntry[]) => void;
+  reset: () => void;
+}
+
+// ─── PERSISTENCE STORES ───
+
 // preferencesStore.ts — User defaults (persisted to localStorage)
+// Owner: Settings developer
 interface PreferencesState {
   defaultModel: string;               // default: 'medium'
   defaultLanguage: string;            // default: 'auto'
@@ -629,6 +687,7 @@ interface PreferencesState {
 }
 
 // toastStore.ts — Notification state
+// Owner: UI Primitives developer
 interface ToastState {
   toasts: Array<{
     id: string;
@@ -645,6 +704,7 @@ interface ToastState {
 }
 
 // recentProjectsStore.ts — Project history (persisted to localStorage)
+// Owner: Upload/Home developer
 interface RecentProjectsState {
   projects: Array<{
     taskId: string;
@@ -663,18 +723,72 @@ interface RecentProjectsState {
 }
 ```
 
+### Shared Types (types.ts — common interfaces used across stores)
+
+```typescript
+// types.ts — Shared types. All stores import from here, never from each other.
+export interface FileMetadata {
+  filename: string;
+  duration: number;
+  format: string;
+  resolution: string | null;
+  size: number;
+  codec: string;
+  isVideo: boolean;
+}
+
+export interface Segment {
+  index: number;
+  start: number;
+  end: number;
+  text: string;
+  speaker?: string;
+}
+
+export interface TranslatedSegment {
+  index: number;
+  start: number;
+  end: number;
+  text: string;
+}
+
+export type StepName = 'upload' | 'transcribe' | 'translate' | 'embed' | 'export';
+export type StepStatus = 'pending' | 'active' | 'completed' | 'failed' | 'skipped' | 'hidden';
+```
+
 ### Store Relationships
 
 ```
 recentProjectsStore (localStorage)
         |
         v (user clicks project)
-workspaceStore (active project state)
+workspaceStore (navigation + identity)
+        |
+        +-- step stores read workspaceStore.currentStep to know if they're active
+        |   +-- transcribeStore (Step 2 state)
+        |   +-- translateStore (Step 3 state)
+        |   +-- embedStore (Step 4 state)
+        |   +-- exportStore (Step 5 state)
         |
         +-- reads --> preferencesStore (smart defaults)
         +-- triggers --> toastStore (notifications)
         +-- reads/writes --> uiStore (navigation, SSE status)
 ```
+
+### Parallel Development Ownership
+
+| Store File | Owner | Can develop independently? |
+|------------|-------|---------------------------|
+| `workspaceStore.ts` | Layout/Shell dev | Yes — only navigation, no step logic |
+| `uiStore.ts` | Layout/Shell dev | Yes — app chrome only |
+| `transcribeStore.ts` | Transcribe dev | Yes — isolated step state |
+| `translateStore.ts` | Translate dev | Yes — isolated step state |
+| `embedStore.ts` | Embed dev | Yes — isolated step state |
+| `exportStore.ts` | Export dev | Yes — isolated step state |
+| `preferencesStore.ts` | Settings dev | Yes — user defaults only |
+| `toastStore.ts` | UI Primitives dev | Yes — notification queue only |
+| `recentProjectsStore.ts` | Home/Upload dev | Yes — project history only |
+| `types.ts` | Defined once upfront | Shared contract — frozen early |
 
 ---
 
