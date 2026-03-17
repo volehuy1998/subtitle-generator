@@ -13,7 +13,7 @@ This file is the **single source of truth** for Claude Code operating in this re
 - **Stack**: FastAPI (Python 3.12) backend + React 19 SPA frontend (Vite 6 + TypeScript + Zustand + Tailwind CSS v4)
 - **Deployment**: Single standalone server or multi-server (web + worker) with Redis and S3
 - **Current version**: Check `app/main.py` FastAPI `version=` field
-- **Tests**: 1328 tests (~20s). CI fully green. 30 sprints complete.
+- **Tests**: 3,667 tests (~28s). CI fully green. 110 sprints complete (30 legacy + 80 Lumen).
 - **Priority order**: Architecture & Performance > Security > Features
 
 ## Identity & Role
@@ -309,8 +309,8 @@ Upload → probe (ffprobe) → extract audio (ffmpeg→WAV) → load model → t
 
 | UI System | Source | Design | Served When |
 |-----------|--------|--------|-------------|
-| **React SPA** | `frontend/src/` → builds to `frontend/dist/` | Enterprise Slate (dark nav, radio buttons, 500MB limit, SRT/VTT only) | `frontend/dist/index.html` exists AND `FRONTEND=react` (default) |
-| **Jinja Templates** | `templates/*.html` | Modern light theme (button pills, 2GB limit, multi-file, JSON format) | `frontend/dist/` does NOT exist, OR `FRONTEND=templates` |
+| **React SPA** | `frontend/src/` → builds to `frontend/dist/` | Lumen (light theme, Inter font, preferences, theme toggle) | `frontend/dist/index.html` exists AND `FRONTEND=react` (default) |
+| **Jinja Templates** | `templates/*.html` | Legacy light theme (button pills, 2GB limit, multi-file, JSON format) | `frontend/dist/` does NOT exist, OR `FRONTEND=templates` |
 
 **Deployment implications:**
 - **Docker** (Dockerfile runs `npm run build`) → always serves **React SPA**
@@ -320,9 +320,8 @@ Upload → probe (ffprobe) → extract audio (ffmpeg→WAV) → load model → t
 **WARNING**: The newui Docker Compose profile builds from the same Dockerfile as production — it produces the SAME React SPA output. To preview the Jinja template UI in Docker, set `FRONTEND=templates` in the container environment.
 
 **openlabs.club deployment:**
-- `openlabs.club` → Docker, React SPA (old Enterprise Slate UI)
-- `newui.openlabs.club` → Docker, React SPA (same UI — NOT the new design)
-- `meridian-openlabs.shop` → bare-metal, Jinja templates (new modern UI)
+- `openlabs.club` → Docker, React SPA (Lumen light theme, `PRELOAD_MODEL=large`)
+- `newui.openlabs.club` → Docker, React SPA (same Lumen UI, staging/preview for next iteration)
 
 ### React SPA Details
 - **Stores**: `taskStore.ts` (task state, progress), `uiStore.ts` (theme, UI toggles)
@@ -542,7 +541,7 @@ Investor-approved priorities:
 ### Completed
 - 30 legacy sprints (S1-S30) + 80 Lumen sprints (L1-L80) = 110 sprints complete
 - 3,667 tests passing (3,295 backend + 372 frontend), CI green
-- v2.3.0 released
+- v2.3.0 released (v2.4.0 release-please PR merged, tag pending)
 - Phase Lumen integration + hardening complete (L61-L80):
   - `process_video()` refactored into 8 step functions with `_PipelineContext` dataclass
   - Backend test gaps closed: audit HMAC, brute force, quarantine, S3, pub/sub, Redis, model manager, slow query, session, rate limiting
@@ -552,13 +551,13 @@ Investor-approved priorities:
 - CI pipeline: lint, test, CodeQL, secret scan, PR attributes, deploy validation, consistency checks
 
 ### Current Deployment
-- **openlabs.club** — production (container: `subforge-prod`, port 8000, old interface)
-- **newui.openlabs.club** — Lumen preview (container: `subtitle-generator-newui`, port 8001, `PRELOAD_MODEL=large`)
-- Both are on **localhost** (hostname: `subtitle-generator-engine`, DNS resolves both domains)
-- Nginx reverse proxies both domains to their respective containers
+- **openlabs.club** — production (container: `subtitle-generator-subtitle-generator-1`, port 8000, Lumen UI, `PRELOAD_MODEL=large`)
+- **newui.openlabs.club** — staging/preview (container: `subtitle-generator-subtitle-generator-newui-1`, port 8001, Lumen UI, `PRELOAD_MODEL=large`)
+- Both serve the **Lumen light theme** (promoted 2026-03-17)
+- Both are on **localhost**. Nginx reverse proxies both domains to Docker containers (TLS terminated by nginx)
 - Docker requires `sudo` (user `claude-user` not in docker group)
 - Deploy newui: `sudo docker compose --profile newui up -d --build --force-recreate`
-- Deploy prod: `sudo docker compose --profile cpu up -d --build` (ONLY after investor approves newui)
+- Deploy prod: `sudo docker compose --profile cpu up -d --build --force-recreate` (ONLY after investor approves newui)
 - **NEVER touch prod when deploying newui** — always update newui first, promote after approval
 
 ### Deployment Flow (MANDATORY)
@@ -616,6 +615,7 @@ Investor-approved priorities:
 | 2026-03-17 (AM) | Phase Lumen L61-L80 completed in one session: pipeline refactored (8 step functions), 116 backend tests, 346 frontend tests, 44 E2E tests added. PR #158 merged. Total: 3,667 tests. |
 | 2026-03-17 (AM-2) | Deployed to newui.openlabs.club with `PRELOAD_MODEL=large`. Fixed prod 502 (log permission error). Fixed preferences bug (form ignored user defaults). PR #159 merged. |
 | 2026-03-17 (AM-3) | Removed public IP from CLAUDE.md to fix sensitive data scan. Cleaned MEMORY.md references from TEAM.md. PR #160 merged. Updated CLAUDE.md as single portable source of truth. |
+| 2026-03-17 (PM) | Full triage sweep: 8 PRs merged (#121 release v2.3.1, #144 docs, #151-155 #157 deps), PR #156 closed (vite 8 broken). Lumen UI promoted to production. Docker cpu profile fixed for nginx proxy (#163). PRELOAD_MODEL=large hardcoded (#164). Model preload loading badge + API client polling + schema fix (#165). All PRs cleared (0 open). |
 
 ### Deployment Rules (NEVER FORGET)
 
