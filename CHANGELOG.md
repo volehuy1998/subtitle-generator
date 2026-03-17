@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0](https://github.com/volehuy1998/subtitle-generator/compare/v2.3.0...v2.4.0) (2026-03-17)
+
+
+### Features
+
+* **lumen:** Sprint L1 — foundation ([#146](https://github.com/volehuy1998/subtitle-generator/issues/146)) ([d0cb63d](https://github.com/volehuy1998/subtitle-generator/commit/d0cb63dead07cbbb5688f8998ca4d05edc92c0f6))
+* **lumen:** Sprint L2 — design system, light theme ([#147](https://github.com/volehuy1998/subtitle-generator/issues/147)) ([54afbc3](https://github.com/volehuy1998/subtitle-generator/commit/54afbc3f6a969c734a07a06970f1baddc1804dc6))
+* **lumen:** Sprint L3 — model readiness API ([#148](https://github.com/volehuy1998/subtitle-generator/issues/148)) ([7025d6e](https://github.com/volehuy1998/subtitle-generator/commit/7025d6e09624c4167d859ada3127b6e83ddfab9b))
+* **lumen:** Sprint L6 — component styling ([#150](https://github.com/volehuy1998/subtitle-generator/issues/150)) ([5f448ae](https://github.com/volehuy1998/subtitle-generator/commit/5f448aec874e2bac6f842629a037c3ba251eca85))
+* **lumen:** Sprints L4+L5 — confirmation + liveness ([#149](https://github.com/volehuy1998/subtitle-generator/issues/149)) ([8d58133](https://github.com/volehuy1998/subtitle-generator/commit/8d58133087bf10e6ecf8ee073090e8e9b751117e))
+* **lumen:** Sprints L61-L80 — integration + hardening phase complete ([213e9f3](https://github.com/volehuy1998/subtitle-generator/commit/213e9f31ce67eaf0cbd0b160f79c0c010b9565ca))
+
+
+### Bug Fixes
+
+* **ci:** invalidate stale reviews after new pushes to PR ([#143](https://github.com/volehuy1998/subtitle-generator/issues/143)) ([9686d86](https://github.com/volehuy1998/subtitle-generator/commit/9686d8680daf5a997c5238a5ba63a64db7d3861f))
+* correct team member count in .sentinel/ frontmatter ([#116](https://github.com/volehuy1998/subtitle-generator/issues/116)) ([aac9cf0](https://github.com/volehuy1998/subtitle-generator/commit/aac9cf0eb59f671029599e3ffcc37fd6b70c0cd5))
+* **health:** replace asyncio.timeout for Python 3.10 compatibility ([#120](https://github.com/volehuy1998/subtitle-generator/issues/120)) ([51839bd](https://github.com/volehuy1998/subtitle-generator/commit/51839bd9ad79ecac0a01238bb8c91d67e99c4b45))
+* **policy:** ban --admin merge override, close enforcement loophole ([#142](https://github.com/volehuy1998/subtitle-generator/issues/142)) ([ea92acc](https://github.com/volehuy1998/subtitle-generator/commit/ea92acca8dfcc01844be4ac4caa8c2744152fffd))
+* preferences defaults + CLAUDE.md deployment docs ([10ca293](https://github.com/volehuy1998/subtitle-generator/commit/10ca293d508a335da079940fc060383b0052449c))
+* resolve 3 DVS deployment issues — nginx upload, ffmpeg errors, JS error ([#128](https://github.com/volehuy1998/subtitle-generator/issues/128)) ([4803a99](https://github.com/volehuy1998/subtitle-generator/commit/4803a998b1983c80b75367918120476e097abb66)), closes [#127](https://github.com/volehuy1998/subtitle-generator/issues/127)
+* resolve 9 DVS follow-up issues — Sprint 31 ([#139](https://github.com/volehuy1998/subtitle-generator/issues/139)) ([43bcbb8](https://github.com/volehuy1998/subtitle-generator/commit/43bcbb814c4b0b706f6699f87ccc1dfaeb8e9eef))
+
+
+### Documentation
+
+* add deployment UI rules to prevent same-UI-everywhere mistake ([#124](https://github.com/volehuy1998/subtitle-generator/issues/124)) ([f9742b8](https://github.com/volehuy1998/subtitle-generator/commit/f9742b8b5f6e9d0dc4b964cede702ac8cad2a1ce))
+* consolidate all operational knowledge into CLAUDE.md ([#118](https://github.com/volehuy1998/subtitle-generator/issues/118)) ([70f1d1a](https://github.com/volehuy1998/subtitle-generator/commit/70f1d1aaf05f7a7a9e04b56bf31a204a7c6747b9))
+* document dual-UI system (React SPA vs Jinja templates) ([#123](https://github.com/volehuy1998/subtitle-generator/issues/123)) ([7e1a344](https://github.com/volehuy1998/subtitle-generator/commit/7e1a344517cee1d4cda03e152ae0aab4b47d522f))
+* expand CLAUDE.md with team structure and operational rules ([#117](https://github.com/volehuy1998/subtitle-generator/issues/117)) ([eef45fd](https://github.com/volehuy1998/subtitle-generator/commit/eef45fdee3268677bcc585f8202a992b89f79e27))
+* fill 15 gaps found in CLAUDE.md audit ([#119](https://github.com/volehuy1998/subtitle-generator/issues/119)) ([36b5532](https://github.com/volehuy1998/subtitle-generator/commit/36b55327d8bff65db5656dfb09545c255aab96f7))
+* Phase Lumen — quality & design overhaul spec ([#145](https://github.com/volehuy1998/subtitle-generator/issues/145)) ([1d39d05](https://github.com/volehuy1998/subtitle-generator/commit/1d39d05b38264b27607d71b30653928a2eb23711))
+* promote React SPA to production on all main domains ([#138](https://github.com/volehuy1998/subtitle-generator/issues/138)) ([6ba9160](https://github.com/volehuy1998/subtitle-generator/commit/6ba91600e62a3f788e8995625383478e05daa313))
+* save session context to CLAUDE.md ([eb53aab](https://github.com/volehuy1998/subtitle-generator/commit/eb53aab6e1ce314431d31c7fd347413f91eedc57))
+* simplify deployment rule to technology-agnostic matching principle ([#125](https://github.com/volehuy1998/subtitle-generator/issues/125)) ([c67c9da](https://github.com/volehuy1998/subtitle-generator/commit/c67c9da83de04ec06f515284327b4b31d9b4cd8f))
+
 ## [2.3.0](https://github.com/volehuy1998/subtitle-generator/compare/v2.2.0...v2.3.0) (2026-03-14)
 
 
