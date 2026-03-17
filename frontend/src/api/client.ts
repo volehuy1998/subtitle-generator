@@ -102,7 +102,7 @@ export const api = {
     fetch('/translation/languages').then(r => json<TranslationLanguagesResponse>(r)),
 
   modelStatus: () =>
-    fetch('/api/model-status').then(r => json<ModelPreloadStatus>(r)),
+    fetch('/api/model-status').then(r => json<{ preload: ModelPreloadStatus }>(r)).then(d => d.preload),
 
   tasksBySession: () =>
     fetch('/tasks?session_only=true').then(r => json<TasksResponse>(r)),

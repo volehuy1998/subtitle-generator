@@ -316,10 +316,21 @@ export function TranscribeForm({ onUpload }: Props) {
                       </span>
                     )}
                     {preloadState === 'loading' && (
-                      <svg className="animate-spin flex-shrink-0" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" aria-label="Loading model">
-                        <circle cx="6" cy="6" r="4.5" stroke="var(--color-primary)" strokeWidth="1.5" opacity="0.25" />
-                        <path d="M10.5 6a4.5 4.5 0 00-4.5-4.5" stroke="var(--color-primary)" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
+                      <span
+                        className="inline-flex items-center gap-1 text-xs font-medium px-1.5 rounded-full"
+                        style={{
+                          background: 'var(--color-warning-light, #FEF3C7)',
+                          color: 'var(--color-warning, #D97706)',
+                          fontSize: '9px',
+                          lineHeight: '16px',
+                        }}
+                      >
+                        <svg className="animate-spin flex-shrink-0" width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
+                          <circle cx="4" cy="4" r="3" stroke="currentColor" strokeWidth="1.2" opacity="0.3" />
+                          <path d="M7 4a3 3 0 00-3-3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                        </svg>
+                        Loading…
+                      </span>
                     )}
 
                     {/* GPU fit */}

@@ -145,6 +145,7 @@ class SystemInfoResponse(BaseModel):
     model_recommendations: dict[str, Literal["ok", "tight", "too_large"]]
     auto_model: str
     diarization: Optional[DiarizationInfo] = None
+    model_preload: Optional[dict] = None
 
 
 class LanguagesResponse(BaseModel):
