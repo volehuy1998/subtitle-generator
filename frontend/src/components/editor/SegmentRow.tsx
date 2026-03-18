@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Segment, formatTimecode } from '../../types'
+import type { Segment } from '../../types'
+import { formatTimecode } from '../../types'
 import { cn } from '../ui/cn'
 
 interface SegmentRowProps {

@@ -41,10 +41,10 @@ export function EditorPage({ taskId }: { taskId: string }) {
       if (data.status === 'done') {
         api.subtitles(taskId).then(subs => {
           setComplete({
-            segments: subs.segments || [],
+            segments: (subs.segments || []).map((seg, i) => ({ ...seg, index: i })),
             language: data.language || null,
             modelUsed: data.model || null,
-            timings: data.step_timings || {},
+            timings: { ...(data.step_timings || {}) } as Record<string, number>,
             isVideo: data.is_video ?? false,
           })
         }).catch(() => setError('Failed to load subtitles'))

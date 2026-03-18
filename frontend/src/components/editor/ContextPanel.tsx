@@ -119,11 +119,11 @@ function SearchPanel() {
         <ul className="flex flex-col gap-2">
           {searchResults.map(r => (
             <li
-              key={r.index}
+              key={r.segmentIndex}
               className="rounded-md border border-[--color-border] bg-[--color-surface-raised] p-2 text-sm"
             >
               <span className="text-xs text-[--color-text-muted] block mb-0.5">
-                #{r.index + 1}
+                #{r.segmentIndex + 1}
               </span>
               <span className="text-[--color-text]">{r.text}</span>
             </li>
