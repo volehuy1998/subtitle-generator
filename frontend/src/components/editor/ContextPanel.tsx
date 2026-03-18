@@ -21,6 +21,7 @@ function InfoPanel() {
   const modelUsed = useEditorStore(s => s.modelUsed)
   const segments = useEditorStore(s => s.segments)
   const timings = useEditorStore(s => s.timings)
+  const isVideo = useEditorStore(s => s.isVideo)
   const setContextPanel = useUIStore(s => s.setContextPanel)
 
   const isNonEnglish = language && language.toLowerCase() !== 'en' && language.toLowerCase() !== 'english'
@@ -76,7 +77,7 @@ function InfoPanel() {
             {timings?.transcribe && (
               <div className="flex justify-between">
                 <dt className="text-[--color-text-secondary]">Transcribe time</dt>
-                <dd className="text-[--color-text]">{(timings.transcribe / 1000).toFixed(1)}s</dd>
+                <dd className="text-[--color-text]">{timings.transcribe.toFixed(1)}s</dd>
               </div>
             )}
           </dl>
@@ -94,13 +95,15 @@ function InfoPanel() {
         />
       )}
 
-      <SmartSuggestion
-        id="try-embed"
-        title="Embed subtitles into video"
-        description="Burn subtitles directly into your video file for universal compatibility."
-        actionLabel="Open Embed"
-        onAction={() => setContextPanel('embed')}
-      />
+      {isVideo && (
+        <SmartSuggestion
+          id="try-embed"
+          title="Embed subtitles into video"
+          description="Burn subtitles directly into your video file for universal compatibility."
+          actionLabel="Open Embed"
+          onAction={() => setContextPanel('embed')}
+        />
+      )}
     </div>
   )
 }

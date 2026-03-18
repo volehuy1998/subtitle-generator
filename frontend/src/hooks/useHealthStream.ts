@@ -4,7 +4,7 @@ import { useUIStore } from '../store/uiStore'
 const GRACE_PERIOD_MS = 2500
 
 export function useHealthStream() {
-  const setSSEConnected = useUIStore(s => s.setSSEConnected)
+  const setHealthStreamConnected = useUIStore(s => s.setHealthStreamConnected)
   const setSystemHealth = useUIStore(s => s.setSystemHealth)
   const setModelPreloadStatus = useUIStore(s => s.setModelPreloadStatus)
   const gracePeriodRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -14,13 +14,13 @@ export function useHealthStream() {
 
     es.onopen = () => {
       if (gracePeriodRef.current) clearTimeout(gracePeriodRef.current)
-      setSSEConnected(true)
+      setHealthStreamConnected(true)
     }
 
     es.onerror = () => {
       if (gracePeriodRef.current) clearTimeout(gracePeriodRef.current)
       gracePeriodRef.current = setTimeout(() => {
-        setSSEConnected(false)
+        setHealthStreamConnected(false)
       }, GRACE_PERIOD_MS)
     }
 

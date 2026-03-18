@@ -27,6 +27,7 @@ export function EditorPage({ taskId }: { taskId: string }) {
   const setComplete = useEditorStore(s => s.setComplete)
   const setError = useEditorStore(s => s.setError)
   const setPhase = useEditorStore(s => s.setPhase)
+  const setFileMetadata = useEditorStore(s => s.setFileMetadata)
   const fileMetadata = useEditorStore(s => s.fileMetadata)
 
   // Session restore: on mount, if task not already loaded, fetch its status
@@ -38,6 +39,17 @@ export function EditorPage({ taskId }: { taskId: string }) {
     setPhase('processing')
 
     api.progress(taskId).then(data => {
+      if (data.filename) {
+        setFileMetadata({
+          filename: data.filename,
+          duration: data.audio_duration ?? 0,
+          format: '',
+          resolution: null,
+          size: 0,
+          codec: '',
+          isVideo: data.is_video ?? false,
+        })
+      }
       if (data.status === 'done') {
         api.subtitles(taskId).then(subs => {
           setComplete({

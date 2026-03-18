@@ -14,7 +14,7 @@ import { useUIStore } from '../../store/uiStore'
 import { Tooltip } from '../ui/Tooltip'
 
 export function HealthIndicator() {
-  const sseConnected = useUIStore((s) => s.sseConnected)
+  const sseConnected = useUIStore((s) => s.healthStreamConnected)
   const systemHealth = useUIStore((s) => s.systemHealth)
 
   let color: string
