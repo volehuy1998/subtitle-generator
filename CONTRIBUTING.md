@@ -114,7 +114,7 @@ security/clamav-scan-timeout
 - **Error handling**: `HTTPException` for client errors, global exception handler for 500s.
 - **Concurrency**: `asyncio.to_thread()` for blocking I/O, `threading.Semaphore` for task limits.
 - **Config**: All settings in `app/config.py` with env var overrides and sensible defaults.
-- **Linting**: `ruff check . --select E,F,W --ignore E501` (no line length limit).
+- **Linting**: `ruff check .` (rules sourced from `pyproject.toml` — do not pass `--select`/`--ignore` inline).
 
 ### Frontend (React 19 + TypeScript + Vite 6)
 
@@ -305,15 +305,28 @@ E2E tests are excluded from the default `pytest tests/` run and require `pytest-
 ### Linting
 
 ```bash
-# Backend lint (matches CI)
-ruff check . --select E,F,W --ignore E501
+# Backend lint (matches CI — rules come from pyproject.toml)
+ruff check .
 
-# Frontend lint
+# Frontend lint (--max-warnings 0 matches CI exactly)
 cd frontend && npm run lint
 
 # Frontend type check + build
 cd frontend && npm run build
 ```
+
+### Pre-commit hook
+
+The repository ships a pre-commit hook that runs the same checks as CI Tier 1 (lint). Install it once after cloning:
+
+```bash
+# The hook is already present at .git/hooks/pre-commit — just make it executable
+chmod +x .git/hooks/pre-commit
+```
+
+The hook checks staged Python files with `ruff` (reads `pyproject.toml` for rules) and staged TypeScript/TSX files with ESLint (`--max-warnings 0`, blocking). It also scans for blocked files (cert.pem, .env) and secret patterns.
+
+Emergency bypass (use sparingly): `GIT_HOOKS_INHIBIT=1 git commit`
 
 ## 8. Architecture Overview
 
