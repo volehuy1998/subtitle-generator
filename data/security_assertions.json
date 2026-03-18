@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "7496c6e",
-    "sha_full": "7496c6efc0d8fd020c6ffd12e5e2917078afbbbe",
-    "datetime": "2026-03-18T13:42:08+07:00",
-    "message": "ci: add ruff security rules S602/S604/S608 and TID253 banned imports"
+    "sha": "af04734",
+    "sha_full": "af0473404de5e24874c16ac646ad25a1d864c7ba",
+    "datetime": "2026-03-18T14:08:01+07:00",
+    "message": "ci: add import order check [6/6] to consistency validator"
   },
   "assertions": [
     {
