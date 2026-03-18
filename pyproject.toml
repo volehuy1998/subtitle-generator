@@ -3,22 +3,11 @@ target-version = "py312"
 line-length = 120
 
 [tool.ruff.lint]
-# Google-aligned rule selection:
-# E/F/W: pycodestyle errors, pyflakes, warnings (core)
-# I: isort (import sorting — Google style guide)
-# B: flake8-bugbear (common pitfalls)
-# UP: pyupgrade (modern Python idioms)
-# SIM: flake8-simplify (simplifiable constructs)
-# Current: E, F, W (matching existing CI). Enable incrementally:
-# Phase 1 (now): E, F, W
-# Phase 2 (next): + I (import sorting)
-# Phase 3: + B, UP, SIM
-select = ["E", "F", "W", "I"]
-ignore = [
-    "E501",   # Line length — handled by formatter
-    "B008",   # Function call in default argument — FastAPI Depends() pattern
-    "UP007",  # X | None syntax — keep Optional for compatibility
-]
+select = ["E", "F", "W", "I", "S602", "S604", "S608", "TID253"]
+ignore = ["E501"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+banned-module-level-imports = ["torch", "faster_whisper", "ctranslate2", "numpy"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]

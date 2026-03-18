@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "12cfa73",
-    "sha_full": "12cfa732038446faa8a39130101a449e797f84a2",
-    "datetime": "2026-03-17T14:00:42+07:00",
-    "message": "fix(docker): cpu profile uses nginx reverse proxy instead of direct TLS"
+    "sha": "7496c6e",
+    "sha_full": "7496c6efc0d8fd020c6ffd12e5e2917078afbbbe",
+    "datetime": "2026-03-18T13:42:08+07:00",
+    "message": "ci: add ruff security rules S602/S604/S608 and TID253 banned imports"
   },
   "assertions": [
     {
