@@ -35,6 +35,19 @@ describe('Button', () => {
     fireEvent.click(screen.getByRole('button'))
     expect(fn).not.toHaveBeenCalled()
   })
+
+  it('secondary variant has strong border class', () => {
+    const { container } = render(<Button variant="secondary">Click</Button>)
+    const btn = container.querySelector('button')!
+    // Should use border-strong, not the default border
+    expect(btn.className).toContain('border-[--color-border-strong]')
+  })
+
+  it('secondary variant uses primary text color', () => {
+    const { container } = render(<Button variant="secondary">Click</Button>)
+    const btn = container.querySelector('button')!
+    expect(btn.className).toContain('text-[--color-text]')
+  })
 })
 
 describe('IconButton', () => {
