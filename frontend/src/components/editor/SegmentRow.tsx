@@ -13,6 +13,14 @@ interface SegmentRowProps {
 
 export function SegmentRow({ segment, onEdit, editing = false, highlighted = false, onClick }: SegmentRowProps) {
   const [draft, setDraft] = useState(segment.text)
+  const [lastText, setLastText] = useState(segment.text)
+
+  // Sync draft when segment.text changes externally (e.g. after translation)
+  // Uses setState-during-render pattern (React 18+) to avoid useEffect loop
+  if (!editing && segment.text !== lastText) {
+    setDraft(segment.text)
+    setLastText(segment.text)
+  }
 
   const handleBlur = () => {
     onEdit(segment.index, draft)

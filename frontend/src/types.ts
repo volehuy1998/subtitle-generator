@@ -58,7 +58,7 @@ export function formatDuration(seconds: number): string {
 }
 
 export function detectUploadType(files: File[]): 'transcribe' | 'combine' | 'edit-srt' | 'unknown' {
-  const mediaExts = ['.mp4', '.mkv', '.avi', '.webm', '.mov', '.mp3', '.wav', '.flac']
+  const mediaExts = ['.mp4', '.mkv', '.avi', '.webm', '.mov', '.mp3', '.wav', '.flac', '.ogg', '.m4a']
   const subtitleExts = ['.srt', '.vtt']
   const hasMedia = files.some(f => mediaExts.some(e => f.name.toLowerCase().endsWith(e)))
   const hasSubtitle = files.some(f => subtitleExts.some(e => f.name.toLowerCase().endsWith(e)))
