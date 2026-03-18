@@ -9,10 +9,11 @@
 @layer base {
   :root {
     /* Color palette */
-    --color-bg: #F3F4F6;
+    --color-bg: #EAECF0;
     --color-surface: #FFFFFF;
-    --color-surface-raised: #F9FAFB;
-    --color-border: #E5E7EB;
+    --color-surface-raised: #F3F4F6;
+    --color-border: #C9CDD6;
+    --color-border-strong: #9CA3AF;
     --color-border-focus: #2563EB;
 
     --color-text: #111827;
