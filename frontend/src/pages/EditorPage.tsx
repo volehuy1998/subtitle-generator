@@ -40,7 +40,15 @@ export function EditorPage({ taskId }: { taskId: string }) {
 
     api.progress(taskId).then(data => {
       if (data.filename) {
-        setFileMetadata({ filename: data.filename, duration: data.audio_duration ?? 0 })
+        setFileMetadata({
+          filename: data.filename,
+          duration: data.audio_duration ?? 0,
+          format: '',
+          resolution: null,
+          size: 0,
+          codec: '',
+          isVideo: data.is_video ?? false,
+        })
       }
       if (data.status === 'done') {
         api.subtitles(taskId).then(subs => {
