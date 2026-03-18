@@ -11,9 +11,9 @@ export function ContactPage() {
   return (
     <AppShell>
       <PageLayout title="Contact" subtitle="Get in touch">
-        <div className="space-y-4 text-[--color-text-secondary]">
+        <div className="space-y-4 text-[var(--color-text-secondary)]">
           <p>For support or feedback, open an issue on{' '}
-            <a href="https://github.com/volehuy1998/subtitle-generator" className="text-[--color-primary] hover:underline" target="_blank" rel="noreferrer">GitHub</a>.
+            <a href="https://github.com/volehuy1998/subtitle-generator" className="text-[var(--color-primary)] hover:underline" target="_blank" rel="noreferrer">GitHub</a>.
           </p>
         </div>
       </PageLayout>

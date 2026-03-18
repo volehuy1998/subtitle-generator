@@ -64,8 +64,8 @@ export function TranslatePanel() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-[--color-text]">Source language</label>
-        <div className="h-9 px-3 flex items-center text-sm text-[--color-text-secondary] rounded-md border border-[--color-border] bg-[--color-surface-raised]">
+        <label className="text-sm font-medium text-[var(--color-text)]">Source language</label>
+        <div className="h-9 px-3 flex items-center text-sm text-[var(--color-text-secondary)] rounded-md border border-[var(--color-border)] bg-[var(--color-surface-raised)]">
           {sourceLanguage ?? 'Auto-detected'}
         </div>
       </div>
@@ -79,7 +79,7 @@ export function TranslatePanel() {
 
       {/* Engine selector */}
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-[--color-text]">Engine</label>
+        <label className="text-sm font-medium text-[var(--color-text)]">Engine</label>
         <div className="grid grid-cols-2 gap-2">
           {(['whisper', 'argos'] as Engine[]).map(e => (
             <button
@@ -89,8 +89,8 @@ export function TranslatePanel() {
               className={[
                 'rounded-lg border p-2 text-left text-xs transition-colors',
                 engine === e
-                  ? 'border-[--color-primary] bg-[--color-primary-light] text-[--color-primary]'
-                  : 'border-[--color-border] bg-[--color-surface] text-[--color-text-secondary] hover:bg-[--color-surface-raised]',
+                  ? 'border-[var(--color-primary)] bg-[var(--color-primary-light)] text-[var(--color-primary)]'
+                  : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-raised)]',
               ].join(' ')}
             >
               <p className="font-medium">
@@ -109,11 +109,11 @@ export function TranslatePanel() {
       )}
 
       {status === 'done' && (
-        <p className="text-sm text-[--color-success]">Translation complete.</p>
+        <p className="text-sm text-[var(--color-success)]">Translation complete.</p>
       )}
 
       {status === 'error' && (
-        <p className="text-sm text-[--color-danger]">{errorMsg}</p>
+        <p className="text-sm text-[var(--color-danger)]">{errorMsg}</p>
       )}
 
       <Button

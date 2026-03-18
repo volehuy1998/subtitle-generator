@@ -19,7 +19,7 @@ export function UploadProgress({ filename, percent }: UploadProgressProps) {
 
   return (
     <div
-      className="flex flex-col gap-3 w-full rounded-xl border border-[--color-border] bg-[--color-surface] p-5"
+      className="flex flex-col gap-3 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5"
       data-testid="upload-progress"
       role="status"
       aria-live="polite"
@@ -28,18 +28,18 @@ export function UploadProgress({ filename, percent }: UploadProgressProps) {
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
           <Spinner size="sm" />
-          <span className="text-sm font-medium text-[--color-text] truncate" title={filename}>
+          <span className="text-sm font-medium text-[var(--color-text)] truncate" title={filename}>
             {displayName}
           </span>
         </div>
-        <span className="text-sm font-semibold text-[--color-primary] shrink-0">
+        <span className="text-sm font-semibold text-[var(--color-primary)] shrink-0">
           {Math.round(percent)}%
         </span>
       </div>
 
       <ProgressBar value={percent} />
 
-      <p className="text-xs text-[--color-text-muted]">Uploading...</p>
+      <p className="text-xs text-[var(--color-text-muted)]">Uploading...</p>
     </div>
   )
 }

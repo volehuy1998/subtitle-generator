@@ -8,11 +8,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: 'bg-[--color-primary] text-white hover:bg-[--color-primary-hover] active:bg-[--color-primary-hover]',
-        secondary: 'bg-[--color-surface] text-[--color-text] border border-[--color-border] hover:bg-[--color-surface-raised] active:bg-[--color-surface-raised]',
-        ghost: 'text-[--color-text] hover:bg-[--color-surface-raised] active:bg-[--color-surface-raised]',
-        danger: 'bg-[--color-danger] text-white hover:opacity-90 active:opacity-90',
-        success: 'bg-[--color-success] text-white hover:opacity-90 active:opacity-90',
+        primary: 'bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] active:bg-[var(--color-primary-hover)]',
+        secondary: 'bg-[var(--color-surface-raised)] border border-[var(--color-border-strong)] text-[var(--color-text)] hover:bg-[var(--color-border)] hover:border-[var(--color-text-muted)]',
+        ghost: 'text-[var(--color-text)] hover:bg-[var(--color-surface-raised)] active:bg-[var(--color-surface-raised)]',
+        danger: 'bg-[var(--color-danger)] text-white hover:opacity-90 active:opacity-90',
+        success: 'bg-[var(--color-success)] text-white hover:opacity-90 active:opacity-90',
       },
       size: {
         sm: 'h-7 px-3 text-xs',

@@ -7,11 +7,11 @@ const iconButtonVariants = cva(
   {
     variants: {
       variant: {
-        primary: 'bg-[--color-primary] text-white hover:bg-[--color-primary-hover]',
-        secondary: 'bg-[--color-surface] text-[--color-text-secondary] border border-[--color-border] hover:bg-[--color-surface-raised] hover:text-[--color-text]',
-        ghost: 'text-[--color-text-secondary] hover:bg-[--color-surface-raised] hover:text-[--color-text]',
-        danger: 'text-[--color-danger] hover:bg-[--color-danger-light]',
-        success: 'text-[--color-success] hover:bg-[--color-success-light]',
+        primary: 'bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]',
+        secondary: 'bg-[var(--color-surface-raised)] text-[var(--color-text)] border border-[var(--color-border-strong)] hover:bg-[var(--color-border)] hover:border-[var(--color-text-muted)]',
+        ghost: 'bg-[var(--color-surface-raised)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)] hover:text-[var(--color-text)] hover:border-[var(--color-border-strong)]',
+        danger: 'text-[var(--color-danger)] hover:bg-[var(--color-danger-light)]',
+        success: 'text-[var(--color-success)] hover:bg-[var(--color-success-light)]',
       },
       size: {
         sm: 'h-7 w-7',

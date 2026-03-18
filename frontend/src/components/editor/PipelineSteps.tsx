@@ -23,9 +23,9 @@ export function PipelineSteps({ currentStep }: PipelineStepsProps) {
             <span
               className={cn(
                 'flex h-5 w-5 shrink-0 items-center justify-center rounded-full',
-                isPast && 'text-[--color-success]',
-                isCurrent && 'text-[--color-primary]',
-                isFuture && 'text-[--color-text-muted]',
+                isPast && 'text-[var(--color-success)]',
+                isCurrent && 'text-[var(--color-primary)]',
+                isFuture && 'text-[var(--color-text-muted)]',
               )}
               aria-hidden="true"
             >
@@ -40,9 +40,9 @@ export function PipelineSteps({ currentStep }: PipelineStepsProps) {
             <span
               className={cn(
                 'text-sm',
-                isPast && 'text-[--color-text-secondary] line-through',
-                isCurrent && 'font-medium text-[--color-text]',
-                isFuture && 'text-[--color-text-muted]',
+                isPast && 'text-[var(--color-text-secondary)] line-through',
+                isCurrent && 'font-medium text-[var(--color-text)]',
+                isFuture && 'text-[var(--color-text-muted)]',
               )}
             >
               {step.charAt(0).toUpperCase() + step.slice(1)}

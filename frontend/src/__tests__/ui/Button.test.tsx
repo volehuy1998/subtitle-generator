@@ -35,6 +35,19 @@ describe('Button', () => {
     fireEvent.click(screen.getByRole('button'))
     expect(fn).not.toHaveBeenCalled()
   })
+
+  it('secondary variant has strong border class', () => {
+    const { container } = render(<Button variant="secondary">Click</Button>)
+    const btn = container.querySelector('button')!
+    // Should use border-strong, not the default border
+    expect(btn.className).toContain('border-[var(--color-border-strong)]')
+  })
+
+  it('secondary variant uses primary text color', () => {
+    const { container } = render(<Button variant="secondary">Click</Button>)
+    const btn = container.querySelector('button')!
+    expect(btn.className).toContain('text-[var(--color-text)]')
+  })
 })
 
 describe('IconButton', () => {
@@ -54,5 +67,17 @@ describe('IconButton', () => {
     render(<IconButton icon={<X />} aria-label="Close" disabled />)
     const btn = screen.getByRole('button') as HTMLButtonElement
     expect(btn.disabled).toBe(true)
+  })
+
+  it('ghost variant has visible background by default', () => {
+    const { container } = render(<IconButton icon={<span />} aria-label="test" variant="ghost" />)
+    const btn = container.querySelector('button')!
+    expect(btn.className).toContain('bg-[var(--color-surface-raised)]')
+  })
+
+  it('secondary variant uses border-strong', () => {
+    const { container } = render(<IconButton icon={<span />} aria-label="test" variant="secondary" />)
+    const btn = container.querySelector('button')!
+    expect(btn.className).toContain('border-[var(--color-border-strong)]')
   })
 })

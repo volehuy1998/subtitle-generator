@@ -22,9 +22,9 @@ export function PageLayout({ title, subtitle, children, className }: PageLayoutP
   return (
     <div className={cn('max-w-2xl mx-auto', className)}>
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-[--color-text]">{title}</h1>
+        <h1 className="text-2xl font-semibold text-[var(--color-text)]">{title}</h1>
         {subtitle && (
-          <p className="mt-2 text-[--color-text-secondary]">{subtitle}</p>
+          <p className="mt-2 text-[var(--color-text-secondary)]">{subtitle}</p>
         )}
       </div>
       {children}

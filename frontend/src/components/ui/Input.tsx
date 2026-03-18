@@ -18,13 +18,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="flex flex-col gap-1">
         {label && (
-          <label htmlFor={id} className="text-sm font-medium text-[--color-text]">
+          <label htmlFor={id} className="text-sm font-medium text-[var(--color-text)]">
             {label}
           </label>
         )}
         <div className="relative">
           {leftIcon && (
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[--color-text-muted]">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]">
               {leftIcon}
             </span>
           )}
@@ -32,9 +32,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={id}
             className={cn(
-              'w-full h-9 px-3 text-sm rounded-md border border-[--color-border] bg-[--color-surface] text-[--color-text] placeholder:text-[--color-text-muted] focus:outline-none focus:border-[--color-border-focus] focus:ring-1 focus:ring-[--color-border-focus] transition-colors',
+              'w-full h-9 px-3 text-sm rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-border-focus)] focus:ring-1 focus:ring-[var(--color-border-focus)] transition-colors',
               leftIcon && 'pl-9',
-              error && 'border-[--color-danger] focus:border-[--color-danger] focus:ring-[--color-danger]',
+              error && 'border-[var(--color-danger)] focus:border-[var(--color-danger)] focus:ring-[var(--color-danger)]',
               className
             )}
             aria-describedby={cn(error ? errorId : undefined, helperText ? helperId : undefined) || undefined}
@@ -43,10 +43,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           />
         </div>
         {error && (
-          <p id={errorId} className="text-xs text-[--color-danger]">{error}</p>
+          <p id={errorId} className="text-xs text-[var(--color-danger)]">{error}</p>
         )}
         {helperText && !error && (
-          <p id={helperId} className="text-xs text-[--color-text-muted]">{helperText}</p>
+          <p id={helperId} className="text-xs text-[var(--color-text-muted)]">{helperText}</p>
         )}
       </div>
     )

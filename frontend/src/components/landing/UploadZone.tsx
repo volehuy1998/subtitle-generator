@@ -75,10 +75,10 @@ export function UploadZone({ onUpload, onError, disabled = false }: UploadZonePr
         'flex flex-col items-center justify-center gap-4',
         'w-full rounded-xl border-2 border-dashed',
         'px-8 py-12 cursor-pointer transition-colors',
-        'bg-[--color-surface] border-[--color-border]',
-        'hover:border-[--color-primary] hover:bg-[--color-primary-light]',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-primary]',
-        isDragActive && 'upload-zone-active border-[--color-primary] bg-[--color-primary-light]',
+        'bg-[var(--color-surface)] border-[var(--color-border)]',
+        'hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-light)]',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]',
+        isDragActive && 'upload-zone-active border-[var(--color-primary)] bg-[var(--color-primary-light)]',
         disabled && 'opacity-50 cursor-not-allowed pointer-events-none'
       )}
       role="button"
@@ -89,25 +89,25 @@ export function UploadZone({ onUpload, onError, disabled = false }: UploadZonePr
       <UploadCloud
         className={cn(
           'h-10 w-10 transition-colors',
-          isDragActive ? 'text-[--color-primary]' : 'text-[--color-text-muted]'
+          isDragActive ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'
         )}
         aria-hidden="true"
       />
 
       <div className="text-center space-y-1">
-        <p className="text-base font-semibold text-[--color-text]">
+        <p className="text-base font-semibold text-[var(--color-text)]">
           Drop your file here
         </p>
-        <p className="text-sm text-[--color-text-secondary]">
+        <p className="text-sm text-[var(--color-text-secondary)]">
           or click to browse
         </p>
       </div>
 
       <div className="text-center space-y-1">
-        <p data-testid="format-hint" className="text-xs text-[--color-text-muted]">
+        <p data-testid="format-hint" className="text-xs text-[var(--color-text-muted)]">
           MP4, MKV, MOV, WAV, MP3, OGG, M4A, WEBM, SRT, VTT
         </p>
-        <p data-testid="size-hint" className="text-xs text-[--color-text-muted]">
+        <p data-testid="size-hint" className="text-xs text-[var(--color-text-muted)]">
           Up to 2GB
         </p>
       </div>

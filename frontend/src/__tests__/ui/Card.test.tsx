@@ -29,6 +29,6 @@ describe('Card', () => {
   it('does not apply border class when border=false', () => {
     const { container } = render(<Card border={false}>X</Card>)
     const el = container.firstChild as HTMLElement
-    expect(el.className).not.toContain('border-[--color-border]')
+    expect(el.className).not.toContain('border-[var(--color-border)]')
   })
 })

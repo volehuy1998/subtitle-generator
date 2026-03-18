@@ -68,18 +68,18 @@ export function RetranscribeDialog({ open, onClose, taskId }: RetranscribeDialog
           helperText="Leave blank to auto-detect."
         />
 
-        <label className="flex items-center gap-2 text-sm text-[--color-text] cursor-pointer select-none">
+        <label className="flex items-center gap-2 text-sm text-[var(--color-text)] cursor-pointer select-none">
           <input
             type="checkbox"
             checked={diarize}
             onChange={e => setDiarize(e.target.checked)}
-            className="h-4 w-4 rounded border-[--color-border] accent-[--color-primary]"
+            className="h-4 w-4 rounded border-[var(--color-border)] accent-[var(--color-primary)]"
           />
           Enable speaker diarization
         </label>
 
         {errorMsg && (
-          <p className="text-sm text-[--color-danger]">{errorMsg}</p>
+          <p className="text-sm text-[var(--color-danger)]">{errorMsg}</p>
         )}
 
         <div className="flex justify-end gap-3">

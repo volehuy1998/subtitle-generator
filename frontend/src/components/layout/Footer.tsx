@@ -13,9 +13,9 @@ const currentYear = new Date().getFullYear()
 
 export function Footer() {
   return (
-    <footer data-testid="footer" className="border-t border-[--color-border] bg-[--color-surface] mt-auto">
+    <footer data-testid="footer" className="border-t border-[var(--color-border)] bg-[var(--color-surface)] mt-auto">
       <div className="max-w-[1280px] mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <p className="text-xs text-[--color-text-muted]">
+        <p className="text-xs text-[var(--color-text-muted)]">
           &copy; {currentYear} SubForge. Open source subtitle generation.
         </p>
         <nav className="flex items-center gap-4" aria-label="Footer navigation">
@@ -28,7 +28,7 @@ export function Footer() {
             <button
               key={href}
               onClick={() => navigate(href)}
-              className="text-xs text-[--color-text-muted] hover:text-[--color-text] transition-colors"
+              className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
             >
               {label}
             </button>

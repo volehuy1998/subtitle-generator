@@ -26,7 +26,7 @@ export function Dialog({ open, onClose, title, description, size = 'md', childre
         <RadixDialog.Content
           className={cn(
             'fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50',
-            'w-[calc(100vw-2rem)] rounded-xl bg-[--color-surface] p-6 shadow-xl',
+            'w-[calc(100vw-2rem)] rounded-xl bg-[var(--color-surface)] p-6 shadow-xl',
             'animate-fade-in',
             sizeMap[size]
           )}
@@ -34,18 +34,18 @@ export function Dialog({ open, onClose, title, description, size = 'md', childre
         >
           <div className="flex items-start justify-between mb-4">
             <div>
-              <RadixDialog.Title className="text-base font-semibold text-[--color-text]">
+              <RadixDialog.Title className="text-base font-semibold text-[var(--color-text)]">
                 {title}
               </RadixDialog.Title>
               {description && (
-                <RadixDialog.Description className="text-sm text-[--color-text-secondary] mt-1">
+                <RadixDialog.Description className="text-sm text-[var(--color-text-secondary)] mt-1">
                   {description}
                 </RadixDialog.Description>
               )}
             </div>
             <button
               onClick={onClose}
-              className="ml-4 p-1 rounded-md text-[--color-text-muted] hover:text-[--color-text] hover:bg-[--color-surface-raised] transition-colors"
+              className="ml-4 p-1 rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-raised)] transition-colors"
               aria-label="Close dialog"
             >
               <X className="h-4 w-4" />

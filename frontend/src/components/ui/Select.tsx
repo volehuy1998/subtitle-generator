@@ -28,7 +28,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div className="flex flex-col gap-1">
         {label && (
-          <label htmlFor={id} className="text-sm font-medium text-[--color-text]">
+          <label htmlFor={id} className="text-sm font-medium text-[var(--color-text)]">
             {label}
           </label>
         )}
@@ -36,8 +36,8 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           id={id}
           className={cn(
-            'w-full h-9 px-3 text-sm rounded-md border border-[--color-border] bg-[--color-surface] text-[--color-text] focus:outline-none focus:border-[--color-border-focus] focus:ring-1 focus:ring-[--color-border-focus] transition-colors',
-            error && 'border-[--color-danger]',
+            'w-full h-9 px-3 text-sm rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] focus:outline-none focus:border-[var(--color-border-focus)] focus:ring-1 focus:ring-[var(--color-border-focus)] transition-colors',
+            error && 'border-[var(--color-danger)]',
             className
           )}
           aria-describedby={error ? errorId : undefined}
@@ -51,8 +51,8 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             </optgroup>
           ))}
         </select>
-        {error && <p id={errorId} className="text-xs text-[--color-danger]">{error}</p>}
-        {helperText && !error && <p className="text-xs text-[--color-text-muted]">{helperText}</p>}
+        {error && <p id={errorId} className="text-xs text-[var(--color-danger)]">{error}</p>}
+        {helperText && !error && <p className="text-xs text-[var(--color-text-muted)]">{helperText}</p>}
       </div>
     )
   }
