@@ -1,381 +1,289 @@
+/* SubForge — Drop, See, Refine design system */
+/* "Cool Professional" light theme — gray-100 foundation, blue-600 accent */
+
 @import "tailwindcss";
 
-@theme {
-  /* Spacing: 4px base grid */
-  --spacing: 0.25rem;
+/* Google Fonts — must be at top level, outside @layer */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-  /* Typography — Phase Lumen: Inter for clarity, JetBrains Mono for technical data */
-  --font-family-sans:    'Inter', system-ui, -apple-system, sans-serif;
-  --font-family-display: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-family-mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+@layer base {
+  :root {
+    /* Color palette */
+    --color-bg: #F3F4F6;
+    --color-surface: #FFFFFF;
+    --color-surface-raised: #F9FAFB;
+    --color-border: #E5E7EB;
+    --color-border-focus: #2563EB;
 
-  /* Colors — Phase Lumen: Professional light theme
-     Reference: Microsoft 365, Google Workspace, Claude AI, Vercel */
-  --color-bg:        #FFFFFF;
-  --color-surface:   #F8FAFC;
-  --color-surface-2: #F1F5F9;
-  --color-border:    #E2E8F0;
-  --color-border-2:  #CBD5E1;
-  --color-text:      #0F172A;
-  --color-text-2:    #475569;
-  --color-text-3:    #64748B;
+    --color-text: #111827;
+    --color-text-secondary: #6B7280;
+    --color-text-muted: #9CA3AF;
+    --color-text-inverse: #FFFFFF;
 
-  --color-primary:         #6366F1;
-  --color-primary-hover:   #4F46E5;
-  --color-primary-light:   rgba(99,102,241,0.08);
-  --color-primary-border:  rgba(99,102,241,0.20);
+    --color-primary: #2563EB;
+    --color-primary-hover: #1D4ED8;
+    --color-primary-light: #EFF6FF;
+    --color-primary-ring: rgba(37, 99, 235, 0.25);
 
-  --color-success:         #10B981;
-  --color-success-light:   rgba(16,185,129,0.08);
-  --color-success-border:  rgba(16,185,129,0.20);
+    --color-success: #059669;
+    --color-success-light: #ECFDF5;
+    --color-warning: #D97706;
+    --color-warning-light: #FFFBEB;
+    --color-danger: #DC2626;
+    --color-danger-light: #FEF2F2;
+    --color-info: #0891B2;
+    --color-info-light: #ECFEFF;
 
-  --color-warning:         #F59E0B;
-  --color-warning-light:   rgba(245,158,11,0.08);
+    /* Typography */
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
 
-  --color-danger:          #EF4444;
-  --color-danger-light:    rgba(239,68,68,0.08);
-  --color-danger-border:   rgba(239,68,68,0.20);
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-base: 1rem;
+    --text-lg: 1.125rem;
+    --text-xl: 1.25rem;
+    --text-2xl: 1.5rem;
 
-  /* Hero gradients — tokenized for consistency across static pages */
-  --gradient-hero-about:    linear-gradient(135deg, var(--color-surface) 0%, rgba(99,102,241,0.06) 55%, rgba(99,102,241,0.10) 100%);
-  --gradient-hero-security: linear-gradient(135deg, var(--color-surface) 0%, rgba(99,102,241,0.06) 55%, rgba(99,102,241,0.10) 100%);
-  --gradient-hero-contact:  linear-gradient(135deg, var(--color-surface) 0%, rgba(99,102,241,0.06) 55%, rgba(16,185,129,0.06) 100%);
+    --font-normal: 400;
+    --font-medium: 500;
+    --font-semibold: 600;
+    --font-bold: 700;
 
-  /* Radius — slightly softer for light theme */
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius:    8px;
-  --radius-lg: 12px;
+    --leading-tight: 1.25;
+    --leading-normal: 1.5;
+    --leading-relaxed: 1.625;
 
-  /* Shadows — soft and subtle for light backgrounds */
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px rgb(0 0 0 / 0.07), 0 2px 4px rgb(0 0 0 / 0.06);
-  --shadow-lg: 0 10px 15px rgb(0 0 0 / 0.10), 0 4px 6px rgb(0 0 0 / 0.05);
-}
+    /* Spacing (4px grid) */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-10: 2.5rem;
+    --space-12: 3rem;
+    --space-16: 4rem;
 
-/* Dark mode — auto-detect OS preference — Pixel (Sr. Frontend), Sprint L29 */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --color-bg: #0F172A;
-    --color-surface: #1E293B;
-    --color-surface-2: #334155;
-    --color-text: #F1F5F9;
-    --color-text-2: #94A3B8;
-    --color-text-3: #64748B;
-    --color-primary: #818CF8;
-    --color-primary-hover: #6366F1;
-    --color-primary-light: rgba(129,140,248,0.10);
-    --color-primary-border: rgba(129,140,248,0.25);
-    --color-border: #334155;
-    --color-border-2: #475569;
-    --color-success: #34D399;
-    --color-success-light: rgba(52,211,153,0.10);
-    --color-success-border: rgba(52,211,153,0.25);
-    --color-warning: #FBBF24;
-    --color-warning-light: rgba(251,191,36,0.10);
-    --color-danger: #F87171;
-    --color-danger-light: rgba(248,113,113,0.10);
-    --color-danger-border: rgba(248,113,113,0.25);
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
-    --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
-    --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
-    --gradient-hero-about: linear-gradient(135deg, #1E293B 0%, rgba(129,140,248,0.08) 55%, rgba(129,140,248,0.14) 100%);
-    --gradient-hero-security: linear-gradient(135deg, #1E293B 0%, rgba(129,140,248,0.08) 55%, rgba(129,140,248,0.14) 100%);
-    --gradient-hero-contact: linear-gradient(135deg, #1E293B 0%, rgba(129,140,248,0.08) 55%, rgba(52,211,153,0.08) 100%);
+    /* Borders */
+    --radius-sm: 0.25rem;
+    --radius-md: 0.375rem;
+    --radius-lg: 0.5rem;
+    --radius-xl: 0.75rem;
+    --radius-2xl: 1rem;
+    --radius-full: 9999px;
+
+    --border-width: 1px;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    --shadow-focus: 0 0 0 3px var(--color-primary-ring);
+
+    /* Layout */
+    --max-width-content: 1280px;
+    --header-height: 3.5rem;
+
+    /* Transitions */
+    --transition-fast: 100ms ease;
+    --transition-base: 150ms ease;
+    --transition-slow: 250ms ease;
   }
-}
 
-/* Manual dark mode override — Pixel (Sr. Frontend), Sprint L29 */
-[data-theme="dark"] {
-  --color-bg: #0F172A;
-  --color-surface: #1E293B;
-  --color-surface-2: #334155;
-  --color-text: #F1F5F9;
-  --color-text-2: #94A3B8;
-  --color-text-3: #64748B;
-  --color-primary: #818CF8;
-  --color-primary-hover: #6366F1;
-  --color-primary-light: rgba(129,140,248,0.10);
-  --color-primary-border: rgba(129,140,248,0.25);
-  --color-border: #334155;
-  --color-border-2: #475569;
-  --color-success: #34D399;
-  --color-success-light: rgba(52,211,153,0.10);
-  --color-success-border: rgba(52,211,153,0.25);
-  --color-warning: #FBBF24;
-  --color-warning-light: rgba(251,191,36,0.10);
-  --color-danger: #F87171;
-  --color-danger-light: rgba(248,113,113,0.10);
-  --color-danger-border: rgba(248,113,113,0.25);
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
-  --gradient-hero-about: linear-gradient(135deg, #1E293B 0%, rgba(129,140,248,0.08) 55%, rgba(129,140,248,0.14) 100%);
-  --gradient-hero-security: linear-gradient(135deg, #1E293B 0%, rgba(129,140,248,0.08) 55%, rgba(129,140,248,0.14) 100%);
-  --gradient-hero-contact: linear-gradient(135deg, #1E293B 0%, rgba(129,140,248,0.08) 55%, rgba(52,211,153,0.08) 100%);
-}
-
-/* Base */
-*, *::before, *::after { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  font-family: var(--font-family-sans);
-  font-size: 16px;
-  line-height: 1.6;
-  color: var(--color-text);
-  background-color: var(--color-bg);
-  -webkit-font-smoothing: antialiased;
-}
-
-/* Scrollbar — always-visible track prevents layout shift when switching tabs */
-html { overflow-y: scroll; scrollbar-width: thin; scrollbar-color: var(--color-border-2) transparent; }
-::-webkit-scrollbar       { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-border-2); border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: var(--color-text-3); }
-
-/* WCAG 2.1 AA — visible focus indicators — Prism (UI/UX), Sprint L15 */
-:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-  border-radius: var(--radius-xs);
-}
-
-button:focus-visible,
-a:focus-visible,
-select:focus-visible,
-input:focus-visible {
-  outline: 2px solid var(--color-primary) !important;
-  outline-offset: 2px !important;
-}
-
-/* WCAG 2.1 AA — screen-reader-only utility — Prism (UI/UX), Sprint L15 */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
-}
-
-/* Skip navigation link — visible on focus — Prism (UI/UX), Sprint L15 */
-.skip-nav:focus {
-  position: fixed;
-  top: 8px;
-  left: 8px;
-  z-index: 9999;
-  width: auto;
-  height: auto;
-  padding: 8px 16px;
-  margin: 0;
-  overflow: visible;
-  clip: auto;
-  white-space: normal;
-  background: var(--color-primary);
-  color: white;
-  font-size: 14px;
-  font-weight: 500;
-  border-radius: var(--radius-sm);
-  text-decoration: none;
-  box-shadow: var(--shadow-md);
-}
-
-/* Monospace class — used for timestamps, task IDs, technical data */
-.font-mono {
-  font-family: var(--font-family-mono);
-}
-
-/* Display font class — used for headings and wordmark */
-.font-display {
-  font-family: var(--font-family-display);
-}
-
-/* Interactive button lift effect — Prism (UI/UX), Sprint L19 */
-.btn-interactive {
-  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
-}
-.btn-interactive:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(99,102,241,0.15);
-  filter: brightness(1.05);
-}
-.btn-interactive:active {
-  transform: translateY(0);
-  filter: brightness(0.95);
-}
-
-/* Download button primary style */
-.btn-download {
-  background: var(--color-primary);
-  color: white;
-  border-color: var(--color-primary);
-  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
-}
-.btn-download:hover {
-  background: var(--color-primary-hover);
-  box-shadow: 0 4px 16px rgba(99,102,241,0.25);
-}
-
-/* Process next file button hover */
-.btn-process-next {
-  transition: border-color 0.15s ease, color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
-}
-.btn-process-next:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-}
-
-/* Dropzone border pulse on drag-over — Pixel (Sr. Frontend), Sprint L42 */
-@keyframes dropzone-pulse {
-  0%, 100% { border-color: var(--color-primary); }
-  50% { border-color: var(--color-primary-border); }
-}
-.dropzone-pulse {
-  animation: dropzone-pulse 1.2s ease-in-out infinite;
-}
-
-/* Active pipeline step pulse — Pixel (Sr. Frontend), Sprint L13 */
-@keyframes stepPulse {
-  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(99,102,241,0.4); }
-  50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(99,102,241,0); }
-}
-
-/* Slide-in-right animation — Pixel (Sr. Frontend), Sprint L47 */
-@keyframes slideInRight {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
-}
-.animate-slide-in-right {
-  animation: slideInRight 0.25s ease-out;
-}
-
-/* Fade-in animation */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.animate-fade-in {
-  animation: fadeIn 0.2s ease-out;
-}
-
-/* Success celebration fade-in — enhanced with scale bounce, Prism (UI/UX), Sprint L19 */
-@keyframes successEnter {
-  0% { opacity: 0; transform: scale(0.95); }
-  50% { transform: scale(1.02); }
-  100% { opacity: 1; transform: scale(1); }
-}
-.animate-success-fade-in {
-  animation: successEnter 0.4s ease-out;
-}
-
-/* Gentle float animation for empty state */
-@keyframes gentleFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
-}
-.animate-gentle-float {
-  animation: gentleFloat 3s ease-in-out infinite;
-}
-
-/* Page transition — fade-in with subtle upward slide, Prism (UI/UX), Sprint L19 */
-@keyframes pageEnter {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.animate-page-enter {
-  animation: pageEnter 0.2s ease-out;
-}
-
-/* Progress bar shimmer — animated gradient during active processing, Prism (UI/UX), Sprint L19 */
-@keyframes toast-fade-in {
-  from { opacity: 0; transform: translateX(20px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-/* Tooltip fade-in — Pixel (Sr. Frontend), Sprint L33 */
-@keyframes tooltip-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-.progress-bar-shimmer {
-  background: linear-gradient(
-    90deg,
-    var(--color-primary) 0%,
-    var(--color-primary-light) 50%,
-    var(--color-primary) 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 2s linear infinite;
-}
-
-/* Responsive model table: hide middle columns on narrow screens */
-@media (max-width: 639px) {
-  .model-grid { grid-template-columns: 1fr 60px !important; }
-  .model-col-speed, .model-col-pros { display: none !important; }
-}
-@media (min-width: 640px) and (max-width: 849px) {
-  .model-grid { grid-template-columns: 90px 1fr 60px !important; }
-  .model-col-pros { display: none !important; }
-}
-
-/* Mobile touch improvements — WCAG minimum 44px tap targets — Pixel (Sr. Frontend), Sprint L56 */
-@media (max-width: 768px) {
-  button,
-  a,
-  [role="button"] {
-    min-height: 44px;
-    touch-action: manipulation;
-  }
-}
-
-/* Reduced motion — WCAG 2.1 AA, Prism (UI/UX), Sprint L24 */
-@media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    box-sizing: border-box;
+    border-color: var(--color-border);
   }
 
-  .animate-pulse,
-  .animate-fade-in,
-  .animate-success-fade-in,
-  .animate-page-enter,
-  .animate-gentle-float,
-  .animate-slide-in-right,
-  .progress-bar-shimmer,
-  .dropzone-pulse,
-  [style*="toast-fade-in"] {
-    animation: none !important;
-  }
-}
-
-/* Button spinner — Prism (UI/UX), Sprint L28 */
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* Print styles — Prism (UI/UX), Sprint L24 */
-@media print {
-  header, footer, nav, .health-panel, .btn-interactive {
-    display: none !important;
+  html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
-    background: white !important;
-    color: black !important;
+    margin: 0;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--leading-normal);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
+  #root {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Headings */
+  h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+    font-weight: var(--font-semibold);
+    line-height: var(--leading-tight);
+    color: var(--color-text);
+  }
+
+  h1 { font-size: var(--text-2xl); }
+  h2 { font-size: var(--text-xl); }
+  h3 { font-size: var(--text-lg); }
+  h4, h5, h6 { font-size: var(--text-base); }
+
+  p { margin: 0; }
+  a { color: var(--color-primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  code, pre {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+  }
+
+  button {
+    cursor: pointer;
+    border: none;
+    background: none;
+    padding: 0;
+    font: inherit;
+  }
+
+  input, select, textarea {
+    font: inherit;
+    background: var(--color-surface);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text);
+  }
+
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--color-border-focus);
+    box-shadow: var(--shadow-focus);
+  }
+
+  /* Scrollbar */
   * {
-    box-shadow: none !important;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--color-border);
+    border-radius: var(--radius-full);
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-text-muted);
+  }
+}
+
+@layer utilities {
+  /* Focus */
+  .focus-ring {
+    outline: none;
+  }
+  .focus-ring:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  /* Truncation */
+  .truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Screen reader only */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+}
+
+@layer components {
+  /* Upload zone drag animation */
+  @keyframes pulse-border {
+    0%, 100% { border-color: var(--color-primary); opacity: 1; }
+    50% { border-color: var(--color-primary); opacity: 0.6; }
+  }
+
+  .upload-zone-active {
+    animation: pulse-border 1.5s ease-in-out infinite;
+  }
+
+  /* Skeleton loading */
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--color-border) 25%,
+      var(--color-surface-raised) 50%,
+      var(--color-border) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  /* Spinner */
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .spinner {
+    animation: spin 0.8s linear infinite;
+  }
+
+  /* Card hover lift */
+  @keyframes lift {
+    from { transform: translateY(0); box-shadow: var(--shadow-sm); }
+    to { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  }
+
+  /* Fade in */
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-fade-in {
+    animation: fade-in var(--transition-slow) ease forwards;
+  }
+
+  /* Indeterminate progress bar */
+  @keyframes indeterminate {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(400%); }
+  }
+
+  /* Toast slide in */
+  @keyframes slide-in-right {
+    from { opacity: 0; transform: translateX(100%); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .toast-enter {
+    animation: slide-in-right var(--transition-base) ease forwards;
   }
 }
