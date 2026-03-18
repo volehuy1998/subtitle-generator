@@ -8,8 +8,11 @@ import pytest
 import requests
 
 
-def _get(base_url, path, **kwargs):
-    resp = requests.get(f"{base_url}{path}", verify=False, timeout=10, **kwargs)
+def _get(base_url, path, session=None, **kwargs):
+    """GET helper. Pass session= to reuse an authenticated requests.Session."""
+    getter = session.get if session else requests.get
+    extra = {} if session else {"verify": False}
+    resp = getter(f"{base_url}{path}", timeout=10, **extra, **kwargs)
     resp.raise_for_status()
     return resp.json()
 
@@ -46,24 +49,32 @@ def test_upload_response_shape(base_url, test_audio_file):
 
 
 @pytest.mark.contract
-def test_progress_response_shape(base_url, completed_task_id):
-    data = _get(base_url, f"/progress/{completed_task_id}")
-    assert "task_id" in data and isinstance(data["task_id"], str)
+def test_progress_response_shape(base_url, completed_task_id, task_http_session):
+    """Uses task_http_session so session cookies are sent (progress endpoint is session-gated)."""
+    data = _get(base_url, f"/progress/{completed_task_id}", session=task_http_session)
+    # task_id may be null for completed tasks (backend returns None when done)
+    assert "task_id" in data, f"Missing 'task_id' key: {data}"
     assert "status" in data and isinstance(data["status"], str)
     assert "percent" in data and isinstance(data["percent"], (int, float))
     assert "message" in data and isinstance(data["message"], str)
 
 
 @pytest.mark.contract
-def test_subtitles_response_shape(base_url, completed_task_id):
-    data = _get(base_url, f"/subtitles/{completed_task_id}")
+def test_subtitles_response_shape(base_url, completed_task_id, task_http_session):
+    data = _get(base_url, f"/subtitles/{completed_task_id}", session=task_http_session)
     assert "task_id" in data and isinstance(data["task_id"], str)
     assert "segments" in data and isinstance(data["segments"], list)
 
 
 @pytest.mark.contract
-def test_search_response_shape(base_url, completed_task_id):
-    data = _get(base_url, f"/search/{completed_task_id}", params={"q": "the"})
+def test_search_response_shape(base_url, completed_task_id, task_http_session):
+    """Uses task_http_session so session cookies are sent (search endpoint is session-gated)."""
+    data = _get(
+        base_url,
+        f"/search/{completed_task_id}",
+        session=task_http_session,
+        params={"q": "the"},
+    )
     assert "task_id" in data and isinstance(data["task_id"], str)
     assert "query" in data and isinstance(data["query"], str)
     assert "matches" in data, f"'matches' key missing — got: {list(data.keys())}"

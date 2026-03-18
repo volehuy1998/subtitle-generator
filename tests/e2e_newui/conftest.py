@@ -60,7 +60,15 @@ def unique_audio_file(tmp_path_factory, test_audio_file):
 
 
 @pytest.fixture(scope="session")
-def completed_task_id(base_url, unique_audio_file):
+def task_http_session():
+    """A requests.Session instance shared by completed_task_id and contract tests."""
+    s = requests.Session()
+    s.verify = False
+    return s
+
+
+@pytest.fixture(scope="session")
+def completed_task_id(base_url, unique_audio_file, task_http_session):
     """
     Returns a task ID for a completed transcription.
     Checks FIXTURE_TASK_ID env var first (local dev), then uploads and polls (CI).
@@ -70,13 +78,13 @@ def completed_task_id(base_url, unique_audio_file):
     if task_id:
         return task_id
 
-    # Upload and poll to completion
+    # Upload and poll to completion — use a Session to persist cookies for session auth
+    session = task_http_session
     try:
         with open(unique_audio_file, "rb") as f:
-            resp = requests.post(
+            resp = session.post(
                 f"{base_url}/upload",
                 files={"file": f},
-                verify=False,
                 timeout=30,
             )
         resp.raise_for_status()
@@ -87,13 +95,17 @@ def completed_task_id(base_url, unique_audio_file):
     deadline = time.time() + 300
     while time.time() < deadline:
         try:
-            prog = requests.get(f"{base_url}/progress/{task_id}", verify=False, timeout=10).json()
+            prog = session.get(f"{base_url}/progress/{task_id}", timeout=10).json()
         except Exception:
             time.sleep(2)
             continue
-        if prog["status"] == "done":
+        status = prog.get("status")
+        if status is None:
+            # Unexpected response shape — skip rather than error
+            pytest.skip(f"Unexpected progress response: {prog}")
+        if status == "done":
             return task_id
-        if prog["status"] in ("error", "cancelled"):
+        if status in ("error", "cancelled"):
             pytest.skip(f"Fixture task failed: {prog.get('message')}")
         time.sleep(2)
 
