@@ -71,6 +71,7 @@ export function LandingPage() {
         duration: null,
       })
 
+      setUploading(false)
       navigate(`/editor/${result.task_id}`)
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Upload failed'
