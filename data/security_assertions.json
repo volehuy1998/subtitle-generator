@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "51651df",
-    "sha_full": "51651dfdb3016d69f7e5eeecfb2494c5fe5fdbfa",
-    "datetime": "2026-03-18T14:50:18+07:00",
-    "message": "feat(ui): add Drop See Refine design tokens \u2014 cool professional light theme"
+    "sha": "164937e",
+    "sha_full": "164937eead0e2e0fedec7c7f3f2bbf982f7e8d21",
+    "datetime": "2026-03-18T16:12:24+07:00",
+    "message": "feat(ui): add static pages (Status, About, Security, Contact)"
   },
   "assertions": [
     {
