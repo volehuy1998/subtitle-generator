@@ -4,12 +4,13 @@
  *
  * — Pixel (Senior Frontend Engineer)
  */
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { AppShell } from '../components/layout/AppShell'
 import { UploadZone } from '../components/landing/UploadZone'
 import { UploadProgress } from '../components/landing/UploadProgress'
 import { ProjectGrid } from '../components/landing/ProjectGrid'
 import { Card } from '../components/ui/Card'
+import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { useEditorStore } from '../store/editorStore'
 import { useRecentProjectsStore } from '../store/recentProjectsStore'
 import { useToastStore } from '../store/toastStore'
@@ -20,9 +21,51 @@ export function LandingPage() {
   const [uploading, setUploading] = useState(false)
   const [uploadPercent, setUploadPercent] = useState(0)
   const [uploadFilename, setUploadFilename] = useState('')
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false)
+  const [duplicateResolve, setDuplicateResolve] = useState<((v: boolean) => void) | null>(null)
   const reset = useEditorStore(s => s.reset)
   const addProject = useRecentProjectsStore(s => s.addProject)
+  const projects = useRecentProjectsStore(s => s.projects)
+  const updateProject = useRecentProjectsStore(s => s.updateProject)
+  const removeProject = useRecentProjectsStore(s => s.removeProject)
   const addToast = useToastStore(s => s.addToast)
+
+  // Validate recent projects on mount — stagger calls 100ms apart, max 3 concurrent
+  useEffect(() => {
+    if (projects.length === 0) return
+
+    const BATCH_SIZE = 3
+    const DELAY_MS = 100
+
+    const timers: ReturnType<typeof setTimeout>[] = []
+
+    projects.forEach((project, index) => {
+      // Only validate processing ones (completed/failed are stable)
+      if (project.status !== 'processing') return
+
+      const delay = Math.floor(index / BATCH_SIZE) * DELAY_MS
+      const timer = setTimeout(() => {
+        api.progress(project.taskId).then(data => {
+          if (data.status === 'done') {
+            updateProject(project.taskId, { status: 'completed' })
+          } else if (data.status === 'error' || data.status === 'cancelled') {
+            updateProject(project.taskId, { status: 'failed' })
+          }
+        }).catch((err: unknown) => {
+          // 404 means task was deleted
+          if (err instanceof Error && err.message.includes('404')) {
+            removeProject(project.taskId)
+          }
+        })
+      }, delay)
+
+      timers.push(timer)
+    })
+
+    return () => {
+      timers.forEach(t => clearTimeout(t))
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleUpload = async (files: File | File[], type: string) => {
     reset()
@@ -43,7 +86,14 @@ export function LandingPage() {
       // Check for duplicates
       const dupeResult = await api.duplicates(file.name, file.size)
       if (dupeResult.duplicates.length > 0) {
-        // TODO: show duplicate dialog (Task 40)
+        const proceed = await new Promise<boolean>(resolve => {
+          setDuplicateDialogOpen(true)
+          setDuplicateResolve(() => resolve)
+        })
+        if (!proceed) {
+          setUploading(false)
+          return
+        }
       }
 
       // Build FormData
@@ -95,6 +145,15 @@ export function LandingPage() {
         </Card>
         <ProjectGrid />
       </div>
+      <ConfirmDialog
+        open={duplicateDialogOpen}
+        title="Duplicate detected"
+        description="A similar file has already been processed. Upload anyway?"
+        confirmLabel="Upload anyway"
+        cancelLabel="Cancel"
+        onConfirm={() => { setDuplicateDialogOpen(false); duplicateResolve?.(true) }}
+        onClose={() => { setDuplicateDialogOpen(false); duplicateResolve?.(false) }}
+      />
     </AppShell>
   )
 }
