@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "a2e4c7b",
-    "sha_full": "a2e4c7ba3e5d709501d13d4a4b9ea0d3e6c94626",
-    "datetime": "2026-03-18T14:11:58+07:00",
-    "message": "ci: add docs.yml with stub checks and README link validation"
+    "sha": "625b799",
+    "sha_full": "625b799ad015f91622911825934cbc2b1a04f37b",
+    "datetime": "2026-03-18T14:22:31+07:00",
+    "message": "docs: update CONTRIBUTING.md and SECURITY.md to reflect new scanner toolchain"
   },
   "assertions": [
     {

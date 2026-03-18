@@ -70,7 +70,7 @@ SubForge implements the following security controls:
 - Audit logging for all sensitive operations (`app/services/audit.py`)
 - Request logging middleware
 - Security assertion tracking at `/security` with live OWASP results
-- Automated secret scanning in CI (`.github/workflows/secret-scan.yml`)
+- Automated secret scanning in CI (GitHub Secret Protection + Semgrep SAST in `ci.yml`)
 - CodeQL static analysis (`.github/workflows/codeql.yml`)
 
 ### Infrastructure
@@ -88,6 +88,6 @@ Visit [`/security`](https://openlabs.club/security) on the live demo to see real
 | Tool | Purpose | Config |
 |------|---------|--------|
 | CodeQL | Static analysis (Python + JavaScript) | `.github/workflows/codeql.yml` |
-| Secret scanning | Detect leaked credentials | `.github/workflows/secret-scan.yml` |
-| `scan_sensitive.py` | Custom sensitive data scanner | `scripts/scan_sensitive.py` |
+| GitHub Secret Protection | Detect leaked credentials | GitHub native (automatic) |
+| Semgrep SAST | Security anti-patterns, unsafe code | `.github/workflows/ci.yml` (Tier 2) |
 | Ruff | Python linting (security rules) | `pyproject.toml` |
