@@ -33,13 +33,19 @@ export function useSSE(taskId: string | null) {
           .then(r => r.json())
           .then(data => {
             if (data.status === 'done') {
-              setComplete({
-                segments: data.segments || [],
-                language: data.language || null,
-                modelUsed: data.model || null,
-                timings: data.step_timings || {},
-                isVideo: data.is_video ?? false,
-              })
+              // Fetch actual segments — progress endpoint returns count, not array
+              fetch(`/subtitles/${taskId}`)
+                .then(r => r.json())
+                .then(subs => {
+                  setComplete({
+                    segments: (subs.segments || []).map((seg: { start: number; end: number; text: string; speaker?: string }, i: number) => ({ ...seg, index: i })),
+                    language: data.language || null,
+                    modelUsed: data.model || null,
+                    timings: data.step_timings || {},
+                    isVideo: data.is_video ?? false,
+                  })
+                })
+                .catch(() => setError('Failed to load subtitles'))
             } else if (data.status === 'error') {
               setError(data.error || 'Task failed')
             }
@@ -93,13 +99,19 @@ export function useSSE(taskId: string | null) {
               updateProgress(data)
               break
             case 'done':
-              setComplete({
-                segments: data.segments || [],
-                language: data.language || null,
-                modelUsed: data.model || null,
-                timings: data.step_timings || {},
-                isVideo: data.is_video ?? false,
-              })
+              // data.segments is a COUNT (number), not an array — fetch actual segments
+              fetch(`/subtitles/${taskId}`)
+                .then(r => r.json())
+                .then(subs => {
+                  setComplete({
+                    segments: (subs.segments || []).map((seg: { start: number; end: number; text: string; speaker?: string }, i: number) => ({ ...seg, index: i })),
+                    language: data.language || null,
+                    modelUsed: data.model || null,
+                    timings: data.step_timings || {},
+                    isVideo: data.is_video ?? false,
+                  })
+                })
+                .catch(() => setError('Failed to load subtitles'))
               updateProject(taskId, { status: 'completed', duration: data.duration ?? null })
               es.close()
               esRef.current = null
