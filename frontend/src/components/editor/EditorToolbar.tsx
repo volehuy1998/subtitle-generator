@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { RefreshCw, Languages, Film } from 'lucide-react'
+import { RefreshCw, Languages, Film, Search } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { IconButton } from '../ui/IconButton'
 import { Badge } from '../ui/Badge'
@@ -45,6 +45,15 @@ export function EditorToolbar() {
               Embed
             </Button>
           )}
+
+          <IconButton
+            icon={<Search className="h-4 w-4" />}
+            aria-label="Search subtitles"
+            variant="ghost"
+            size="sm"
+            title="Search subtitles"
+            onClick={() => setContextPanel('search')}
+          />
 
           <IconButton
             icon={<RefreshCw className="h-4 w-4" />}

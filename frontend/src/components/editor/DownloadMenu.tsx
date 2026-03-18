@@ -33,7 +33,7 @@ export function DownloadMenu({ taskId }: DownloadMenuProps) {
   }, [open])
 
   const buildUrl = (format: string) =>
-    `/subtitles/${taskId}?format=${format}&download=1&max_chars=${maxChars}`
+    `/download/${taskId}?format=${format}&max_line_chars=${maxChars}`
 
   return (
     <div ref={containerRef} data-testid="download-menu-wrapper" className="relative">
