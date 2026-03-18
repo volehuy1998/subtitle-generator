@@ -77,6 +77,47 @@ def test_duplicate_detection_upload_anyway(page: Page, base_url: str, duplicate_
 
 
 @pytest.mark.upload
+def test_upload_full_transcription_flow(page: Page, base_url: str, unique_audio_file: Path):
+    """Upload file → progress shows → transcription completes → editor loads with NO error boundary.
+
+    This test specifically guards against the bug where useSSE treated the done-event
+    'segments' field (a count integer) as an array, crashing SegmentList.
+    """
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.goto(base_url)
+    _set_file_input(page, unique_audio_file)
+
+    # Wait for navigation to editor
+    page.wait_for_url("**/editor/**", timeout=60_000, wait_until="commit")
+    assert re.search(r"/editor/[0-9a-f-]+", page.url), f"Unexpected URL: {page.url}"
+
+    # Progress view may still be visible while transcription runs — that's fine
+
+    # Wait for transcription to finish: upload-progress disappears and editor renders
+    # The done SSE event triggers setComplete — either segment-list or empty-state appears.
+    # Use a broad locator that matches EITHER outcome (segments present OR empty audio).
+    # The critical thing is that the ErrorBoundary "Something went wrong" is NOT shown.
+    page.wait_for_function(
+        """() => {
+            const errBoundary = document.body.innerText.includes('An unexpected error occurred')
+            const progressGone = !document.querySelector('[data-testid="upload-progress"]')
+            const editorPresent = document.querySelector('[data-testid="segment-list"]')
+                || document.body.innerText.includes('No subtitles yet')
+                || document.body.innerText.includes('Download')
+            return errBoundary || (progressGone && editorPresent)
+        }""",
+        timeout=120_000,
+    )
+
+    # Fail if the error boundary appeared
+    assert not page.locator('text="An unexpected error occurred"').is_visible(), (
+        "ErrorBoundary fired after transcription completed — likely a type mismatch in useSSE done handler"
+    )
+    assert not errors, f"JS errors during full transcription flow: {errors}"
+
+
+@pytest.mark.upload
 def test_invalid_extension_shows_error(page: Page, base_url: str):
     """Uploading a .exe file triggers an error toast; URL stays at /."""
     errors = []
