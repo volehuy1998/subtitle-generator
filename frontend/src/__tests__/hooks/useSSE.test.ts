@@ -71,12 +71,30 @@ describe('useSSE', () => {
     expect(useEditorStore.getState().liveSegments).toHaveLength(1)
   })
 
-  it('transitions to editing on done event', () => {
+  it('transitions to editing on done event (fetches subtitles)', async () => {
+    // done event sends segments as a COUNT (integer), not array.
+    // The hook fetches /subtitles/{taskId} to get actual segments.
+    const mockSegments = [{ start: 0, end: 5, text: 'Hi' }]
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      json: () => Promise.resolve({ task_id: 'task-123', segments: mockSegments }),
+    }))
+
     renderHook(() => useSSE('task-123'))
     const es = MockEventSource.instances[0]
     es.onopen?.(new Event('open'))
-    es.emit('done', { segments: [{ index: 0, start: 0, end: 5, text: 'Hi' }], language: 'en', model: 'large', step_timings: {}, is_video: false })
-    expect(useEditorStore.getState().phase).toBe('editing')
+    es.emit('done', { segments: 1, language: 'en', model: 'large', step_timings: {}, is_video: false })
+
+    // Wait for fetch + setComplete to resolve
+    await vi.waitFor(() => {
+      expect(useEditorStore.getState().phase).toBe('editing')
+    }, { timeout: 1000 })
+
+    const segs = useEditorStore.getState().segments
+    expect(segs).toHaveLength(1)
+    expect(segs[0].text).toBe('Hi')
+    expect(segs[0].index).toBe(0) // index added by map
+
+    vi.unstubAllGlobals()
   })
 
   it('sets error phase on error event', () => {
