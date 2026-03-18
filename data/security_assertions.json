@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "af04734",
-    "sha_full": "af0473404de5e24874c16ac646ad25a1d864c7ba",
-    "datetime": "2026-03-18T14:08:01+07:00",
-    "message": "ci: add import order check [6/6] to consistency validator"
+    "sha": "a2e4c7b",
+    "sha_full": "a2e4c7ba3e5d709501d13d4a4b9ea0d3e6c94626",
+    "datetime": "2026-03-18T14:11:58+07:00",
+    "message": "ci: add docs.yml with stub checks and README link validation"
   },
   "assertions": [
     {
