@@ -8,8 +8,8 @@ const iconButtonVariants = cva(
     variants: {
       variant: {
         primary: 'bg-[--color-primary] text-white hover:bg-[--color-primary-hover]',
-        secondary: 'bg-[--color-surface] text-[--color-text-secondary] border border-[--color-border] hover:bg-[--color-surface-raised] hover:text-[--color-text]',
-        ghost: 'text-[--color-text-secondary] hover:bg-[--color-surface-raised] hover:text-[--color-text]',
+        secondary: 'bg-[--color-surface-raised] text-[--color-text] border border-[--color-border-strong] hover:bg-[--color-border] hover:border-[--color-text-muted]',
+        ghost: 'bg-[--color-surface-raised] border border-[--color-border] text-[--color-text-secondary] hover:bg-[--color-border] hover:text-[--color-text] hover:border-[--color-border-strong]',
         danger: 'text-[--color-danger] hover:bg-[--color-danger-light]',
         success: 'text-[--color-success] hover:bg-[--color-success-light]',
       },

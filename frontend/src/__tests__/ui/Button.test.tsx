@@ -68,4 +68,16 @@ describe('IconButton', () => {
     const btn = screen.getByRole('button') as HTMLButtonElement
     expect(btn.disabled).toBe(true)
   })
+
+  it('ghost variant has visible background by default', () => {
+    const { container } = render(<IconButton icon={<span />} aria-label="test" variant="ghost" />)
+    const btn = container.querySelector('button')!
+    expect(btn.className).toContain('bg-[--color-surface-raised]')
+  })
+
+  it('secondary variant uses border-strong', () => {
+    const { container } = render(<IconButton icon={<span />} aria-label="test" variant="secondary" />)
+    const btn = container.querySelector('button')!
+    expect(btn.className).toContain('border-[--color-border-strong]')
+  })
 })
