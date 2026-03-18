@@ -44,7 +44,7 @@ tests/e2e_newui/
 
 ## Fixtures (`conftest.py`)
 
-### Base URL and browser context
+### Base URL and browser
 
 ```python
 @pytest.fixture(scope="session")
@@ -52,27 +52,32 @@ def base_url():
     return os.environ.get("E2E_BASE_URL", "https://newui.openlabs.club")
 
 @pytest.fixture(scope="session")
-def browser_context(playwright, base_url):
-    """Auto-skip entire suite if server is unreachable."""
+def browser_instance(playwright, base_url):
+    """Single browser process for the session. Auto-skip if server unreachable."""
     try:
         requests.get(base_url, timeout=5, verify=False)
     except Exception:
         pytest.skip(f"Server unreachable: {base_url}")
     browser = playwright.chromium.launch(headless=True)
-    context = browser.new_context(ignore_https_errors=True)
-    yield context
-    context.close()
+    yield browser
     browser.close()
 ```
 
-### Page fixture — function scope to prevent state bleed
+### Browser context fixture — function scope for full storage isolation
 
-Each test function gets a **fresh page** to prevent navigation state from leaking between tests and test files.
+Each test function gets a **fresh BrowserContext** (not just a fresh page). This isolates cookies, localStorage, sessionStorage, and IndexedDB between tests. The React SPA uses `localStorage` for recent projects and `sessionStorage` for task restore — without context-level isolation these bleed between tests.
 
 ```python
 @pytest.fixture(scope="function")
+def browser_context(browser_instance):
+    """Fresh context per test function — isolates cookies, localStorage, sessionStorage."""
+    context = browser_instance.new_context(ignore_https_errors=True)
+    yield context
+    context.close()
+
+@pytest.fixture(scope="function")
 def page(browser_context):
-    """Fresh page per test function — prevents URL/state bleed between tests."""
+    """Fresh page per test function."""
     p = browser_context.new_page()
     yield p
     p.close()
@@ -87,6 +92,8 @@ def test_audio_file():
 ```
 
 `fixtures/sample.wav` is a generated ~50KB silent WAV file committed to the repository. It is created by the implementation task using `scipy.io.wavfile` or an equivalent tool so no external dependency is required.
+
+**Silent audio and segment assertions:** faster-whisper on silent audio produces zero segments or a single `[BLANK_AUDIO]` segment. `test_editor.py` must not assert "non-empty text content" for the auto-uploaded fixture — instead assert only that the segment list renders (at least 0 segments, or that the editor page loads without error). For assertions that require real transcription content, set `FIXTURE_TASK_ID` to a pre-existing completed task ID. In CI, set `FIXTURE_TASK_ID` to a task that was uploaded with real speech audio during environment setup.
 
 ### Unique audio file fixture (prevents duplicate detection across runs)
 
@@ -167,12 +174,12 @@ Each test uses `requests.get` / `requests.post` directly against `base_url`. For
 | Endpoint | Required response keys | Types |
 |---|---|---|
 | `GET /tasks/duplicates?filename=x&file_size=1` | `duplicates_found`, `matches` | `bool`, `list` |
-| `POST /upload` (with `sample.wav`) | `task_id`, `model_size`, `language` | `str`, `str`, `str` |
+| `POST /upload` (with `sample.wav`) | `task_id`, `model_size`, `language`, `word_timestamps`, `diarize` | `str`, `str`, `str`, `bool`, `bool` |
 | `GET /progress/{completed_task_id}` | `task_id`, `status`, `percent`, `message` | `str`, `str`, `int/float`, `str` |
 | `GET /subtitles/{completed_task_id}` | `task_id`, `segments` | `str`, `list` |
 | `GET /search/{completed_task_id}?q=the` | `task_id`, `query`, `matches`, `total_matches` | `str`, `str`, `list`, `int` |
 | `GET /translation/languages` | `pairs`, `count` | `list`, `int` |
-| `GET /embed/presets` | `presets` | `dict` |
+| `GET /embed/presets` | `presets` | `dict` (non-empty; assert `"default" in data["presets"]`) |
 | `GET /health` | `status`, `uptime_sec` | `str`, `float/int` |
 
 **Note:** `/tasks/duplicates` always returns 200 with the contract keys regardless of whether duplicates exist. A test using `filename=doesnotexist.wav&file_size=1` will return `{"duplicates_found": false, "matches": []}` — this is sufficient to assert both keys are present with correct types.
@@ -252,9 +259,13 @@ Requires `completed_task_id` fixture. All tests navigate to `/editor/{completed_
 **Session restore:**
 ```
 - page.goto(f"{base_url}/editor/{completed_task_id}")
-- Segment list visible (data-testid="segment-list" OR at least one segment row)
-- At least one segment has timecode text matching HH:MM:SS format
-- At least one segment has non-empty text content
+- Editor page loads (no redirect away, no JS errors)
+- Segment list container visible (data-testid="segment-list" OR .segment-list selector)
+- If FIXTURE_TASK_ID is set (real speech audio):
+    - At least one segment has timecode text matching HH:MM:SS format
+    - At least one segment has non-empty text content
+- If using auto-uploaded silent fixture:
+    - Assert only that the editor renders without error (zero segments is acceptable)
 - No JS errors
 ```
 
