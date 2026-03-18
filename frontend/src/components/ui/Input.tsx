@@ -1,40 +1,56 @@
-/* Input — text input with label and validation — Pixel (Sr. Frontend), Sprint L37 */
+import { forwardRef, useId, type InputHTMLAttributes } from 'react'
+import { cn } from './cn'
 
-import type React from 'react'
-
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string
   error?: string
   helperText?: string
+  leftIcon?: React.ReactNode
 }
 
-export function Input({ label, error, helperText, id, style, ...props }: InputProps) {
-  const inputId = id || (label ? `input-${label.toLowerCase().replace(/\s+/g, '-')}` : undefined)
+export const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ className, label, error, helperText, leftIcon, id: externalId, ...props }, ref) => {
+    const internalId = useId()
+    const id = externalId ?? internalId
+    const errorId = `${id}-error`
+    const helperId = `${id}-helper`
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-      {label && (
-        <label htmlFor={inputId} style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-text-2)' }}>
-          {label}
-        </label>
-      )}
-      <input
-        id={inputId}
-        {...props}
-        style={{
-          padding: '8px 12px',
-          borderRadius: 'var(--radius)',
-          border: `1px solid ${error ? 'var(--color-danger)' : 'var(--color-border)'}`,
-          background: 'var(--color-bg)',
-          color: 'var(--color-text)',
-          fontSize: '14px',
-          fontFamily: 'var(--font-family-sans)',
-          outline: 'none',
-          ...style,
-        }}
-      />
-      {error && <span style={{ fontSize: '12px', color: 'var(--color-danger)' }}>{error}</span>}
-      {!error && helperText && <span style={{ fontSize: '12px', color: 'var(--color-text-3)' }}>{helperText}</span>}
-    </div>
-  )
-}
+    return (
+      <div className="flex flex-col gap-1">
+        {label && (
+          <label htmlFor={id} className="text-sm font-medium text-[--color-text]">
+            {label}
+          </label>
+        )}
+        <div className="relative">
+          {leftIcon && (
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[--color-text-muted]">
+              {leftIcon}
+            </span>
+          )}
+          <input
+            ref={ref}
+            id={id}
+            className={cn(
+              'w-full h-9 px-3 text-sm rounded-md border border-[--color-border] bg-[--color-surface] text-[--color-text] placeholder:text-[--color-text-muted] focus:outline-none focus:border-[--color-border-focus] focus:ring-1 focus:ring-[--color-border-focus] transition-colors',
+              leftIcon && 'pl-9',
+              error && 'border-[--color-danger] focus:border-[--color-danger] focus:ring-[--color-danger]',
+              className
+            )}
+            aria-describedby={cn(error ? errorId : undefined, helperText ? helperId : undefined) || undefined}
+            aria-invalid={error ? 'true' : undefined}
+            {...props}
+          />
+        </div>
+        {error && (
+          <p id={errorId} className="text-xs text-[--color-danger]">{error}</p>
+        )}
+        {helperText && !error && (
+          <p id={helperId} className="text-xs text-[--color-text-muted]">{helperText}</p>
+        )}
+      </div>
+    )
+  }
+)
+
+Input.displayName = 'Input'

@@ -6,7 +6,6 @@ describe('Input', () => {
   it('no label renders no label element', () => {
     render(<Input />)
     expect(screen.queryByRole('textbox')).toBeInTheDocument()
-    // No label element
     const labels = document.querySelectorAll('label')
     expect(labels.length).toBe(0)
   })
@@ -30,10 +29,10 @@ describe('Input', () => {
     expect(screen.getByText('Enter your name')).toBeInTheDocument()
   })
 
-  it('error styling applies danger border', () => {
+  it('error applies danger border class', () => {
     render(<Input error="Bad" />)
     const input = screen.getByRole('textbox')
-    expect(input.style.border).toContain('var(--color-danger)')
+    expect(input.className).toContain('border-[--color-danger]')
   })
 
   it('onChange fires on user typing', () => {
