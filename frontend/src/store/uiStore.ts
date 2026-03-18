@@ -1,49 +1,41 @@
 import { create } from 'zustand'
-import type { HealthStatus } from '@/api/types'
 
-export type AppMode = 'transcribe' | 'embed'
-export type EmbedMode = 'soft' | 'hard'
+export type ContextPanelContent = 'info' | 'translate' | 'embed' | 'search'
 
 interface UIState {
-  appMode: AppMode
-  embedMode: EmbedMode
-  healthPanelOpen: boolean
-  taskQueueOpen: boolean
-  /** True once the /health/stream SSE connection has received at least one message. */
+  currentPage: string
+  contextPanelContent: ContextPanelContent
   sseConnected: boolean
-  reconnecting: boolean
-  dbOk: boolean
-  /** Latest health snapshot from /health/stream, shared across all consumers. */
-  health: HealthStatus | null
-}
+  sseReconnecting: boolean
+  systemHealth: 'healthy' | 'degraded' | 'critical'
+  modelPreloadStatus: Record<string, string>
+  dismissedSuggestions: string[]
 
-interface UIActions {
-  setAppMode: (mode: AppMode) => void
-  setEmbedMode: (mode: EmbedMode) => void
-  setHealthPanelOpen: (open: boolean) => void
-  setTaskQueueOpen: (open: boolean) => void
-  setSseConnected: (connected: boolean) => void
+  setCurrentPage: (page: string) => void
+  setContextPanel: (content: ContextPanelContent) => void
+  setSSEConnected: (connected: boolean) => void
   setReconnecting: (reconnecting: boolean) => void
-  setDbOk: (ok: boolean) => void
-  setHealth: (health: HealthStatus | null) => void
+  setSystemHealth: (health: 'healthy' | 'degraded' | 'critical') => void
+  setModelPreloadStatus: (status: Record<string, string>) => void
+  dismissSuggestion: (id: string) => void
 }
 
-export const useUIStore = create<UIState & UIActions>((set) => ({
-  appMode: 'transcribe',
-  embedMode: 'soft',
-  healthPanelOpen: false,
-  taskQueueOpen: false,
+export const useUIStore = create<UIState>((set) => ({
+  currentPage: '/',
+  contextPanelContent: 'info',
   sseConnected: false,
-  reconnecting: false,
-  dbOk: true,
-  health: null,
+  sseReconnecting: false,
+  systemHealth: 'healthy',
+  modelPreloadStatus: {},
+  dismissedSuggestions: [],
 
-  setAppMode: (mode) => set({ appMode: mode }),
-  setEmbedMode: (mode) => set({ embedMode: mode }),
-  setHealthPanelOpen: (open) => set({ healthPanelOpen: open }),
-  setTaskQueueOpen: (open) => set({ taskQueueOpen: open }),
-  setSseConnected: (connected) => set({ sseConnected: connected }),
-  setReconnecting: (reconnecting) => set({ reconnecting }),
-  setDbOk: (ok) => set({ dbOk: ok }),
-  setHealth: (health) => set({ health }),
+  setCurrentPage: (page) => set({ currentPage: page }),
+  setContextPanel: (content) => set({ contextPanelContent: content }),
+  setSSEConnected: (connected) => set({ sseConnected: connected }),
+  setReconnecting: (reconnecting) => set({ sseReconnecting: reconnecting }),
+  setSystemHealth: (health) => set({ systemHealth: health }),
+  setModelPreloadStatus: (status) => set({ modelPreloadStatus: status }),
+  dismissSuggestion: (id) => set(s => ({
+    dismissedSuggestions: [...s.dismissedSuggestions, id],
+  })),
 }))
