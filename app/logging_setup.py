@@ -132,7 +132,7 @@ class WebhookLogHandler(logging.Handler):
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
-            urllib.request.urlopen(req, timeout=5)
+            urllib.request.urlopen(req, timeout=5)  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected  # URL is operator-configured LOG_WEBHOOK_URL env-var, not user input  # fmt: skip
         except Exception:
             pass  # Never let log delivery failure crash the app
 

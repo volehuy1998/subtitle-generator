@@ -10,6 +10,7 @@ Checks:
   3. README.md references that point to real files exist
   4. Module counts in CLAUDE.md match actual file counts
   5. SECURITY.md exists (referenced by README.md)
+  6. Import order in app/main.py (app.config must be first)
 
 Exit code 0 = all checks pass, 1 = at least one failure.
 """
@@ -35,7 +36,7 @@ def ok(msg: str) -> None:
 
 
 def check_version_consistency() -> None:
-    print("\n[1/5] Version consistency")
+    print("\n[1/6] Version consistency")
 
     # Extract version from app/main.py
     main_py = ROOT / "app" / "main.py"
@@ -70,7 +71,7 @@ def check_version_consistency() -> None:
 
 
 def check_changelog_version() -> None:
-    print("\n[2/5] CHANGELOG latest version")
+    print("\n[2/6] CHANGELOG latest version")
 
     changelog = ROOT / "CHANGELOG.md"
     if not changelog.exists():
@@ -100,7 +101,7 @@ def check_changelog_version() -> None:
 
 
 def check_readme_references() -> None:
-    print("\n[3/5] README.md file references")
+    print("\n[3/6] README.md file references")
 
     readme = ROOT / "README.md"
     if not readme.exists():
@@ -126,7 +127,7 @@ def check_readme_references() -> None:
 
 
 def check_module_counts() -> None:
-    print("\n[4/5] CLAUDE.md module counts")
+    print("\n[4/6] CLAUDE.md module counts")
 
     claude_md = ROOT / "CLAUDE.md"
     if not claude_md.exists():
@@ -161,7 +162,7 @@ def check_module_counts() -> None:
 
 
 def check_required_files() -> None:
-    print("\n[5/5] Required project files exist")
+    print("\n[5/6] Required project files exist")
 
     required = [
         "README.md",
@@ -184,6 +185,36 @@ def check_required_files() -> None:
             error(f"{path} is missing")
 
 
+# ── 6. Import order in app/main.py ─────────────────────────────────────────
+
+
+def check_import_order() -> None:
+    print("\n[6/6] Import order in app/main.py")
+
+    main_py = ROOT / "app" / "main.py"
+    if not main_py.exists():
+        error("app/main.py not found")
+        return
+
+    lines = main_py.read_text().splitlines()
+    first_import: str | None = None
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith(("import ", "from ")) and not stripped.startswith("#"):
+            first_import = stripped
+            break
+
+    if first_import is None:
+        error("No import statements found in app/main.py")
+    elif "app.config" in first_import:
+        ok(f"First import is from app.config: {first_import}")
+    else:
+        error(
+            f"First import must be 'from app.config import ...' "
+            f"(loads env vars before anything else), found: {first_import}"
+        )
+
+
 # ── Main ─────────────────────────────────────────────────────────────────
 
 
@@ -197,6 +228,7 @@ def main() -> int:
     check_readme_references()
     check_module_counts()
     check_required_files()
+    check_import_order()
 
     print("\n" + "=" * 60)
     if ERRORS:

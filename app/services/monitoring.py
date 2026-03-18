@@ -114,7 +114,7 @@ def _notify_webhook(alert: dict):
             }
         ).encode()
         req = Request(url, data=body, headers={"Content-Type": "application/json"}, method="POST")
-        urlopen(req, timeout=5)
+        urlopen(req, timeout=5)  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected  # URL is operator-configured WEBHOOK_ALERT_URL env-var, not user input  # fmt: skip
     except Exception:
         pass  # Never block on webhook failure
 

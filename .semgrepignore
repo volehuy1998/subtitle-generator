@@ -1,0 +1,9 @@
+# .semgrepignore — paths excluded from Semgrep scanning
+# Only add paths with documented justification (false positive rationale required)
+
+# Test files — mocking patterns (sys.modules patching, mock objects) trigger
+# security rule false positives. Tests do not run in production.
+tests/
+
+# Example environment file — contains only placeholder values, not real secrets.
+.env.example

@@ -477,7 +477,7 @@ async def _fetch_github_json(path: str) -> dict | list | None:
         headers["Authorization"] = f"token {_GITHUB_TOKEN}"
     req = urllib.request.Request(url, headers=headers)
     loop = asyncio.get_event_loop()
-    resp = await loop.run_in_executor(None, lambda: urllib.request.urlopen(req, timeout=15))
+    resp = await loop.run_in_executor(None, lambda: urllib.request.urlopen(req, timeout=15))  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected  # URL is hardcoded https://api.github.com constant, not user-controlled  # fmt: skip
     return json.loads(resp.read().decode())
 
 

@@ -114,7 +114,7 @@ security/clamav-scan-timeout
 - **Error handling**: `HTTPException` for client errors, global exception handler for 500s.
 - **Concurrency**: `asyncio.to_thread()` for blocking I/O, `threading.Semaphore` for task limits.
 - **Config**: All settings in `app/config.py` with env var overrides and sensible defaults.
-- **Linting**: `ruff check . --select E,F,W --ignore E501` (no line length limit).
+- **Linting**: `ruff check .` (rules sourced from `pyproject.toml` — do not pass `--select`/`--ignore` inline).
 
 ### Frontend (React 19 + TypeScript + Vite 6)
 
@@ -305,15 +305,28 @@ E2E tests are excluded from the default `pytest tests/` run and require `pytest-
 ### Linting
 
 ```bash
-# Backend lint (matches CI)
-ruff check . --select E,F,W --ignore E501
+# Backend lint (matches CI — rules come from pyproject.toml)
+ruff check .
 
-# Frontend lint
+# Frontend lint (--max-warnings 0 matches CI exactly)
 cd frontend && npm run lint
 
 # Frontend type check + build
 cd frontend && npm run build
 ```
+
+### Pre-commit hook
+
+The repository ships a pre-commit hook that runs the same checks as CI Tier 1 (lint). Install it once after cloning:
+
+```bash
+# The hook is already present at .git/hooks/pre-commit — just make it executable
+chmod +x .git/hooks/pre-commit
+```
+
+The hook checks staged Python files with `ruff` (reads `pyproject.toml` for rules) and staged TypeScript/TSX files with ESLint (`--max-warnings 0`, blocking). It also scans for blocked files (cert.pem, .env) and secret patterns.
+
+Emergency bypass (use sparingly): `GIT_HOOKS_INHIBIT=1 git commit`
 
 ## 8. Architecture Overview
 
@@ -427,18 +440,18 @@ If you discover a security vulnerability, **do not open a public issue**. Instea
 
 ### Automated secret scanning
 
-Every PR is scanned by two CI jobs before it can merge:
+Every PR is scanned by CI jobs before it can merge:
 
 | Scanner | What it detects |
 |---------|-----------------|
-| **TruffleHog** | Verified credentials — API tokens, private keys, cloud access keys |
-| **`scripts/scan_sensitive.py`** | Public IPv4 addresses, PEM keys, DB URLs with credentials, hardcoded passwords |
+| **GitHub Secret Protection** | Verified credentials — API tokens, private keys, cloud access keys |
+| **Semgrep SAST** | Security anti-patterns, unsafe code patterns (`ci.yml` Tier 2) |
 
 **If the CI job fails on your PR:**
 
 1. Review the output — it shows the file, line number, and matched text.
 2. If it is a **real secret**: remove it immediately. Rotate the credential — assume it is compromised.
-3. If it is a **false positive**: add a regex to `.scanignore` with a comment explaining why it is safe. Keep the allow-list minimal.
+3. If it is a **false positive**: add a `# nosemgrep: rule-id  # justification` inline comment with a brief explanation of why it is safe.
 
 **For memory/documentation files** (`docs/`, `docs/`): do not include real server IPs, credentials, or private network details. Use placeholders (e.g., `<server-ip>`, `<db-password>`) or example addresses from [RFC 5737](https://datatracker.ietf.org/doc/html/rfc5737) TEST-NET ranges (`192.0.2.x`, `198.51.100.x`, `203.0.113.x`).
 

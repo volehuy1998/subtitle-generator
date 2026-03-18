@@ -54,7 +54,38 @@ jobs:
             type=semver,pattern={{major}}
             type=raw,value=latest
 
-      - uses: docker/build-push-action@v7
+      # Step A: Build image locally (do not push yet)
+      - name: Build Docker image (no push)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Step B: Health check before publish
+      - name: Validate Docker health before publish
+        run: |
+          IMAGE="ghcr.io/${{ github.repository }}:${{ needs.release-please.outputs.tag_name }}"
+          docker run -d --name release-health -p 8000:8000 "$IMAGE"
+          for i in $(seq 1 6); do
+            sleep 5
+            curl -sf http://localhost:8000/health && echo " Health OK" && break
+            if [ "$i" = "6" ]; then
+              echo "Health check timed out -- NOT publishing"
+              docker logs release-health
+              exit 1
+            fi
+          done
+          docker stop release-health
+          docker rm release-health
+
+      # Step C: Push only after health check passes
+      - name: Push Docker image
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true

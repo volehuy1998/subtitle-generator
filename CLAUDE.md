@@ -33,7 +33,7 @@ pytest tests/test_sprint17.py -v  # single file
 pytest tests/e2e/ -v              # e2e (requires Playwright)
 
 # Lint
-ruff check . --select E,F,W --ignore E501  # lint
+ruff check .                              # lint (rules from pyproject.toml)
 ruff format --check --diff .      # format check
 
 # Docker

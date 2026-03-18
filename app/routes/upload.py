@@ -5,7 +5,6 @@ import logging
 import uuid
 from typing import Literal, Optional
 
-import torch
 from fastapi import APIRouter, Form, HTTPException, Request, UploadFile
 
 from app import state
@@ -97,6 +96,8 @@ async def upload(
         )
 
     # Device fallback
+    import torch  # noqa: PLC0415  # lazy — avoids top-level GPU init
+
     if device == "cuda" and not torch.cuda.is_available():
         logger.warning("UPLOAD Device 'cuda' not available, falling back to CPU")
         device = "cpu"
