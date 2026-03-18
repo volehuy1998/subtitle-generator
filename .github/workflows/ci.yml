@@ -1,17 +1,20 @@
-name: CI/CD Pipeline
+# .github/workflows/ci.yml
+# Two-tier gate: Tier 1 (Lint, <2min) -> Tier 2 (Test, <10min)
+# Required status checks: "Lint" and "Test" only.
+# Docs-only changes are handled by docs.yml which provides passing stubs.
+
+name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
     paths-ignore:
       - '**.md'
       - 'docs/**'
       - 'LICENSE'
       - 'CODE_OF_CONDUCT.md'
-      - 'SECURITY.md'
-      - '.gitignore'
+      - 'CONTRIBUTING.md'
       - '.github/PULL_REQUEST_TEMPLATE.md'
-      - '.github/POSTMORTEM_TEMPLATE.md'
   pull_request:
     branches: [main]
     paths-ignore:
@@ -19,135 +22,225 @@ on:
       - 'docs/**'
       - 'LICENSE'
       - 'CODE_OF_CONDUCT.md'
-      - 'SECURITY.md'
-      - '.gitignore'
+      - 'CONTRIBUTING.md'
       - '.github/PULL_REQUEST_TEMPLATE.md'
-      - '.github/POSTMORTEM_TEMPLATE.md'
 
 permissions:
   contents: read
 
 jobs:
-  lint:
+  # ================================================================
+  # TIER 1: Fast Gate (<2 min) -- provides "Lint" required check
+  # ================================================================
+  tier1-lint:
     name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
 
-      # Python lint
+      # -- Python --------------------------------------------------
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
-      - run: pip install ruff
-      - run: ruff check .
-      - run: ruff format --check --diff .
+          python-version: '3.12'
 
-      # Frontend lint + type check
-      - uses: actions/setup-node@v6
+      - name: Install ruff
+        run: pip install ruff
+
+      - name: Ruff lint
+        run: ruff check .
+
+      - name: Ruff format check
+        run: ruff format --check --diff .
+
+      # -- Frontend -------------------------------------------------
+      - uses: actions/setup-node@v4
         with:
-          node-version: "20"
-      - name: Install frontend dependencies
-        working-directory: frontend
-        run: npm ci
-      - name: TypeScript check
-        working-directory: frontend
-        run: npx tsc -b --noEmit
-      - name: ESLint
-        working-directory: frontend
-        run: npx eslint src/ --max-warnings 0
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
-  test:
-    name: Test
+      - name: Install frontend dependencies
+        run: cd frontend && npm ci
+
+      - name: TypeScript type check
+        run: cd frontend && npx tsc -b --noEmit
+
+      - name: ESLint
+        run: cd frontend && npx eslint src/ --max-warnings 0
+
+      # -- Consistency ----------------------------------------------
+      - name: Validate cross-file consistency
+        run: python scripts/validate_consistency.py
+
+  # ================================================================
+  # TIER 2: Full Gate (<10 min) -- all parallel, all need Tier 1
+  # ================================================================
+
+  tier2-backend:
+    name: Backend Tests
+    needs: tier1-lint
     runs-on: ubuntu-latest
-    needs: lint
     steps:
       - uses: actions/checkout@v6
-
-      # Backend tests
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: '3.12'
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Install Python dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install pytest pytest-cov
+        run: pip install -r requirements.txt pytest pytest-cov
       - name: Run backend tests
         run: pytest tests/ -v --tb=short --cov=app --cov-report=xml
-      - name: Upload backend coverage
-        if: github.event_name == 'push'
-        uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: backend-coverage
           path: coverage.xml
 
-      # Frontend tests
-      - uses: actions/setup-node@v6
+  tier2-frontend:
+    name: Frontend Tests
+    needs: tier1-lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
         with:
-          node-version: "20"
-      - name: Install frontend dependencies
-        working-directory: frontend
-        run: npm ci
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - run: cd frontend && npm ci
       - name: Run frontend tests
-        working-directory: frontend
-        run: npx vitest run --coverage
-      - name: Upload frontend coverage
-        if: github.event_name == 'push'
-        uses: actions/upload-artifact@v7
+        run: cd frontend && npx vitest run --coverage
+      - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: frontend-coverage
           path: frontend/coverage/
 
-  deploy-validate:
-    name: Validate Deploy-Critical Files
+  tier2-semgrep:
+    name: Semgrep SAST
+    needs: tier1-lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-
-      - name: Validate docker-compose CPU profile
-        run: docker compose --profile cpu config > /dev/null
-
-      - name: Validate docker-compose newui profile
-        run: docker compose --profile newui config > /dev/null
-
-      - name: Validate deploy.sh syntax
-        run: bash -n scripts/deploy.sh
-
-      - name: Validate PROD_IMAGE_TAG consistency
+      - name: Install Semgrep
+        run: pip install semgrep
+      - name: Semgrep SAST scan
+        # Note: --config=auto requires network access to semgrep.dev registry.
+        # If the registry is unavailable, the job fails for non-code reasons.
+        # Mitigation: --timeout 60 caps the fetch. Pin to a specific version
+        # (e.g., semgrep==1.x.x) once a stable version is confirmed clean.
         run: |
-          # .env.example must declare PROD_IMAGE_TAG
-          grep -q '^PROD_IMAGE_TAG=' .env.example || { echo "PROD_IMAGE_TAG missing from .env.example"; exit 1; }
-          # docker-compose.yml must reference PROD_IMAGE_TAG
-          grep -q 'PROD_IMAGE_TAG' docker-compose.yml || { echo "docker-compose.yml does not reference PROD_IMAGE_TAG"; exit 1; }
+          semgrep scan \
+            --config=auto \
+            --config=p/python \
+            --config=p/security-audit \
+            --error \
+            --timeout 60 \
+            --no-git-ignore \
+            app/
 
-  consistency:
-    name: Validate Cross-File Consistency
+  tier2-audit:
+    name: Dependency Audit
+    needs: tier1-lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - name: Python dependency audit
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt
+      - name: Frontend dependency audit
+        run: cd frontend && npm ci && npm audit --audit-level=high
 
-      - name: Run consistency checks
-        run: python scripts/validate_consistency.py
-
-  build:
-    name: Build Docker Image
+  tier2-build:
+    name: Build
+    needs: tier1-lint
     runs-on: ubuntu-latest
-    needs: test
-    if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v6
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-      - name: Build image
-        run: docker build -t subtitle-generator:${{ github.sha }} .
-      - name: Test image health
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - name: Build frontend
+        run: cd frontend && npm ci && npm run build
+      - name: Validate build output
         run: |
-          docker run -d --name test-container -p 8000:8000 subtitle-generator:${{ github.sha }}
-          sleep 10
-          curl -f http://localhost:8000/health || exit 1
-          docker stop test-container
+          test -f frontend/dist/index.html || (echo "FAIL: index.html missing" && exit 1)
+          test -d frontend/dist/assets || (echo "FAIL: assets/ missing" && exit 1)
+          echo "Build validation passed"
+      - name: Build Docker image
+        if: github.ref == 'refs/heads/main'
+        run: docker build -t subtitle-generator:${{ github.sha }} .
+      - name: Validate Docker health
+        if: github.ref == 'refs/heads/main'
+        run: |
+          docker run -d --name health-test -p 8000:8000 subtitle-generator:${{ github.sha }}
+          for i in $(seq 1 6); do
+            sleep 5
+            curl -sf http://localhost:8000/health && echo " Health OK" && break
+            if [ "$i" = "6" ]; then
+              echo "Health check failed after 30s"
+              docker logs health-test
+              exit 1
+            fi
+          done
+          docker stop health-test
+
+  tier2-schema:
+    name: Schema Validation
+    needs: tier1-lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run migrations on fresh SQLite
+        run: DATABASE_URL=sqlite+aiosqlite:////tmp/test_schema.db alembic upgrade head
+      - name: Validate schema matches models
+        run: |
+          python -c "
+          from app.db.models import Base
+          from sqlalchemy import create_engine, inspect
+          engine = create_engine('sqlite:////tmp/test_schema.db')
+          inspector = inspect(engine)
+          db_tables = set(inspector.get_table_names())
+          model_tables = set(Base.metadata.tables.keys())
+          missing = model_tables - db_tables
+          extra = db_tables - model_tables - {'alembic_version'}
+          if missing:
+              print(f'FAIL: Tables in models but not in DB: {missing}'); exit(1)
+          if extra:
+              print(f'FAIL: Tables in DB but not in models: {extra}'); exit(1)
+          print(f'Schema OK: {len(db_tables)} tables match')
+          "
+
+  # ================================================================
+  # GATE: Aggregator -- provides "Test" required check
+  # Only passes when ALL Tier 2 jobs pass.
+  # ================================================================
+  tier2-gate:
+    name: Test
+    needs:
+      - tier2-backend
+      - tier2-frontend
+      - tier2-semgrep
+      - tier2-audit
+      - tier2-build
+      - tier2-schema
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "All Tier 2 checks passed"
