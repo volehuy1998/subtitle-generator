@@ -1,5 +1,5 @@
 # CodeQL security scanning for Python, JavaScript/TypeScript, and GitHub Actions.
-# Runs on code changes only — skipped for documentation-only PRs.
+# Runs on code changes only -- skipped for documentation-only PRs.
 # Weekly scheduled scan covers all code regardless of path filtering.
 
 name: "CodeQL Advanced"
@@ -28,7 +28,7 @@ on:
       - '.github/PULL_REQUEST_TEMPLATE.md'
       - '.github/POSTMORTEM_TEMPLATE.md'
   schedule:
-    # Weekly full scan (Monday 1:21 PM UTC) — covers all code regardless of path filtering
+    # Weekly full scan (Monday 1:21 PM UTC) -- covers all code regardless of path filtering
     - cron: '21 13 * * 1'
 
 jobs:
@@ -54,7 +54,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v4
