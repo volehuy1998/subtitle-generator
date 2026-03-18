@@ -271,38 +271,35 @@ export function TaskHistory() {
         onClose={() => setDeleteTarget(null)}
         title="Delete task"
         description={`Delete task and files for "${deleteTarget?.filename ?? ''}"? This action cannot be undone.`}
-        actions={
-          <>
-            <button
-              type="button"
-              onClick={() => setDeleteTarget(null)}
-              className="px-4 py-2 rounded-lg text-sm font-medium border transition-colors"
-              style={{
-                background: 'var(--color-surface)',
-                borderColor: 'var(--color-border)',
-                color: 'var(--color-text)',
-                cursor: 'pointer',
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleDeleteConfirm}
-              className="px-4 py-2 rounded-lg text-sm font-medium border transition-colors"
-              style={{
-                background: 'var(--color-danger)',
-                borderColor: 'var(--color-danger)',
-                color: 'white',
-                cursor: 'pointer',
-              }}
-            >
-              Delete
-            </button>
-          </>
-        }
       >
-        <div />
+        <div className="flex justify-end gap-3 mt-2">
+          <button
+            type="button"
+            onClick={() => setDeleteTarget(null)}
+            className="px-4 py-2 rounded-lg text-sm font-medium border transition-colors"
+            style={{
+              background: 'var(--color-surface)',
+              borderColor: 'var(--color-border)',
+              color: 'var(--color-text)',
+              cursor: 'pointer',
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleDeleteConfirm}
+            className="px-4 py-2 rounded-lg text-sm font-medium border transition-colors"
+            style={{
+              background: 'var(--color-danger)',
+              borderColor: 'var(--color-danger)',
+              color: 'white',
+              cursor: 'pointer',
+            }}
+          >
+            Delete
+          </button>
+        </div>
       </Dialog>
     </div>
   )
