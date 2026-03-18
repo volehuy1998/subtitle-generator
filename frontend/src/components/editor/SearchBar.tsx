@@ -27,7 +27,7 @@ export function SearchBar({ taskId }: SearchBarProps) {
 
     timerRef.current = setTimeout(() => {
       api.search(taskId, query).then(res => {
-        const mapped = (res.results ?? []).map(r => ({
+        const mapped = (res.matches ?? []).map(r => ({
           segmentIndex: r.index,
           text: r.text,
           matchStart: 0,

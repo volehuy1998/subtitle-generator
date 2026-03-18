@@ -138,7 +138,8 @@ export const api = {
     return fetch(`/search/${taskId}?${params}`).then(r => json<{
       task_id: string
       query: string
-      results: Array<{ index: number; start: number; end: number; text: string }>
+      total_matches: number
+      matches: Array<{ index: number; start: number; end: number; text: string }>
     }>(r))
   },
 
