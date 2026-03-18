@@ -271,6 +271,12 @@
     animation: fade-in var(--transition-slow) ease forwards;
   }
 
+  /* Indeterminate progress bar */
+  @keyframes indeterminate {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(400%); }
+  }
+
   /* Toast slide in */
   @keyframes slide-in-right {
     from { opacity: 0; transform: translateX(100%); }
