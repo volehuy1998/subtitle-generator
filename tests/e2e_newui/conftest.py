@@ -71,7 +71,43 @@ def task_http_session():
 
 
 @pytest.fixture(scope="session")
-def completed_task_id(base_url, unique_audio_file, task_http_session):
+def fixture_audio_file(tmp_path_factory, test_audio_file):
+    """Separate unique audio file for the completed_task_id fixture.
+
+    Kept distinct from unique_audio_file so that test_happy_path_upload
+    never sees this upload as a duplicate.
+    """
+    dest = tmp_path_factory.mktemp("fixture") / f"fixture_{uuid.uuid4().hex[:8]}.wav"
+    shutil.copy(test_audio_file, dest)
+    return dest
+
+
+@pytest.fixture(scope="session")
+def contract_audio_file(tmp_path_factory, test_audio_file):
+    """Unique audio file for the upload contract test.
+
+    Kept separate so test_duplicate_detection_* tests are not affected
+    by a prior upload of the same filename.
+    """
+    dest = tmp_path_factory.mktemp("contract") / f"contract_{uuid.uuid4().hex[:8]}.wav"
+    shutil.copy(test_audio_file, dest)
+    return dest
+
+
+@pytest.fixture(scope="session")
+def duplicate_test_audio_file(tmp_path_factory, test_audio_file):
+    """Shared audio file used by both duplicate detection tests.
+
+    Session-scoped so the second duplicate test sees the task created by
+    the first, reliably triggering duplicate detection.
+    """
+    dest = tmp_path_factory.mktemp("dupes") / f"dupe_{uuid.uuid4().hex[:8]}.wav"
+    shutil.copy(test_audio_file, dest)
+    return dest
+
+
+@pytest.fixture(scope="session")
+def completed_task_id(base_url, fixture_audio_file, task_http_session):
     """
     Returns a task ID for a completed transcription.
     Checks FIXTURE_TASK_ID env var first (local dev), then uploads and polls (CI).
@@ -84,7 +120,7 @@ def completed_task_id(base_url, unique_audio_file, task_http_session):
     # Upload and poll to completion — use a Session to persist cookies for session auth
     session = task_http_session
     try:
-        with open(unique_audio_file, "rb") as f:
+        with open(fixture_audio_file, "rb") as f:
             resp = session.post(
                 f"{base_url}/upload",
                 files={"file": f},

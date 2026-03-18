@@ -38,8 +38,8 @@ def test_duplicates_response_shape(base_url):
 
 
 @pytest.mark.contract
-def test_upload_response_shape(base_url, test_audio_file):
-    with open(test_audio_file, "rb") as f:
+def test_upload_response_shape(base_url, contract_audio_file):
+    with open(contract_audio_file, "rb") as f:
         data = _post(base_url, "/upload", files={"file": f})
     assert "task_id" in data and isinstance(data["task_id"], str)
     assert "model_size" in data and isinstance(data["model_size"], str)
