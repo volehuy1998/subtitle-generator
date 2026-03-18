@@ -2,6 +2,7 @@
 Upload flow tests — happy path, duplicate detection, edge cases.
 """
 
+import re
 import tempfile
 from pathlib import Path
 
@@ -94,6 +95,11 @@ def test_undersized_file_shows_error(page: Page, base_url: str):
     _set_file_input(page, Path(tiny_file))
     toast_container = page.locator('[data-testid="toast-container"]')
     expect(toast_container).to_be_visible(timeout=3000)
+    # Error message should mention size or range
+    toast_text = toast_container.text_content() or ""
+    assert re.search(r"size|range", toast_text, re.IGNORECASE), (
+        f"Expected 'size' or 'range' in toast message, got: {toast_text!r}"
+    )
     page.wait_for_timeout(500)
     assert "/editor/" not in page.url
     assert not errors, f"JS errors: {errors}"

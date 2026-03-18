@@ -290,9 +290,12 @@ Requires `completed_task_id` fixture. All tests navigate to `/editor/{completed_
 
 **Download links:**
 ```
-- Click DownloadMenu button (data-testid="download-menu" or button containing "Download")
-- Assert link href containing f"/download/{completed_task_id}?format=srt" is visible
-- Assert link href containing f"/download/{completed_task_id}?format=vtt" is visible
+- Click DownloadMenu button (data-testid="download-menu-wrapper" wrapper, then its button child)
+- Assert link href containing f"/subtitles/{completed_task_id}" and "format=srt" is visible
+- Assert link href containing f"/subtitles/{completed_task_id}" and "format=vtt" is visible
+
+Note: DownloadMenu.tsx generates /subtitles/{taskId}?format={format}&download=1
+(not /download/{taskId}?format=...). Tests must use the actual route.
 ```
 
 **No JS errors throughout**
