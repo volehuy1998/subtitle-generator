@@ -1,32 +1,19 @@
-/* Divider — horizontal rule with optional label — Pixel (Sr. Frontend), Sprint L38 */
+import { cn } from './cn'
 
 interface DividerProps {
   label?: string
-  spacing?: 'sm' | 'md' | 'lg'
+  className?: string
 }
 
-export function Divider({ label, spacing = 'md' }: DividerProps) {
-  const gap = spacing === 'sm' ? '8px' : spacing === 'md' ? '16px' : '24px'
-
-  if (!label) {
-    return <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: `${gap} 0` }} />
+export function Divider({ label, className }: DividerProps) {
+  if (label) {
+    return (
+      <div className={cn('flex items-center gap-3', className)} role="separator">
+        <div className="flex-1 h-px bg-[--color-border]" />
+        <span className="text-xs text-[--color-text-muted] font-medium shrink-0">{label}</span>
+        <div className="flex-1 h-px bg-[--color-border]" />
+      </div>
+    )
   }
-
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: `${gap} 0` }}>
-      <div style={{ flex: 1, height: '1px', background: 'var(--color-border)' }} />
-      <span
-        style={{
-          fontSize: '12px',
-          fontWeight: 500,
-          color: 'var(--color-text-3)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-        }}
-      >
-        {label}
-      </span>
-      <div style={{ flex: 1, height: '1px', background: 'var(--color-border)' }} />
-    </div>
-  )
+  return <hr className={cn('border-0 h-px bg-[--color-border]', className)} />
 }

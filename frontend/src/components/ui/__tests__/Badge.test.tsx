@@ -12,16 +12,15 @@ describe('Badge', () => {
     const { container } = render(<Badge dot>Status</Badge>)
     // The outer span contains a dot span (small circle) + text
     const spans = container.querySelectorAll('span > span')
-    // First inner span is the dot
     const dotSpan = spans[0]
     expect(dotSpan).toBeInTheDocument()
-    expect((dotSpan as HTMLElement).style.borderRadius).toBe('50%')
+    // dot uses Tailwind classes: rounded-full bg-current
+    expect((dotSpan as HTMLElement).className).toContain('rounded-full')
   })
 
   it('dot=false renders no dot', () => {
     const { container } = render(<Badge>Status</Badge>)
     const innerSpans = container.querySelectorAll('span > span')
-    // No inner span elements — only text node inside the outer span
     expect(innerSpans.length).toBe(0)
   })
 
@@ -33,11 +32,8 @@ describe('Badge', () => {
     },
   )
 
-  it.each(['sm', 'md'] as const)(
-    'size=%s renders without crashing',
-    (size) => {
-      render(<Badge size={size}>Tag</Badge>)
-      expect(screen.getByText('Tag')).toBeInTheDocument()
-    },
-  )
+  it('className passthrough works', () => {
+    const { container } = render(<Badge className="extra-class">Tag</Badge>)
+    expect(container.firstElementChild!.className).toContain('extra-class')
+  })
 })
