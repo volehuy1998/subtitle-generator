@@ -117,4 +117,47 @@ export const api = {
       preview_limit: number
       segments: Array<{ start: number; end: number; text: string }>
     }>(r)),
+
+  updateSubtitle: (taskId: string, index: number, text: string) =>
+    fetch(`/subtitles/${taskId}/${index}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    }).then(r => json<{ message: string }>(r)),
+
+  updateSubtitles: (taskId: string, segments: Array<{ index: number; text: string }>) =>
+    fetch(`/subtitles/${taskId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ segments }),
+    }).then(r => json<{ message: string }>(r)),
+
+  search: (taskId: string, query: string, limit?: number) => {
+    const params = new URLSearchParams({ q: query })
+    if (limit !== undefined) params.set('limit', String(limit))
+    return fetch(`/search/${taskId}?${params}`).then(r => json<{
+      task_id: string
+      query: string
+      results: Array<{ index: number; start: number; end: number; text: string }>
+    }>(r))
+  },
+
+  retranscribe: (taskId: string, options?: Record<string, unknown>) =>
+    fetch(`/tasks/${taskId}/retranscribe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(options ?? {}),
+    }).then(r => json<{ task_id: string; message: string }>(r)),
+
+  duplicates: (filename: string, fileSize: number) => {
+    const params = new URLSearchParams({ filename, file_size: String(fileSize) })
+    return fetch(`/tasks/duplicates?${params}`).then(r => json<{
+      duplicates: Array<{ task_id: string; filename: string; created_at: string }>
+    }>(r))
+  },
+
+  embedPresets: () =>
+    fetch('/embed/presets').then(r => json<{
+      presets: Array<{ name: string; label: string; description: string }>
+    }>(r)),
 }
