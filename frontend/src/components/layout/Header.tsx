@@ -10,7 +10,7 @@
 
 import { navigate } from '../../navigation'
 import { useUIStore } from '../../store/uiStore'
-// import { HealthIndicator } from '../system/HealthIndicator' // added in Task 36
+import { HealthIndicator } from '../system/HealthIndicator'
 
 export function Header() {
   const currentPage = useUIStore((s) => s.currentPage)
@@ -52,7 +52,7 @@ export function Header() {
               {label}
             </button>
           ))}
-          {/* HealthIndicator placeholder — added in Task 36 */}
+          <HealthIndicator />
         </nav>
       </div>
     </header>

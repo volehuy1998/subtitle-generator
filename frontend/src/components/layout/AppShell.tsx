@@ -13,7 +13,7 @@
 import { type ReactNode } from 'react'
 import { Header } from './Header'
 import { Footer } from './Footer'
-// import { ConnectionBanner } from '../system/ConnectionBanner' // added in Task 36
+import { ConnectionBanner } from '../system/ConnectionBanner'
 
 interface AppShellProps {
   children: ReactNode
@@ -29,7 +29,7 @@ export function AppShell({ children }: AppShellProps) {
       >
         Skip to main content
       </a>
-      {/* <ConnectionBanner /> */}
+      <ConnectionBanner />
       <Header />
       <main
         id="main-content"
