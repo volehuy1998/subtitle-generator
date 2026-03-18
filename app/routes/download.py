@@ -60,7 +60,7 @@ async def search_subtitles(
         segments = json.load(f)
 
     query_lower = q.lower()
-    matches = [s for s in segments if query_lower in s.get("text", "").lower()]
+    matches = [{"index": i, **s} for i, s in enumerate(segments) if query_lower in s.get("text", "").lower()]
 
     logger.info(f"SEARCH [{task_id[:8]}] query={q!r} found {len(matches)} match(es)")
     log_task_event(task_id, "searched", query=q, total_matches=len(matches), limit=limit)
