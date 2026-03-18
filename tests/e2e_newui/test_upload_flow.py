@@ -24,19 +24,21 @@ def test_happy_path_upload(page: Page, base_url: str, unique_audio_file: Path):
     _set_file_input(page, unique_audio_file)
     progress = page.locator('[data-testid="upload-progress"]')
     expect(progress).to_be_visible(timeout=5000)
-    page.wait_for_url("**/editor/**", timeout=60_000)
+    page.wait_for_url("**/editor/**", timeout=60_000, wait_until="commit")
     assert re.search(r"/editor/[0-9a-f-]+", page.url), f"Unexpected URL: {page.url}"
     assert not errors, f"JS errors during upload: {errors}"
 
 
 @pytest.mark.upload
-def test_duplicate_detection_cancel(page: Page, base_url: str, test_audio_file: Path):
+def test_duplicate_detection_cancel(page: Page, base_url: str, duplicate_test_audio_file: Path):
     """Upload same file twice; cancel from duplicate dialog returns to /."""
     page.goto(base_url)
-    _set_file_input(page, test_audio_file)
-    page.wait_for_url("**/editor/**", timeout=60_000)
+    _set_file_input(page, duplicate_test_audio_file)
+    page.wait_for_url("**/editor/**", timeout=60_000, wait_until="commit")
+    # Wait for transcription to complete — duplicate check only matches status=done tasks
+    page.wait_for_timeout(8000)
     page.goto(base_url)
-    _set_file_input(page, test_audio_file)
+    _set_file_input(page, duplicate_test_audio_file)
     dialog = page.locator('text="Duplicate detected"')
     expect(dialog).to_be_visible(timeout=5000)
     cancel_btn = page.get_by_role("button", name="Cancel")
@@ -48,19 +50,29 @@ def test_duplicate_detection_cancel(page: Page, base_url: str, test_audio_file: 
 
 
 @pytest.mark.upload
-def test_duplicate_detection_upload_anyway(page: Page, base_url: str, test_audio_file: Path):
+def test_duplicate_detection_upload_anyway(page: Page, base_url: str, duplicate_test_audio_file: Path):
     """Upload same file twice; click 'Upload anyway' → proceeds to editor."""
     page.goto(base_url)
-    _set_file_input(page, test_audio_file)
-    page.wait_for_url("**/editor/**", timeout=60_000)
+    _set_file_input(page, duplicate_test_audio_file)
+    # First upload may show duplicate dialog if test_duplicate_detection_cancel ran first.
+    # Wait up to 5s for the dialog; if it appears, click through.
+    dialog = page.locator('text="Duplicate detected"')
+    try:
+        expect(dialog).to_be_visible(timeout=5000)
+        page.get_by_role("button", name="Upload anyway").click()
+    except Exception:
+        pass  # No dialog — first upload for this file in the session
+    page.wait_for_url("**/editor/**", timeout=60_000, wait_until="commit")
+    # Wait for transcription to complete — duplicate check only matches status=done tasks
+    page.wait_for_timeout(8000)
     page.goto(base_url)
-    _set_file_input(page, test_audio_file)
+    _set_file_input(page, duplicate_test_audio_file)
     dialog = page.locator('text="Duplicate detected"')
     expect(dialog).to_be_visible(timeout=5000)
     upload_anyway = page.get_by_role("button", name="Upload anyway")
     expect(upload_anyway).to_be_visible()
     upload_anyway.click()
-    page.wait_for_url("**/editor/**", timeout=60_000)
+    page.wait_for_url("**/editor/**", timeout=60_000, wait_until="commit")
     assert "/editor/" in page.url
 
 
