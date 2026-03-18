@@ -1,6 +1,7 @@
 import { X } from 'lucide-react'
 import { Badge } from '../ui/Badge'
 import { SmartSuggestion } from './SmartSuggestion'
+import { SearchBar } from './SearchBar'
 import { TranslatePanel } from './TranslatePanel'
 import { EmbedPanel } from './EmbedPanel'
 import { useEditorStore } from '../../store/editorStore'
@@ -105,11 +106,13 @@ function InfoPanel() {
 }
 
 function SearchPanel() {
+  const taskId = useEditorStore(s => s.taskId)
   const searchResults = useEditorStore(s => s.searchResults)
   const searchQuery = useEditorStore(s => s.searchQuery)
 
   return (
     <div className="flex flex-col gap-3">
+      {taskId && <SearchBar taskId={taskId} />}
       <p className="text-sm text-[--color-text-secondary]">
         {searchResults.length === 0
           ? searchQuery ? 'No results found.' : 'Enter a search query.'
