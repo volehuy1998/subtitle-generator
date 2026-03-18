@@ -34,7 +34,7 @@ def main():
         # Find matching incident IDs first
         placeholders = ",".join("?" for _ in TEST_TITLES)
         rows = conn.execute(
-            f"SELECT id, title, severity, status FROM status_incidents WHERE title IN ({placeholders})",
+            f"SELECT id, title, severity, status FROM status_incidents WHERE title IN ({placeholders})",  # noqa: S608  # parameterized query, not injection risk
             list(TEST_TITLES),
         ).fetchall()
 
@@ -51,11 +51,11 @@ def main():
         # Delete child updates first (FK constraint)
         id_placeholders = ",".join("?" for _ in ids_to_delete)
         updates_deleted = conn.execute(
-            f"DELETE FROM status_incident_updates WHERE incident_id IN ({id_placeholders})",
+            f"DELETE FROM status_incident_updates WHERE incident_id IN ({id_placeholders})",  # noqa: S608  # parameterized query, not injection risk
             ids_to_delete,
         ).rowcount
         incidents_deleted = conn.execute(
-            f"DELETE FROM status_incidents WHERE id IN ({id_placeholders})",
+            f"DELETE FROM status_incidents WHERE id IN ({id_placeholders})",  # noqa: S608  # parameterized query, not injection risk
             ids_to_delete,
         ).rowcount
 

@@ -1,11 +1,11 @@
 """GPU detection, VRAM management, auto model selection."""
 
-import torch
-
 from app.config import MODEL_VRAM_GB
 
 
 def get_system_info() -> dict:
+    import torch  # noqa: PLC0415  # lazy — avoids top-level GPU init
+
     from app.services.gpu import auto_select_model
 
     info = {
@@ -35,6 +35,8 @@ def get_system_info() -> dict:
 
 
 def get_gpu_memory_usage() -> dict:
+    import torch  # noqa: PLC0415  # lazy — avoids top-level GPU init
+
     if not torch.cuda.is_available():
         return {}
     allocated = torch.cuda.memory_allocated(0) / 1024**3
@@ -50,6 +52,8 @@ def get_gpu_memory_usage() -> dict:
 
 def check_vram_for_model(model_size: str) -> dict:
     """Check if the model will fit in GPU VRAM."""
+    import torch  # noqa: PLC0415  # lazy — avoids top-level GPU init
+
     if not torch.cuda.is_available():
         return {"fits": False, "reason": "no_gpu"}
     total = torch.cuda.get_device_properties(0).total_memory / 1024**3
@@ -66,6 +70,8 @@ def check_vram_for_model(model_size: str) -> dict:
 
 def auto_select_model() -> str:
     """Auto-select the largest model that fits comfortably in VRAM."""
+    import torch  # noqa: PLC0415  # lazy — avoids top-level GPU init
+
     if not torch.cuda.is_available():
         return "small"
     total = torch.cuda.get_device_properties(0).total_memory / 1024**3

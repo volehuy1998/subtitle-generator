@@ -12,7 +12,6 @@ import subprocess
 import sys
 
 import psutil
-import torch
 
 from app.config import CPU_COUNT, MODEL_VRAM_GB
 
@@ -97,6 +96,8 @@ def _detect_memory() -> dict:
 
 
 def _detect_gpu() -> dict:
+    import torch  # noqa: PLC0415  # lazy — avoids top-level GPU init
+
     info = {
         "cuda_available": torch.cuda.is_available(),
         "device_count": 0,
@@ -144,7 +145,8 @@ def _detect_storage() -> dict:
 
 
 def _detect_software() -> dict:
-    import faster_whisper
+    import faster_whisper  # noqa: PLC0415  # lazy — avoids top-level GPU init
+    import torch  # noqa: PLC0415  # lazy — avoids top-level GPU init
 
     ffmpeg_version = "not found"
     ffprobe_version = "not found"

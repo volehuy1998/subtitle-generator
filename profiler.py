@@ -15,7 +15,6 @@ import threading
 import time
 
 import psutil
-import torch
 
 logger = logging.getLogger("subtitle-generator")
 
@@ -59,6 +58,8 @@ def snapshot_system() -> dict:
         pass
 
     # GPU
+    import torch  # noqa: PLC0415  # lazy — avoids top-level GPU init
+
     if torch.cuda.is_available():
         snap.update(snapshot_gpu())
 
@@ -67,6 +68,8 @@ def snapshot_system() -> dict:
 
 def snapshot_gpu() -> dict:
     """Capture GPU-specific metrics."""
+    import torch  # noqa: PLC0415  # lazy — avoids top-level GPU init
+
     if not torch.cuda.is_available():
         return {}
     try:

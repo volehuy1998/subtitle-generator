@@ -4,8 +4,6 @@ import logging
 import threading
 import time
 
-from faster_whisper import WhisperModel
-
 from app import state
 from app.config import CPU_COUNT
 from app.services.gpu import get_gpu_memory_usage
@@ -32,11 +30,13 @@ def get_compute_type(device: str, model_size: str) -> str:
     return "float16"
 
 
-def _load_model_with_timeout(model_size: str, device: str, compute_type: str, timeout: float) -> WhisperModel:
+def _load_model_with_timeout(model_size: str, device: str, compute_type: str, timeout: float):
     """Load a WhisperModel in a thread with a timeout to prevent deadlocks.
 
     Sprint L9: Queue-based model loading with timeout — Forge (Sr. Backend Engineer)
     """
+    from faster_whisper import WhisperModel  # noqa: PLC0415  # lazy — avoids top-level GPU init
+
     result: dict = {}
     error: list = []
 
@@ -66,7 +66,7 @@ def _load_model_with_timeout(model_size: str, device: str, compute_type: str, ti
     return result["model"]
 
 
-def get_model(model_size: str, device: str) -> WhisperModel:
+def get_model(model_size: str, device: str):
     """Thread-safe cached model loading with timeout protection.
 
     Uses a lock to prevent concurrent model switches. If loading takes longer
