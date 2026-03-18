@@ -21,7 +21,7 @@ export function EditorToolbar() {
 
   return (
     <>
-      <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-[--color-border] bg-[--color-surface]">
+      <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-surface)]">
         {/* Left: actions */}
         <div className="flex items-center gap-2 flex-wrap">
           <DownloadMenu taskId={taskId} />
@@ -69,7 +69,7 @@ export function EditorToolbar() {
         <div className="flex items-center gap-2 shrink-0">
           {fileMetadata?.filename && (
             <span
-              className="text-sm text-[--color-text-secondary] max-w-[200px] truncate"
+              className="text-sm text-[var(--color-text-secondary)] max-w-[200px] truncate"
               title={fileMetadata.filename}
             >
               {fileMetadata.filename}

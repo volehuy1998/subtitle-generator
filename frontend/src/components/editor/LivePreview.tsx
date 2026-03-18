@@ -16,14 +16,14 @@ export function LivePreview() {
     <div
       aria-live="polite"
       aria-label="Live transcription preview"
-      className="max-h-48 overflow-y-auto rounded-md border border-[--color-border] bg-[--color-surface-raised] p-2"
+      className="max-h-48 overflow-y-auto rounded-md border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-2"
     >
       {liveSegments.map((seg) => (
         <div key={seg.index} className="flex gap-3 py-0.5 text-sm">
-          <span className="shrink-0 font-mono text-xs text-[--color-text-muted] pt-px">
+          <span className="shrink-0 font-mono text-xs text-[var(--color-text-muted)] pt-px">
             {formatTimecode(seg.start)}
           </span>
-          <span className="text-[--color-text]">{seg.text}</span>
+          <span className="text-[var(--color-text)]">{seg.text}</span>
         </div>
       ))}
       <div ref={bottomRef} />

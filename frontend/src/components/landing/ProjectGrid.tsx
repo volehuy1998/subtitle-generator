@@ -25,11 +25,11 @@ export function ProjectGrid() {
   return (
     <section data-testid="project-grid">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-semibold text-[--color-text]">Recent Projects</h2>
+        <h2 className="text-base font-semibold text-[var(--color-text)]">Recent Projects</h2>
         <button
           type="button"
           onClick={clearAll}
-          className="text-xs text-[--color-text-secondary] hover:text-[--color-danger] transition-colors"
+          className="text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-danger)] transition-colors"
         >
           Clear
         </button>

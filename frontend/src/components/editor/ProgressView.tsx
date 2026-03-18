@@ -36,14 +36,14 @@ export function ProgressView({ taskId }: ProgressViewProps) {
 
   return (
     <TooltipProvider>
-      <div className="flex flex-col gap-4 p-4 rounded-lg border border-[--color-border] bg-[--color-surface]">
+      <div className="flex flex-col gap-4 p-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]">
         {/* Header */}
         <div>
-          <p className="text-sm font-medium text-[--color-text] truncate">
+          <p className="text-sm font-medium text-[var(--color-text)] truncate">
             {fileMetadata?.filename ?? 'Processing...'}
           </p>
           {modelUsed && (
-            <p className="text-xs text-[--color-text-muted] mt-0.5">
+            <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
               Model: {modelUsed}
             </p>
           )}
@@ -54,14 +54,14 @@ export function ProgressView({ taskId }: ProgressViewProps) {
 
         {/* Stats */}
         {statParts.length > 0 && (
-          <p className="text-xs text-[--color-text-secondary]">
+          <p className="text-xs text-[var(--color-text-secondary)]">
             {statParts.join(' | ')}
           </p>
         )}
 
         {/* Message */}
         {progress?.message && (
-          <p className="text-xs text-[--color-text-muted] italic">{progress.message}</p>
+          <p className="text-xs text-[var(--color-text-muted)] italic">{progress.message}</p>
         )}
 
         {/* Pipeline steps */}

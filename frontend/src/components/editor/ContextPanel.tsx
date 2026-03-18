@@ -29,34 +29,34 @@ function InfoPanel() {
   return (
     <div className="flex flex-col gap-4">
       {/* File info */}
-      <div className="rounded-lg border border-[--color-border] bg-[--color-surface-raised] p-3">
-        <p className="text-xs font-semibold text-[--color-text-muted] uppercase tracking-wide mb-2">
+      <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-3">
+        <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-2">
           File Info
         </p>
         <dl className="flex flex-col gap-1.5 text-sm">
           {fileMetadata?.filename && (
             <div className="flex justify-between gap-2">
-              <dt className="text-[--color-text-secondary] shrink-0">Name</dt>
-              <dd className="text-[--color-text] truncate text-right" title={fileMetadata.filename}>
+              <dt className="text-[var(--color-text-secondary)] shrink-0">Name</dt>
+              <dd className="text-[var(--color-text)] truncate text-right" title={fileMetadata.filename}>
                 {fileMetadata.filename}
               </dd>
             </div>
           )}
           {fileMetadata?.duration !== undefined && fileMetadata.duration > 0 && (
             <div className="flex justify-between gap-2">
-              <dt className="text-[--color-text-secondary]">Duration</dt>
-              <dd className="text-[--color-text]">{formatDuration(fileMetadata.duration)}</dd>
+              <dt className="text-[var(--color-text-secondary)]">Duration</dt>
+              <dd className="text-[var(--color-text)]">{formatDuration(fileMetadata.duration)}</dd>
             </div>
           )}
           {language && (
             <div className="flex justify-between gap-2">
-              <dt className="text-[--color-text-secondary]">Language</dt>
+              <dt className="text-[var(--color-text-secondary)]">Language</dt>
               <dd><Badge variant="info">{language}</Badge></dd>
             </div>
           )}
           {modelUsed && (
             <div className="flex justify-between gap-2">
-              <dt className="text-[--color-text-secondary]">Model</dt>
+              <dt className="text-[var(--color-text-secondary)]">Model</dt>
               <dd><Badge>{modelUsed}</Badge></dd>
             </div>
           )}
@@ -65,19 +65,19 @@ function InfoPanel() {
 
       {/* Stats */}
       {segments.length > 0 && (
-        <div className="rounded-lg border border-[--color-border] bg-[--color-surface-raised] p-3">
-          <p className="text-xs font-semibold text-[--color-text-muted] uppercase tracking-wide mb-2">
+        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-3">
+          <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-2">
             Stats
           </p>
           <dl className="flex flex-col gap-1.5 text-sm">
             <div className="flex justify-between">
-              <dt className="text-[--color-text-secondary]">Segments</dt>
-              <dd className="text-[--color-text]">{segments.length}</dd>
+              <dt className="text-[var(--color-text-secondary)]">Segments</dt>
+              <dd className="text-[var(--color-text)]">{segments.length}</dd>
             </div>
             {timings?.transcribe && (
               <div className="flex justify-between">
-                <dt className="text-[--color-text-secondary]">Transcribe time</dt>
-                <dd className="text-[--color-text]">{timings.transcribe.toFixed(1)}s</dd>
+                <dt className="text-[var(--color-text-secondary)]">Transcribe time</dt>
+                <dd className="text-[var(--color-text)]">{timings.transcribe.toFixed(1)}s</dd>
               </div>
             )}
           </dl>
@@ -116,7 +116,7 @@ function SearchPanel() {
   return (
     <div className="flex flex-col gap-3">
       {taskId && <SearchBar taskId={taskId} />}
-      <p className="text-sm text-[--color-text-secondary]">
+      <p className="text-sm text-[var(--color-text-secondary)]">
         {searchResults.length === 0
           ? searchQuery ? 'No results found.' : 'Enter a search query.'
           : `${searchResults.length} result${searchResults.length === 1 ? '' : 's'} found.`}
@@ -126,12 +126,12 @@ function SearchPanel() {
           {searchResults.map(r => (
             <li
               key={r.segmentIndex}
-              className="rounded-md border border-[--color-border] bg-[--color-surface-raised] p-2 text-sm"
+              className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-2 text-sm"
             >
-              <span className="text-xs text-[--color-text-muted] block mb-0.5">
+              <span className="text-xs text-[var(--color-text-muted)] block mb-0.5">
                 #{r.segmentIndex + 1}
               </span>
-              <span className="text-[--color-text]">{r.text}</span>
+              <span className="text-[var(--color-text)]">{r.text}</span>
             </li>
           ))}
         </ul>
@@ -152,15 +152,15 @@ export function ContextPanel() {
   }
 
   return (
-    <div className="w-full lg:w-[360px] border border-[--color-border] rounded-xl bg-[--color-surface] p-4 flex flex-col gap-3 h-fit">
+    <div className="w-full lg:w-[360px] border border-[var(--color-border)] rounded-xl bg-[var(--color-surface)] p-4 flex flex-col gap-3 h-fit">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-[--color-text]">
+        <h2 className="text-sm font-semibold text-[var(--color-text)]">
           {titles[contextPanelContent]}
         </h2>
         {contextPanelContent !== 'info' && (
           <button
-            className="p-1 rounded-md text-[--color-text-muted] hover:text-[--color-text] hover:bg-[--color-surface-raised] transition-colors"
+            className="p-1 rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-raised)] transition-colors"
             aria-label="Close panel"
             onClick={() => setContextPanel('info')}
           >

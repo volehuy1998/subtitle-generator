@@ -23,7 +23,7 @@ export function CombineView({ taskId }: CombineViewProps) {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 gap-6">
       <div className="w-full max-w-md flex flex-col gap-4">
-        <h2 className="text-base font-semibold text-[--color-text] text-center">
+        <h2 className="text-base font-semibold text-[var(--color-text)] text-center">
           {isDone ? 'Ready to download!' : 'Combining subtitles with video...'}
         </h2>
 
@@ -36,7 +36,7 @@ export function CombineView({ taskId }: CombineViewProps) {
             <a
               href={api.combineDownloadUrl(taskId)}
               download
-              className="inline-flex items-center justify-center gap-2 font-medium rounded-md transition-colors focus-ring select-none h-9 px-4 text-sm bg-[--color-primary] text-white hover:bg-[--color-primary-hover] active:bg-[--color-primary-hover]"
+              className="inline-flex items-center justify-center gap-2 font-medium rounded-md transition-colors focus-ring select-none h-9 px-4 text-sm bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] active:bg-[var(--color-primary-hover)]"
             >
               Download video
             </a>

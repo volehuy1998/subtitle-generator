@@ -74,7 +74,7 @@ export function EmbedPanel() {
     <div className="flex flex-col gap-4">
       {/* Mode selector */}
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-[--color-text]">Mode</label>
+        <label className="text-sm font-medium text-[var(--color-text)]">Mode</label>
         <div className="grid grid-cols-2 gap-2">
           {(['soft', 'hard'] as EmbedMode[]).map(m => (
             <button
@@ -84,8 +84,8 @@ export function EmbedPanel() {
               className={[
                 'rounded-lg border p-2 text-left text-xs transition-colors',
                 mode === m
-                  ? 'border-[--color-primary] bg-[--color-primary-light] text-[--color-primary]'
-                  : 'border-[--color-border] bg-[--color-surface] text-[--color-text-secondary] hover:bg-[--color-surface-raised]',
+                  ? 'border-[var(--color-primary)] bg-[var(--color-primary-light)] text-[var(--color-primary)]'
+                  : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-raised)]',
               ].join(' ')}
             >
               <p className="font-medium">
@@ -114,14 +114,14 @@ export function EmbedPanel() {
       )}
 
       {status === 'error' && (
-        <p className="text-sm text-[--color-danger]">{errorMsg}</p>
+        <p className="text-sm text-[var(--color-danger)]">{errorMsg}</p>
       )}
 
       {status === 'done' && downloadUrl && (
         <a
           href={downloadUrl}
           download
-          className="inline-flex items-center gap-2 text-sm text-[--color-primary] hover:underline"
+          className="inline-flex items-center gap-2 text-sm text-[var(--color-primary)] hover:underline"
         >
           <Download className="h-4 w-4" />
           Download embedded video

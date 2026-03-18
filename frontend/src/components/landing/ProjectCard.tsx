@@ -35,13 +35,13 @@ export function ProjectCard({ project }: ProjectCardProps) {
       type="button"
       onClick={handleClick}
       className={cn(
-        'w-full text-left rounded-lg border border-[--color-border] bg-[--color-surface]',
+        'w-full text-left rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]',
         'p-4 flex flex-col gap-2',
         'hover:-translate-y-0.5 hover:shadow-md transition-transform transition-shadow',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-primary]',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]',
       )}
     >
-      <p className="text-sm font-medium text-[--color-text] truncate" title={filename}>
+      <p className="text-sm font-medium text-[var(--color-text)] truncate" title={filename}>
         {filename}
       </p>
 
@@ -60,13 +60,13 @@ export function ProjectCard({ project }: ProjectCardProps) {
         )}
 
         {duration != null && (
-          <span className="text-xs text-[--color-text-secondary]">
+          <span className="text-xs text-[var(--color-text-secondary)]">
             {formatDuration(duration)}
           </span>
         )}
       </div>
 
-      <p className="text-xs text-[--color-text-muted]">{relativeTime(createdAt)}</p>
+      <p className="text-xs text-[var(--color-text-muted)]">{relativeTime(createdAt)}</p>
     </button>
   )
 }

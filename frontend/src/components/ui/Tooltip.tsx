@@ -16,10 +16,10 @@ export function Tooltip({ content, children, side = 'top', delayDuration = 500 }
         <RadixTooltip.Content
           side={side}
           sideOffset={6}
-          className="z-50 rounded-md bg-[--color-text] px-2.5 py-1 text-xs text-[--color-text-inverse] shadow-lg animate-fade-in max-w-[200px]"
+          className="z-50 rounded-md bg-[var(--color-text)] px-2.5 py-1 text-xs text-[var(--color-text-inverse)] shadow-lg animate-fade-in max-w-[200px]"
         >
           {content}
-          <RadixTooltip.Arrow className="fill-[--color-text]" />
+          <RadixTooltip.Arrow className="fill-[var(--color-text)]" />
         </RadixTooltip.Content>
       </RadixTooltip.Portal>
     </RadixTooltip.Root>

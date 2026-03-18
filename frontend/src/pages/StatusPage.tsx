@@ -11,10 +11,10 @@ export function StatusPage() {
   return (
     <AppShell>
       <PageLayout title="System Status" subtitle="Real-time service health">
-        <p className="text-[--color-text-secondary]">All systems operational.</p>
-        <p className="text-sm text-[--color-text-muted] mt-4">
+        <p className="text-[var(--color-text-secondary)]">All systems operational.</p>
+        <p className="text-sm text-[var(--color-text-muted)] mt-4">
           For backend health details, visit{' '}
-          <a href="/health" className="text-[--color-primary] hover:underline">/health</a>.
+          <a href="/health" className="text-[var(--color-primary)] hover:underline">/health</a>.
         </p>
       </PageLayout>
     </AppShell>

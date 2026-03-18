@@ -53,7 +53,7 @@ export function DownloadMenu({ taskId }: DownloadMenuProps) {
         <div
           className={cn(
             'absolute left-0 top-full mt-1 z-50 min-w-[180px]',
-            'rounded-lg border border-[--color-border] bg-[--color-surface] shadow-lg',
+            'rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg',
             'p-1'
           )}
           role="menu"
@@ -66,7 +66,7 @@ export function DownloadMenu({ taskId }: DownloadMenuProps) {
               role="menuitem"
               className={cn(
                 'flex items-center gap-2 px-3 py-1.5 text-sm rounded-md',
-                'text-[--color-text] hover:bg-[--color-surface-raised] transition-colors'
+                'text-[var(--color-text)] hover:bg-[var(--color-surface-raised)] transition-colors'
               )}
               onClick={() => setOpen(false)}
             >
@@ -74,8 +74,8 @@ export function DownloadMenu({ taskId }: DownloadMenuProps) {
             </a>
           ))}
 
-          <div className="border-t border-[--color-border] mt-1 pt-1 px-3 pb-1">
-            <label className="text-xs text-[--color-text-muted] block mb-1">
+          <div className="border-t border-[var(--color-border)] mt-1 pt-1 px-3 pb-1">
+            <label className="text-xs text-[var(--color-text-muted)] block mb-1">
               Max line chars
             </label>
             <input
@@ -85,9 +85,9 @@ export function DownloadMenu({ taskId }: DownloadMenuProps) {
               value={maxChars}
               onChange={e => setMaxChars(Number(e.target.value))}
               className={cn(
-                'w-full h-7 px-2 text-xs rounded-md border border-[--color-border]',
-                'bg-[--color-surface] text-[--color-text]',
-                'focus:outline-none focus:border-[--color-border-focus] focus:ring-1 focus:ring-[--color-border-focus]'
+                'w-full h-7 px-2 text-xs rounded-md border border-[var(--color-border)]',
+                'bg-[var(--color-surface)] text-[var(--color-text)]',
+                'focus:outline-none focus:border-[var(--color-border-focus)] focus:ring-1 focus:ring-[var(--color-border-focus)]'
               )}
               onClick={e => e.stopPropagation()}
             />

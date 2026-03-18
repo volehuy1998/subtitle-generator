@@ -11,11 +11,11 @@ export function SecurityPage() {
   return (
     <AppShell>
       <PageLayout title="Security" subtitle="How we protect your data">
-        <div className="space-y-4 text-[--color-text-secondary]">
+        <div className="space-y-4 text-[var(--color-text-secondary)]">
           <p>Uploaded files are processed in memory and deleted after 24 hours.</p>
           <p>All connections use HTTPS with HSTS in production.</p>
           <p>To report a vulnerability, please see our{' '}
-            <a href="/SECURITY.md" className="text-[--color-primary] hover:underline">security policy</a>.
+            <a href="/SECURITY.md" className="text-[var(--color-primary)] hover:underline">security policy</a>.
           </p>
         </div>
       </PageLayout>

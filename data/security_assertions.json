@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "69972cc",
-    "sha_full": "69972cca2b74712a194902cfb71d1942326878b5",
-    "datetime": "2026-03-18T20:47:07+07:00",
-    "message": "style(ui): increase contrast on background and border tokens"
+    "sha": "6551428",
+    "sha_full": "65514284ac0c398abc9211bad07de552c5f1392e",
+    "datetime": "2026-03-18T21:11:57+07:00",
+    "message": "fix(ui): wrap CSS custom properties in var() for Tailwind v4 compatibility"
   },
   "assertions": [
     {

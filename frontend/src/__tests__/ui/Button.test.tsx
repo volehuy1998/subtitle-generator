@@ -40,13 +40,13 @@ describe('Button', () => {
     const { container } = render(<Button variant="secondary">Click</Button>)
     const btn = container.querySelector('button')!
     // Should use border-strong, not the default border
-    expect(btn.className).toContain('border-[--color-border-strong]')
+    expect(btn.className).toContain('border-[var(--color-border-strong)]')
   })
 
   it('secondary variant uses primary text color', () => {
     const { container } = render(<Button variant="secondary">Click</Button>)
     const btn = container.querySelector('button')!
-    expect(btn.className).toContain('text-[--color-text]')
+    expect(btn.className).toContain('text-[var(--color-text)]')
   })
 })
 
@@ -72,12 +72,12 @@ describe('IconButton', () => {
   it('ghost variant has visible background by default', () => {
     const { container } = render(<IconButton icon={<span />} aria-label="test" variant="ghost" />)
     const btn = container.querySelector('button')!
-    expect(btn.className).toContain('bg-[--color-surface-raised]')
+    expect(btn.className).toContain('bg-[var(--color-surface-raised)]')
   })
 
   it('secondary variant uses border-strong', () => {
     const { container } = render(<IconButton icon={<span />} aria-label="test" variant="secondary" />)
     const btn = container.querySelector('button')!
-    expect(btn.className).toContain('border-[--color-border-strong]')
+    expect(btn.className).toContain('border-[var(--color-border-strong)]')
   })
 })

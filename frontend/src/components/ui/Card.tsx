@@ -25,8 +25,8 @@ export function Card({ className, padding = 'md', shadow = false, border = true,
   return (
     <div
       className={cn(
-        'rounded-lg bg-[--color-surface]',
-        border && 'border border-[--color-border]',
+        'rounded-lg bg-[var(--color-surface)]',
+        border && 'border border-[var(--color-border)]',
         shadow && 'shadow-md',
         paddingMap[padding],
         className
@@ -36,9 +36,9 @@ export function Card({ className, padding = 'md', shadow = false, border = true,
       {header && (
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h3 className="text-sm font-semibold text-[--color-text]">{header.title}</h3>
+            <h3 className="text-sm font-semibold text-[var(--color-text)]">{header.title}</h3>
             {header.subtitle && (
-              <p className="text-xs text-[--color-text-secondary] mt-0.5">{header.subtitle}</p>
+              <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{header.subtitle}</p>
             )}
           </div>
           {header.action && <div className="ml-4 shrink-0">{header.action}</div>}
