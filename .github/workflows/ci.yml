@@ -90,7 +90,7 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r requirements.txt pytest pytest-cov
       - name: Run backend tests
-        run: pytest tests/ -v --tb=short --cov=app --cov-report=xml
+        run: pytest tests/ --ignore=tests/e2e --ignore=tests/e2e_newui -v --tb=short --cov=app --cov-report=xml
       - uses: actions/upload-artifact@v4
         if: always()
         with:

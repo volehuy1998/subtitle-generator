@@ -16,7 +16,7 @@ export function Header() {
   const currentPage = useUIStore((s) => s.currentPage)
 
   return (
-    <header className="sticky top-0 z-40 h-14 bg-[--color-surface] border-b border-[--color-border] shadow-sm">
+    <header data-testid="app-header" className="sticky top-0 z-40 h-14 bg-[--color-surface] border-b border-[--color-border] shadow-sm">
       <div className="h-full max-w-[1280px] mx-auto px-4 flex items-center justify-between">
         {/* Logo */}
         <button

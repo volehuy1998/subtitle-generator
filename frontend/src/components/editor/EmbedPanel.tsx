@@ -31,8 +31,13 @@ export function EmbedPanel() {
   useEffect(() => {
     api.embedPresets()
       .then(r => {
-        setPresets(r.presets)
-        if (r.presets.length > 0) setPreset(r.presets[0].name)
+        const list = Object.entries(r.presets).map(([name, p]) => ({
+          name,
+          label: name.replace(/_/g, ' '),
+          description: `${p.font_name} ${p.font_size}pt`,
+        }))
+        setPresets(list)
+        if (list.length > 0) setPreset(list[0].name)
       })
       .catch(() => {/* silently ignore */})
   }, [])

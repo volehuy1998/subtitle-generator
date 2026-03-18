@@ -13,7 +13,7 @@ const currentYear = new Date().getFullYear()
 
 export function Footer() {
   return (
-    <footer className="border-t border-[--color-border] bg-[--color-surface] mt-auto">
+    <footer data-testid="footer" className="border-t border-[--color-border] bg-[--color-surface] mt-auto">
       <div className="max-w-[1280px] mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
         <p className="text-xs text-[--color-text-muted]">
           &copy; {currentYear} SubForge. Open source subtitle generation.

@@ -70,6 +70,7 @@ export function UploadZone({ onUpload, onError, disabled = false }: UploadZonePr
   return (
     <div
       {...getRootProps()}
+      data-testid="upload-zone"
       className={cn(
         'flex flex-col items-center justify-center gap-4',
         'w-full rounded-xl border-2 border-dashed',
@@ -103,10 +104,10 @@ export function UploadZone({ onUpload, onError, disabled = false }: UploadZonePr
       </div>
 
       <div className="text-center space-y-1">
-        <p className="text-xs text-[--color-text-muted]">
+        <p data-testid="format-hint" className="text-xs text-[--color-text-muted]">
           MP4, MKV, MOV, WAV, MP3, OGG, M4A, WEBM, SRT, VTT
         </p>
-        <p className="text-xs text-[--color-text-muted]">
+        <p data-testid="size-hint" className="text-xs text-[--color-text-muted]">
           Up to 2GB
         </p>
       </div>
