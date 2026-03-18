@@ -196,6 +196,7 @@ jobs:
             fi
           done
           docker stop health-test
+          docker rm health-test
 
   tier2-schema:
     name: Schema Validation

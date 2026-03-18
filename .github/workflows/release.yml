@@ -81,6 +81,7 @@ jobs:
             fi
           done
           docker stop release-health
+          docker rm release-health
 
       # Step C: Push only after health check passes
       - name: Push Docker image
