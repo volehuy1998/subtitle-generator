@@ -152,7 +152,8 @@ export const api = {
   duplicates: (filename: string, fileSize: number) => {
     const params = new URLSearchParams({ filename, file_size: String(fileSize) })
     return fetch(`/tasks/duplicates?${params}`).then(r => json<{
-      duplicates: Array<{ task_id: string; filename: string; created_at: string }>
+      duplicates_found: boolean
+      matches: Array<{ task_id: string; filename: string; created_at: string }>
     }>(r))
   },
 
