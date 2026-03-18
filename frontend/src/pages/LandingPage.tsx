@@ -85,7 +85,7 @@ export function LandingPage() {
     try {
       // Check for duplicates
       const dupeResult = await api.duplicates(file.name, file.size)
-      if (dupeResult.duplicates.length > 0) {
+      if (dupeResult.duplicates_found) {
         const proceed = await new Promise<boolean>(resolve => {
           setDuplicateDialogOpen(true)
           setDuplicateResolve(() => resolve)
