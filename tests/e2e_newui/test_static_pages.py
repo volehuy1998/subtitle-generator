@@ -45,10 +45,10 @@ def test_browser_back_forward(page: Page, base_url: str):
     page.locator('[data-testid="app-header"]').get_by_role("button", name="Status").click()
     page.wait_for_url("**/status**", timeout=5000)
     page.go_back()
-    page.wait_for_timeout(300)
+    page.wait_for_url(base_url.rstrip("/") + "/", timeout=5000)
     assert page.url.rstrip("/") == base_url.rstrip("/"), f"Expected /, got: {page.url}"
     page.go_forward()
-    page.wait_for_timeout(300)
+    page.wait_for_url("**/status**", timeout=5000)
     assert page.url.endswith("/status"), f"Expected /status, got: {page.url}"
 
 

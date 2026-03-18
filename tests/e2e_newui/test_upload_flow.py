@@ -18,8 +18,6 @@ def _set_file_input(page: Page, file_path: Path):
 @pytest.mark.upload
 def test_happy_path_upload(page: Page, base_url: str, unique_audio_file: Path):
     """Upload unique file → progress shows → navigate to /editor/{uuid}."""
-    import re
-
     errors = []
     page.on("pageerror", lambda e: errors.append(str(e)))
     page.goto(base_url)

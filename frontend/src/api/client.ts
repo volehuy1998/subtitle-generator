@@ -160,6 +160,6 @@ export const api = {
 
   embedPresets: () =>
     fetch('/embed/presets').then(r => json<{
-      presets: Array<{ name: string; label: string; description: string }>
+      presets: Record<string, { font_name: string; font_size: number; bold: boolean; position: string }>
     }>(r)),
 }

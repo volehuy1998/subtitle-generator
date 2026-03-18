@@ -11,6 +11,9 @@ from pathlib import Path
 
 import pytest
 import requests
+import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 @pytest.fixture(scope="session")

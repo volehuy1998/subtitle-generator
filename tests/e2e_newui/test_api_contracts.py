@@ -95,6 +95,8 @@ def test_embed_presets_response_shape(base_url):
     assert "presets" in data
     assert isinstance(data["presets"], dict), f"'presets' must be dict, got {type(data['presets'])}"
     assert "default" in data["presets"], f"'default' preset missing — got: {list(data['presets'].keys())}"
+    default = data["presets"]["default"]
+    assert "font_name" in default, f"'font_name' missing from default preset: {default}"
 
 
 @pytest.mark.contract
