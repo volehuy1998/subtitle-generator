@@ -20,6 +20,7 @@ export function UploadProgress({ filename, percent }: UploadProgressProps) {
   return (
     <div
       className="flex flex-col gap-3 w-full rounded-xl border border-[--color-border] bg-[--color-surface] p-5"
+      data-testid="upload-progress"
       role="status"
       aria-live="polite"
       aria-label={`Uploading ${filename}: ${Math.round(percent)}%`}

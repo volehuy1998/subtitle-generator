@@ -36,7 +36,7 @@ export function DownloadMenu({ taskId }: DownloadMenuProps) {
     `/subtitles/${taskId}?format=${format}&download=1&max_chars=${maxChars}`
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} data-testid="download-menu-wrapper" className="relative">
       <Button
         variant="secondary"
         size="sm"

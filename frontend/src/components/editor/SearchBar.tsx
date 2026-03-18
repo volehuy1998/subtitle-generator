@@ -49,6 +49,7 @@ export function SearchBar({ taskId }: SearchBarProps) {
         />
         <input
           type="text"
+          data-testid="search-bar"
           role="textbox"
           placeholder="Search subtitles..."
           onChange={handleChange}

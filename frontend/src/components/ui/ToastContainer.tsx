@@ -10,6 +10,7 @@ export function ToastContainer() {
   return (
     <div
       className="fixed top-4 right-4 z-[100] flex flex-col gap-2"
+      data-testid="toast-container"
       aria-label="Notifications"
     >
       {toasts.map(t => (

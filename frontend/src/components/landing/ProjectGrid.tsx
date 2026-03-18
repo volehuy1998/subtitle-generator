@@ -13,15 +13,17 @@ export function ProjectGrid() {
 
   if (projects.length === 0) {
     return (
-      <EmptyState
-        title="No recent projects"
-        description="Upload a file to get started"
-      />
+      <div data-testid="project-grid">
+        <EmptyState
+          title="No recent projects"
+          description="Upload a file to get started"
+        />
+      </div>
     )
   }
 
   return (
-    <section>
+    <section data-testid="project-grid">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-base font-semibold text-[--color-text]">Recent Projects</h2>
         <button

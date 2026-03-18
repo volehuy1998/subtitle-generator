@@ -26,7 +26,7 @@ export function SegmentList({ taskId }: SegmentListProps) {
   }
 
   return (
-    <div className="max-h-[60vh] overflow-y-auto">
+    <div data-testid="segment-list" className="max-h-[60vh] overflow-y-auto">
       {segments.map((segment, i) => (
         <SegmentRow
           key={segment.index}
