@@ -26,7 +26,7 @@ export interface SearchResult {
 export interface RecentProject {
   taskId: string
   filename: string
-  createdAt: string
+  createdAt: string // ISO 8601 string
   status: 'processing' | 'completed' | 'failed'
   duration: number | null
 }
@@ -34,10 +34,11 @@ export interface RecentProject {
 export type EditorPhase = 'idle' | 'uploading' | 'processing' | 'editing' | 'error'
 
 export function formatTimecode(seconds: number): string {
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  const s = Math.floor(seconds % 60)
-  return [h, m, s].map(v => String(v).padStart(2, '0')).join(':')
+  const s = Math.max(0, seconds)
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  const sec = Math.floor(s % 60)
+  return [h, m, sec].map(v => String(v).padStart(2, '0')).join(':')
 }
 
 export function formatFileSize(bytes: number): string {
@@ -48,11 +49,12 @@ export function formatFileSize(bytes: number): string {
 }
 
 export function formatDuration(seconds: number): string {
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  const s = Math.floor(seconds % 60)
-  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-  return `${m}:${String(s).padStart(2, '0')}`
+  const s = Math.max(0, seconds)
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  const sec = Math.floor(s % 60)
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
+  return `${m}:${String(sec).padStart(2, '0')}`
 }
 
 export function detectUploadType(files: File[]): 'transcribe' | 'combine' | 'edit-srt' | 'unknown' {

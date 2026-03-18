@@ -18,6 +18,7 @@ describe('formatDuration', () => {
   it('formats minutes', () => expect(formatDuration(754)).toBe('12:34'))
   it('formats hours', () => expect(formatDuration(3754)).toBe('1:02:34'))
   it('formats zero', () => expect(formatDuration(0)).toBe('0:00'))
+  it('formats exactly one hour', () => expect(formatDuration(3600)).toBe('1:00:00'))
 })
 
 describe('detectUploadType', () => {
@@ -27,4 +28,6 @@ describe('detectUploadType', () => {
   it('detects SRT edit', () => expect(detectUploadType([file('subs.srt')])).toBe('edit-srt'))
   it('detects unknown', () => expect(detectUploadType([file('readme.txt')])).toBe('unknown'))
   it('detects audio', () => expect(detectUploadType([file('podcast.mp3')])).toBe('transcribe'))
+  it('detects uppercase extensions', () => expect(detectUploadType([file('VIDEO.MP4')])).toBe('transcribe'))
+  it('detects two media files as transcribe', () => expect(detectUploadType([file('a.mp4'), file('b.mp4')])).toBe('transcribe'))
 })
