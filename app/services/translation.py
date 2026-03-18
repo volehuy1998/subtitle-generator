@@ -243,6 +243,16 @@ def is_translation_available(target_lang: str) -> dict:
         }
 
 
+_NAME_CORRECTIONS = {
+    "Ukranian": "Ukrainian",
+    "Ukranian (General)": "Ukrainian",
+}
+
+
+def _correct_name(name: str) -> str:
+    return _NAME_CORRECTIONS.get(name, name)
+
+
 def get_available_languages() -> list[dict]:
     """List available translation target languages with install status.
 
@@ -262,9 +272,9 @@ def get_available_languages() -> list[dict]:
             result.append(
                 {
                     "source": pkg.from_code,
-                    "source_name": pkg.from_name,
+                    "source_name": _correct_name(pkg.from_name),
                     "target": pkg.to_code,
-                    "target_name": pkg.to_name,
+                    "target_name": _correct_name(pkg.to_name),
                     "installed": True,
                 }
             )
@@ -278,9 +288,9 @@ def get_available_languages() -> list[dict]:
                     result.append(
                         {
                             "source": pkg.from_code,
-                            "source_name": pkg.from_name,
+                            "source_name": _correct_name(pkg.from_name),
                             "target": pkg.to_code,
-                            "target_name": pkg.to_name,
+                            "target_name": _correct_name(pkg.to_name),
                             "installed": False,
                         }
                     )

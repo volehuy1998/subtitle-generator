@@ -11,10 +11,12 @@ interface SearchBarProps {
 export function SearchBar({ taskId }: SearchBarProps) {
   const searchResults = useEditorStore(s => s.searchResults)
   const setSearchResults = useEditorStore(s => s.setSearchResults)
+  const setSearchQuery = useEditorStore(s => s.setSearchQuery)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value
+    setSearchQuery(query)
 
     if (timerRef.current) {
       clearTimeout(timerRef.current)
