@@ -154,6 +154,7 @@ def _step_probe(ctx: _PipelineContext) -> None:
         ctx.file_size = get_file_size(ctx.video_path)
         duration_str = format_time_display(ctx.duration) if ctx.duration > 0 else "unknown"
         ctx.task["duration"] = duration_str
+        ctx.task["audio_duration"] = round(ctx.duration, 2)
         ctx.task["file_size"] = ctx.file_size
         ctx.task["file_size_fmt"] = format_bytes(ctx.file_size)
         ctx.pipeline.file_size = ctx.file_size
@@ -275,6 +276,7 @@ def _step_load_model(ctx: _PipelineContext) -> None:
 
     with StepTimer(ctx.task_id, "model_load", task_log_func=log_task_event) as step_model:
         ctx.m = get_model(ctx.model_size, ctx.device)
+    ctx.task["model"] = ctx.model_size
     ctx.pipeline.record_step("model_load", step_model.elapsed)
     emit_event(
         ctx.task_id,
@@ -787,6 +789,7 @@ def process_video(
         if ctx.translate_elapsed > 0:
             final_step_timing["translate"] = round(ctx.translate_elapsed, 2)
         task["step_timing"] = final_step_timing
+        task["step_timings"] = final_step_timing  # alias used by progress API schema
 
         done_data = {
             "status": "done",
@@ -794,9 +797,10 @@ def process_video(
             "message": task["message"],
             "segments": ctx.num_segments,
             "language": ctx.detected_lang,
+            "model": ctx.model_size,
             "total_time_sec": round(pipeline_summary.get("total_time_sec", 0), 2),
             "speed_factor": round(ctx.speed_factor, 2),
-            "step_timings": task["step_timing"],
+            "step_timings": task["step_timings"],
             "is_video": is_video_file,
         }
         if task.get("translated_to"):
