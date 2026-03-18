@@ -11,6 +11,7 @@ const iconButtonVariants = cva(
         secondary: 'bg-[--color-surface] text-[--color-text-secondary] border border-[--color-border] hover:bg-[--color-surface-raised] hover:text-[--color-text]',
         ghost: 'text-[--color-text-secondary] hover:bg-[--color-surface-raised] hover:text-[--color-text]',
         danger: 'text-[--color-danger] hover:bg-[--color-danger-light]',
+        success: 'text-[--color-success] hover:bg-[--color-success-light]',
       },
       size: {
         sm: 'h-7 w-7',
