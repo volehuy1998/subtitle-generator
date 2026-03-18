@@ -210,7 +210,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Run migrations on fresh SQLite
-        run: DATABASE_URL=sqlite+aiosqlite:////tmp/test_schema.db alembic upgrade head
+        run: PYTHONPATH=. DATABASE_URL=sqlite+aiosqlite:////tmp/test_schema.db alembic upgrade head
       - name: Validate schema matches models
         run: |
           python -c "
