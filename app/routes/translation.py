@@ -64,19 +64,26 @@ async def translate_task(task_id: str, target_language: str = Form("en")):
     For English targets, Whisper translate during re-transcription is recommended.
     """
     # — Forge (Sr. Backend Engineer)
+    import re
+
     from app import state
     from app.services.sse import create_event_queue, emit_event
     from app.services.translation import translate_segments
+    from app.utils.security import safe_path
     from app.utils.srt import parse_srt, segments_to_srt
 
     if task_id not in state.tasks:
         raise HTTPException(404, "Task not found")
 
+    # Sanitize target_language — only allow ISO 639-1/2 codes (2-3 lowercase letters)
+    if not re.match(r"^[a-z]{2,3}$", target_language):
+        raise HTTPException(400, "Invalid target language code. Use ISO 639-1 format (e.g., 'es', 'fr', 'de').")
+
     task = state.tasks[task_id]
     if task.get("status") != "done":
         raise HTTPException(400, "Transcription not complete")
 
-    srt_path = Path(config.OUTPUT_DIR) / f"{task_id}.srt"
+    srt_path = safe_path(Path(config.OUTPUT_DIR) / f"{task_id}.srt", allowed_dir=Path(config.OUTPUT_DIR))
     if not srt_path.exists():
         raise HTTPException(404, "Subtitle file not found")
 
@@ -97,8 +104,11 @@ async def translate_task(task_id: str, target_language: str = Form("en")):
             translated = translate_segments(segments, source_lang, target_language, task_id)
             translated_srt = segments_to_srt(translated, include_speakers=False)
 
-            # Save translated subtitles
-            translated_path = Path(config.OUTPUT_DIR) / f"{task_id}_translated_{target_language}.srt"
+            # Save translated subtitles (target_language already validated as [a-z]{2,3})
+            translated_path = safe_path(
+                Path(config.OUTPUT_DIR) / f"{task_id}_translated_{target_language}.srt",
+                allowed_dir=Path(config.OUTPUT_DIR),
+            )
             translated_path.write_text(translated_srt, encoding="utf-8")
 
             # Update task with translated segments

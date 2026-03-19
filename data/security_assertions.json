@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "f10eb7e",
-    "sha_full": "f10eb7e6c8403882913ad2f00abe3c2ec7f43a1a",
-    "datetime": "2026-03-19T10:30:06+07:00",
-    "message": "style(ui): update UI primitives for Premium Editorial token system"
+    "sha": "f866335",
+    "sha_full": "f866335bc280d36a3d57cb8693483d881e2ff57c",
+    "datetime": "2026-03-19T15:34:34+07:00",
+    "message": "security(api): sanitize target_language input + safe_path for translate endpoint"
   },
   "assertions": [
     {
