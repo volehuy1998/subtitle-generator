@@ -103,4 +103,45 @@ describe('EmbedPanel', () => {
     expect(screen.queryByText('Preset')).toBeNull()
     expect(screen.queryByText('Custom')).toBeNull()
   })
+
+  it('disables embed button during running state', async () => {
+    const { api } = await import('../../api/client')
+    // Make embedQuick hang so status stays 'running'
+    ;(api.embedQuick as ReturnType<typeof vi.fn>).mockReturnValue(new Promise(() => {}))
+    render(<EmbedPanel />)
+    // Open dialog and confirm to trigger embed
+    fireEvent.click(screen.getByText('Embed Subtitles'))
+    fireEvent.click(screen.getByText('Confirm'))
+    // Button should now be disabled
+    const btn = screen.getByText('Embed Subtitles')
+    expect(btn.getAttribute('disabled')).not.toBeNull()
+  })
+
+  it('clears download link when starting new embed', async () => {
+    const { api } = await import('../../api/client')
+    ;(api.embedQuick as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ download_url: '/embed/download/task-123' })
+    render(<EmbedPanel />)
+    // First embed — completes with download link
+    fireEvent.click(screen.getByText('Embed Subtitles'))
+    fireEvent.click(screen.getByText('Confirm'))
+    await vi.waitFor(() => {
+      expect(screen.getByText('Download embedded video')).toBeDefined()
+    })
+    // Second embed — download link should disappear immediately
+    ;(api.embedQuick as ReturnType<typeof vi.fn>).mockReturnValue(new Promise(() => {}))
+    fireEvent.click(screen.getByText('Embed Subtitles'))
+    fireEvent.click(screen.getByText('Confirm'))
+    expect(screen.queryByText('Download embedded video')).toBeNull()
+  })
+
+  it('shows friendly message on 409 conflict', async () => {
+    const { api } = await import('../../api/client')
+    ;(api.embedQuick as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('409: Embed already in progress'))
+    render(<EmbedPanel />)
+    fireEvent.click(screen.getByText('Embed Subtitles'))
+    fireEvent.click(screen.getByText('Confirm'))
+    await vi.waitFor(() => {
+      expect(screen.getByText('An embed is already in progress. Please wait for it to finish.')).toBeDefined()
+    })
+  })
 })

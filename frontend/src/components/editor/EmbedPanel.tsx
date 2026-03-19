@@ -60,6 +60,7 @@ export function EmbedPanel() {
   const handleEmbed = async () => {
     if (!taskId) return
     setConfirmOpen(false)
+    setDownloadUrl(null)
     setStatus('running')
     setProgress(0)
     setErrorMsg('')
@@ -89,8 +90,14 @@ export function EmbedPanel() {
         setDownloadUrl(api.embedDownloadUrl(taskId))
       }
     } catch (err) {
-      setStatus('error')
-      setErrorMsg(err instanceof Error ? err.message : 'Embed failed')
+      const msg = err instanceof Error ? err.message : 'Embed failed'
+      if (msg.includes('409') || msg.toLowerCase().includes('already in progress')) {
+        setStatus('error')
+        setErrorMsg('An embed is already in progress. Please wait for it to finish.')
+      } else {
+        setStatus('error')
+        setErrorMsg(msg)
+      }
     }
   }
 
@@ -192,13 +199,13 @@ export function EmbedPanel() {
         size="sm"
         loading={status === 'running'}
         disabled={status === 'running'}
-        onClick={() => setConfirmOpen(true)}
+        onClick={() => { if (status !== 'running') setConfirmOpen(true) }}
       >
         Embed Subtitles
       </Button>
 
       <ConfirmDialog
-        open={confirmOpen}
+        open={confirmOpen && status !== 'running'}
         onClose={() => setConfirmOpen(false)}
         onConfirm={handleEmbed}
         title="Embed subtitles"
