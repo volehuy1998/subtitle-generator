@@ -1,6 +1,6 @@
 /**
  * TranslatePanel tests — translation engine selector with language options.
- * Updated to reflect guidance-based flow (no standalone translate API).
+ * Tests Whisper guidance flow and Argos api.translate() call.
  *
  * — Pixel (Sr. Frontend Engineer)
  */
@@ -9,6 +9,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { TranslatePanel } from '../../components/editor/TranslatePanel'
 import { useEditorStore } from '../../store/editorStore'
+
+const mockTranslate = vi.fn().mockResolvedValue({ message: 'Translation started', task_id: 'task-123' })
 
 // Mock API client
 vi.mock('../../api/client', () => ({
@@ -19,13 +21,14 @@ vi.mock('../../api/client', () => ({
         { source: 'en', source_name: 'English', target: 'fr', target_name: 'French' },
       ],
     }),
+    translate: (...args: unknown[]) => mockTranslate(...args),
   },
 }))
 
 // Mock UI components to simplify rendering
 vi.mock('../../components/ui/Button', () => ({
-  Button: ({ children, onClick, disabled }: { children: React.ReactNode; onClick?: () => void; disabled?: boolean }) => (
-    <button onClick={onClick} disabled={disabled}>{children}</button>
+  Button: ({ children, onClick, disabled, loading }: { children: React.ReactNode; onClick?: () => void; disabled?: boolean; loading?: boolean }) => (
+    <button onClick={onClick} disabled={disabled || loading} data-loading={loading}>{children}</button>
   ),
 }))
 vi.mock('../../components/ui/Select', () => ({
@@ -38,11 +41,15 @@ vi.mock('../../components/ui/Select', () => ({
     </label>
   ),
 }))
+vi.mock('../../components/ui/ProgressBar', () => ({
+  ProgressBar: ({ label }: { label?: string }) => <div data-testid="progress-bar">{label}</div>,
+}))
 
 describe('TranslatePanel', () => {
   beforeEach(() => {
     useEditorStore.getState().reset()
     useEditorStore.setState({ taskId: 'task-123', language: 'en' })
+    mockTranslate.mockClear()
   })
 
   it('renders source language display', () => {
@@ -84,18 +91,27 @@ describe('TranslatePanel', () => {
     expect(screen.getByText(/Translate to English/)).toBeDefined()
   })
 
-  it('shows error message when Argos engine is selected', () => {
+  it('calls api.translate when Argos engine is selected', async () => {
+    // Mock EventSource
+    const mockES = { addEventListener: vi.fn(), close: vi.fn(), readyState: 0 }
+    vi.stubGlobal('EventSource', vi.fn(() => mockES))
+
     render(<TranslatePanel />)
     // Click Argos engine button
     fireEvent.click(screen.getByText('Argos'))
     fireEvent.click(screen.getByText('Begin Translation'))
-    expect(screen.getByText(/Standalone Argos translation is not yet available/)).toBeDefined()
+
+    await waitFor(() => {
+      expect(mockTranslate).toHaveBeenCalledWith('task-123', 'en')
+    })
+
+    vi.unstubAllGlobals()
   })
 
-  it('disables button after showing whisper guidance', () => {
+  it('shows Translate Again after whisper guidance', () => {
     render(<TranslatePanel />)
     fireEvent.click(screen.getByText('Begin Translation'))
-    expect(screen.getByText('Begin Translation').closest('button')?.disabled).toBe(true)
+    expect(screen.getByText('Translate Again')).toBeDefined()
   })
 
   it('does nothing when taskId is not set', () => {
@@ -104,6 +120,5 @@ describe('TranslatePanel', () => {
     fireEvent.click(screen.getByText('Begin Translation'))
     // No guidance or error should appear
     expect(screen.queryByText('Use Re-transcribe')).toBeNull()
-    expect(screen.queryByText(/not yet available/)).toBeNull()
   })
 })

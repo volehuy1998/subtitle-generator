@@ -101,6 +101,12 @@ export const api = {
   translationLanguages: () =>
     fetch('/translation/languages').then(r => json<TranslationLanguagesResponse>(r)),
 
+  translate: (taskId: string, targetLanguage: string) =>
+    fetch(`/translate/${taskId}`, {
+      method: 'POST',
+      body: new URLSearchParams({ target_language: targetLanguage }),
+    }).then(r => json<{ message: string; task_id: string }>(r)),
+
   modelStatus: () =>
     fetch('/api/model-status').then(r => json<{ preload: ModelPreloadStatus }>(r)).then(d => d.preload),
 

@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Button } from '../ui/Button'
+import { ProgressBar } from '../ui/ProgressBar'
 import { Select } from '../ui/Select'
 import { api } from '../../api/client'
 import { useEditorStore } from '../../store/editorStore'
 import type { TranslationPair } from '../../api/types'
 
 type Engine = 'whisper' | 'argos'
-type Status = 'idle' | 'done' | 'error'
+type Status = 'idle' | 'running' | 'done' | 'error'
 
 export function TranslatePanel() {
   const taskId = useEditorStore(s => s.taskId)
@@ -33,19 +34,53 @@ export function TranslatePanel() {
     (opt, idx, arr) => arr.findIndex(o => o.value === opt.value) === idx
   )
 
-  // No standalone translate API exists on the backend.
-  // Whisper translate = re-transcribe with task="translate".
-  // Argos translate = pipeline step during transcription.
-  // Show guidance instead of a broken API call. — Pixel (Sr. Frontend Engineer)
-  const handleTranslate = () => {
+  const handleTranslate = async () => {
     if (!taskId) return
+    setStatus('running')
+    setErrorMsg('')
 
     if (engine === 'whisper') {
-      setErrorMsg('')
+      // Whisper can only translate to English during re-transcription
       setStatus('done')
-    } else {
+      return
+    }
+
+    // Argos translation — call the API and listen for SSE completion
+    try {
+      await api.translate(taskId, targetLanguage)
+
+      // Listen for translate_done SSE event
+      const baseUrl = window.location.origin
+      const es = new EventSource(`${baseUrl}/events/${taskId}`)
+
+      es.addEventListener('translate_done', () => {
+        setStatus('done')
+        setErrorMsg('')
+        es.close()
+      })
+
+      es.addEventListener('translate_error', (e) => {
+        try {
+          const data = JSON.parse(e.data)
+          setStatus('error')
+          setErrorMsg(data.message || 'Translation failed')
+        } catch {
+          setStatus('error')
+          setErrorMsg('Translation failed')
+        }
+        es.close()
+      })
+
+      // Safety timeout
+      setTimeout(() => {
+        if (es.readyState !== EventSource.CLOSED) {
+          es.close()
+          setStatus('done')
+        }
+      }, 300000) // 5 min timeout for large translations
+    } catch (err) {
       setStatus('error')
-      setErrorMsg('Standalone Argos translation is not yet available. Use the Advanced Upload Options to enable translation during transcription.')
+      setErrorMsg(err instanceof Error ? err.message : 'Translation failed')
     }
   }
 
@@ -92,12 +127,22 @@ export function TranslatePanel() {
         </div>
       </div>
 
+      {status === 'running' && engine === 'argos' && (
+        <ProgressBar label="Translating…" />
+      )}
+
       {status === 'done' && engine === 'whisper' && (
         <div className="p-3 rounded-lg bg-[var(--color-primary-light)] text-sm text-[var(--color-text)]">
           <p className="font-medium mb-1">Use Re-transcribe</p>
           <p className="text-[var(--color-text-secondary)]">
             To translate to English, click the Re-transcribe button in the toolbar and enable &quot;Translate to English&quot; in the options.
           </p>
+        </div>
+      )}
+
+      {status === 'done' && engine === 'argos' && (
+        <div className="p-3 rounded-lg bg-[var(--color-success-light)] text-sm text-[var(--color-success)]">
+          Translation complete! Subtitles translated to {targetLanguage}.
         </div>
       )}
 
@@ -108,10 +153,11 @@ export function TranslatePanel() {
       <Button
         variant="primary"
         size="sm"
-        disabled={status === 'done'}
+        loading={status === 'running'}
+        disabled={status === 'running'}
         onClick={handleTranslate}
       >
-        Begin Translation
+        {status === 'done' ? 'Translate Again' : 'Begin Translation'}
       </Button>
     </div>
   )
