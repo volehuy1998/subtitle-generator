@@ -1,5 +1,5 @@
-/* SubForge — Drop, See, Refine design system */
-/* "Cool Professional" light theme — gray-100 foundation, blue-600 accent */
+/* SubForge — Premium Editorial design system */
+/* Warm neutrals, muted indigo accent, refined typography */
 
 @import "tailwindcss";
 
@@ -8,23 +8,25 @@
 
 @layer base {
   :root {
-    /* Color palette */
-    --color-bg: #EAECF0;
+    /* Premium Editorial — Warm neutrals, refined accents */
+    --color-bg: #FAFAF9;
     --color-surface: #FFFFFF;
-    --color-surface-raised: #F3F4F6;
-    --color-border: #C9CDD6;
-    --color-border-strong: #9CA3AF;
-    --color-border-focus: #2563EB;
+    --color-surface-raised: #F5F5F4;
+    --color-surface-sunken: #F0EFED;
+    --color-border: #E7E5E4;
+    --color-border-strong: #A8A29E;
+    --color-border-focus: #18181B;
 
-    --color-text: #111827;
-    --color-text-secondary: #6B7280;
-    --color-text-muted: #9CA3AF;
-    --color-text-inverse: #FFFFFF;
+    --color-text: #18181B;
+    --color-text-secondary: #52525B;
+    --color-text-muted: #A1A1AA;
+    --color-text-inverse: #FAFAF9;
 
-    --color-primary: #2563EB;
-    --color-primary-hover: #1D4ED8;
-    --color-primary-light: #EFF6FF;
-    --color-primary-ring: rgba(37, 99, 235, 0.25);
+    /* Accent — muted indigo (Stripe-inspired) */
+    --color-primary: #4F46E5;
+    --color-primary-hover: #4338CA;
+    --color-primary-light: #EEF2FF;
+    --color-primary-ring: rgba(79, 70, 229, 0.24);
 
     --color-success: #059669;
     --color-success-light: #ECFDF5;
@@ -35,9 +37,10 @@
     --color-info: #0891B2;
     --color-info-light: #ECFEFF;
 
-    /* Typography */
+    /* Typography — Premium Editorial */
     --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --font-display: 'Inter', system-ui, -apple-system, sans-serif;
 
     --text-xs: 0.75rem;
     --text-sm: 0.875rem;
@@ -45,15 +48,20 @@
     --text-lg: 1.125rem;
     --text-xl: 1.25rem;
     --text-2xl: 1.5rem;
+    --text-3xl: 1.875rem;
 
     --font-normal: 400;
     --font-medium: 500;
     --font-semibold: 600;
     --font-bold: 700;
 
-    --leading-tight: 1.25;
+    --leading-tight: 1.2;
     --leading-normal: 1.5;
-    --leading-relaxed: 1.625;
+    --leading-relaxed: 1.65;
+
+    --tracking-tight: -0.025em;
+    --tracking-normal: -0.011em;
+    --tracking-wide: 0.025em;
 
     /* Spacing (4px grid) */
     --space-1: 0.25rem;
@@ -77,11 +85,11 @@
 
     --border-width: 1px;
 
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    /* Shadows — warm, layered */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 2px 4px -1px rgba(0, 0, 0, 0.04), 0 4px 8px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 4px 8px -2px rgba(0, 0, 0, 0.06), 0 10px 20px -2px rgba(0, 0, 0, 0.08);
+    --shadow-xl: 0 8px 16px -4px rgba(0, 0, 0, 0.08), 0 20px 40px -4px rgba(0, 0, 0, 0.1);
     --shadow-focus: 0 0 0 3px var(--color-primary-ring);
 
     /* Layout */
@@ -126,13 +134,14 @@
     margin: 0;
     font-weight: var(--font-semibold);
     line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-tight);
     color: var(--color-text);
   }
 
-  h1 { font-size: var(--text-2xl); }
-  h2 { font-size: var(--text-xl); }
-  h3 { font-size: var(--text-lg); }
-  h4, h5, h6 { font-size: var(--text-base); }
+  h1 { font-size: var(--text-3xl); font-weight: var(--font-bold); }
+  h2 { font-size: var(--text-2xl); }
+  h3 { font-size: var(--text-xl); }
+  h4, h5, h6 { font-size: var(--text-lg); }
 
   p { margin: 0; }
   a { color: var(--color-primary); text-decoration: none; }

@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "6551428",
-    "sha_full": "65514284ac0c398abc9211bad07de552c5f1392e",
-    "datetime": "2026-03-18T21:11:57+07:00",
-    "message": "fix(ui): wrap CSS custom properties in var() for Tailwind v4 compatibility"
+    "sha": "012e063",
+    "sha_full": "012e063862281a4094415906d2d7f3c5b6a033ed",
+    "datetime": "2026-03-19T10:01:53+07:00",
+    "message": "style(ui): replace Lumen tokens with Premium Editorial light theme"
   },
   "assertions": [
     {
