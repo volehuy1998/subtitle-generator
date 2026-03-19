@@ -21,9 +21,9 @@ describe('Card', () => {
   it('applies shadow class when shadow=true', () => {
     const { container } = render(<Card shadow>X</Card>)
     expect(container.firstChild).toBeDefined()
-    // shadow-md is applied via cn()
+    // shadow token is applied via cn()
     const el = container.firstChild as HTMLElement
-    expect(el.className).toContain('shadow-md')
+    expect(el.className).toContain('shadow-[var(--shadow-sm)]')
   })
 
   it('does not apply border class when border=false', () => {

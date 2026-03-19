@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "30915fd",
-    "sha_full": "30915fd7b8b16c5f97283a2b6940e583ca143a35",
-    "datetime": "2026-03-19T10:03:29+07:00",
-    "message": "style(ui): add dark mode tokens with warm stone palette"
+    "sha": "f10eb7e",
+    "sha_full": "f10eb7e6c8403882913ad2f00abe3c2ec7f43a1a",
+    "datetime": "2026-03-19T10:30:06+07:00",
+    "message": "style(ui): update UI primitives for Premium Editorial token system"
   },
   "assertions": [
     {

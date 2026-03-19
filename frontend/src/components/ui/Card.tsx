@@ -27,7 +27,7 @@ export function Card({ className, padding = 'md', shadow = false, border = true,
       className={cn(
         'rounded-lg bg-[var(--color-surface)]',
         border && 'border border-[var(--color-border)]',
-        shadow && 'shadow-md',
+        shadow && 'shadow-[var(--shadow-sm)]',
         paddingMap[padding],
         className
       )}
