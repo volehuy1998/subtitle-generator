@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Download } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Select } from '../ui/Select'
@@ -40,6 +40,13 @@ export function EmbedPanel() {
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const embedEsRef = useRef<EventSource | null>(null)
+
+  useEffect(() => {
+    return () => {
+      embedEsRef.current?.close()
+    }
+  }, [])
 
   useEffect(() => {
     api.embedPresets()
@@ -81,14 +88,64 @@ export function EmbedPanel() {
         }
       }
 
-      const result = await api.embedQuick(taskId, fd)
-      setStatus('done')
-      setProgress(100)
-      if (result.download_url) {
-        setDownloadUrl(result.download_url)
-      } else {
-        setDownloadUrl(api.embedDownloadUrl(taskId))
-      }
+      await api.embedQuick(taskId, fd)
+      // Don't set 'done' here — wait for SSE embed_done event
+
+      // Listen for embed completion via SSE
+      const baseUrl = window.location.origin
+      const es = new EventSource(`${baseUrl}/events/${taskId}`)
+      embedEsRef.current = es
+
+      es.addEventListener('embed_done', (e: MessageEvent) => {
+        try {
+          const data = JSON.parse(e.data)
+          setStatus('done')
+          setProgress(100)
+          setDownloadUrl(data.download_url || `/embed/download/${taskId}`)
+        } catch {
+          setStatus('done')
+          setProgress(100)
+          setDownloadUrl(`/embed/download/${taskId}`)
+        }
+        es.close()
+      })
+
+      es.addEventListener('embed_error', (e: MessageEvent) => {
+        try {
+          const data = JSON.parse(e.data)
+          setStatus('error')
+          setErrorMsg(data.message || 'Embedding failed')
+        } catch {
+          setStatus('error')
+          setErrorMsg('Embedding failed')
+        }
+        es.close()
+      })
+
+      es.addEventListener('embed_progress', (e: MessageEvent) => {
+        try {
+          const data = JSON.parse(e.data)
+          if (data.percent != null) setProgress(data.percent)
+        } catch {
+          // ignore parse errors
+        }
+      })
+
+      es.addEventListener('quick_embed_complete', () => {
+        setStatus('done')
+        setProgress(100)
+        setDownloadUrl(`/embed/download/${taskId}`)
+        es.close()
+      })
+
+      // Safety timeout — if no SSE event after 120s, fall back
+      setTimeout(() => {
+        if (es.readyState !== EventSource.CLOSED) {
+          es.close()
+          setStatus('done')
+          setDownloadUrl(`/embed/download/${taskId}`)
+        }
+      }, 120000)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Embed failed'
       if (msg.includes('409') || msg.toLowerCase().includes('already in progress')) {

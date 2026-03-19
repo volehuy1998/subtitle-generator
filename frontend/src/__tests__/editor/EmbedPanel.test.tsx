@@ -4,7 +4,7 @@
  * — Pixel (Sr. Frontend Engineer)
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { EmbedPanel } from '../../components/editor/EmbedPanel'
 import { useEditorStore } from '../../store/editorStore'
@@ -118,20 +118,42 @@ describe('EmbedPanel', () => {
   })
 
   it('clears download link when starting new embed', async () => {
-    const { api } = await import('../../api/client')
-    ;(api.embedQuick as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ download_url: '/embed/download/task-123' })
-    render(<EmbedPanel />)
-    // First embed — completes with download link
-    fireEvent.click(screen.getByText('Embed Subtitles'))
-    fireEvent.click(screen.getByText('Confirm'))
-    await vi.waitFor(() => {
-      expect(screen.getByText('Download embedded video')).toBeDefined()
-    })
-    // Second embed — download link should disappear immediately
-    ;(api.embedQuick as ReturnType<typeof vi.fn>).mockReturnValue(new Promise(() => {}))
-    fireEvent.click(screen.getByText('Embed Subtitles'))
-    fireEvent.click(screen.getByText('Confirm'))
-    expect(screen.queryByText('Download embedded video')).toBeNull()
+    // Mock EventSource for this test since embed now waits for SSE
+    class InlineES {
+      static instance: InlineES | null = null
+      listeners: Record<string, ((...args: unknown[]) => void)[]> = {}
+      readyState = 0
+      constructor() { InlineES.instance = this }
+      addEventListener(type: string, fn: (...args: unknown[]) => void) { (this.listeners[type] ??= []).push(fn) }
+      close() { this.readyState = 2 }
+      emit(type: string, data: unknown) {
+        for (const fn of this.listeners[type] ?? []) fn({ data: JSON.stringify(data) })
+      }
+    }
+    const origES = globalThis.EventSource
+    globalThis.EventSource = InlineES as unknown as typeof EventSource
+
+    try {
+      const { api } = await import('../../api/client')
+      ;(api.embedQuick as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ status: 'started' })
+      render(<EmbedPanel />)
+      // First embed — trigger and wait for SSE setup
+      fireEvent.click(screen.getByText('Embed Subtitles'))
+      fireEvent.click(screen.getByText('Confirm'))
+      await vi.waitFor(() => { expect(InlineES.instance).not.toBeNull() })
+      // Fire embed_done to complete the first embed
+      InlineES.instance!.emit('embed_done', { download_url: '/embed/download/task-123' })
+      await vi.waitFor(() => {
+        expect(screen.getByText('Download embedded video')).toBeDefined()
+      })
+      // Second embed — download link should disappear immediately
+      ;(api.embedQuick as ReturnType<typeof vi.fn>).mockReturnValue(new Promise(() => {}))
+      fireEvent.click(screen.getByText('Embed Subtitles'))
+      fireEvent.click(screen.getByText('Confirm'))
+      expect(screen.queryByText('Download embedded video')).toBeNull()
+    } finally {
+      globalThis.EventSource = origES
+    }
   })
 
   it('shows friendly message on 409 conflict', async () => {
@@ -142,6 +164,76 @@ describe('EmbedPanel', () => {
     fireEvent.click(screen.getByText('Confirm'))
     await vi.waitFor(() => {
       expect(screen.getByText('An embed is already in progress. Please wait for it to finish.')).toBeDefined()
+    })
+  })
+
+  describe('SSE-based embed completion', () => {
+    // Mock EventSource for SSE tests
+    class MockEventSource {
+      static instance: MockEventSource | null = null
+      listeners: Record<string, ((...args: unknown[]) => void)[]> = {}
+      readyState = 0
+      constructor() {
+        MockEventSource.instance = this
+      }
+      addEventListener(type: string, fn: (...args: unknown[]) => void) {
+        ;(this.listeners[type] ??= []).push(fn)
+      }
+      close() {
+        this.readyState = 2
+      }
+      emit(type: string, data: unknown) {
+        for (const fn of this.listeners[type] ?? []) {
+          fn({ data: JSON.stringify(data) })
+        }
+      }
+    }
+
+    let originalEventSource: typeof EventSource
+
+    beforeEach(() => {
+      originalEventSource = globalThis.EventSource
+      globalThis.EventSource = MockEventSource as unknown as typeof EventSource
+      MockEventSource.instance = null
+    })
+
+    afterEach(() => {
+      globalThis.EventSource = originalEventSource
+    })
+
+    it('does not show download link immediately after embedQuick resolves', async () => {
+      const { api } = await import('../../api/client')
+      ;(api.embedQuick as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ status: 'started' })
+      render(<EmbedPanel />)
+      fireEvent.click(screen.getByText('Embed Subtitles'))
+      fireEvent.click(screen.getByText('Confirm'))
+      // Wait for embedQuick to resolve and SSE to be set up
+      await vi.waitFor(() => {
+        expect(MockEventSource.instance).not.toBeNull()
+      })
+      // Status should be 'running', NOT 'done' — no download link yet
+      expect(screen.queryByText('Download embedded video')).toBeNull()
+      expect(screen.getByTestId('progress-bar')).toBeDefined()
+    })
+
+    it('shows download link after embed_done SSE event', async () => {
+      const { api } = await import('../../api/client')
+      ;(api.embedQuick as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ status: 'started' })
+      render(<EmbedPanel />)
+      fireEvent.click(screen.getByText('Embed Subtitles'))
+      fireEvent.click(screen.getByText('Confirm'))
+      // Wait for EventSource to be created
+      await vi.waitFor(() => {
+        expect(MockEventSource.instance).not.toBeNull()
+      })
+      // Fire embed_done SSE event
+      MockEventSource.instance!.emit('embed_done', { download_url: '/embed/download/task-123' })
+      // Now download link should appear
+      await vi.waitFor(() => {
+        expect(screen.getByText('Download embedded video')).toBeDefined()
+      })
+      const link = screen.getByText('Download embedded video').closest('a')
+      expect(link?.getAttribute('href')).toBe('/embed/download/task-123')
     })
   })
 })
