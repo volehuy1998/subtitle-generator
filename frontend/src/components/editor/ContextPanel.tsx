@@ -4,19 +4,11 @@ import { SmartSuggestion } from './SmartSuggestion'
 import { SearchBar } from './SearchBar'
 import { TranslatePanel } from './TranslatePanel'
 import { EmbedPanel } from './EmbedPanel'
+import { FileMetadataPanel } from './FileMetadataPanel'
 import { useEditorStore } from '../../store/editorStore'
 import { useUIStore } from '../../store/uiStore'
 
-function formatDuration(seconds: number): string {
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  const s = Math.floor(seconds % 60)
-  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-  return `${m}:${String(s).padStart(2, '0')}`
-}
-
 function InfoPanel() {
-  const fileMetadata = useEditorStore(s => s.fileMetadata)
   const language = useEditorStore(s => s.language)
   const modelUsed = useEditorStore(s => s.modelUsed)
   const segments = useEditorStore(s => s.segments)
@@ -28,39 +20,28 @@ function InfoPanel() {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* File info */}
+      {/* File metadata */}
       <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-3">
-        <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-2">
-          File Info
-        </p>
-        <dl className="flex flex-col gap-1.5 text-sm">
-          {fileMetadata?.filename && (
-            <div className="flex justify-between gap-2">
-              <dt className="text-[var(--color-text-secondary)] shrink-0">Name</dt>
-              <dd className="text-[var(--color-text)] truncate text-right" title={fileMetadata.filename}>
-                {fileMetadata.filename}
-              </dd>
-            </div>
-          )}
-          {fileMetadata?.duration !== undefined && fileMetadata.duration > 0 && (
-            <div className="flex justify-between gap-2">
-              <dt className="text-[var(--color-text-secondary)]">Duration</dt>
-              <dd className="text-[var(--color-text)]">{formatDuration(fileMetadata.duration)}</dd>
-            </div>
-          )}
-          {language && (
-            <div className="flex justify-between gap-2">
-              <dt className="text-[var(--color-text-secondary)]">Language</dt>
-              <dd><Badge variant="info">{language}</Badge></dd>
-            </div>
-          )}
-          {modelUsed && (
-            <div className="flex justify-between gap-2">
-              <dt className="text-[var(--color-text-secondary)]">Model</dt>
-              <dd><Badge>{modelUsed}</Badge></dd>
-            </div>
-          )}
-        </dl>
+        <FileMetadataPanel />
+        {(language || modelUsed) && (
+          <div className="mt-2 pt-2 border-t border-[var(--color-border)]">
+            <h4 className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-2">Transcription</h4>
+            <dl className="flex flex-col gap-1.5 text-sm">
+              {language && (
+                <div className="flex justify-between gap-2">
+                  <dt className="text-[var(--color-text-secondary)]">Language</dt>
+                  <dd><Badge variant="info">{language}</Badge></dd>
+                </div>
+              )}
+              {modelUsed && (
+                <div className="flex justify-between gap-2">
+                  <dt className="text-[var(--color-text-secondary)]">Model</dt>
+                  <dd><Badge>{modelUsed}</Badge></dd>
+                </div>
+              )}
+            </dl>
+          </div>
+        )}
       </div>
 
       {/* Stats */}
