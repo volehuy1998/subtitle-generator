@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "6551428",
-    "sha_full": "65514284ac0c398abc9211bad07de552c5f1392e",
-    "datetime": "2026-03-18T21:11:57+07:00",
-    "message": "fix(ui): wrap CSS custom properties in var() for Tailwind v4 compatibility"
+    "sha": "f10eb7e",
+    "sha_full": "f10eb7e6c8403882913ad2f00abe3c2ec7f43a1a",
+    "datetime": "2026-03-19T10:30:06+07:00",
+    "message": "style(ui): update UI primitives for Premium Editorial token system"
   },
   "assertions": [
     {

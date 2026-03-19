@@ -3,8 +3,11 @@ import { Dialog } from '../ui/Dialog'
 import { Button } from '../ui/Button'
 import { Select } from '../ui/Select'
 import { Input } from '../ui/Input'
+import { Switch } from '../ui/Switch'
+import { Slider } from '../ui/Slider'
 import { api } from '../../api/client'
 import { navigate } from '../../navigation'
+import { usePreferencesStore } from '../../store/preferencesStore'
 
 export interface RetranscribeDialogProps {
   open: boolean
@@ -21,9 +24,14 @@ const MODEL_OPTIONS = [
 ]
 
 export function RetranscribeDialog({ open, onClose, taskId }: RetranscribeDialogProps) {
+  const prefs = usePreferencesStore()
+
   const [modelSize, setModelSize] = useState('large')
   const [language, setLanguage] = useState('')
-  const [diarize, setDiarize] = useState(false)
+  const [diarize, setDiarize] = useState(prefs.diarizeByDefault)
+  const [wordTimestamps, setWordTimestamps] = useState(prefs.wordTimestamps)
+  const [initialPrompt, setInitialPrompt] = useState(prefs.initialPrompt)
+  const [numSpeakers, setNumSpeakers] = useState(prefs.numSpeakers ?? 2)
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
 
@@ -32,8 +40,14 @@ export function RetranscribeDialog({ open, onClose, taskId }: RetranscribeDialog
     setErrorMsg('')
 
     try {
-      const opts: Record<string, unknown> = { model_size: modelSize, diarize }
+      const opts: Record<string, unknown> = {
+        model_size: modelSize,
+        diarize,
+        word_timestamps: wordTimestamps,
+      }
       if (language.trim()) opts.language = language.trim()
+      if (initialPrompt.trim()) opts.initial_prompt = initialPrompt.trim()
+      if (diarize) opts.num_speakers = numSpeakers
 
       const result = await api.retranscribe(taskId, opts)
       onClose()
@@ -68,15 +82,46 @@ export function RetranscribeDialog({ open, onClose, taskId }: RetranscribeDialog
           helperText="Leave blank to auto-detect."
         />
 
-        <label className="flex items-center gap-2 text-sm text-[var(--color-text)] cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={diarize}
-            onChange={e => setDiarize(e.target.checked)}
-            className="h-4 w-4 rounded border-[var(--color-border)] accent-[var(--color-primary)]"
+        <Switch
+          checked={wordTimestamps}
+          onChange={setWordTimestamps}
+          label="Word-level timestamps"
+          description="Generate timestamps for each word, enabling precise highlighting."
+        />
+
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-[var(--color-text)]">
+            Initial prompt
+          </label>
+          <textarea
+            value={initialPrompt}
+            onChange={e => setInitialPrompt(e.target.value.slice(0, 500))}
+            placeholder="e.g. domain terms, acronyms, proper nouns..."
+            rows={2}
+            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none"
+            maxLength={500}
           />
-          Enable speaker diarization
-        </label>
+          <p className="text-xs text-[var(--color-text-muted)]">
+            Guide transcription with vocabulary hints. {initialPrompt.length}/500
+          </p>
+        </div>
+
+        <Switch
+          checked={diarize}
+          onChange={setDiarize}
+          label="Speaker diarization"
+          description="Identify and label different speakers in the audio."
+        />
+
+        {diarize && (
+          <Slider
+            value={numSpeakers}
+            onChange={setNumSpeakers}
+            min={1}
+            max={10}
+            label="Number of speakers"
+          />
+        )}
 
         {errorMsg && (
           <p className="text-sm text-[var(--color-danger)]">{errorMsg}</p>

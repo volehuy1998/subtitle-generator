@@ -26,7 +26,7 @@ export function Dialog({ open, onClose, title, description, size = 'md', childre
         <RadixDialog.Content
           className={cn(
             'fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50',
-            'w-[calc(100vw-2rem)] rounded-xl bg-[var(--color-surface)] p-6 shadow-xl',
+            'w-[calc(100vw-2rem)] rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-6 shadow-[var(--shadow-xl)]',
             'animate-fade-in',
             sizeMap[size]
           )}

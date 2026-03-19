@@ -10,6 +10,7 @@ import { AppShell } from '../components/layout/AppShell'
 import { ProgressView } from '../components/editor/ProgressView'
 import { EditorToolbar } from '../components/editor/EditorToolbar'
 import { SegmentList } from '../components/editor/SegmentList'
+import { BulkEditBar } from '../components/editor/BulkEditBar'
 import { ContextPanel } from '../components/editor/ContextPanel'
 import { CombineView } from '../components/editor/CombineView'
 import { Spinner } from '../components/ui/Spinner'
@@ -116,6 +117,7 @@ export function EditorPage({ taskId }: { taskId: string }) {
     <AppShell>
       <div className="max-w-[1280px] mx-auto px-4 py-4">
         <EditorToolbar />
+        <BulkEditBar />
         <div className="flex gap-6 flex-col lg:flex-row mt-4">
           <div className="flex-1 min-w-0">
             <SegmentList taskId={taskId} />

@@ -23,6 +23,7 @@ export function matchRoute(path: string): { page: string; params: Record<string,
     '/about': 'about',
     '/security': 'security',
     '/contact': 'contact',
+    '/settings': 'settings',
   }
   return { page: routes[path] ?? 'landing', params: {} }
 }
