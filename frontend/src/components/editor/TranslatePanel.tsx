@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Button } from '../ui/Button'
 import { Select } from '../ui/Select'
-import { ProgressBar } from '../ui/ProgressBar'
-import { ConfirmDialog } from '../ui/ConfirmDialog'
 import { api } from '../../api/client'
 import { useEditorStore } from '../../store/editorStore'
 import type { TranslationPair } from '../../api/types'
 
 type Engine = 'whisper' | 'argos'
-type Status = 'idle' | 'loading' | 'running' | 'done' | 'error'
+type Status = 'idle' | 'done' | 'error'
 
 export function TranslatePanel() {
   const taskId = useEditorStore(s => s.taskId)
@@ -18,9 +16,7 @@ export function TranslatePanel() {
   const [targetLanguage, setTargetLanguage] = useState('en')
   const [engine, setEngine] = useState<Engine>('whisper')
   const [status, setStatus] = useState<Status>('idle')
-  const [progress, setProgress] = useState(0)
   const [errorMsg, setErrorMsg] = useState('')
-  const [showNoApiDialog, setShowNoApiDialog] = useState(false)
 
   useEffect(() => {
     api.translationLanguages()
@@ -37,27 +33,19 @@ export function TranslatePanel() {
     (opt, idx, arr) => arr.findIndex(o => o.value === opt.value) === idx
   )
 
-  const handleTranslate = async () => {
+  // No standalone translate API exists on the backend.
+  // Whisper translate = re-transcribe with task="translate".
+  // Argos translate = pipeline step during transcription.
+  // Show guidance instead of a broken API call. — Pixel (Sr. Frontend Engineer)
+  const handleTranslate = () => {
     if (!taskId) return
 
-    // Check if api.translate exists
-    if (typeof (api as Record<string, unknown>)['translate'] !== 'function') {
-      setShowNoApiDialog(true)
-      return
-    }
-
-    setStatus('running')
-    setProgress(0)
-    setErrorMsg('')
-
-    try {
-      await (api as unknown as { translate: (id: string, opts: Record<string, unknown>) => Promise<unknown> })
-        .translate(taskId, { target_language: targetLanguage, engine })
+    if (engine === 'whisper') {
+      setErrorMsg('')
       setStatus('done')
-      setProgress(100)
-    } catch (err) {
+    } else {
       setStatus('error')
-      setErrorMsg(err instanceof Error ? err.message : 'Translation failed')
+      setErrorMsg('Standalone Argos translation is not yet available. Use the Advanced Upload Options to enable translation during transcription.')
     }
   }
 
@@ -104,12 +92,13 @@ export function TranslatePanel() {
         </div>
       </div>
 
-      {status === 'running' && (
-        <ProgressBar value={progress} label="Translating…" showPercent />
-      )}
-
-      {status === 'done' && (
-        <p className="text-sm text-[var(--color-success)]">Translation complete.</p>
+      {status === 'done' && engine === 'whisper' && (
+        <div className="p-3 rounded-lg bg-[var(--color-primary-light)] text-sm text-[var(--color-text)]">
+          <p className="font-medium mb-1">Use Re-transcribe</p>
+          <p className="text-[var(--color-text-secondary)]">
+            To translate to English, click the Re-transcribe button in the toolbar and enable &quot;Translate to English&quot; in the options.
+          </p>
+        </div>
       )}
 
       {status === 'error' && (
@@ -119,21 +108,11 @@ export function TranslatePanel() {
       <Button
         variant="primary"
         size="sm"
-        loading={status === 'running'}
-        disabled={status === 'running'}
+        disabled={status === 'done'}
         onClick={handleTranslate}
       >
         Begin Translation
       </Button>
-
-      <ConfirmDialog
-        open={showNoApiDialog}
-        onClose={() => setShowNoApiDialog(false)}
-        onConfirm={() => setShowNoApiDialog(false)}
-        title="Translation not available"
-        description="Translation API is not yet available. Try re-transcribing with Whisper translate mode instead."
-        confirmLabel="OK"
-      />
     </div>
   )
 }

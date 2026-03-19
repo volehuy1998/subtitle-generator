@@ -28,7 +28,7 @@ export function ProgressView({ taskId }: ProgressViewProps) {
   const etaDisplay = progress?.eta != null ? `ETA: ${progress.eta}s` : null
   const speedDisplay = progress?.speed != null ? `${progress.speed.toFixed(1)}x speed` : null
   const segmentDisplay =
-    progress != null
+    progress != null && progress.segmentCount != null
       ? `${progress.segmentCount} segment${progress.segmentCount !== 1 ? 's' : ''}`
       : null
 
@@ -38,8 +38,8 @@ export function ProgressView({ taskId }: ProgressViewProps) {
     <TooltipProvider>
       <div className="flex flex-col gap-4 p-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]">
         {/* Header */}
-        <div>
-          <p className="text-sm font-medium text-[var(--color-text)] truncate">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-[var(--color-text)] truncate" title={fileMetadata?.filename ?? undefined}>
             {fileMetadata?.filename ?? 'Processing...'}
           </p>
           {modelUsed && (

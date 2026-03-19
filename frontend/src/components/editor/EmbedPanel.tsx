@@ -36,7 +36,6 @@ export function EmbedPanel() {
   })
   const [presets, setPresets] = useState<Preset[]>([])
   const [status, setStatus] = useState<Status>('idle')
-  const [progress, setProgress] = useState(0)
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -69,7 +68,6 @@ export function EmbedPanel() {
     setConfirmOpen(false)
     setDownloadUrl(null)
     setStatus('running')
-    setProgress(0)
     setErrorMsg('')
 
     try {
@@ -100,11 +98,9 @@ export function EmbedPanel() {
         try {
           const data = JSON.parse(e.data)
           setStatus('done')
-          setProgress(100)
           setDownloadUrl(data.download_url || `/embed/download/${taskId}`)
         } catch {
           setStatus('done')
-          setProgress(100)
           setDownloadUrl(`/embed/download/${taskId}`)
         }
         es.close()
@@ -122,18 +118,13 @@ export function EmbedPanel() {
         es.close()
       })
 
-      es.addEventListener('embed_progress', (e: MessageEvent) => {
-        try {
-          const data = JSON.parse(e.data)
-          if (data.percent != null) setProgress(data.percent)
-        } catch {
-          // ignore parse errors
-        }
+      es.addEventListener('embed_progress', () => {
+        // Backend sends a single 100% event right before ffmpeg — no incremental progress.
+        // We show an indeterminate bar, so nothing to update here.
       })
 
       es.addEventListener('quick_embed_complete', () => {
         setStatus('done')
-        setProgress(100)
         setDownloadUrl(`/embed/download/${taskId}`)
         es.close()
       })
@@ -233,7 +224,7 @@ export function EmbedPanel() {
       )}
 
       {status === 'running' && (
-        <ProgressBar value={progress} label="Embedding…" showPercent />
+        <ProgressBar label="Embedding…" />
       )}
 
       {status === 'error' && (

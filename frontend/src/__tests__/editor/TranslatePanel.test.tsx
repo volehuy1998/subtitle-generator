@@ -1,11 +1,12 @@
 /**
  * TranslatePanel tests — translation engine selector with language options.
+ * Updated to reflect guidance-based flow (no standalone translate API).
  *
  * — Pixel (Sr. Frontend Engineer)
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { TranslatePanel } from '../../components/editor/TranslatePanel'
 import { useEditorStore } from '../../store/editorStore'
 
@@ -22,13 +23,6 @@ vi.mock('../../api/client', () => ({
 }))
 
 // Mock UI components to simplify rendering
-vi.mock('../../components/ui/ProgressBar', () => ({
-  ProgressBar: ({ label }: { label?: string }) => <div data-testid="progress-bar">{label}</div>,
-}))
-vi.mock('../../components/ui/ConfirmDialog', () => ({
-  ConfirmDialog: ({ open, title, onConfirm }: { open: boolean; title: string; onConfirm: () => void }) =>
-    open ? <div data-testid="confirm-dialog"><span>{title}</span><button onClick={onConfirm}>OK</button></div> : null,
-}))
 vi.mock('../../components/ui/Button', () => ({
   Button: ({ children, onClick, disabled }: { children: React.ReactNode; onClick?: () => void; disabled?: boolean }) => (
     <button onClick={onClick} disabled={disabled}>{children}</button>
@@ -81,5 +75,35 @@ describe('TranslatePanel', () => {
     await waitFor(() => {
       expect(screen.getByText('Target language')).toBeDefined()
     })
+  })
+
+  it('shows re-transcribe guidance when Whisper engine is selected', () => {
+    render(<TranslatePanel />)
+    fireEvent.click(screen.getByText('Begin Translation'))
+    expect(screen.getByText('Use Re-transcribe')).toBeDefined()
+    expect(screen.getByText(/Translate to English/)).toBeDefined()
+  })
+
+  it('shows error message when Argos engine is selected', () => {
+    render(<TranslatePanel />)
+    // Click Argos engine button
+    fireEvent.click(screen.getByText('Argos'))
+    fireEvent.click(screen.getByText('Begin Translation'))
+    expect(screen.getByText(/Standalone Argos translation is not yet available/)).toBeDefined()
+  })
+
+  it('disables button after showing whisper guidance', () => {
+    render(<TranslatePanel />)
+    fireEvent.click(screen.getByText('Begin Translation'))
+    expect(screen.getByText('Begin Translation').closest('button')?.disabled).toBe(true)
+  })
+
+  it('does nothing when taskId is not set', () => {
+    useEditorStore.setState({ taskId: null })
+    render(<TranslatePanel />)
+    fireEvent.click(screen.getByText('Begin Translation'))
+    // No guidance or error should appear
+    expect(screen.queryByText('Use Re-transcribe')).toBeNull()
+    expect(screen.queryByText(/not yet available/)).toBeNull()
   })
 })
