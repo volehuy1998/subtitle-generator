@@ -13,6 +13,8 @@ export function SegmentList({ taskId }: SegmentListProps) {
   const editingSegmentIndex = useEditorStore(s => s.editingSegmentIndex)
   const setEditingSegment = useEditorStore(s => s.setEditingSegment)
   const updateSegment = useEditorStore(s => s.updateSegment)
+  const selectedSegments = useEditorStore(s => s.selectedSegments)
+  const toggleSegment = useEditorStore(s => s.toggleSegment)
 
   const handleEdit = (index: number, text: string) => {
     updateSegment(index, text)
@@ -33,6 +35,8 @@ export function SegmentList({ taskId }: SegmentListProps) {
           segment={segment}
           editing={editingSegmentIndex === i}
           highlighted={searchResults.some(r => r.segmentIndex === i)}
+          selected={selectedSegments.has(i)}
+          onToggleSelect={() => toggleSegment(i)}
           onClick={() => setEditingSegment(i)}
           onEdit={(idx, text) => handleEdit(idx, text)}
         />

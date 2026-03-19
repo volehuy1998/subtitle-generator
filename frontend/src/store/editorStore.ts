@@ -36,6 +36,7 @@ interface EditorState {
   searchQuery: string
   searchResults: SearchResult[]
   editingSegmentIndex: number | null
+  selectedSegments: Set<number>
 
   setTaskId: (id: string) => void
   setFileMetadata: (meta: FileMetadata) => void
@@ -45,10 +46,14 @@ interface EditorState {
   addLiveSegment: (segment: Segment) => void
   setComplete: (data: CompleteData) => void
   setError: (message: string) => void
+  setSegments: (segments: Segment[]) => void
   updateSegment: (index: number, text: string) => void
   setSearchQuery: (query: string) => void
   setSearchResults: (results: SearchResult[]) => void
   setEditingSegment: (index: number | null) => void
+  toggleSegment: (index: number) => void
+  selectAll: () => void
+  clearSelection: () => void
   reset: () => void
 }
 
@@ -68,6 +73,7 @@ const initial = {
   searchQuery: '',
   searchResults: [] as SearchResult[],
   editingSegmentIndex: null as number | null,
+  selectedSegments: new Set<number>(),
 }
 
 export const useEditorStore = create<EditorState>((set) => ({
@@ -101,6 +107,8 @@ export const useEditorStore = create<EditorState>((set) => ({
     progress: null,
   }),
 
+  setSegments: (segments) => set({ segments }),
+
   updateSegment: (index, text) => set(s => ({
     segments: s.segments.map((seg, i) => i === index ? { ...seg, text } : seg),
   })),
@@ -108,6 +116,17 @@ export const useEditorStore = create<EditorState>((set) => ({
   setSearchQuery: (query) => set({ searchQuery: query }),
   setSearchResults: (results) => set({ searchResults: results }),
   setEditingSegment: (index) => set({ editingSegmentIndex: index }),
+
+  toggleSegment: (index) => set((state) => {
+    const next = new Set(state.selectedSegments)
+    if (next.has(index)) next.delete(index)
+    else next.add(index)
+    return { selectedSegments: next }
+  }),
+  selectAll: () => set((state) => ({
+    selectedSegments: new Set(state.segments.map((_, i) => i))
+  })),
+  clearSelection: () => set({ selectedSegments: new Set<number>() }),
 
   reset: () => set(initial),
 }))

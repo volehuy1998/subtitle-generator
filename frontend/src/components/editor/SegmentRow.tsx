@@ -8,10 +8,12 @@ interface SegmentRowProps {
   onEdit: (index: number, text: string) => void
   editing?: boolean
   highlighted?: boolean
+  selected?: boolean
+  onToggleSelect?: () => void
   onClick?: () => void
 }
 
-export function SegmentRow({ segment, onEdit, editing = false, highlighted = false, onClick }: SegmentRowProps) {
+export function SegmentRow({ segment, onEdit, editing = false, highlighted = false, selected = false, onToggleSelect, onClick }: SegmentRowProps) {
   const [draft, setDraft] = useState(segment.text)
   const [lastText, setLastText] = useState(segment.text)
 
@@ -35,6 +37,17 @@ export function SegmentRow({ segment, onEdit, editing = false, highlighted = fal
       )}
       onClick={!editing ? onClick : undefined}
     >
+      <input
+        type="checkbox"
+        checked={selected}
+        onChange={(e) => {
+          e.stopPropagation()
+          onToggleSelect?.()
+        }}
+        onClick={(e) => e.stopPropagation()}
+        className="shrink-0 mt-1 accent-[var(--color-primary)]"
+        aria-label={`Select segment ${segment.index + 1}`}
+      />
       <div className="flex-shrink-0 w-6 text-xs text-neutral-400 pt-1 text-right select-none">
         {segment.index + 1}
       </div>
