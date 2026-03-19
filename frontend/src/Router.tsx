@@ -22,6 +22,7 @@ import { StatusPage } from './pages/StatusPage'
 import { AboutPage } from './pages/AboutPage'
 import { SecurityPage } from './pages/SecurityPage'
 import { ContactPage } from './pages/ContactPage'
+import { SettingsPage } from './pages/SettingsPage'
 
 export function Router() {
   const [path, setPath] = useState(window.location.pathname)
@@ -57,6 +58,8 @@ export function Router() {
       return <SecurityPage />
     case 'contact':
       return <ContactPage />
+    case 'settings':
+      return <SettingsPage />
     default:
       return <LandingPage />
   }
