@@ -7,6 +7,7 @@ export function useHealthStream() {
   const setHealthStreamConnected = useUIStore(s => s.setHealthStreamConnected)
   const setSystemHealth = useUIStore(s => s.setSystemHealth)
   const setModelPreloadStatus = useUIStore(s => s.setModelPreloadStatus)
+  const setHealthMetrics = useUIStore(s => s.setHealthMetrics)
   const gracePeriodRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -37,6 +38,14 @@ export function useHealthStream() {
         if (data.models) {
           setModelPreloadStatus(data.models)
         }
+        setHealthMetrics({
+          cpuPercent: data.cpu_percent ?? null,
+          memoryPercent: data.memory_percent ?? null,
+          diskPercent: data.disk_percent ?? null,
+          diskFreeGb: data.disk_free_gb ?? null,
+          activeTasks: data.active_tasks ?? 0,
+          lastUpdated: Date.now(),
+        })
       } catch {
         // Ignore parse errors
       }

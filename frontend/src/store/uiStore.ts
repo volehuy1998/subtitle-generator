@@ -2,6 +2,15 @@ import { create } from 'zustand'
 
 export type ContextPanelContent = 'info' | 'translate' | 'embed' | 'search'
 
+export interface HealthMetrics {
+  cpuPercent: number | null
+  memoryPercent: number | null
+  diskPercent: number | null
+  diskFreeGb: number | null
+  activeTasks: number
+  lastUpdated: number | null
+}
+
 interface UIState {
   currentPage: string
   contextPanelContent: ContextPanelContent
@@ -10,6 +19,7 @@ interface UIState {
   healthStreamConnected: boolean
   systemHealth: 'healthy' | 'degraded' | 'critical'
   modelPreloadStatus: Record<string, string>
+  healthMetrics: HealthMetrics
   dismissedSuggestions: string[]
 
   setCurrentPage: (page: string) => void
@@ -19,6 +29,7 @@ interface UIState {
   setHealthStreamConnected: (connected: boolean) => void
   setSystemHealth: (health: 'healthy' | 'degraded' | 'critical') => void
   setModelPreloadStatus: (status: Record<string, string>) => void
+  setHealthMetrics: (metrics: HealthMetrics) => void
   dismissSuggestion: (id: string) => void
 }
 
@@ -30,6 +41,14 @@ export const useUIStore = create<UIState>((set) => ({
   healthStreamConnected: false,
   systemHealth: 'healthy',
   modelPreloadStatus: {},
+  healthMetrics: {
+    cpuPercent: null,
+    memoryPercent: null,
+    diskPercent: null,
+    diskFreeGb: null,
+    activeTasks: 0,
+    lastUpdated: null,
+  },
   dismissedSuggestions: [],
 
   setCurrentPage: (page) => set({ currentPage: page }),
@@ -39,6 +58,7 @@ export const useUIStore = create<UIState>((set) => ({
   setHealthStreamConnected: (connected) => set({ healthStreamConnected: connected }),
   setSystemHealth: (health) => set({ systemHealth: health }),
   setModelPreloadStatus: (status) => set({ modelPreloadStatus: status }),
+  setHealthMetrics: (metrics) => set({ healthMetrics: metrics }),
   dismissSuggestion: (id) => set(s => ({
     dismissedSuggestions: [...s.dismissedSuggestions, id],
   })),
