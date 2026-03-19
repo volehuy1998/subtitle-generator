@@ -4,8 +4,10 @@ import { Button } from '../ui/Button'
 import { Select } from '../ui/Select'
 import { ProgressBar } from '../ui/ProgressBar'
 import { ConfirmDialog } from '../ui/ConfirmDialog'
+import { CustomEmbedStyler, type EmbedStyle } from './CustomEmbedStyler'
 import { api } from '../../api/client'
 import { useEditorStore } from '../../store/editorStore'
+import { usePreferencesStore } from '../../store/preferencesStore'
 
 type EmbedMode = 'soft' | 'hard'
 type Status = 'idle' | 'loading' | 'running' | 'done' | 'error'
@@ -19,8 +21,19 @@ interface Preset {
 export function EmbedPanel() {
   const taskId = useEditorStore(s => s.taskId)
 
-  const [mode, setMode] = useState<EmbedMode>('soft')
-  const [preset, setPreset] = useState('default')
+  const prefs = usePreferencesStore()
+
+  const [mode, setMode] = useState<EmbedMode>(prefs.defaultEmbedMode)
+  const [preset, setPreset] = useState(prefs.defaultEmbedPreset)
+  const [useCustomStyle, setUseCustomStyle] = useState(false)
+  const [customStyle, setCustomStyle] = useState<EmbedStyle>({
+    fontName: prefs.customFontName,
+    fontSize: prefs.customFontSize,
+    fontColor: prefs.customFontColor,
+    bold: prefs.customBold,
+    position: prefs.customPosition,
+    backgroundOpacity: prefs.customBackgroundOpacity,
+  })
   const [presets, setPresets] = useState<Preset[]>([])
   const [status, setStatus] = useState<Status>('idle')
   const [progress, setProgress] = useState(0)
@@ -54,7 +67,18 @@ export function EmbedPanel() {
     try {
       const fd = new FormData()
       fd.append('mode', mode)
-      if (mode === 'hard') fd.append('preset', preset)
+      if (mode === 'hard') {
+        if (useCustomStyle) {
+          fd.append('font_name', customStyle.fontName)
+          fd.append('font_size', String(customStyle.fontSize))
+          fd.append('font_color', customStyle.fontColor)
+          fd.append('bold', String(customStyle.bold))
+          fd.append('position', customStyle.position)
+          fd.append('background_opacity', String(customStyle.backgroundOpacity))
+        } else {
+          fd.append('preset', preset)
+        }
+      }
 
       const result = await api.embedQuick(taskId, fd)
       setStatus('done')
@@ -99,14 +123,49 @@ export function EmbedPanel() {
         </div>
       </div>
 
-      {/* Style preset — only for hard mode */}
-      {mode === 'hard' && presetOptions.length > 0 && (
-        <Select
-          label="Style preset"
-          value={preset}
-          onChange={e => setPreset(e.target.value)}
-          options={presetOptions}
-        />
+      {/* Style options — only for hard mode */}
+      {mode === 'hard' && (
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setUseCustomStyle(false)}
+              className={[
+                'text-xs px-3 py-1.5 rounded-md border transition-colors',
+                !useCustomStyle
+                  ? 'border-[var(--color-primary)] bg-[var(--color-primary-light)] text-[var(--color-primary)]'
+                  : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-raised)]',
+              ].join(' ')}
+            >
+              Preset
+            </button>
+            <button
+              type="button"
+              onClick={() => setUseCustomStyle(true)}
+              className={[
+                'text-xs px-3 py-1.5 rounded-md border transition-colors',
+                useCustomStyle
+                  ? 'border-[var(--color-primary)] bg-[var(--color-primary-light)] text-[var(--color-primary)]'
+                  : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-raised)]',
+              ].join(' ')}
+            >
+              Custom
+            </button>
+          </div>
+
+          {!useCustomStyle && presetOptions.length > 0 && (
+            <Select
+              label="Style preset"
+              value={preset}
+              onChange={e => setPreset(e.target.value)}
+              options={presetOptions}
+            />
+          )}
+
+          {useCustomStyle && (
+            <CustomEmbedStyler style={customStyle} onChange={setCustomStyle} />
+          )}
+        </div>
       )}
 
       {status === 'running' && (
