@@ -66,7 +66,13 @@ export function EditorPage({ taskId }: { taskId: string }) {
       }
       // else: still processing — SSE will handle updates
     }).catch(() => {
-      setError('Project not found or deleted')
+      // Delay error display to avoid flash — SSE may connect and provide real status
+      setTimeout(() => {
+        const currentPhase = useEditorStore.getState().phase
+        if (currentPhase === 'processing') {
+          setError('Project not found or deleted')
+        }
+      }, 1500)
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId])
