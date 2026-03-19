@@ -9,10 +9,13 @@ import { AppShell } from '../components/layout/AppShell'
 import { UploadZone } from '../components/landing/UploadZone'
 import { UploadProgress } from '../components/landing/UploadProgress'
 import { ProjectGrid } from '../components/landing/ProjectGrid'
+import { AdvancedUploadOptions } from '../components/editor/AdvancedUploadOptions'
+import type { UploadOptions } from '../components/editor/AdvancedUploadOptions'
 import { Card } from '../components/ui/Card'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { useEditorStore } from '../store/editorStore'
 import { useRecentProjectsStore } from '../store/recentProjectsStore'
+import { usePreferencesStore } from '../store/preferencesStore'
 import { useToastStore } from '../store/toastStore'
 import { navigate } from '../navigation'
 import { api } from '../api/client'
@@ -29,6 +32,16 @@ export function LandingPage() {
   const updateProject = useRecentProjectsStore(s => s.updateProject)
   const removeProject = useRecentProjectsStore(s => s.removeProject)
   const addToast = useToastStore(s => s.addToast)
+  const prefs = usePreferencesStore()
+  const [uploadOptions, setUploadOptions] = useState<UploadOptions>({
+    model: prefs.defaultModel,
+    language: prefs.defaultLanguage,
+    diarize: prefs.diarizeByDefault,
+    numSpeakers: prefs.numSpeakers,
+    wordTimestamps: prefs.wordTimestamps,
+    initialPrompt: prefs.initialPrompt,
+    translateToEnglish: false,
+  })
 
   // Validate recent projects on mount — stagger calls 100ms apart, max 3 concurrent
   useEffect(() => {
@@ -109,6 +122,13 @@ export function LandingPage() {
         result = await api.combineStart(fd)
       } else {
         fd.append('file', file)
+        // Append advanced upload options
+        if (uploadOptions.model !== 'auto') fd.append('model', uploadOptions.model)
+        if (uploadOptions.language !== 'auto') fd.append('language', uploadOptions.language)
+        if (uploadOptions.diarize) fd.append('diarize', 'true')
+        if (uploadOptions.wordTimestamps) fd.append('word_timestamps', 'true')
+        if (uploadOptions.initialPrompt) fd.append('initial_prompt', uploadOptions.initialPrompt)
+        if (uploadOptions.translateToEnglish) fd.append('translate', 'true')
         const { promise } = api.uploadWithProgress(fd, setUploadPercent)
         result = await promise
       }
@@ -137,10 +157,16 @@ export function LandingPage() {
           {uploading ? (
             <UploadProgress filename={uploadFilename} percent={uploadPercent} />
           ) : (
-            <UploadZone
-              onUpload={handleUpload}
-              onError={(msg) => addToast({ type: 'error', title: 'Error', description: msg })}
-            />
+            <>
+              <UploadZone
+                onUpload={handleUpload}
+                onError={(msg) => addToast({ type: 'error', title: 'Error', description: msg })}
+              />
+              <AdvancedUploadOptions
+                options={uploadOptions}
+                onChange={setUploadOptions}
+              />
+            </>
           )}
         </Card>
         <ProjectGrid />
