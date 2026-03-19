@@ -11,6 +11,7 @@
 import { navigate } from '../../navigation'
 import { useUIStore } from '../../store/uiStore'
 import { HealthIndicator } from '../system/HealthIndicator'
+import { ThemeToggle } from '../ui/ThemeToggle'
 
 export function Header() {
   const currentPage = useUIStore((s) => s.currentPage)
@@ -38,6 +39,7 @@ export function Header() {
         <nav className="flex items-center gap-1" aria-label="Main navigation">
           {[
             { href: '/status', label: 'Status' },
+            { href: '/settings', label: 'Settings' },
             { href: '/about', label: 'About' },
           ].map(({ href, label }) => (
             <button
@@ -52,6 +54,7 @@ export function Header() {
               {label}
             </button>
           ))}
+          <ThemeToggle />
           <HealthIndicator />
         </nav>
       </div>
