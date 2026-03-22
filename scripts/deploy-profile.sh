@@ -69,11 +69,14 @@ trap restore_state EXIT
 
 case "$PROFILE" in
   cpu)
-    TARGET_BRANCH="main"
     TAG_FLAG=false
     if [ "$SECOND_ARG" = "--tag" ]; then
       TAG_FLAG=true
+    elif [ -n "$SECOND_ARG" ]; then
+      # Allow explicit branch override: deploy-profile.sh cpu <branch>
+      PROD_BRANCH_OVERRIDE="$SECOND_ARG"
     fi
+    TARGET_BRANCH="${PROD_BRANCH_OVERRIDE:-${PROD_BRANCH:-main}}"
     ;;
   newui)
     if [ -n "$SECOND_ARG" ] && [ "$SECOND_ARG" != "--tag" ]; then
