@@ -30,13 +30,13 @@ describe('ErrorBoundary', () => {
     expect(screen.getByText('Something went wrong')).toBeInTheDocument()
   })
 
-  it('shows reload button after error', () => {
+  it('shows Refresh Page button after error', () => {
     render(
       <ErrorBoundary>
         <Bomb shouldThrow={true} />
       </ErrorBoundary>,
     )
-    expect(screen.getByText('Reload page')).toBeInTheDocument()
+    expect(screen.getByText('Refresh Page')).toBeInTheDocument()
   })
 
   it('shows descriptive message after error', () => {

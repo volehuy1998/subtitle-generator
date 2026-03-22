@@ -1,59 +1,112 @@
-import * as RadixDialog from '@radix-ui/react-dialog'
-import { X } from 'lucide-react'
-import { type ReactNode } from 'react'
-import { cn } from './cn'
+/**
+ * Dialog — reusable modal dialog wrapper with focus trapping,
+ * Escape-to-close, and overlay click-to-close.
+ *
+ * Created as a shared primitive for future dialogs. Existing dialogs
+ * (ConfirmationDialog, CancelConfirmationDialog, EmbedConfirmationDialog)
+ * are not refactored — this is for new usage going forward.
+ *
+ * — Pixel (Sr. Frontend), Sprint L22
+ */
+
+import type { ReactNode } from 'react'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 
 interface DialogProps {
   open: boolean
   onClose: () => void
   title: string
   description?: string
-  size?: 'sm' | 'md' | 'lg'
   children: ReactNode
+  actions?: ReactNode
+  maxWidth?: string
+  ariaLabel?: string
 }
 
-const sizeMap = {
-  sm: 'max-w-[400px]',
-  md: 'max-w-[500px]',
-  lg: 'max-w-[640px]',
-}
+export function Dialog({
+  open,
+  onClose,
+  title,
+  description,
+  children,
+  actions,
+  maxWidth = '480px',
+  ariaLabel,
+}: DialogProps) {
+  const trapRef = useFocusTrap()
 
-export function Dialog({ open, onClose, title, description, size = 'md', children }: DialogProps) {
+  if (!open) return null
+
   return (
-    <RadixDialog.Root open={open} onOpenChange={(o) => { if (!o) onClose() }}>
-      <RadixDialog.Portal>
-        <RadixDialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 animate-fade-in" />
-        <RadixDialog.Content
-          className={cn(
-            'fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50',
-            'w-[calc(100vw-2rem)] rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-6 shadow-[var(--shadow-xl)]',
-            'animate-fade-in',
-            sizeMap[size]
-          )}
-          onEscapeKeyDown={onClose}
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        zIndex: 50,
+      }}
+      onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose()
+      }}
+      role="dialog"
+      aria-modal="true"
+      aria-label={ariaLabel || title}
+    >
+      <div
+        ref={trapRef}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'var(--color-bg)',
+          border: '1px solid var(--color-border)',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: 'var(--shadow-lg)',
+          padding: '32px',
+          maxWidth,
+          width: '90%',
+        }}
+      >
+        <h3
+          style={{
+            margin: '0 0 8px',
+            fontSize: '20px',
+            fontWeight: 600,
+            color: 'var(--color-text)',
+          }}
         >
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <RadixDialog.Title className="text-base font-semibold text-[var(--color-text)]">
-                {title}
-              </RadixDialog.Title>
-              {description && (
-                <RadixDialog.Description className="text-sm text-[var(--color-text-secondary)] mt-1">
-                  {description}
-                </RadixDialog.Description>
-              )}
-            </div>
-            <button
-              onClick={onClose}
-              className="ml-4 p-1 rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-raised)] transition-colors"
-              aria-label="Close dialog"
-            >
-              <X className="h-4 w-4" />
-            </button>
+          {title}
+        </h3>
+
+        {description && (
+          <p
+            style={{
+              margin: '0 0 24px',
+              fontSize: '14px',
+              color: 'var(--color-text-2)',
+            }}
+          >
+            {description}
+          </p>
+        )}
+
+        {children}
+
+        {actions && (
+          <div
+            style={{
+              display: 'flex',
+              gap: '12px',
+              justifyContent: 'flex-end',
+              marginTop: '24px',
+            }}
+          >
+            {actions}
           </div>
-          {children}
-        </RadixDialog.Content>
-      </RadixDialog.Portal>
-    </RadixDialog.Root>
+        )}
+      </div>
+    </div>
   )
 }

@@ -16,13 +16,14 @@ describe('Select', () => {
     expect(screen.getByText('Spanish')).toBeInTheDocument()
   })
 
-  it('no options renders empty select', () => {
-    render(<Select options={[]} />)
-    const allOptions = screen.queryAllByRole('option')
-    expect(allOptions.length).toBe(0)
+  it('placeholder renders as disabled option', () => {
+    render(<Select options={options} placeholder="Choose language" />)
+    const placeholder = screen.getByText('Choose language') as HTMLOptionElement
+    expect(placeholder.tagName).toBe('OPTION')
+    expect(placeholder).toBeDisabled()
   })
 
-  it('renders options count', () => {
+  it('no placeholder renders no empty option', () => {
     render(<Select options={options} />)
     const allOptions = screen.getAllByRole('option')
     expect(allOptions.length).toBe(3)
@@ -46,13 +47,5 @@ describe('Select', () => {
     render(<Select options={options} onChange={handler} />)
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'fr' } })
     expect(handler).toHaveBeenCalled()
-  })
-
-  it('groups render optgroup elements', () => {
-    const groups = [
-      { label: 'European', options: [{ value: 'de', label: 'German' }] },
-    ]
-    render(<Select groups={groups} />)
-    expect(screen.getByText('German')).toBeInTheDocument()
   })
 })

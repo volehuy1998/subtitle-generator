@@ -101,12 +101,6 @@ export const api = {
   translationLanguages: () =>
     fetch('/translation/languages').then(r => json<TranslationLanguagesResponse>(r)),
 
-  translate: (taskId: string, targetLanguage: string) =>
-    fetch(`/translate/${taskId}`, {
-      method: 'POST',
-      body: new URLSearchParams({ target_language: targetLanguage }),
-    }).then(r => json<{ message: string; task_id: string }>(r)),
-
   modelStatus: () =>
     fetch('/api/model-status').then(r => json<{ preload: ModelPreloadStatus }>(r)).then(d => d.preload),
 
@@ -122,50 +116,5 @@ export const api = {
       total_segments: number
       preview_limit: number
       segments: Array<{ start: number; end: number; text: string }>
-    }>(r)),
-
-  updateSubtitle: (taskId: string, index: number, text: string) =>
-    fetch(`/subtitles/${taskId}/${index}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text }),
-    }).then(r => json<{ message: string }>(r)),
-
-  updateSubtitles: (taskId: string, segments: Array<{ index: number; text: string }>) =>
-    fetch(`/subtitles/${taskId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ segments }),
-    }).then(r => json<{ message: string }>(r)),
-
-  search: (taskId: string, query: string, limit?: number) => {
-    const params = new URLSearchParams({ q: query })
-    if (limit !== undefined) params.set('limit', String(limit))
-    return fetch(`/search/${taskId}?${params}`).then(r => json<{
-      task_id: string
-      query: string
-      total_matches: number
-      matches: Array<{ index: number; start: number; end: number; text: string }>
-    }>(r))
-  },
-
-  retranscribe: (taskId: string, options?: Record<string, unknown>) =>
-    fetch(`/tasks/${taskId}/retranscribe`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(options ?? {}),
-    }).then(r => json<{ task_id: string; message: string }>(r)),
-
-  duplicates: (filename: string, fileSize: number) => {
-    const params = new URLSearchParams({ filename, file_size: String(fileSize) })
-    return fetch(`/tasks/duplicates?${params}`).then(r => json<{
-      duplicates_found: boolean
-      matches: Array<{ task_id: string; filename: string; created_at: string }>
-    }>(r))
-  },
-
-  embedPresets: () =>
-    fetch('/embed/presets').then(r => json<{
-      presets: Record<string, { font_name: string; font_size: number; bold: boolean; position: string }>
     }>(r)),
 }

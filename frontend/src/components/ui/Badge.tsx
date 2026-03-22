@@ -1,34 +1,63 @@
-import { cva, type VariantProps } from 'class-variance-authority'
-import { type ReactNode } from 'react'
-import { cn } from './cn'
+/**
+ * Badge — reusable badge/tag component with variant coloring.
+ * Pure presentational, no state or side effects.
+ * — Pixel (Sr. Frontend), Sprint L25
+ */
 
-const badgeVariants = cva(
-  'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium',
-  {
-    variants: {
-      variant: {
-        default: 'bg-[var(--color-surface-raised)] text-[var(--color-text-secondary)] border border-[var(--color-border)]',
-        success: 'bg-[var(--color-success-light)] text-[var(--color-success)]',
-        warning: 'bg-[var(--color-warning-light)] text-[var(--color-warning)]',
-        danger: 'bg-[var(--color-danger-light)] text-[var(--color-danger)]',
-        info: 'bg-[var(--color-info-light)] text-[var(--color-info)]',
-      },
-    },
-    defaultVariants: { variant: 'default' },
-  }
-)
+import type { ReactNode } from 'react'
 
-interface BadgeProps extends VariantProps<typeof badgeVariants> {
+type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'info'
+
+interface BadgeProps {
   children: ReactNode
+  variant?: BadgeVariant
+  size?: 'sm' | 'md'
   dot?: boolean
-  className?: string
 }
 
-export function Badge({ variant, children, dot = false, className }: BadgeProps) {
+const variantStyles: Record<BadgeVariant, { bg: string; text: string }> = {
+  default: { bg: 'var(--color-surface-2)', text: 'var(--color-text-2)' },
+  success: { bg: 'var(--color-success-light)', text: 'var(--color-success)' },
+  warning: { bg: 'var(--color-warning-light)', text: 'var(--color-warning)' },
+  danger: { bg: 'var(--color-danger-light)', text: 'var(--color-danger)' },
+  info: { bg: 'var(--color-primary-light)', text: 'var(--color-primary)' },
+}
+
+const sizeStyles: Record<'sm' | 'md', { fontSize: string; padding: string }> = {
+  sm: { fontSize: '10px', padding: '2px 6px' },
+  md: { fontSize: '12px', padding: '3px 8px' },
+}
+
+export function Badge({ children, variant = 'default', size = 'md', dot = false }: BadgeProps) {
+  const colors = variantStyles[variant]
+  const sizing = sizeStyles[size]
+
   return (
-    <span className={cn(badgeVariants({ variant }), className)}>
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: dot ? '5px' : undefined,
+        backgroundColor: colors.bg,
+        color: colors.text,
+        fontSize: sizing.fontSize,
+        padding: sizing.padding,
+        borderRadius: '9999px',
+        fontWeight: 500,
+        lineHeight: 1.4,
+        whiteSpace: 'nowrap',
+      }}
+    >
       {dot && (
-        <span className="h-1.5 w-1.5 rounded-full bg-current shrink-0" aria-hidden="true" />
+        <span
+          style={{
+            width: size === 'sm' ? '5px' : '6px',
+            height: size === 'sm' ? '5px' : '6px',
+            borderRadius: '50%',
+            backgroundColor: colors.text,
+            flexShrink: 0,
+          }}
+        />
       )}
       {children}
     </span>

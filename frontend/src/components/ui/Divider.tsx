@@ -1,19 +1,32 @@
-import { cn } from './cn'
+/* Divider — horizontal rule with optional label — Pixel (Sr. Frontend), Sprint L38 */
 
 interface DividerProps {
   label?: string
-  className?: string
+  spacing?: 'sm' | 'md' | 'lg'
 }
 
-export function Divider({ label, className }: DividerProps) {
-  if (label) {
-    return (
-      <div className={cn('flex items-center gap-3', className)} role="separator">
-        <div className="flex-1 h-px bg-[var(--color-border)]" />
-        <span className="text-xs text-[var(--color-text-muted)] font-medium shrink-0">{label}</span>
-        <div className="flex-1 h-px bg-[var(--color-border)]" />
-      </div>
-    )
+export function Divider({ label, spacing = 'md' }: DividerProps) {
+  const gap = spacing === 'sm' ? '8px' : spacing === 'md' ? '16px' : '24px'
+
+  if (!label) {
+    return <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: `${gap} 0` }} />
   }
-  return <hr className={cn('border-0 h-px bg-[var(--color-border)]', className)} />
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: `${gap} 0` }}>
+      <div style={{ flex: 1, height: '1px', background: 'var(--color-border)' }} />
+      <span
+        style={{
+          fontSize: '12px',
+          fontWeight: 500,
+          color: 'var(--color-text-3)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+        }}
+      >
+        {label}
+      </span>
+      <div style={{ flex: 1, height: '1px', background: 'var(--color-border)' }} />
+    </div>
+  )
 }

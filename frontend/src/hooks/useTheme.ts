@@ -1,51 +1,42 @@
 /**
- * Theme hook — syncs with preferencesStore and handles system dark preference.
+ * Theme hook — manages light/dark/system preference with localStorage persistence.
  *
- * - 'system': follows OS prefers-color-scheme via matchMedia listener
+ * - 'system': follows OS prefers-color-scheme (no data-theme attribute)
  * - 'dark': forces dark mode via data-theme="dark"
  * - 'light': forces light mode via data-theme="light"
  *
- * — Pixel (Sr. Frontend Engineer), Task 5
+ * — Pixel (Sr. Frontend Engineer), Sprint L30
  */
 
-import { useEffect } from 'react'
-import { usePreferencesStore } from '../store/preferencesStore'
+import { useState, useEffect } from 'react'
 
 export type Theme = 'light' | 'dark' | 'system'
 
 export function useTheme() {
-  const theme = usePreferencesStore((s) => s.theme)
-  const setPreference = usePreferencesStore((s) => s.setPreference)
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return 'system'
+    return (localStorage.getItem('theme') as Theme) || 'system'
+  })
 
   useEffect(() => {
     const root = document.documentElement
-
-    const applyTheme = () => {
-      if (theme === 'dark') {
-        root.setAttribute('data-theme', 'dark')
-      } else if (theme === 'light') {
-        root.setAttribute('data-theme', 'light')
-      } else {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-        root.setAttribute('data-theme', prefersDark ? 'dark' : 'light')
-      }
+    if (theme === 'dark') {
+      root.setAttribute('data-theme', 'dark')
+    } else if (theme === 'light') {
+      root.setAttribute('data-theme', 'light')
+    } else {
+      root.removeAttribute('data-theme')
     }
-
-    applyTheme()
-
-    if (theme === 'system') {
-      const mql = window.matchMedia('(prefers-color-scheme: dark)')
-      const handler = () => applyTheme()
-      mql.addEventListener('change', handler)
-      return () => mql.removeEventListener('change', handler)
-    }
+    localStorage.setItem('theme', theme)
   }, [theme])
 
-  const setTheme = (t: Theme) => setPreference('theme', t)
+  const setTheme = (t: Theme) => setThemeState(t)
+
   const cycleTheme = () => {
-    setPreference('theme',
-      theme === 'system' ? 'dark' :
-      theme === 'dark' ? 'light' : 'system'
+    setThemeState(prev =>
+      prev === 'system' ? 'dark' :
+      prev === 'dark' ? 'light' :
+      'system'
     )
   }
 

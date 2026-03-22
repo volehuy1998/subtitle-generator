@@ -51,7 +51,22 @@ export function KeyboardShortcutsDialog({ open, onClose }: Props) {
       onClose={onClose}
       title="Keyboard Shortcuts"
       description="Navigate the app faster with these shortcuts."
-      size="sm"
+      maxWidth="400px"
+      actions={
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 py-2 rounded-lg text-sm font-medium"
+          style={{
+            background: 'var(--color-primary)',
+            color: 'white',
+            border: 'none',
+            cursor: 'pointer',
+          }}
+        >
+          Got it
+        </button>
+      }
     >
       <div className="flex flex-col gap-0">
         {SHORTCUTS.map((shortcut, i) => (
@@ -75,21 +90,6 @@ export function KeyboardShortcutsDialog({ open, onClose }: Props) {
             </div>
           </div>
         ))}
-      </div>
-      <div className="flex justify-end mt-4">
-        <button
-          type="button"
-          onClick={onClose}
-          className="px-4 py-2 rounded-lg text-sm font-medium"
-          style={{
-            background: 'var(--color-primary)',
-            color: 'white',
-            border: 'none',
-            cursor: 'pointer',
-          }}
-        >
-          Got it
-        </button>
       </div>
     </Dialog>
   )
