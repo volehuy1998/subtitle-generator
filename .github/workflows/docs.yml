@@ -26,16 +26,60 @@ on:
       - '.github/PULL_REQUEST_TEMPLATE.md'
 
 jobs:
-  # Stubs -- provide passing required checks for docs-only PRs
+  # Stubs — provide passing required checks for docs-only PRs.
+  # Every required status check must have a matching job name here,
+  # otherwise docs-only PRs will hang waiting for checks that never run.
   Lint:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Docs-only change -- lint skipped"
+      - run: echo "Docs-only change — skipped"
 
   Test:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Docs-only change -- tests skipped"
+      - run: echo "Docs-only change — skipped"
+
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Docs-only change — skipped"
+
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Docs-only change — skipped"
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Docs-only change — skipped"
+
+  schema-validation:
+    name: Schema Validation
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Docs-only change — skipped"
+
+  semgrep-sast:
+    name: Semgrep SAST
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Docs-only change — skipped"
+
+  dependency-audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Docs-only change — skipped"
+
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Docs-only change — skipped"
 
   # Advisory: link validation (does not block merge)
   docs-validate:
