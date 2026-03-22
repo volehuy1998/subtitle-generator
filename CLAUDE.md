@@ -119,10 +119,9 @@ Task arrives at Atlas
 ```
 
 **Rules**:
-1. Phase 1 always parallel — if task touches backend + frontend + infra, ALL start simultaneously
-2. Phase 2 always parallel — cross-reviews, QA, and Hawk happen at the same time
-3. Atlas never writes application code — only decomposes, dispatches, coordinates, merges
-4. No engineer waits for another engineer in the same phase
+1. **Always spawn subagents for implementation, testing, review, and finalization** — every phase uses parallel subagents, never inline. Phase 1: dispatch Forge/Bolt, Pixel/Prism, Harbor/Anchor, Shield, Quill as subagents simultaneously. Phase 2: dispatch Scout (tests), Hawk (review), Quill (docs) as subagents simultaneously. No exceptions.
+2. Atlas never writes application code — only decomposes, dispatches, coordinates, merges
+3. No engineer waits for another engineer in the same phase
 
 ### Standing Orders (Auto-Activate Without Atlas Dispatch)
 | Trigger | Engineer | Action |
