@@ -5,7 +5,7 @@
  * — Pixel (Sr. Frontend), Sprint L47
  */
 
-import { usePreferencesStore } from '@/store/preferencesStore'
+import { usePreferencesStore, type PreferencesState } from '@/store/preferencesStore'
 
 interface Props {
   open: boolean
@@ -205,7 +205,7 @@ export function PreferencesPanel({ open, onClose }: Props) {
             label="Default Model"
             description="Used when starting a new transcription"
             value={prefs.defaultModel}
-            onChange={(v) => prefs.setPreference('defaultModel', v)}
+            onChange={(v) => prefs.setPreference('defaultModel', v as PreferencesState['defaultModel'])}
             options={MODELS}
           />
 
@@ -213,7 +213,7 @@ export function PreferencesPanel({ open, onClose }: Props) {
             label="Default Output Format"
             description="Preferred download format"
             value={prefs.defaultFormat}
-            onChange={(v) => prefs.setPreference('defaultFormat', v)}
+            onChange={(v) => prefs.setPreference('defaultFormat', v as PreferencesState['defaultFormat'])}
             options={FORMATS}
           />
 

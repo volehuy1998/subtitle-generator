@@ -22,6 +22,8 @@
   --color-text-muted:     #A1A1AA;
   --color-surface-raised: #F5F5F4;
   --color-primary-ring:   rgba(99,102,241,0.24);
+  --color-border-strong:  #A8A29E;
+  --color-border-focus:   #18181B;
 
   --color-text:      #0F172A;
   --color-text-2:    #475569;
