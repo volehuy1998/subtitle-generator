@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "f866335",
-    "sha_full": "f866335bc280d36a3d57cb8693483d881e2ff57c",
-    "datetime": "2026-03-19T15:34:34+07:00",
-    "message": "security(api): sanitize target_language input + safe_path for translate endpoint"
+    "sha": "12e25a2",
+    "sha_full": "12e25a206caef1405871e5abb2645db2a50a5870",
+    "datetime": "2026-03-23T00:48:04+07:00",
+    "message": "security(deps): fix flatted prototype pollution vulnerability"
   },
   "assertions": [
     {
