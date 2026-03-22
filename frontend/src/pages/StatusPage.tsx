@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { AppHeader } from '@/components/layout/AppHeader'
+import { Header } from '@/components/layout/Header'
 import { HealthPanel } from '@/components/system/HealthPanel'
 import { useUIStore } from '@/store/uiStore'
 
@@ -476,7 +476,7 @@ export function StatusPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-bg)', fontFamily: 'var(--font-family-sans)', fontSize: '14px', color: C.text }}>
-      <AppHeader />
+      <Header />
       {healthPanelOpen && <HealthPanel health={health} onClose={() => setHealthPanelOpen(false)} />}
 
       {/* Body */}

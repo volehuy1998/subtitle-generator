@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { AppHeader } from '@/components/layout/AppHeader'
+import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { HealthPanel } from '@/components/system/HealthPanel'
 import { ConnectionBanner } from '@/components/system/ConnectionBanner'
@@ -226,7 +226,7 @@ export function App() {
         Skip to main content
       </a>
       <ConnectionBanner />
-      <AppHeader />
+      <Header />
 
       {healthPanelOpen && (
         <HealthPanel
