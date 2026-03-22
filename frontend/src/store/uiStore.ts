@@ -85,7 +85,7 @@ export const useUIStore = create<UIState>((set) => ({
   setSSEConnected: (connected) => set({ sseConnected: connected }),
   setSseConnected: (connected) => set({ sseConnected: connected }),
   setReconnecting: (reconnecting) => set({ sseReconnecting: reconnecting, reconnecting }),
-  setHealthStreamConnected: (connected) => set({ healthStreamConnected: connected }),
+  setHealthStreamConnected: (connected) => set({ healthStreamConnected: connected, sseConnected: connected, reconnecting: !connected }),
   setSystemHealth: (health) => set({ systemHealth: health }),
   setModelPreloadStatus: (status) => set({ modelPreloadStatus: status }),
   setHealthMetrics: (metrics) => set({ healthMetrics: metrics }),

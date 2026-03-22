@@ -1,59 +1,59 @@
 import { useEffect, useRef } from 'react'
-import type { HealthStatus } from '@/api/types'
-import { useUIStore } from '@/store/uiStore'
+import { useUIStore } from '../store/uiStore'
 
-// Grace period before the offline banner appears.
-// Short reconnects (e.g. during server-side keep-alive rotation) are silently
-// absorbed — only sustained outages are surfaced to the user.
-const OFFLINE_GRACE_MS = 2500
+const GRACE_PERIOD_MS = 2500
 
-export function useHealthStream(): HealthStatus | null {
-  const { health, setSseConnected, setReconnecting, setDbOk, setHealth } = useUIStore()
-  const esRef = useRef<EventSource | null>(null)
-  const offlineTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+export function useHealthStream() {
+  const setHealthStreamConnected = useUIStore(s => s.setHealthStreamConnected)
+  const setSystemHealth = useUIStore(s => s.setSystemHealth)
+  const setModelPreloadStatus = useUIStore(s => s.setModelPreloadStatus)
+  const setHealthMetrics = useUIStore(s => s.setHealthMetrics)
+  const gracePeriodRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    const clearOfflineTimer = () => {
-      if (offlineTimer.current) {
-        clearTimeout(offlineTimer.current)
-        offlineTimer.current = null
-      }
+    const es = new EventSource('/health/stream')
+
+    es.onopen = () => {
+      if (gracePeriodRef.current) clearTimeout(gracePeriodRef.current)
+      setHealthStreamConnected(true)
     }
 
-    const connect = () => {
-      const es = new EventSource('/health/stream')
-      esRef.current = es
+    es.onerror = () => {
+      if (gracePeriodRef.current) clearTimeout(gracePeriodRef.current)
+      gracePeriodRef.current = setTimeout(() => {
+        setHealthStreamConnected(false)
+      }, GRACE_PERIOD_MS)
+    }
 
-      es.onmessage = (e) => {
-        try {
-          const data = JSON.parse(e.data) as HealthStatus
-          clearOfflineTimer()
-          setHealth(data)
-          setSseConnected(true)
-          setReconnecting(false)
-          setDbOk(data.db_ok !== false)
-        } catch { /* ignore parse errors */ }
-      }
-
-      es.onerror = () => {
-        es.close()
-        // Start grace period — only mark offline after sustained disconnection
-        if (!offlineTimer.current) {
-          offlineTimer.current = setTimeout(() => {
-            setSseConnected(false)
-            setReconnecting(true)
-          }, OFFLINE_GRACE_MS)
+    es.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (data.system_critical) {
+          setSystemHealth('critical')
+        } else if (data.disk_percent > 90 || data.cpu_percent > 95) {
+          setSystemHealth('degraded')
+        } else {
+          setSystemHealth('healthy')
         }
-        setTimeout(connect, 5000)
+        if (data.models) {
+          setModelPreloadStatus(data.models)
+        }
+        setHealthMetrics({
+          cpuPercent: data.cpu_percent ?? null,
+          memoryPercent: data.memory_percent ?? null,
+          diskPercent: data.disk_percent ?? null,
+          diskFreeGb: data.disk_free_gb ?? null,
+          activeTasks: data.active_tasks ?? 0,
+          lastUpdated: Date.now(),
+        })
+      } catch {
+        // Ignore parse errors
       }
     }
 
-    connect()
     return () => {
-      clearOfflineTimer()
-      esRef.current?.close()
+      es.close()
+      if (gracePeriodRef.current) clearTimeout(gracePeriodRef.current)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  return health
 }
