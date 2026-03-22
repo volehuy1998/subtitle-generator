@@ -123,6 +123,7 @@ Task arrives at Atlas
 2. Phase 2 always parallel — cross-reviews, QA, and Hawk happen at the same time
 3. Atlas never writes application code — only decomposes, dispatches, coordinates, merges
 4. No engineer waits for another engineer in the same phase
+5. **Always spawn subagents for testing, review, and finalization** — never run tests inline when a subagent can do it faster in parallel. After implementation, dispatch Scout (tests), Hawk (review), and Quill (docs) simultaneously as subagents. This applies to every code change, no exceptions.
 
 ### Standing Orders (Auto-Activate Without Atlas Dispatch)
 | Trigger | Engineer | Action |
