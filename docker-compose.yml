@@ -53,12 +53,12 @@ services:
     profiles:
       - s3
 
-  # ── Single-server (CPU) ─────────────────────────────────────────────────────
-  # Usage: docker compose --profile cpu up -d --build
+  # ── Single-server (CPU) — PRODUCTION ────────────────────────────────────────
+  # Branch: main (always). Use deploy-profile.sh to ensure correct branch.
+  # Usage: ./scripts/deploy-profile.sh cpu [--tag]
   # Serves on 127.0.0.1:8000 behind nginx reverse proxy (TLS terminated by nginx)
 
   subtitle-generator:
-    image: subtitle-generator-prod:${PROD_IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: Dockerfile
@@ -91,9 +91,10 @@ services:
     profiles:
       - cpu
 
-  # ── Preview subdomain (newui) ──────────────────────────────────────────────
-  # Usage: docker compose --profile newui up -d --build
-  # Serves current main build on 127.0.0.1:8001 for nginx reverse proxy
+  # ── Preview subdomain (newui) — STAGING ────────────────────────────────────
+  # Branch: NEWUI_BRANCH env var (defaults to current branch).
+  # Usage: ./scripts/deploy-profile.sh newui [branch-name]
+  # Serves on 127.0.0.1:8001 behind nginx reverse proxy
 
   subtitle-generator-newui:
     build:

@@ -86,7 +86,7 @@ audit: ## Audit dependencies for known vulnerabilities
 # ── Docker ───────────────────────────────────────────────────────────────────
 
 docker-up: ## Start services (CPU mode) with Docker Compose
-	docker compose --profile cpu up --build -d
+	./scripts/deploy-profile.sh cpu
 
 docker-up-gpu: ## Start services (GPU mode) with Docker Compose
 	docker compose --profile gpu up --build -d

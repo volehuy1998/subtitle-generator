@@ -36,9 +36,12 @@ pytest tests/e2e/ -v              # e2e (requires Playwright)
 ruff check .                              # lint (rules from pyproject.toml)
 ruff format --check --diff .      # format check
 
-# Docker
-docker compose --profile cpu up --build   # CPU
-docker compose --profile gpu up --build   # GPU
+# Docker (branch-per-environment — use deploy-profile.sh)
+./scripts/deploy-profile.sh cpu           # prod from main
+./scripts/deploy-profile.sh cpu --tag     # prod from main + git tag
+./scripts/deploy-profile.sh newui         # staging from NEWUI_BRANCH
+./scripts/deploy-profile.sh newui feat/x  # staging from specific branch
+docker compose --profile gpu up --build   # GPU (manual)
 
 # Makefile (Google SWE: all CI steps reproducible locally)
 make ci-fast          # presubmit: lint + fast tests (< 2 min)
@@ -551,22 +554,27 @@ Investor-approved priorities:
 - CI pipeline: lint, test, CodeQL, secret scan, PR attributes, deploy validation, consistency checks
 
 ### Current Deployment
-- **openlabs.club** — production (container: `subtitle-generator-subtitle-generator-1`, port 8000, Lumen UI, `PRELOAD_MODEL=large`)
-- **newui.openlabs.club** — staging/preview (container: `subtitle-generator-subtitle-generator-newui-1`, port 8001, Lumen UI, `PRELOAD_MODEL=large`)
-- Both serve the **Lumen light theme** (promoted 2026-03-17)
+- **openlabs.club** — production (container: `subtitle-generator-subtitle-generator-1`, port 8000, `PRELOAD_MODEL=large`), built from `main` branch
+- **newui.openlabs.club** — staging/preview (container: `subtitle-generator-subtitle-generator-newui-1`, port 8001, `PRELOAD_MODEL=large`), built from `NEWUI_BRANCH` (currently `prod-editorial-nav`)
 - Both are on **localhost**. Nginx reverse proxies both domains to Docker containers (TLS terminated by nginx)
 - Docker requires `sudo` (user `claude-user` not in docker group)
-- Deploy newui: `sudo docker compose --profile newui up -d --build --force-recreate`
-- Deploy prod: `sudo docker compose --profile cpu up -d --build --force-recreate` (ONLY after investor approves newui)
-- **NEVER touch prod when deploying newui** — always update newui first, promote after approval
+
+### Branch-per-Environment Model
+- **`main` branch** = production (openlabs.club). Always stable, investor-approved.
+- **Feature branches** = staging (newui.openlabs.club). Experimental, under review.
+- **Git tags** on `main` mark each production deploy for auditing/rollback.
+- `NEWUI_BRANCH` in `.env` controls which branch the newui profile builds from.
 
 ### Deployment Flow (MANDATORY)
-1. Code changes → merge to main
-2. Rebuild newui container only: `sudo docker compose --profile newui up -d --build --force-recreate`
-3. Verify: `curl -s http://127.0.0.1:8001/health`
-4. Investor reviews on `newui.openlabs.club`
-5. If approved → rebuild prod: `sudo docker compose --profile cpu up -d --build --force-recreate`
-6. **NEVER** deploy directly to prod without investor approval on newui first
+1. Work on feature branch (e.g., `feat/editorial-redesign`)
+2. Set `NEWUI_BRANCH=feat/editorial-redesign` in `.env`
+3. Deploy to newui: `./scripts/deploy-profile.sh newui`
+4. Verify: `curl -s http://127.0.0.1:8001/health`
+5. Investor reviews on `newui.openlabs.club`
+6. If approved → merge branch to `main`, then: `./scripts/deploy-profile.sh cpu --tag`
+7. **NEVER** deploy directly to prod without investor approval on newui first
+- The deploy script handles branch checkout, build, health check, and restore automatically.
+- `--tag` creates an annotated git tag (e.g., `v2.5.0-prod-20260322-141500`) for rollback.
 
 ### Open Work (Backlog)
 - Distributed deployment (5-server plan — not started)
