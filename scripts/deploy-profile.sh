@@ -21,6 +21,14 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
+# Source .env if it exists (docker compose reads it, so should we)
+if [ -f .env ]; then
+  set -a
+  # shellcheck disable=SC1091
+  . ./.env
+  set +a
+fi
+
 PROFILE="${1:?Usage: deploy-profile.sh <cpu|newui> [branch|--tag]}"
 SECOND_ARG="${2:-}"
 
