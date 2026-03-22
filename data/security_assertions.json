@@ -2,10 +2,10 @@
   "last_updated": "2026-03-12T21:28:45.891962+00:00",
   "last_run_commit": "8d085c9",
   "last_security_commit": {
-    "sha": "12cfa73",
-    "sha_full": "12cfa732038446faa8a39130101a449e797f84a2",
-    "datetime": "2026-03-17T14:00:42+07:00",
-    "message": "fix(docker): cpu profile uses nginx reverse proxy instead of direct TLS"
+    "sha": "3df6b50",
+    "sha_full": "3df6b5063d17b2e0f3df877b43dd7c2297a1ad21",
+    "datetime": "2026-03-22T17:06:44+07:00",
+    "message": "style(ui): add Editorial CSS tokens alongside Lumen tokens"
   },
   "assertions": [
     {

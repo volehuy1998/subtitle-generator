@@ -16,6 +16,13 @@
   --color-surface-2: #F1F5F9;
   --color-border:    #E2E8F0;
   --color-border-2:  #CBD5E1;
+
+  /* Editorial tokens — used by Header + Footer backport */
+  --color-text-secondary: #52525B;
+  --color-text-muted:     #A1A1AA;
+  --color-surface-raised: #F5F5F4;
+  --color-primary-ring:   rgba(99,102,241,0.24);
+
   --color-text:      #0F172A;
   --color-text-2:    #475569;
   --color-text-3:    #64748B;
@@ -82,6 +89,11 @@
     --gradient-hero-about: linear-gradient(135deg, #1E293B 0%, rgba(129,140,248,0.08) 55%, rgba(129,140,248,0.14) 100%);
     --gradient-hero-security: linear-gradient(135deg, #1E293B 0%, rgba(129,140,248,0.08) 55%, rgba(129,140,248,0.14) 100%);
     --gradient-hero-contact: linear-gradient(135deg, #1E293B 0%, rgba(129,140,248,0.08) 55%, rgba(52,211,153,0.08) 100%);
+    /* Editorial tokens — dark mode */
+    --color-text-secondary: #D6D3D1;
+    --color-text-muted:     #78716C;
+    --color-surface-raised: #292524;
+    --color-primary-ring:   rgba(129,140,248,0.3);
   }
 }
 
@@ -113,6 +125,11 @@
   --gradient-hero-about: linear-gradient(135deg, #1E293B 0%, rgba(129,140,248,0.08) 55%, rgba(129,140,248,0.14) 100%);
   --gradient-hero-security: linear-gradient(135deg, #1E293B 0%, rgba(129,140,248,0.08) 55%, rgba(129,140,248,0.14) 100%);
   --gradient-hero-contact: linear-gradient(135deg, #1E293B 0%, rgba(129,140,248,0.08) 55%, rgba(52,211,153,0.08) 100%);
+  /* Editorial tokens — dark mode */
+  --color-text-secondary: #D6D3D1;
+  --color-text-muted:     #78716C;
+  --color-surface-raised: #292524;
+  --color-primary-ring:   rgba(129,140,248,0.3);
 }
 
 /* Base */
