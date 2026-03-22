@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Header } from '@/components/layout/Header'
+import { Footer } from '@/components/layout/Footer'
 import { HealthPanel } from '@/components/system/HealthPanel'
 import { useUIStore } from '@/store/uiStore'
 
@@ -526,10 +527,7 @@ export function StatusPage() {
         </Section>
       </main>
 
-      {/* Footer */}
-      <footer style={{ textAlign: 'center', padding: '24px', fontSize: '0.75rem', color: C.text3 }}>
-        SubForge · Python 3.12 · FastAPI · faster-whisper (CTranslate2) · pyannote.audio · FFmpeg · React 19 · TypeScript · Tailwind CSS · Open Source
-      </footer>
+      <Footer />
     </div>
   )
 }
