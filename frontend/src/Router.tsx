@@ -1,12 +1,9 @@
 /**
- * Router — SPA router with parameterised route matching.
+ * Router — SPA router with shared layout (Header + Footer on every page).
  *
- * Listens for both popstate and spa-navigate events, and syncs the
- * current path into uiStore. The health stream SSE connection is
- * mounted here so it is shared across all pages.
- *
- * navigate() and matchRoute() live in navigation.ts to satisfy
- * react-refresh/only-export-components (Router.tsx exports only components).
+ * All pages are wrapped in a consistent layout: skip-link, ConnectionBanner,
+ * Header, main content, Footer. Individual pages no longer render their own
+ * Header/Footer — the Router provides them.
  *
  * — Pixel (Senior Frontend Engineer)
  */
@@ -15,12 +12,32 @@ import { useState, useEffect, useMemo } from 'react'
 import { useHealthStream } from './hooks/useHealthStream'
 import { useUIStore } from './store/uiStore'
 import { matchRoute } from './navigation'
+import { Header } from './components/layout/Header'
+import { Footer } from './components/layout/Footer'
+import { ConnectionBanner } from './components/system/ConnectionBanner'
 import { App as MainApp } from './pages/App'
 import { StatusPage } from './pages/StatusPage'
 import { AboutPage } from './pages/AboutPage'
 import { SecurityPage } from './pages/SecurityPage'
 import { ContactPage } from './pages/ContactPage'
 import { SettingsPage } from './pages/SettingsPage'
+
+function PageContent({ page }: { page: string }) {
+  switch (page) {
+    case 'status':
+      return <StatusPage />
+    case 'about':
+      return <AboutPage />
+    case 'security':
+      return <SecurityPage />
+    case 'contact':
+      return <ContactPage />
+    case 'settings':
+      return <SettingsPage />
+    default:
+      return <MainApp />
+  }
+}
 
 export function Router() {
   const [path, setPath] = useState(window.location.pathname)
@@ -45,18 +62,15 @@ export function Router() {
     setCurrentPage(path)
   }, [path, setCurrentPage])
 
-  switch (route.page) {
-    case 'status':
-      return <StatusPage />
-    case 'about':
-      return <AboutPage />
-    case 'security':
-      return <SecurityPage />
-    case 'contact':
-      return <ContactPage />
-    case 'settings':
-      return <SettingsPage />
-    default:
-      return <MainApp />
-  }
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--color-bg)' }}>
+      <a href="#main-content" className="sr-only skip-nav">Skip to main content</a>
+      <ConnectionBanner />
+      <Header />
+      <main id="main-content" style={{ flex: 1 }}>
+        <PageContent page={route.page} />
+      </main>
+      <Footer />
+    </div>
+  )
 }

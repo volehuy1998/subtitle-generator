@@ -1,5 +1,3 @@
-import { Header } from './Header'
-import { Footer } from './Footer'
 import { HealthPanel } from '@/components/system/HealthPanel'
 import { useUIStore } from '@/store/uiStore'
 
@@ -19,14 +17,12 @@ export function StaticPageLayout({ children }: Props) {
       color: 'var(--color-text)',
       WebkitFontSmoothing: 'antialiased',
     }}>
-      <Header />
       {healthPanelOpen && (
         <HealthPanel health={health} onClose={() => setHealthPanelOpen(false)} />
       )}
       <main style={{ maxWidth: '860px', margin: '0 auto', padding: '40px 24px 80px' }}>
         {children}
       </main>
-      <Footer />
     </div>
   )
 }

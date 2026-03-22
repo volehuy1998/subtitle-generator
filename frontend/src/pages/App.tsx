@@ -1,8 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Header } from '@/components/layout/Header'
-import { Footer } from '@/components/layout/Footer'
 import { HealthPanel } from '@/components/system/HealthPanel'
-import { ConnectionBanner } from '@/components/system/ConnectionBanner'
 import { TaskQueuePanel } from '@/components/system/TaskQueuePanel'
 import { TranscribeForm } from '@/components/transcribe/TranscribeForm'
 import { ProgressView } from '@/components/progress/ProgressView'
@@ -217,17 +214,7 @@ export function App() {
   ]
 
   return (
-    <div
-      className="min-h-screen"
-      style={{ background: 'var(--color-bg)', fontFamily: 'var(--font-family-sans)' }}
-    >
-      {/* WCAG 2.1 AA — Skip navigation link — Prism (UI/UX), Sprint L15 */}
-      <a href="#main-content" className="sr-only skip-nav">
-        Skip to main content
-      </a>
-      <ConnectionBanner />
-      <Header />
-
+    <>
       {healthPanelOpen && (
         <HealthPanel
           health={health}
@@ -344,9 +331,6 @@ export function App() {
       {/* Task Queue */}
       <TaskQueuePanel />
 
-      {/* Footer — Pixel (Sr. Frontend), Sprint L20 */}
-      <Footer />
-
       {/* Phase Lumen: Keyboard shortcuts dialog — Sprint L48 */}
       <KeyboardShortcutsDialog
         open={shortcutsOpen}
@@ -379,6 +363,6 @@ export function App() {
           onCancel={handleCancelUpload}
         />
       )}
-    </div>
+    </>
   )
 }
