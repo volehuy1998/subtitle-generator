@@ -36,9 +36,12 @@ pytest tests/e2e/ -v              # e2e (requires Playwright)
 ruff check .                              # lint (rules from pyproject.toml)
 ruff format --check --diff .      # format check
 
-# Docker
-docker compose --profile cpu up --build   # CPU
-docker compose --profile gpu up --build   # GPU
+# Docker (branch-per-environment — use deploy-profile.sh)
+./scripts/deploy-profile.sh cpu           # prod from main
+./scripts/deploy-profile.sh cpu --tag     # prod from main + git tag
+./scripts/deploy-profile.sh newui         # staging from NEWUI_BRANCH
+./scripts/deploy-profile.sh newui feat/x  # staging from specific branch
+docker compose --profile gpu up --build   # GPU (manual)
 
 # Makefile (Google SWE: all CI steps reproducible locally)
 make ci-fast          # presubmit: lint + fast tests (< 2 min)
@@ -303,25 +306,21 @@ Upload → probe (ffprobe) → extract audio (ffmpeg→WAV) → load model → t
 - **`app/state.py`** — Global in-memory state: tasks dict, model cache, translation model cache, task semaphore
 - **`frontend/src/`** — React 19 SPA (Vite 6 + TypeScript + Zustand + Tailwind CSS v4)
 
-### Frontend — DUAL UI SYSTEM (CRITICAL KNOWLEDGE)
+### Frontend — Branch-per-Environment UI System
 
-**Two completely separate frontends exist in this repository.** Which one is served depends on whether `frontend/dist/` exists at runtime. See `app/routes/pages.py` line 18.
+The React SPA (`frontend/src/`) is the primary frontend. Each Docker profile builds from a different git branch via `scripts/deploy-profile.sh`, so prod and staging can serve different UI code.
 
-| UI System | Source | Design | Served When |
-|-----------|--------|--------|-------------|
-| **React SPA** | `frontend/src/` → builds to `frontend/dist/` | Lumen (light theme, Inter font, preferences, theme toggle) | `frontend/dist/index.html` exists AND `FRONTEND=react` (default) |
-| **Jinja Templates** | `templates/*.html` | Legacy light theme (button pills, 2GB limit, multi-file, JSON format) | `frontend/dist/` does NOT exist, OR `FRONTEND=templates` |
+| Environment | Domain | Branch | UI |
+|-------------|--------|--------|-----|
+| **Production** | `openlabs.club` | `prod-editorial-nav` | Lumen + Editorial header/footer |
+| **Staging** | `newui.openlabs.club` | `feat/editorial-redesign` (via `NEWUI_BRANCH`) | Premium Editorial (full redesign) |
 
-**Deployment implications:**
-- **Docker** (Dockerfile runs `npm run build`) → always serves **React SPA**
-- **Bare-metal** (`deploy.sh` does NOT run `npm run build`) → serves **Jinja templates**
-- **`FRONTEND` env var**: Set to `templates` to force Jinja templates even when React build exists
+**Jinja Templates** (`templates/*.html`) are a legacy fallback served only on bare-metal deployments without `npm run build`, or when `FRONTEND=templates` is set. Docker always serves the React SPA.
 
-**WARNING**: The newui Docker Compose profile builds from the same Dockerfile as production — it produces the SAME React SPA output. To preview the Jinja template UI in Docker, set `FRONTEND=templates` in the container environment.
-
-**openlabs.club deployment:**
-- `openlabs.club` → Docker, React SPA (Lumen light theme, `PRELOAD_MODEL=large`)
-- `newui.openlabs.club` → Docker, React SPA (same Lumen UI, staging/preview for next iteration)
+**Branch model:**
+- **`main`** — clean production source (Lumen React SPA). No experimental UI code.
+- **Feature branches** — new UI development. `NEWUI_BRANCH` in `.env` controls which branch staging builds from.
+- **`prod-editorial-nav`** — production deploy branch (Lumen + editorial header/footer). `PROD_BRANCH` in `.env` controls which branch prod builds from.
 
 ### React SPA Details
 - **Stores**: `taskStore.ts` (task state, progress), `uiStore.ts` (theme, UI toggles)
@@ -551,22 +550,33 @@ Investor-approved priorities:
 - CI pipeline: lint, test, CodeQL, secret scan, PR attributes, deploy validation, consistency checks
 
 ### Current Deployment
-- **openlabs.club** — production (container: `subtitle-generator-subtitle-generator-1`, port 8000, Lumen UI, `PRELOAD_MODEL=large`)
-- **newui.openlabs.club** — staging/preview (container: `subtitle-generator-subtitle-generator-newui-1`, port 8001, Lumen UI, `PRELOAD_MODEL=large`)
-- Both serve the **Lumen light theme** (promoted 2026-03-17)
-- Both are on **localhost**. Nginx reverse proxies both domains to Docker containers (TLS terminated by nginx)
+- **openlabs.club** — production (port 8000, `PRELOAD_MODEL=large`), built from `prod-editorial-nav` branch (Lumen + Editorial header/footer)
+- **newui.openlabs.club** — staging (port 8001, `PRELOAD_MODEL=large`), built from `feat/editorial-redesign` branch (Premium Editorial full redesign)
+- Both on **localhost**. Nginx reverse proxies both domains to Docker containers (TLS terminated by nginx)
 - Docker requires `sudo` (user `claude-user` not in docker group)
-- Deploy newui: `sudo docker compose --profile newui up -d --build --force-recreate`
-- Deploy prod: `sudo docker compose --profile cpu up -d --build --force-recreate` (ONLY after investor approves newui)
-- **NEVER touch prod when deploying newui** — always update newui first, promote after approval
+
+### Branch-per-Environment Model
+
+| Branch | Purpose | Domain | `.env` var |
+|--------|---------|--------|------------|
+| `main` | Clean production source (Lumen UI) | — (source of truth) | — |
+| `prod-editorial-nav` | Production deploy (Lumen + editorial header/footer) | openlabs.club | `PROD_BRANCH` |
+| `feat/editorial-redesign` | New UI development (Premium Editorial) | newui.openlabs.club | `NEWUI_BRANCH` |
+
+- **`main`** has no experimental UI code. All new UI work happens on feature branches.
+- **Git tags** on production deploys mark each release for auditing/rollback.
+- `scripts/deploy-profile.sh` handles branch checkout, build, health check, and restore.
 
 ### Deployment Flow (MANDATORY)
-1. Code changes → merge to main
-2. Rebuild newui container only: `sudo docker compose --profile newui up -d --build --force-recreate`
-3. Verify: `curl -s http://127.0.0.1:8001/health`
-4. Investor reviews on `newui.openlabs.club`
-5. If approved → rebuild prod: `sudo docker compose --profile cpu up -d --build --force-recreate`
-6. **NEVER** deploy directly to prod without investor approval on newui first
+1. Work on feature branch (e.g., `feat/my-feature`)
+2. Set `NEWUI_BRANCH=feat/my-feature` in `.env`
+3. Deploy to staging: `./scripts/deploy-profile.sh newui`
+4. Verify: `curl -s http://127.0.0.1:8001/health`
+5. Investor reviews on `newui.openlabs.club`
+6. If approved → merge to `main`, update `PROD_BRANCH` in `.env`, then: `./scripts/deploy-profile.sh cpu --tag`
+7. **NEVER** deploy directly to prod without investor approval on staging first
+- The deploy script handles branch checkout, build, health check, and restore automatically.
+- `--tag` creates an annotated git tag (e.g., `v2.5.0-prod-20260323-001500`) for rollback.
 
 ### Open Work (Backlog)
 - Distributed deployment (5-server plan — not started)
@@ -616,17 +626,19 @@ Investor-approved priorities:
 | 2026-03-17 (AM-2) | Deployed to newui.openlabs.club with `PRELOAD_MODEL=large`. Fixed prod 502 (log permission error). Fixed preferences bug (form ignored user defaults). PR #159 merged. |
 | 2026-03-17 (AM-3) | Removed public IP from CLAUDE.md to fix sensitive data scan. Cleaned MEMORY.md references from TEAM.md. PR #160 merged. Updated CLAUDE.md as single portable source of truth. |
 | 2026-03-17 (PM) | Full triage sweep: 8 PRs merged (#121 release v2.3.1, #144 docs, #151-155 #157 deps), PR #156 closed (vite 8 broken). Lumen UI promoted to production. Docker cpu profile fixed for nginx proxy (#163). PRELOAD_MODEL=large hardcoded (#164). Model preload loading badge + API client polling + schema fix (#165). All PRs cleared (0 open). |
+| 2026-03-22 | Editorial header/footer backported to prod (`prod-editorial-nav` branch). Branch-per-environment deployment model implemented (`scripts/deploy-profile.sh`). `PROD_BRANCH` + `NEWUI_BRANCH` env vars control which branch each Docker profile builds from. |
+| 2026-03-23 | Premium Editorial redesign removed from `main` → moved to `feat/editorial-redesign` branch. Main is now clean Lumen source. All redesign docs/specs/plans moved to feature branch. Branch model enforced: `main` = production source, feature branches = staging. |
 
 ### Deployment Rules (NEVER FORGET)
 
-**openlabs.club is ALWAYS production. newui.openlabs.club is ALWAYS the preview.**
+**`main` is the clean production source. Feature branches are for staging/preview.**
 
-- `openlabs.club` → production, stable, investor-facing. **NEVER deploy untested changes here.**
-- `newui.openlabs.club` → preview/staging. All improvements deploy here FIRST.
-- Investor reviews on newui. Only after explicit approval → promote to openlabs.club.
+- `openlabs.club` → production, stable, investor-facing. Built from `PROD_BRANCH` (currently `prod-editorial-nav`).
+- `newui.openlabs.club` → preview/staging. Built from `NEWUI_BRANCH` (currently `feat/editorial-redesign`).
+- Investor reviews on newui. Only after explicit approval → merge to `main`, update `PROD_BRANCH`, redeploy.
 - Both domains are on the **same server** (localhost). Nginx reverse proxies to Docker containers.
-- **Main and newui must always be different** — the investor needs to compare side by side.
-- When newui is approved by investor, promote it to main and start the next evolution on newui.
+- **`main` must never contain experimental UI code** — all new UI work goes on feature branches.
+- Use `./scripts/deploy-profile.sh` for all deployments — it handles branch checkout safely.
 
 ### CI Known Issues
 

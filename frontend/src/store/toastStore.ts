@@ -1,31 +1,35 @@
+/**
+ * Toast notification store — manages transient notifications.
+ * — Pixel (Sr. Frontend), Sprint L21
+ */
+
 import { create } from 'zustand'
+
+export type ToastType = 'success' | 'error' | 'warning' | 'info'
 
 export interface Toast {
   id: string
-  type: 'success' | 'error' | 'warning' | 'info'
-  title: string
-  description?: string
+  type: ToastType
+  message: string
   duration: number
-  action?: { label: string; onClick: () => void }
 }
 
-interface ToastState {
+interface ToastStore {
   toasts: Toast[]
-  addToast: (toast: Omit<Toast, 'id' | 'duration'> & { duration?: number }) => void
+  addToast: (type: ToastType, message: string, duration?: number) => void
   removeToast: (id: string) => void
 }
 
-let counter = 0
-
-export const useToastStore = create<ToastState>((set) => ({
+export const useToastStore = create<ToastStore>((set) => ({
   toasts: [],
-  addToast: (toast) => {
-    const id = `toast-${++counter}-${Date.now()}`
-    const duration = toast.duration ?? 5000
-    set(s => ({ toasts: [...s.toasts, { ...toast, id, duration }] }))
+  addToast: (type, message, duration = 4000) => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`
+    set((s) => ({ toasts: [...s.toasts, { id, type, message, duration }] }))
     if (duration > 0) {
-      setTimeout(() => set(s => ({ toasts: s.toasts.filter(t => t.id !== id) })), duration)
+      setTimeout(() => {
+        set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }))
+      }, duration)
     }
   },
-  removeToast: (id) => set(s => ({ toasts: s.toasts.filter(t => t.id !== id) })),
+  removeToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
 }))

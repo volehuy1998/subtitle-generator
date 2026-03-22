@@ -4,13 +4,13 @@ import { useUIStore } from '../uiStore'
 const store = () => useUIStore.getState()
 const resetStore = () =>
   useUIStore.setState({
-    currentPage: '/',
-    contextPanelContent: 'info',
+    appMode: 'transcribe',
+    embedMode: 'soft',
+    healthPanelOpen: false,
+    taskQueueOpen: false,
     sseConnected: false,
-    sseReconnecting: false,
-    systemHealth: 'healthy',
-    modelPreloadStatus: {},
-    dismissedSuggestions: [],
+    reconnecting: false,
+    dbOk: true,
   })
 
 describe('uiStore', () => {
@@ -20,79 +20,88 @@ describe('uiStore', () => {
 
   it('starts with sensible defaults', () => {
     const s = store()
-    expect(s.currentPage).toBe('/')
-    expect(s.contextPanelContent).toBe('info')
+    expect(s.appMode).toBe('transcribe')
+    expect(s.embedMode).toBe('soft')
+    expect(s.healthPanelOpen).toBe(false)
+    expect(s.taskQueueOpen).toBe(false)
     expect(s.sseConnected).toBe(false)
-    expect(s.sseReconnecting).toBe(false)
-    expect(s.systemHealth).toBe('healthy')
+    expect(s.reconnecting).toBe(false)
+    expect(s.dbOk).toBe(true)
   })
 
-  // ── currentPage ───────────────────────────────────────────────────────────
+  // ── appMode ───────────────────────────────────────────────────────────────
 
-  it('setCurrentPage updates the page', () => {
-    store().setCurrentPage('/editor/123')
-    expect(store().currentPage).toBe('/editor/123')
-    store().setCurrentPage('/')
-    expect(store().currentPage).toBe('/')
+  it('setAppMode switches between transcribe and embed', () => {
+    store().setAppMode('embed')
+    expect(store().appMode).toBe('embed')
+    store().setAppMode('transcribe')
+    expect(store().appMode).toBe('transcribe')
   })
 
-  // ── contextPanelContent ───────────────────────────────────────────────────
+  // ── embedMode ─────────────────────────────────────────────────────────────
 
-  it('setContextPanel switches between panels', () => {
-    store().setContextPanel('translate')
-    expect(store().contextPanelContent).toBe('translate')
-    store().setContextPanel('embed')
-    expect(store().contextPanelContent).toBe('embed')
+  it('setEmbedMode switches between soft and hard', () => {
+    store().setEmbedMode('hard')
+    expect(store().embedMode).toBe('hard')
+    store().setEmbedMode('soft')
+    expect(store().embedMode).toBe('soft')
+  })
+
+  // ── healthPanelOpen ───────────────────────────────────────────────────────
+
+  it('setHealthPanelOpen toggles the health panel', () => {
+    store().setHealthPanelOpen(true)
+    expect(store().healthPanelOpen).toBe(true)
+    store().setHealthPanelOpen(false)
+    expect(store().healthPanelOpen).toBe(false)
+  })
+
+  // ── taskQueueOpen ─────────────────────────────────────────────────────────
+
+  it('setTaskQueueOpen toggles the task queue drawer', () => {
+    store().setTaskQueueOpen(true)
+    expect(store().taskQueueOpen).toBe(true)
+    store().setTaskQueueOpen(false)
+    expect(store().taskQueueOpen).toBe(false)
   })
 
   // ── SSE connection state ──────────────────────────────────────────────────
 
   it('connection sequence: disconnected → reconnecting → connected', () => {
     // Simulate disconnect
-    store().setSSEConnected(false)
+    store().setSseConnected(false)
     store().setReconnecting(true)
     expect(store().sseConnected).toBe(false)
-    expect(store().sseReconnecting).toBe(true)
+    expect(store().reconnecting).toBe(true)
 
     // Simulate successful reconnect
-    store().setSSEConnected(true)
+    store().setSseConnected(true)
     store().setReconnecting(false)
     expect(store().sseConnected).toBe(true)
-    expect(store().sseReconnecting).toBe(false)
+    expect(store().reconnecting).toBe(false)
   })
 
-  it('sseConnected and sseReconnecting are independent fields', () => {
-    store().setSSEConnected(true)
-    store().setReconnecting(true)
+  it('sseConnected and reconnecting are independent fields', () => {
+    store().setSseConnected(true)
+    store().setReconnecting(true) // can be reconnecting while still "connected" during transition
     expect(store().sseConnected).toBe(true)
-    expect(store().sseReconnecting).toBe(true)
+    expect(store().reconnecting).toBe(true)
   })
 
-  // ── systemHealth ──────────────────────────────────────────────────────────
+  // ── dbOk ──────────────────────────────────────────────────────────────────
 
-  it('setSystemHealth reflects health status changes', () => {
-    store().setSystemHealth('degraded')
-    expect(store().systemHealth).toBe('degraded')
-    store().setSystemHealth('critical')
-    expect(store().systemHealth).toBe('critical')
-    store().setSystemHealth('healthy')
-    expect(store().systemHealth).toBe('healthy')
-  })
-
-  // ── dismissedSuggestions ──────────────────────────────────────────────────
-
-  it('dismissSuggestion accumulates dismissed IDs', () => {
-    store().dismissSuggestion('hint-translate')
-    store().dismissSuggestion('hint-embed')
-    expect(store().dismissedSuggestions).toHaveLength(2)
-    expect(store().dismissedSuggestions).toContain('hint-translate')
+  it('setDbOk reflects database connectivity changes', () => {
+    store().setDbOk(false)
+    expect(store().dbOk).toBe(false)
+    store().setDbOk(true)
+    expect(store().dbOk).toBe(true)
   })
 
   // ── state isolation ───────────────────────────────────────────────────────
 
   it('each test starts with fresh defaults (beforeEach verification)', () => {
-    expect(store().currentPage).toBe('/')
+    expect(store().appMode).toBe('transcribe')
     expect(store().sseConnected).toBe(false)
-    expect(store().systemHealth).toBe('healthy')
+    expect(store().healthPanelOpen).toBe(false)
   })
 })

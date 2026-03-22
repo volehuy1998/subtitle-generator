@@ -1,164 +1,169 @@
-import { useEffect, useRef } from 'react'
-import { useEditorStore } from '../store/editorStore'
-import { useUIStore } from '../store/uiStore'
-import { useRecentProjectsStore } from '../store/recentProjectsStore'
+import { useEffect, useRef, useCallback } from 'react'
+import { useTaskStore } from '@/store/taskStore'
+import { api } from '@/api/client'
 
-const BASE_DELAY = 1000
-const MAX_DELAY = 30000
-const WATCHDOG_TIMEOUT = 45000
+const MIN_RETRY = 1000
+const MAX_RETRY = 30000
 
 export function useSSE(taskId: string | null) {
-  const updateProgress = useEditorStore(s => s.updateProgress)
-  const addLiveSegment = useEditorStore(s => s.addLiveSegment)
-  const setComplete = useEditorStore(s => s.setComplete)
-  const setError = useEditorStore(s => s.setError)
-  const setSSEConnected = useUIStore(s => s.setSSEConnected)
-  const setReconnecting = useUIStore(s => s.setReconnecting)
-  const updateProject = useRecentProjectsStore(s => s.updateProject)
-
   const esRef = useRef<EventSource | null>(null)
-  const watchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const retryCountRef = useRef(0)
+  const retryDelay = useRef(MIN_RETRY)
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastEventTime = useRef(0)
+  const watchdog = useRef<ReturnType<typeof setInterval> | null>(null)
+  const closed = useRef(false)
+  // Stable ref to connect — avoids TDZ issue with const referencing itself in onerror
+  const connectRef = useRef<() => void>(() => {})
+
+  const store = useTaskStore()
+
+  const close = useCallback(() => {
+    closed.current = true
+    if (retryTimer.current) clearTimeout(retryTimer.current)
+    if (watchdog.current) clearInterval(watchdog.current)
+    esRef.current?.close()
+    esRef.current = null
+  }, [])
+
+  const connect = useCallback(() => {
+    if (!taskId || taskId === 'uploading' || closed.current) return
+    esRef.current?.close()
+
+    const es = new EventSource(`/events/${taskId}`)
+    esRef.current = es
+    lastEventTime.current = Date.now()
+
+    const onData = () => {
+      lastEventTime.current = Date.now()
+      retryDelay.current = MIN_RETRY
+    }
+
+    es.addEventListener('state', (e) => {
+      onData()
+      const data = JSON.parse((e as MessageEvent).data)
+      store.applyProgressData(data)
+      if (data.status === 'done') store.setComplete(data)
+    })
+
+    es.addEventListener('progress', (e) => {
+      onData()
+      const data = JSON.parse((e as MessageEvent).data)
+      store.applyProgressData(data)
+      if (data.step !== undefined) store.setStep(data.step)
+    })
+
+    es.addEventListener('step_change', (e) => {
+      onData()
+      const data = JSON.parse((e as MessageEvent).data)
+      store.applyProgressData(data)
+      if (data.step !== undefined) store.setStep(data.step)
+    })
+
+    let translatedReset = false
+    es.addEventListener('segment', (e) => {
+      onData()
+      const data = JSON.parse((e as MessageEvent).data)
+      // When translated segments arrive, clear the preview first
+      if (data.translated && !translatedReset) {
+        translatedReset = true
+        store.setLiveSegments([])
+      }
+      store.addSegment(data.segment ?? data)
+    })
+
+    es.addEventListener('warning', (e) => {
+      onData()
+      const data = JSON.parse((e as MessageEvent).data)
+      store.setWarning(data.message ?? data.warning ?? '')
+    })
+
+    es.addEventListener('done', (e) => {
+      onData()
+      const raw = JSON.parse((e as MessageEvent).data)
+      store.setComplete({ ...raw, isVideo: raw.is_video ?? raw.isVideo ?? false })
+      localStorage.setItem('sg_currentTaskId', taskId)
+      close()
+    })
+
+    es.addEventListener('paused', () => { onData(); store.setPaused() })
+    es.addEventListener('resumed', () => { onData(); store.setResumed() })
+
+    es.addEventListener('embed_progress', (e) => {
+      onData()
+      const data = JSON.parse((e as MessageEvent).data)
+      store.applyProgressData({ message: data.message ?? 'Embedding…' })
+    })
+
+    es.addEventListener('embed_done', (e) => {
+      onData()
+      const data = JSON.parse((e as MessageEvent).data)
+      if (data.download_url) store.setEmbedDownload(data.download_url)
+      close()
+    })
+
+    es.addEventListener('embed_error', (e) => {
+      onData()
+      const data = JSON.parse((e as MessageEvent).data)
+      store.setError(data.message ?? 'Embedding failed')
+      close()
+    })
+
+    es.addEventListener('cancelled', () => {
+      onData()
+      store.setCancelled()
+      localStorage.removeItem('sg_currentTaskId')
+      close()
+    })
+
+    es.addEventListener('critical_abort', (e) => {
+      onData()
+      const data = JSON.parse((e as MessageEvent).data)
+      store.setError(data.message ?? 'Critical system error')
+      close()
+    })
+
+    es.addEventListener('heartbeat', () => { onData() })
+
+    es.onerror = () => {
+      if (closed.current) return
+      es.close()
+      // Check if task finished before reconnecting
+      api.progress(taskId).then((data) => {
+        if (data.status === 'done') { store.setComplete({ ...data, isVideo: data.is_video ?? false }); close(); return }
+        if (data.status === 'cancelled') { store.setCancelled(); close(); return }
+        if (data.status === 'error') { store.setError(data.error ?? 'Task failed'); close(); return }
+        retryTimer.current = setTimeout(() => {
+          retryDelay.current = Math.min(retryDelay.current * 2, MAX_RETRY)
+          connectRef.current()
+        }, retryDelay.current)
+      }).catch(() => {
+        retryTimer.current = setTimeout(() => {
+          retryDelay.current = Math.min(retryDelay.current * 2, MAX_RETRY)
+          connectRef.current()
+        }, retryDelay.current)
+      })
+    }
+
+    // Watchdog: if no event for 45s, force reconnect
+    if (watchdog.current) clearInterval(watchdog.current)
+    watchdog.current = setInterval(() => {
+      if (closed.current) return
+      if (Date.now() - lastEventTime.current > 45_000) {
+        es.close()
+        es.onerror?.(new Event('error'))
+      }
+    }, 5000)
+  }, [taskId, close, store])
+
+  // Keep the ref in sync so recursive onerror retries always call the current closure
+  useEffect(() => { connectRef.current = connect }, [connect])
 
   useEffect(() => {
-    if (!taskId) return
-
-    let cancelled = false
-
-    const resetWatchdog = () => {
-      if (watchdogRef.current) clearTimeout(watchdogRef.current)
-      watchdogRef.current = setTimeout(() => {
-        // Watchdog fired — poll for final state
-        fetch(`/progress/${taskId}`)
-          .then(r => r.json())
-          .then(data => {
-            if (data.status === 'done') {
-              // Fetch actual segments — progress endpoint returns count, not array
-              fetch(`/subtitles/${taskId}`)
-                .then(r => r.json())
-                .then(subs => {
-                  setComplete({
-                    segments: (subs.segments || []).map((seg: { start: number; end: number; text: string; speaker?: string }, i: number) => ({ ...seg, index: i })),
-                    language: data.language || null,
-                    modelUsed: data.model || null,
-                    timings: data.step_timings || {},
-                    isVideo: data.is_video ?? false,
-                  })
-                })
-                .catch(() => setError('Failed to load subtitles'))
-            } else if (data.status === 'error') {
-              setError(data.error || 'Task failed')
-            }
-          })
-          .catch(() => {}) // Keep SSE running if poll fails
-      }, WATCHDOG_TIMEOUT)
-    }
-
-    const connect = (delay: number) => {
-      if (cancelled) return
-
-      if (delay > 0) {
-        setReconnecting(true)
-        setTimeout(() => {
-          if (!cancelled) connect(0)
-        }, delay)
-        return
-      }
-
-      const es = new EventSource(`/events/${taskId}`)
-      esRef.current = es
-      retryCountRef.current++
-
-      es.onopen = () => {
-        setSSEConnected(true)
-        setReconnecting(false)
-        retryCountRef.current = 0
-        resetWatchdog()
-      }
-
-      es.onerror = () => {
-        es.close()
-        esRef.current = null
-        setSSEConnected(false)
-        const delay = Math.min(BASE_DELAY * Math.pow(2, retryCountRef.current - 1), MAX_DELAY)
-        connect(delay)
-      }
-
-      const handleEvent = (event: MessageEvent) => {
-        resetWatchdog()
-        try {
-          const data = JSON.parse(event.data)
-          switch (event.type) {
-            case 'progress':
-              updateProgress(data)
-              break
-            case 'segment':
-              addLiveSegment(data)
-              break
-            case 'step_change':
-              updateProgress(data)
-              break
-            case 'done':
-              // data.segments is a COUNT (number), not an array — fetch actual segments
-              fetch(`/subtitles/${taskId}`)
-                .then(r => r.json())
-                .then(subs => {
-                  setComplete({
-                    segments: (subs.segments || []).map((seg: { start: number; end: number; text: string; speaker?: string }, i: number) => ({ ...seg, index: i })),
-                    language: data.language || null,
-                    modelUsed: data.model || null,
-                    timings: data.step_timings || {},
-                    isVideo: data.is_video ?? false,
-                  })
-                })
-                .catch(() => setError('Failed to load subtitles'))
-              updateProject(taskId, { status: 'completed', duration: data.duration ?? null })
-              es.close()
-              esRef.current = null
-              setSSEConnected(false)
-              if (watchdogRef.current) clearTimeout(watchdogRef.current)
-              break
-            case 'error':
-              setError(data.error || data.message || 'Task failed')
-              updateProject(taskId, { status: 'failed' })
-              es.close()
-              esRef.current = null
-              setSSEConnected(false)
-              if (watchdogRef.current) clearTimeout(watchdogRef.current)
-              break
-            case 'cancelled':
-              setError('Cancelled')
-              es.close()
-              esRef.current = null
-              setSSEConnected(false)
-              if (watchdogRef.current) clearTimeout(watchdogRef.current)
-              break
-            // embed_progress/embed_done/embed_error/translate_progress/translate_done
-            // handled by component-local state — we don't dispatch these to global store
-          }
-        } catch {
-          // Malformed event data — ignore
-        }
-      }
-
-      es.addEventListener('progress', handleEvent)
-      es.addEventListener('segment', handleEvent)
-      es.addEventListener('step_change', handleEvent)
-      es.addEventListener('done', handleEvent)
-      es.addEventListener('error', handleEvent)
-      es.addEventListener('cancelled', handleEvent)
-    }
-
-    connect(0)
-
-    return () => {
-      cancelled = true
-      if (esRef.current) {
-        esRef.current.close()
-        esRef.current = null
-      }
-      if (watchdogRef.current) clearTimeout(watchdogRef.current)
-      setSSEConnected(false)
-    }
+    if (!taskId || taskId === 'uploading') return
+    closed.current = false
+    connect()
+    return () => { closed.current = true; close() }
   }, [taskId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  return { close }
 }

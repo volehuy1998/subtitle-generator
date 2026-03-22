@@ -124,12 +124,15 @@ sudo systemctl status subforge      # status
 The script installs Docker Engine, builds the image, and starts the containers using
 `docker compose --profile cpu` (or `--profile gpu`).
 
+Use `scripts/deploy-profile.sh` for all profile deployments — it handles branch checkout,
+build, and health verification automatically:
+
 ```bash
 cd /opt/subtitle-generator
-docker compose logs -f              # live logs
-docker compose restart              # restart
-docker compose --profile cpu up -d  # start CPU profile
-docker compose --profile gpu up -d  # start GPU profile
+docker compose logs -f                        # live logs
+docker compose restart                        # restart
+./scripts/deploy-profile.sh cpu              # deploy production (always builds from main)
+./scripts/deploy-profile.sh newui            # deploy staging (builds from NEWUI_BRANCH)
 ```
 
 A `.env` file is written to the install directory on first run.
@@ -439,16 +442,30 @@ See [`.env.example`](../.env.example) for the full list of configurable environm
 
 ## Docker: preview subdomain deployment (newui profile)
 
-The `newui` Docker Compose profile runs the current codebase build on an internal port (`127.0.0.1:8001`), allowing an external nginx reverse proxy to serve it at a separate subdomain (e.g. `newui.example.com`) for design review before promoting to production.
+The `newui` Docker Compose profile runs on an internal port (`127.0.0.1:8001`), allowing an external nginx reverse proxy to serve it at a separate subdomain (e.g. `newui.example.com`) for design review before promoting to production.
 
 **This is required for any frontend design changes.** See [CONTRIBUTING.md §6a](../CONTRIBUTING.md#6a-ui--frontend-design-review-process) for the full subdomain-first design review policy.
 
-```bash
-# Start the preview container (builds from current code)
-docker compose --profile newui up -d --build
+### Branch-per-environment model
 
-# Verify it is running on port 8001
-curl -s http://127.0.0.1:8001/api/health | head -c 100
+Environments map directly to git branches:
+
+| Environment | Branch | Port | Command |
+|---|---|---|---|
+| Production (`example.com`) | `main` | `8000` | `./scripts/deploy-profile.sh cpu` |
+| Staging (`newui.example.com`) | `NEWUI_BRANCH` (default: current branch) | `8001` | `./scripts/deploy-profile.sh newui` |
+
+`NEWUI_BRANCH` in `.env` controls which branch the newui profile builds from. If unset, the script uses the currently checked-out branch. Production always builds from `main`.
+
+```bash
+# Deploy staging from the current branch (or NEWUI_BRANCH in .env)
+./scripts/deploy-profile.sh newui
+
+# Deploy staging from a specific feature branch
+./scripts/deploy-profile.sh newui feat/my-feature
+
+# Verify staging is running on port 8001
+curl -s http://127.0.0.1:8001/health
 ```
 
 ### Host nginx config (two-domain setup)
@@ -537,18 +554,23 @@ sudo certbot --nginx -d newui.example.com
 
 ### Promoting a reviewed design to production
 
-After investor approval:
+After investor approval, merge the staging branch into `main` and deploy the production profile.
+The `--tag` flag creates an annotated git tag for rollback if needed:
 
 ```bash
-# 1. Build and tag the new production image
-docker build -t subtitle-generator-prod:v2.2.0 .
+# 1. Merge the approved branch into main
+git checkout main
+git merge --no-ff feat/my-feature
+git push origin main
 
-# 2. Update PROD_IMAGE_TAG in .env
-#    (do NOT hardcode it in docker-compose.yml)
-sed -i 's/^PROD_IMAGE_TAG=.*/PROD_IMAGE_TAG=v2.2.0/' .env
+# 2. Deploy production (always builds from main) and tag the release
+./scripts/deploy-profile.sh cpu --tag
 
-# 3. Restart the production container
-docker compose --profile cpu up -d
+# 3. Verify production is healthy
+curl -s http://127.0.0.1:8000/health
 ```
+
+The `--tag` flag reads the version from `app/main.py` and creates a timestamped tag
+(e.g. `v2.3.0-prod-20260322-143000`) for rollback reference.
 
 See `CLAUDE.md` for the full environment variable reference and architecture details.

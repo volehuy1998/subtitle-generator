@@ -25,7 +25,7 @@ AI-powered subtitle generation service. Upload audio/video, transcribe with fast
 cp .env.example .env        # edit as needed
 
 # 2. Start (CPU mode)
-docker compose --profile cpu up --build -d
+./scripts/deploy-profile.sh cpu
 
 # 3. Start (GPU mode — requires NVIDIA Container Toolkit)
 docker compose --profile gpu up --build -d

@@ -1,47 +1,89 @@
-import { type HTMLAttributes, type ReactNode } from 'react'
+/**
+ * Card — presentational container with variant styling.
+ * Supports title/subtitle header, padding sizes, and three visual variants.
+ * — Pixel (Sr. Frontend), Sprint L34
+ */
+
+import type { CSSProperties, ReactNode } from 'react'
 import { cn } from './cn'
 
-interface CardHeaderProps {
-  title: string
+type CardVariant = 'default' | 'bordered' | 'elevated'
+type CardPadding = 'sm' | 'md' | 'lg'
+
+interface CardProps {
+  children: ReactNode
+  title?: string
   subtitle?: string
-  action?: ReactNode
+  padding?: CardPadding
+  variant?: CardVariant
+  className?: string
 }
 
-interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  padding?: 'sm' | 'md' | 'lg' | 'none'
-  shadow?: boolean
-  border?: boolean
-  header?: CardHeaderProps
+const paddingValues: Record<CardPadding, string> = {
+  sm: '12px',
+  md: '16px',
+  lg: '24px',
 }
 
-const paddingMap = {
-  none: '',
-  sm: 'p-3',
-  md: 'p-4',
-  lg: 'p-6',
+const variantStyles: Record<CardVariant, CSSProperties> = {
+  default: {
+    background: 'var(--color-surface)',
+    border: 'none',
+    boxShadow: 'none',
+  },
+  bordered: {
+    background: 'var(--color-bg)',
+    border: '1px solid var(--color-border)',
+    boxShadow: 'none',
+  },
+  elevated: {
+    background: 'var(--color-bg)',
+    border: 'none',
+    boxShadow: 'var(--shadow-md)',
+  },
 }
 
-export function Card({ className, padding = 'md', shadow = false, border = true, header, children, ...props }: CardProps) {
+export function Card({
+  children,
+  title,
+  subtitle,
+  padding = 'md',
+  variant = 'default',
+  className,
+}: CardProps) {
+  const style: CSSProperties = {
+    ...variantStyles[variant],
+    padding: paddingValues[padding],
+    borderRadius: 'var(--radius)',
+  }
+
   return (
-    <div
-      className={cn(
-        'rounded-lg bg-[var(--color-surface)]',
-        border && 'border border-[var(--color-border)]',
-        shadow && 'shadow-[var(--shadow-sm)]',
-        paddingMap[padding],
-        className
-      )}
-      {...props}
-    >
-      {header && (
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <h3 className="text-sm font-semibold text-[var(--color-text)]">{header.title}</h3>
-            {header.subtitle && (
-              <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{header.subtitle}</p>
-            )}
+    <div className={cn('card', className)} style={style}>
+      {title && (
+        <div style={{ marginBottom: subtitle ? '4px' : '12px' }}>
+          <div
+            style={{
+              fontSize: '16px',
+              fontWeight: 600,
+              color: 'var(--color-text)',
+              lineHeight: 1.4,
+            }}
+          >
+            {title}
           </div>
-          {header.action && <div className="ml-4 shrink-0">{header.action}</div>}
+          {subtitle && (
+            <div
+              style={{
+                fontSize: '13px',
+                color: 'var(--color-text-3)',
+                lineHeight: 1.4,
+                marginTop: '2px',
+                marginBottom: '12px',
+              }}
+            >
+              {subtitle}
+            </div>
+          )}
         </div>
       )}
       {children}

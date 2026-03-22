@@ -47,12 +47,14 @@ The app will be available at `http://localhost:8000`. The frontend dev server ca
 ### Docker setup
 
 ```bash
-# CPU-only
+# CPU-only (development)
 docker compose --profile cpu up --build
 
-# NVIDIA GPU
+# NVIDIA GPU (development)
 docker compose --profile gpu up --build
 ```
+
+For production and staging deployments, use the deployment script instead of calling `docker compose` directly (see Section 6a).
 
 ### Key environment variables
 
@@ -213,33 +215,56 @@ Any change to the **visual design, theme, or UI layout** of the frontend **must*
 ### Rule: preview first, production second
 
 ```
-1. Deploy to preview subdomain (newui.openlabs.club)
-2. Sentinel engineering team reviews via GitHub Issue + PR
-3. Investor approval
-4. Only then → update PROD_IMAGE_TAG in .env to promote to main domain
+1. Merge feature branch to a staging branch; set NEWUI_BRANCH in .env to that branch
+2. Deploy to preview subdomain (newui.openlabs.club): ./scripts/deploy-profile.sh newui
+3. Sentinel engineering team reviews via GitHub Issue + PR
+4. Investor approval
+5. Only then → merge to main and deploy production: ./scripts/deploy-profile.sh cpu --tag
 ```
 
-**Never** rebuild or restart the `cpu` Docker profile with `--build` when a new design is on `main` but has not yet been investor-approved. The `cpu` profile is pinned to a specific image tag (`PROD_IMAGE_TAG` in `.env`).
+**Never** run `./scripts/deploy-profile.sh cpu` with new, uninspected code when it has not yet been investor-approved. Production (`cpu` profile) always tracks the `main` branch.
+
+### Branch-per-environment model
+
+| Branch | Environment | Deployed via | Domain |
+|--------|-------------|-------------|--------|
+| `main` | Production | `./scripts/deploy-profile.sh cpu` | `openlabs.club` |
+| Feature / staging branch | Preview | `./scripts/deploy-profile.sh newui` | `newui.openlabs.club` |
+
+The `NEWUI_BRANCH` variable in `.env` controls which branch the `newui` profile builds from. Set it to the branch you want to preview before running the deploy script.
 
 ### How the two-container preview works
 
 | Container | Profile | Port | Domain | Purpose |
 |-----------|---------|------|--------|---------|
-| `subtitle-generator` | `cpu` | 8000 | `openlabs.club` | Production — pinned image tag |
-| `subtitle-newui` | `newui` | 8001 | `newui.openlabs.club` | Preview — current build |
+| `subtitle-generator` | `cpu` | 8000 | `openlabs.club` | Production — tracks `main` |
+| `subtitle-newui` | `newui` | 8001 | `newui.openlabs.club` | Preview — tracks `NEWUI_BRANCH` |
 
 The host nginx reverse proxy routes each domain to the correct container. See `docs/DEPLOY.md` for nginx config details.
 
+### Deployment commands
+
+```bash
+# Deploy preview (staging) — builds from the branch set in NEWUI_BRANCH (.env)
+./scripts/deploy-profile.sh newui
+
+# Deploy production — builds from main, creates a git tag for rollback
+./scripts/deploy-profile.sh cpu --tag
+
+# Deploy production without tagging (e.g. hotfix already tagged separately)
+./scripts/deploy-profile.sh cpu
+```
+
 ### Promotion checklist
 
-Before changing `PROD_IMAGE_TAG` to promote a new design to production:
+Before deploying to production with `./scripts/deploy-profile.sh cpu --tag`:
 
 - [ ] Preview has been live on `newui.openlabs.club` for at least 24 hours
 - [ ] All Sentinel engineers have commented on the review issue
 - [ ] Investor has explicitly approved the design in writing (issue comment or message)
-- [ ] New Docker image has been built and tagged (e.g. `docker build -t subtitle-generator-prod:v2.2.0 .`)
-- [ ] `PROD_IMAGE_TAG` updated in `.env` (not hardcoded in docker-compose.yml)
-- [ ] Production container restarted: `docker compose --profile cpu up -d`
+- [ ] Changes are merged to `main`
+- [ ] `NEWUI_BRANCH` in `.env` is updated to the next staging branch (so production and preview diverge again)
+- [ ] Production deployed: `./scripts/deploy-profile.sh cpu --tag`
 
 ### Code review checklist
 
