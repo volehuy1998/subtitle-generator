@@ -112,6 +112,12 @@ if [ "$(current_branch)" != "$TARGET_BRANCH" ]; then
   log "Checked out: $TARGET_BRANCH"
 fi
 
+# ── Pull latest from remote (if tracking branch exists) ─────────────────────
+
+if git rev-parse --verify "origin/$TARGET_BRANCH" &>/dev/null; then
+  git pull --ff-only origin "$TARGET_BRANCH" --quiet 2>/dev/null && log "Pulled latest from origin/$TARGET_BRANCH" || log "No remote changes (or not fast-forwardable)"
+fi
+
 # ── Build and deploy ─────────────────────────────────────────────────────────
 
 log "Building Docker profile: $PROFILE"
