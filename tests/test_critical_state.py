@@ -754,11 +754,11 @@ class TestCriticalStateMiddleware:
         res = self.client.get("/progress/fake-task-id")
         assert res.status_code == 503
 
-    def test_blocks_events_when_critical(self):
-        """GET /events returns 503 during critical state."""
+    def test_allows_events_when_critical(self):
+        """GET /events passes through during critical state (SSE needed for recovery)."""
         state.set_critical(["Database connection lost"])
         res = self.client.get("/events/fake-task-id")
-        assert res.status_code == 503
+        assert res.status_code != 503
 
     def test_blocks_download_when_critical(self):
         """GET /download returns 503 during critical state."""
@@ -1485,3 +1485,90 @@ class TestCheckModel:
         finally:
             state.loaded_models = old_models
             state.model_preload = old_preload
+
+
+class TestCriticalStateMiddlewareResponse:
+    """Verify middleware serves HTML to browsers and JSON to API clients during critical state."""
+
+    def setup_method(self):
+        self.snapshot = _save_critical_state()
+        from fastapi.testclient import TestClient
+
+        from app.main import app
+
+        self.client = TestClient(app, base_url="https://testserver")
+
+    def teardown_method(self):
+        _restore_critical_state(self.snapshot)
+
+    def test_browser_gets_html_during_critical(self):
+        """Browser requesting / during critical state gets styled HTML 503."""
+        state.system_critical = True
+        state.system_critical_reasons = ["Database unreachable"]
+        try:
+            resp = self.client.get("/", headers={"Accept": "text/html"})
+            assert resp.status_code == 503
+            assert "text/html" in resp.headers.get("content-type", "")
+            assert "SubForge" in resp.text
+            assert "Database unreachable" in resp.text
+        finally:
+            state.system_critical = False
+            state.system_critical_reasons = []
+
+    def test_api_client_gets_json_during_critical(self):
+        """API client requesting /upload during critical state gets JSON 503."""
+        state.system_critical = True
+        state.system_critical_reasons = ["Disk space critically low"]
+        try:
+            resp = self.client.get("/upload", headers={"Accept": "application/json"})
+            assert resp.status_code == 503
+            data = resp.json()
+            assert data["critical"] is True
+        finally:
+            state.system_critical = False
+            state.system_critical_reasons = []
+
+    def test_assets_passthrough_during_critical(self):
+        """Static assets pass through during critical state."""
+        state.system_critical = True
+        state.system_critical_reasons = ["Test"]
+        try:
+            resp = self.client.get("/assets/index.js")
+            assert resp.status_code != 503
+        finally:
+            state.system_critical = False
+            state.system_critical_reasons = []
+
+    def test_health_passthrough_during_critical(self):
+        """GET /health passes through during critical state."""
+        state.system_critical = True
+        state.system_critical_reasons = ["Test"]
+        try:
+            resp = self.client.get("/health")
+            assert resp.status_code == 200
+        finally:
+            state.system_critical = False
+            state.system_critical_reasons = []
+
+    def test_system_info_passthrough_during_critical(self):
+        """GET /system-info passes through during critical state."""
+        state.system_critical = True
+        state.system_critical_reasons = ["Test"]
+        try:
+            resp = self.client.get("/system-info")
+            assert resp.status_code == 200
+        finally:
+            state.system_critical = False
+            state.system_critical_reasons = []
+
+    def test_multiple_reasons_in_html(self):
+        """Multiple critical reasons all appear in the HTML response."""
+        state.system_critical = True
+        state.system_critical_reasons = ["Database unreachable", "Disk full"]
+        try:
+            resp = self.client.get("/", headers={"Accept": "text/html"})
+            assert "Database unreachable" in resp.text
+            assert "Disk full" in resp.text
+        finally:
+            state.system_critical = False
+            state.system_critical_reasons = []
