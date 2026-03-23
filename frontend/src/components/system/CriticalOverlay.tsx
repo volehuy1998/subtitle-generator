@@ -7,11 +7,11 @@ import { useUIStore } from '@/store/uiStore'
  * Returns null when the system is healthy (zero render overhead).
  */
 export default function CriticalOverlay() {
-  const health = useUIStore((s) => s.health)
+  const healthMetrics = useUIStore((s) => s.healthMetrics)
 
-  if (health?.system_critical !== true) return null
+  if (healthMetrics?.system_critical !== true) return null
 
-  const reasons = health.system_critical_reasons ?? []
+  const reasons: string[] = healthMetrics.system_critical_reasons ?? []
 
   return (
     <div
@@ -76,7 +76,7 @@ export default function CriticalOverlay() {
               textAlign: 'left',
             }}
           >
-            {reasons.map((reason, i) => (
+            {reasons.map((reason: string, i: number) => (
               <li
                 key={i}
                 style={{

@@ -12,6 +12,7 @@
 import { type ReactNode } from 'react'
 import { Header } from './Header'
 import { Footer } from './Footer'
+import CriticalOverlay from '../system/CriticalOverlay'
 
 interface AppShellProps {
   children: ReactNode
@@ -28,6 +29,7 @@ export function AppShell({ children }: AppShellProps) {
         Skip to main content
       </a>
       <Header />
+      <CriticalOverlay />
       <main
         id="main-content"
         className="flex-1 w-full max-w-[1280px] mx-auto px-4 py-6"

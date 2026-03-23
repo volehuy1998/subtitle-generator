@@ -9,6 +9,8 @@ export interface HealthMetrics {
   diskFreeGb: number | null
   activeTasks: number
   lastUpdated: number | null
+  system_critical?: boolean
+  system_critical_reasons?: string[]
 }
 
 interface UIState {
