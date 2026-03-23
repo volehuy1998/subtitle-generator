@@ -91,7 +91,7 @@ jobs:
         run: pip install -r requirements.txt pytest pytest-cov
       - name: Run backend tests
         run: pytest tests/ --ignore=tests/e2e --ignore=tests/e2e_newui -v --tb=short --cov=app --cov-report=xml
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: backend-coverage
@@ -111,7 +111,7 @@ jobs:
       - run: cd frontend && npm ci
       - name: Run frontend tests
         run: cd frontend && npx vitest run --coverage
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: frontend-coverage
