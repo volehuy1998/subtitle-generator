@@ -43,6 +43,18 @@ export function LandingPage() {
     translateToEnglish: false,
   })
 
+  // Fetch preloaded models and default to the first loaded one
+  const [preloadedModels, setPreloadedModels] = useState<string[]>([])
+  useEffect(() => {
+    api.systemInfo().then(info => {
+      const loaded = info.model_preload?.loaded ?? []
+      setPreloadedModels(loaded)
+      if (loaded.length > 0 && uploadOptions.model === 'auto') {
+        setUploadOptions(prev => ({ ...prev, model: loaded[0] }))
+      }
+    }).catch(() => { /* fallback to auto */ })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Validate recent projects on mount — stagger calls 100ms apart, max 3 concurrent
   useEffect(() => {
     if (projects.length === 0) return
@@ -165,6 +177,7 @@ export function LandingPage() {
               <AdvancedUploadOptions
                 options={uploadOptions}
                 onChange={setUploadOptions}
+                preloadedModels={preloadedModels}
               />
             </>
           )}

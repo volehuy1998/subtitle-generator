@@ -24,19 +24,32 @@ export interface UploadOptions {
 interface Props {
   options: UploadOptions
   onChange: (options: UploadOptions) => void
+  preloadedModels?: string[]
 }
 
-const MODEL_OPTIONS = [
-  { value: 'auto', label: 'Auto (recommended)' },
-  { value: 'tiny', label: 'Tiny — fastest, least accurate' },
-  { value: 'base', label: 'Base — fast, basic accuracy' },
-  { value: 'small', label: 'Small — balanced' },
-  { value: 'medium', label: 'Medium — slower, more accurate' },
-  { value: 'large', label: 'Large — slowest, best accuracy' },
+const BASE_MODEL_OPTIONS = [
+  { value: 'auto', label: 'Auto', desc: 'Server picks best model' },
+  { value: 'tiny', label: 'Tiny', desc: '39M params · ~10x speed · fastest' },
+  { value: 'base', label: 'Base', desc: '74M params · ~7x speed · basic accuracy' },
+  { value: 'small', label: 'Small', desc: '244M params · ~4x speed · balanced' },
+  { value: 'medium', label: 'Medium', desc: '769M params · ~2x speed · accurate' },
+  { value: 'large', label: 'Large', desc: '1.5B params · ~1x speed · best accuracy' },
 ]
 
-export function AdvancedUploadOptions({ options, onChange }: Props) {
+/** Build model options, marking preloaded models with ⚡ Ready badge */
+function getModelOptions(preloaded: string[] = []) {
+  return BASE_MODEL_OPTIONS.map(opt => {
+    const isLoaded = preloaded.includes(opt.value)
+    return {
+      value: opt.value,
+      label: isLoaded ? `${opt.label} ⚡ Ready` : opt.label,
+    }
+  })
+}
+
+export function AdvancedUploadOptions({ options, onChange, preloadedModels }: Props) {
   const [expanded, setExpanded] = useState(false)
+  const modelOptions = getModelOptions(preloadedModels)
 
   const update = <K extends keyof UploadOptions>(key: K, value: UploadOptions[K]) => {
     onChange({ ...options, [key]: value })
@@ -70,7 +83,7 @@ export function AdvancedUploadOptions({ options, onChange }: Props) {
         >
           <Select
             label="Model"
-            options={MODEL_OPTIONS}
+            options={modelOptions}
             value={options.model}
             onChange={e => update('model', e.target.value)}
           />
