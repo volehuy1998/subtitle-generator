@@ -30,19 +30,4 @@ describe('Card', () => {
     expect(container.firstElementChild!.className).toContain('card')
   })
 
-  it.each(['default', 'bordered', 'elevated'] as const)(
-    'variant=%s renders without crashing',
-    (variant) => {
-      const { container } = render(<Card variant={variant}>Content</Card>)
-      expect(container.firstElementChild).toBeInTheDocument()
-    },
-  )
-
-  it.each(['sm', 'md', 'lg'] as const)(
-    'padding=%s renders without crashing',
-    (padding) => {
-      const { container } = render(<Card padding={padding}>Content</Card>)
-      expect(container.firstElementChild).toBeInTheDocument()
-    },
-  )
 })

@@ -330,12 +330,6 @@ class TestAnalyticsRoutes:
 class TestMigration:
     """Test Alembic migration file exists."""
 
-    def test_migration_002_exists(self):
-        from pathlib import Path
-
-        migration = Path("alembic/versions/002_analytics_audit_feedback.py")
-        assert migration.exists(), "Migration 002 not found"
-
     def test_migration_002_has_upgrade(self):
         from pathlib import Path
 

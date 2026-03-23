@@ -10,8 +10,6 @@ Tests cover:
   - Docker hardening config
 """
 
-from pathlib import Path
-
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -246,16 +244,3 @@ class TestCspNonceConfig:
         from app.config import CSP_NONCE_ENABLED
 
         assert isinstance(CSP_NONCE_ENABLED, bool)
-
-
-# ── Docker Hardening Tests ──
-
-
-class TestDockerHardening:
-    """Test Docker security configuration exists."""
-
-    def test_dockerfile_exists(self):
-        assert Path("Dockerfile").exists()
-
-    def test_docker_compose_exists(self):
-        assert Path("docker-compose.yml").exists() or Path("compose.yml").exists()

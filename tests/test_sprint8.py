@@ -13,7 +13,6 @@ S8-9: Integration tests
 
 from pathlib import Path
 
-import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -296,42 +295,6 @@ class TestMetricsWiring:
 
 
 # ── S8-8: Frontend Advanced Options ──
-
-
-@pytest.mark.skip(reason="Advanced Options removed; frontend migrated to React")
-class TestFrontendAdvancedOptions:
-    def test_frontend_has_word_timestamps_option(self):
-        html = (PROJECT_ROOT / "templates" / "index.html").read_text()
-        assert "advWordTimestamps" in html
-
-    def test_frontend_has_diarize_option(self):
-        html = (PROJECT_ROOT / "templates" / "index.html").read_text()
-        assert "advDiarize" in html
-
-    def test_frontend_has_translate_option(self):
-        html = (PROJECT_ROOT / "templates" / "index.html").read_text()
-        assert "advTranslate" in html
-
-    def test_frontend_has_vocabulary_option(self):
-        html = (PROJECT_ROOT / "templates" / "index.html").read_text()
-        assert "advVocabulary" in html
-
-    def test_frontend_has_max_chars_option(self):
-        html = (PROJECT_ROOT / "templates" / "index.html").read_text()
-        assert "advMaxChars" in html
-
-    def test_frontend_has_json_download(self):
-        html = (PROJECT_ROOT / "templates" / "index.html").read_text()
-        assert "downloadBtnJson" in html
-
-    def test_frontend_sends_advanced_params(self):
-        """Verify upload function sends advanced params in FormData."""
-        html = (PROJECT_ROOT / "templates" / "index.html").read_text()
-        assert "word_timestamps" in html
-        assert "diarize" in html
-        assert "translate_to_english" in html
-        assert "initial_prompt" in html
-        assert "max_line_chars" in html
 
 
 # ── S8-9: Analytics Persistence ──

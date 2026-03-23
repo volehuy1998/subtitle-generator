@@ -127,13 +127,4 @@ describe('taskStore — additional actions', () => {
     expect(second).toBeGreaterThanOrEqual(first)
   })
 
-  // ── state isolation ───────────────────────────────────────────────────────
-
-  it('each test starts fresh (beforeEach reset verification)', () => {
-    expect(store().isUploading).toBe(false)
-    expect(store().uploadPercent).toBe(0)
-    expect(store().isPauseRequesting).toBe(false)
-    expect(store().isCancelRequesting).toBe(false)
-    expect(store().liveSegments).toHaveLength(0)
-  })
 })

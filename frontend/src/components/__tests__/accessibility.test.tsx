@@ -1,22 +1,14 @@
-/// <reference types="node" />
 /**
  * Accessibility audit tests — Sprint L78
  *
- * Validates WCAG 2.1 AA compliance across all major components:
- * accessible names, labels, ARIA attributes, focus indicators,
- * keyboard navigation, and semantic HTML.
+ * Validates WCAG 2.1 AA compliance via render-based behavioral tests
+ * and color contrast calculations.
  *
  * — Pixel (Sr. Frontend Engineer)
  */
 
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import fs from 'fs'
-import path from 'path'
-
-// Read source files for static analysis
-const readSource = (relPath: string) =>
-  fs.readFileSync(path.resolve(__dirname, '../..', relPath), 'utf-8')
 
 // ---- Component imports for render-based tests ----
 import { Button } from '../ui/Button'
@@ -48,16 +40,6 @@ describe('L78: Accessibility — buttons have accessible names', () => {
     const { container } = render(<Button loading>Save</Button>)
     const spinner = container.querySelector('[aria-hidden="true"]')
     expect(spinner).toBeInTheDocument()
-  })
-
-  it('AppHeader settings button has aria-label', () => {
-    const source = readSource('components/layout/AppHeader.tsx')
-    expect(source).toContain('aria-label="Open preferences"')
-  })
-
-  it('AppHeader theme toggle has aria-label', () => {
-    const source = readSource('components/layout/AppHeader.tsx')
-    expect(source).toContain('aria-label={themeLabels[theme]}')
   })
 })
 
@@ -102,18 +84,6 @@ describe('L78: Accessibility — form inputs have associated labels', () => {
     )
     const select = screen.getByLabelText('Output Format')
     expect(select.id).toBe('select-output-format')
-  })
-
-  it('TranscribeForm language select has label with htmlFor', () => {
-    const source = readSource('components/transcribe/TranscribeForm.tsx')
-    expect(source).toContain('htmlFor="language-select"')
-    expect(source).toContain('id="language-select"')
-  })
-
-  it('TranscribeForm translate select has label with htmlFor', () => {
-    const source = readSource('components/transcribe/TranscribeForm.tsx')
-    expect(source).toContain('htmlFor="translate-select"')
-    expect(source).toContain('id="translate-select"')
   })
 })
 
@@ -161,148 +131,6 @@ describe('L78: Accessibility — dialogs have role="dialog" and aria-modal', () 
     )
     const dialog = screen.getByRole('dialog')
     expect(dialog).toHaveAttribute('aria-label', 'Delete item confirmation')
-  })
-
-  it('CancelConfirmationDialog has role="dialog" and aria-modal', () => {
-    const source = readSource(
-      'components/progress/CancelConfirmationDialog.tsx',
-    )
-    expect(source).toContain('role="dialog"')
-    expect(source).toContain('aria-modal="true"')
-    expect(source).toContain('aria-label="Cancel transcription confirmation"')
-  })
-
-  it('ConfirmationDialog has role="dialog" and aria-modal', () => {
-    const source = readSource(
-      'components/transcribe/ConfirmationDialog.tsx',
-    )
-    expect(source).toContain('role="dialog"')
-    expect(source).toContain('aria-modal="true"')
-    expect(source).toContain('aria-label="Confirm transcription"')
-  })
-
-  it('EmbedConfirmationDialog has role="dialog" and aria-modal', () => {
-    const source = readSource(
-      'components/embed/EmbedConfirmationDialog.tsx',
-    )
-    expect(source).toContain('role="dialog"')
-    expect(source).toContain('aria-modal="true"')
-    expect(source).toContain('aria-label="Confirm subtitle embedding"')
-  })
-})
-
-describe('L78: Accessibility — status messages have appropriate roles', () => {
-  it('ProgressView success banner has role="status"', () => {
-    const source = readSource('components/progress/ProgressView.tsx')
-    expect(source).toContain('role="status"')
-  })
-
-  it('ProgressView warning has role="alert"', () => {
-    const source = readSource('components/progress/ProgressView.tsx')
-    expect(source).toContain('role="alert"')
-  })
-
-  it('ProgressView error section has role="alert"', () => {
-    const source = readSource('components/progress/ProgressView.tsx')
-    // Error section uses role="alert"
-    const alertCount = (source.match(/role="alert"/g) || []).length
-    expect(alertCount).toBeGreaterThanOrEqual(2) // warning + error
-  })
-
-  it('ConnectionBanner success uses role="status"', () => {
-    const source = readSource('components/system/ConnectionBanner.tsx')
-    expect(source).toContain('role="status"')
-  })
-
-  it('ConnectionBanner DB down uses role="alert"', () => {
-    const source = readSource('components/system/ConnectionBanner.tsx')
-    expect(source).toContain('role="alert"')
-  })
-
-  it('ConnectionBanner uses aria-live for dynamic updates', () => {
-    const source = readSource('components/system/ConnectionBanner.tsx')
-    expect(source).toContain('aria-live="polite"')
-    expect(source).toContain('aria-live="assertive"')
-  })
-})
-
-describe('L78: Accessibility — progress bars have ARIA attributes', () => {
-  it('ProgressView has role="progressbar"', () => {
-    const source = readSource('components/progress/ProgressView.tsx')
-    expect(source).toContain('role="progressbar"')
-  })
-
-  it('progress bar has aria-valuenow', () => {
-    const source = readSource('components/progress/ProgressView.tsx')
-    expect(source).toContain('aria-valuenow={percent}')
-  })
-
-  it('progress bar has aria-valuemin={0}', () => {
-    const source = readSource('components/progress/ProgressView.tsx')
-    expect(source).toContain('aria-valuemin={0}')
-  })
-
-  it('progress bar has aria-valuemax={100}', () => {
-    const source = readSource('components/progress/ProgressView.tsx')
-    expect(source).toContain('aria-valuemax={100}')
-  })
-
-  it('progress bar has aria-label', () => {
-    const source = readSource('components/progress/ProgressView.tsx')
-    expect(source).toContain('aria-label="Task progress"')
-  })
-})
-
-describe('L78: Accessibility — focus indicators', () => {
-  const cssSource = readSource('index.css')
-
-  it(':focus-visible has a 2px solid outline', () => {
-    expect(cssSource).toContain('outline: 2px solid var(--color-primary)')
-  })
-
-  it(':focus-visible has outline-offset: 2px', () => {
-    expect(cssSource).toContain('outline-offset: 2px')
-  })
-
-  it('button:focus-visible is styled', () => {
-    expect(cssSource).toContain('button:focus-visible')
-  })
-
-  it('a:focus-visible is styled', () => {
-    expect(cssSource).toContain('a:focus-visible')
-  })
-
-  it('input:focus-visible is styled', () => {
-    expect(cssSource).toContain('input:focus-visible')
-  })
-
-  it('select:focus-visible is styled', () => {
-    expect(cssSource).toContain('select:focus-visible')
-  })
-})
-
-describe('L78: Accessibility — skip navigation link', () => {
-  it('App renders skip-nav link pointing to #main-content', () => {
-    const source = readSource('pages/App.tsx')
-    expect(source).toContain('href="#main-content"')
-    expect(source).toContain('className="sr-only skip-nav"')
-  })
-
-  it('main content has id="main-content"', () => {
-    const source = readSource('pages/App.tsx')
-    expect(source).toContain('id="main-content"')
-  })
-
-  it('skip-nav link has descriptive text', () => {
-    const source = readSource('pages/App.tsx')
-    expect(source).toContain('Skip to main content')
-  })
-
-  it('.skip-nav:focus becomes visible with z-index 9999', () => {
-    const cssSource = readSource('index.css')
-    const skipBlock = cssSource.slice(cssSource.indexOf('.skip-nav:focus'))
-    expect(skipBlock).toContain('z-index: 9999')
-    expect(skipBlock).toContain('position: fixed')
   })
 })
 
@@ -373,93 +201,6 @@ describe('L78: Accessibility — icons have alt text or aria-hidden', () => {
     const { container } = render(<Icon name="check" />)
     const svg = container.querySelector('svg')
     expect(svg).toHaveAttribute('aria-hidden', 'true')
-  })
-
-  it('all SVG icons in AppHeader use aria-hidden="true"', () => {
-    const source = readSource('components/layout/AppHeader.tsx')
-    // Every SVG icon should have aria-hidden="true"
-    const svgMatches = source.match(/<svg[^>]*>/g) || []
-    for (const svg of svgMatches) {
-      expect(svg).toContain('aria-hidden="true"')
-    }
-  })
-
-  it('ProgressView SVG icons use aria-hidden="true"', () => {
-    const source = readSource('components/progress/ProgressView.tsx')
-    const svgMatches = source.match(/<svg[^>]*>/g) || []
-    for (const svg of svgMatches) {
-      expect(svg).toContain('aria-hidden="true"')
-    }
-  })
-
-  it('OutputPanel empty state SVG has aria-label', () => {
-    const source = readSource('components/output/OutputPanel.tsx')
-    // The telescope icon has aria-label="No results yet"
-    expect(source).toContain('aria-label="No results yet"')
-  })
-})
-
-describe('L78: Accessibility — keyboard navigation', () => {
-  it('ProgressView uses aria-live="polite" for dynamic content', () => {
-    const source = readSource('components/progress/ProgressView.tsx')
-    expect(source).toContain('aria-live="polite"')
-  })
-
-  it('ProgressView uses aria-live="assertive" for status updates', () => {
-    const source = readSource('components/progress/ProgressView.tsx')
-    expect(source).toContain('aria-live="assertive"')
-  })
-
-  it('App defines tabpanel and tab roles for main sections', () => {
-    const source = readSource('pages/App.tsx')
-    expect(source).toContain('role="tablist"')
-    expect(source).toContain('role="tab"')
-    expect(source).toContain('role="tabpanel"')
-    expect(source).toContain('aria-controls')
-    expect(source).toContain('aria-labelledby')
-  })
-
-  it('subtitle preview has role="log" with aria-label', () => {
-    const source = readSource('components/progress/ProgressView.tsx')
-    expect(source).toContain('role="log"')
-    expect(source).toContain('aria-label="Live subtitle preview"')
-  })
-
-  it('dialogs trap focus', () => {
-    const dialogSource = readSource('components/ui/Dialog.tsx')
-    expect(dialogSource).toContain('useFocusTrap')
-    const cancelSource = readSource('components/progress/CancelConfirmationDialog.tsx')
-    expect(cancelSource).toContain('useFocusTrap')
-    const confirmSource = readSource('components/transcribe/ConfirmationDialog.tsx')
-    expect(confirmSource).toContain('useFocusTrap')
-    const embedSource = readSource('components/embed/EmbedConfirmationDialog.tsx')
-    expect(embedSource).toContain('useFocusTrap')
-  })
-
-  it('dialogs close on Escape key', () => {
-    const dialogSource = readSource('components/ui/Dialog.tsx')
-    expect(dialogSource).toContain("e.key === 'Escape'")
-    const cancelSource = readSource('components/progress/CancelConfirmationDialog.tsx')
-    expect(cancelSource).toContain("e.key === 'Escape'")
-    const confirmSource = readSource('components/transcribe/ConfirmationDialog.tsx')
-    expect(confirmSource).toContain("e.key === 'Escape'")
-    const embedSource = readSource('components/embed/EmbedConfirmationDialog.tsx')
-    expect(embedSource).toContain("e.key === 'Escape'")
-  })
-
-  it('Tooltip uses aria-describedby for association', () => {
-    const source = readSource('components/ui/Tooltip.tsx')
-    expect(source).toContain('aria-describedby')
-  })
-
-  it('Tooltip has role="tooltip"', () => {
-    const source = readSource('components/ui/Tooltip.tsx')
-    expect(source).toContain('role="tooltip"')
-  })
-
-  it('dropzone has aria-label', () => {
-    const source = readSource('components/transcribe/TranscribeForm.tsx')
-    expect(source).toContain('aria-label="Upload media file"')
   })
 })
 

@@ -42,22 +42,6 @@ describe('Button', () => {
     expect(handler).not.toHaveBeenCalled()
   })
 
-  it.each(['primary', 'secondary', 'danger', 'ghost'] as const)(
-    'variant=%s renders without crashing',
-    (variant) => {
-      const { container } = render(<Button variant={variant}>Btn</Button>)
-      expect(container.querySelector('button')).toBeInTheDocument()
-    },
-  )
-
-  it.each(['sm', 'md', 'lg'] as const)(
-    'size=%s renders without crashing',
-    (size) => {
-      const { container } = render(<Button size={size}>Btn</Button>)
-      expect(container.querySelector('button')).toBeInTheDocument()
-    },
-  )
-
   it('className passthrough works', () => {
     render(<Button className="my-class">Btn</Button>)
     expect(screen.getByRole('button').className).toContain('my-class')

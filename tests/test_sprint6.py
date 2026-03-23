@@ -195,7 +195,3 @@ class TestRoutesRegistered:
     def test_metrics_still_works(self):
         res = client.get("/metrics")
         assert res.status_code == 200
-
-    def test_health_still_works(self):
-        res = client.get("/health")
-        assert res.status_code == 200

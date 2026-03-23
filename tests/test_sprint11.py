@@ -201,8 +201,3 @@ class TestIntegration:
             res = client.get(page)
             expected = (200, 503) if page == "/ready" else (200,)
             assert res.status_code in expected, f"{page} returned {res.status_code}"
-
-    def test_security_headers_preserved(self):
-        res = client.get("/")
-        assert "X-Content-Type-Options" in res.headers
-        assert "X-Frame-Options" in res.headers

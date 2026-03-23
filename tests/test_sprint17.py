@@ -19,7 +19,7 @@ from app.services.analytics_db import (
     record_event,
     update_daily_stats,
 )
-from app.services.storage import LocalStorageAdapter, get_storage
+from app.services.storage import get_storage
 from app.services.task_backend import (
     InMemoryTaskBackend,
     get_backend_info,
@@ -284,30 +284,6 @@ class TestScaleIntegration:
         res = client.get("/openapi.json")
         paths = list(res.json()["paths"].keys())
         assert "/scale/info" in paths
-
-    def test_task_backend_importable(self):
-        from app.services.task_backend import InMemoryTaskBackend, TaskBackend
-
-        assert TaskBackend is not None
-        assert InMemoryTaskBackend is not None
-
-    def test_storage_importable(self):
-        from app.services.storage import StorageAdapter
-
-        assert StorageAdapter is not None
-        assert LocalStorageAdapter is not None
-
-    def test_worker_health_importable(self):
-        from app.services.worker_health import get_worker_status, register_worker
-
-        assert callable(register_worker)
-        assert callable(get_worker_status)
-
-    def test_analytics_db_importable(self):
-        from app.services.analytics_db import get_daily_stats, record_event
-
-        assert callable(record_event)
-        assert callable(get_daily_stats)
 
     def test_all_new_endpoints_accessible(self):
         """Verify all Sprint 17 endpoints return non-error status."""

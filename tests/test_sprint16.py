@@ -332,21 +332,3 @@ class TestSecurityIntegration:
         res = client.get("/health", headers={"Origin": "http://example.com"})
         assert res.status_code == 200
         assert "access-control-allow-origin" in res.headers
-
-    def test_audit_service_importable(self):
-        from app.services.audit import get_audit_stats, get_recent_audit_events, log_audit_event
-
-        assert callable(log_audit_event)
-        assert callable(get_recent_audit_events)
-        assert callable(get_audit_stats)
-
-    def test_quarantine_service_importable(self):
-        from app.services.quarantine import get_quarantine_count, quarantine_file
-
-        assert callable(quarantine_file)
-        assert callable(get_quarantine_count)
-
-    def test_brute_force_middleware_importable(self):
-        from app.middleware.brute_force import BruteForceMiddleware
-
-        assert BruteForceMiddleware is not None

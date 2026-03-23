@@ -1,7 +1,6 @@
 """Sprint 30 tests: UX Flow, Stage Timing & Live System Status.
 
 Tests cover:
-  - Phase 1: Per-stage duration display (step timing in UI)
   - Phase 2: Live system health SSE stream + enriched status
   - Phase 3: Quick embed (no re-upload) + video preservation
 """
@@ -9,87 +8,11 @@ Tests cover:
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
 
 client = TestClient(app, base_url="https://testserver")
-
-
-def _html():
-    """Get the main page HTML."""
-    return client.get("/").text
-
-
-# ── Phase 1: Stage Timing Display ──
-
-
-@pytest.mark.skip(reason="Frontend migrated to React")
-class TestStageTimingUI:
-    """Verify step timing elements and JS logic exist in the frontend."""
-
-    def test_step_time_elements_exist(self):
-        html = _html()
-        for i in range(1, 5):
-            assert f'id="stepTime{i}"' in html
-
-    def test_step_timer_js_functions(self):
-        html = _html()
-        assert "function formatStepDuration" in html
-        assert "function startStepTimer" in html
-        assert "function stopStepTimer" in html
-        assert "function updateCompletedTimings" in html
-        assert "function resetStepTimings" in html
-
-    def test_step_timer_interval_logic(self):
-        html = _html()
-        assert "stepTimerInterval" in html
-        assert "setInterval" in html
-
-    def test_step_timing_used_in_progress_handler(self):
-        html = _html()
-        assert "data.step_timing" in html
-        assert "updateCompletedTimings" in html
-
-    def test_step_timing_used_in_done_handler(self):
-        html = _html()
-        assert "data.step_timings" in html
-        assert "tsSummaryUpload" in html
-        assert "tsSummaryExtract" in html
-        assert "tsSummaryTranscribe" in html
-        assert "tsSummaryFinalize" in html
-        assert "tsSummaryTotal" in html
-
-    def test_timing_summary_section_exists(self):
-        html = _html()
-        assert 'id="timingSummary"' in html
-        assert "timing-summary" in html
-
-    def test_timing_summary_labels(self):
-        html = _html()
-        assert "Upload &amp; Probe" in html or "Upload & Probe" in html
-        assert "Audio Extraction" in html
-        assert "Transcription" in html
-        assert "File Generation" in html
-
-    def test_step_time_css_styling(self):
-        html = _html()
-        assert "fade-in-time" in html
-        assert ".step-time" in html
-
-    def test_format_step_duration_handles_ranges(self):
-        """Verify the formatter logic covers <10s, 10-60s, and 60s+ ranges."""
-        html = _html()
-        # Check that the function handles all three cases
-        assert "toFixed(1)" in html  # < 10s
-        assert "Math.round(sec)" in html  # 10-60s
-        assert "Math.floor(sec / 60)" in html  # 60s+
-
-    def test_reset_clears_timings(self):
-        html = _html()
-        assert "resetStepTimings()" in html
-        assert "timingSummary" in html
 
 
 # ── Phase 2: Live Health SSE Stream ──
@@ -159,62 +82,6 @@ class TestEnrichedStatus:
         assert isinstance(data["active_tasks"], int)
 
 
-@pytest.mark.skip(reason="Frontend migrated to React")
-class TestHealthSSEFrontend:
-    """Verify the frontend wires to health SSE."""
-
-    def test_health_sse_connect_function(self):
-        html = _html()
-        assert "function connectHealthSSE()" in html
-        assert "new EventSource('/health/stream')" in html
-
-    def test_health_offline_state(self):
-        html = _html()
-        assert "function showHealthOffline()" in html
-        assert "health-dot offline" in html
-
-    def test_health_load_bar_exists(self):
-        html = _html()
-        assert 'id="healthLoadFill"' in html
-        assert "health-load-bar" in html
-        assert "health-load-fill" in html
-
-    def test_health_watchdog(self):
-        html = _html()
-        assert "healthWatchdog" in html
-
-    def test_health_panel_cpu_gauge(self):
-        html = _html()
-        assert "cpu_percent" in html
-        assert "health-mini-bar" in html
-
-    def test_health_panel_memory_gauge(self):
-        html = _html()
-        assert "memory_percent" in html
-
-    def test_health_panel_db_latency_badge(self):
-        html = _html()
-        assert "health-latency-badge" in html
-        assert "db_latency_ms" in html
-
-    def test_health_panel_task_gauge(self):
-        html = _html()
-        assert "max_tasks" in html
-
-    def test_health_polling_fallback(self):
-        """Verify polling fallback exists when SSE fails."""
-        html = _html()
-        assert "function pollSystemHealth()" in html
-        assert "function startHealthPolling()" in html
-        assert "function stopHealthPolling()" in html
-
-    def test_health_initial_poll(self):
-        """Verify immediate poll before SSE connects."""
-        html = _html()
-        # Should call pollSystemHealth before connectHealthSSE
-        assert "pollSystemHealth();" in html
-
-
 class TestHealthRateLimitExempt:
     """Verify health endpoints bypass rate limiting."""
 
@@ -230,59 +97,6 @@ class TestHealthRateLimitExempt:
 
 
 # ── Phase 3: Quick Embed (No Re-Upload) ──
-
-
-@pytest.mark.skip(reason="Frontend migrated to React")
-class TestQuickEmbedUI:
-    """Verify unified embed card elements in the frontend."""
-
-    def test_embed_card_exists(self):
-        html = _html()
-        assert 'id="embedCard"' in html
-        assert "embed-card" in html
-
-    def test_embed_mode_tabs(self):
-        html = _html()
-        assert 'id="embedTabSoft"' in html
-        assert "Soft Mux" in html
-        assert "Hard Burn" in html
-
-    def test_embed_preset_select(self):
-        html = _html()
-        assert 'id="embedPreset"' in html
-        assert "YouTube White" in html
-
-    def test_embed_button(self):
-        html = _html()
-        assert 'id="embedStartBtn"' in html
-        assert "startUnifiedEmbed()" in html
-        assert "Embed Now" in html
-
-    def test_embed_status_area(self):
-        html = _html()
-        assert 'id="embedStatus"' in html
-        assert 'id="embedResult"' in html
-
-    def test_embed_js_function(self):
-        html = _html()
-        assert "async function startUnifiedEmbed()" in html
-        assert "/quick" in html
-
-    def test_embed_listens_sse(self):
-        html = _html()
-        assert "embed_done" in html
-        assert "embed_error" in html
-
-    def test_embed_shown_for_video(self):
-        """Verify embed card is shown when is_video flag is set."""
-        html = _html()
-        assert "data.is_video" in html
-        assert "embedCard" in html
-
-    def test_embed_reset(self):
-        html = _html()
-        # Verify resetUI clears embed card
-        assert "embedCard" in html
 
 
 class TestQuickEmbedEndpoint:
@@ -903,37 +717,3 @@ class TestReadinessRequiresDB:
             data = res.json()
             assert data["status"] == "ready"
             assert data["checks"]["db"]["ok"] is True
-
-
-@pytest.mark.skip(reason="Frontend migrated to React")
-class TestServiceBannerUI:
-    """Verify the service unavailable banner exists in the frontend."""
-
-    def test_service_banner_element_exists(self):
-        html = _html()
-        assert 'id="serviceBanner"' in html
-        assert "service-banner" in html
-
-    def test_banner_shows_on_critical_state(self):
-        html = _html()
-        assert "data.system_critical" in html or "system_critical" in html
-        assert "SYSTEM CRITICAL" in html or "critical" in html.lower()
-
-    def test_banner_shows_on_shutting_down(self):
-        html = _html()
-        assert "data.shutting_down" in html
-        assert "shutting down" in html.lower()
-
-    def test_dropzone_disabled_class(self):
-        html = _html()
-        assert "drop-zone.disabled" in html or "disabled" in html
-        assert "pointer-events: none" in html or "pointer-events:none" in html
-
-    def test_banner_hidden_when_healthy(self):
-        html = _html()
-        assert "service-banner hidden" in html
-
-    def test_offline_shows_banner(self):
-        """showHealthOffline also shows the service banner."""
-        html = _html()
-        assert "Service unreachable" in html

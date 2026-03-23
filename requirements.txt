@@ -1,5 +1,6 @@
 fastapi
 uvicorn[standard]
+starlette<1.0.0
 python-multipart
 jinja2
 faster-whisper
