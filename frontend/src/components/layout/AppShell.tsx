@@ -5,7 +5,6 @@
  * main content area, and Footer. Includes a skip-navigation link for
  * keyboard and screen reader accessibility (WCAG 2.4.1).
  *
- * ConnectionBanner will be added in Task 36.
  *
  * — Pixel (Senior Frontend Engineer)
  */
@@ -13,7 +12,6 @@
 import { type ReactNode } from 'react'
 import { Header } from './Header'
 import { Footer } from './Footer'
-import { ConnectionBanner } from '../system/ConnectionBanner'
 
 interface AppShellProps {
   children: ReactNode
@@ -29,7 +27,6 @@ export function AppShell({ children }: AppShellProps) {
       >
         Skip to main content
       </a>
-      <ConnectionBanner />
       <Header />
       <main
         id="main-content"
