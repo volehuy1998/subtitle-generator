@@ -754,11 +754,11 @@ class TestCriticalStateMiddleware:
         res = self.client.get("/progress/fake-task-id")
         assert res.status_code == 503
 
-    def test_blocks_events_when_critical(self):
-        """GET /events returns 503 during critical state."""
+    def test_allows_events_when_critical(self):
+        """GET /events passes through during critical state (SSE needed for recovery)."""
         state.set_critical(["Database connection lost"])
         res = self.client.get("/events/fake-task-id")
-        assert res.status_code == 503
+        assert res.status_code != 503
 
     def test_blocks_download_when_critical(self):
         """GET /download returns 503 during critical state."""
@@ -1304,3 +1304,271 @@ class TestThreadInjectionOnCritical:
 
         source = inspect.getsource(process_video)
         assert 'pop("_thread_id"' in source, "process_video must clean up _thread_id in finally"
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 6. Expanded health checks — FFmpeg, memory, output dir, Redis, model
+# ═══════════════════════════════════════════════════════════════════
+
+
+class TestCheckFFmpeg:
+    """Verify _check_ffmpeg detects missing FFmpeg binary."""
+
+    def test_ffmpeg_available(self):
+        """FFmpeg found on PATH → returns None (healthy)."""
+        from app.services.health_monitor import _check_ffmpeg
+
+        with patch("app.services.health_monitor.shutil.which", return_value="/usr/bin/ffmpeg"):
+            assert _check_ffmpeg() is None
+
+    def test_ffmpeg_missing(self):
+        """FFmpeg not on PATH → returns error reason."""
+        from app.services.health_monitor import _check_ffmpeg
+
+        with patch("app.services.health_monitor.shutil.which", return_value=None):
+            result = _check_ffmpeg()
+            assert result == "FFmpeg not available"
+
+
+class TestCheckMemory:
+    """Verify _check_memory detects low available memory."""
+
+    def test_memory_sufficient(self):
+        """Enough memory available → returns None (healthy)."""
+        from app.services.health_monitor import _check_memory
+
+        mock_mem = MagicMock()
+        mock_mem.available = 2 * 1024 * 1024 * 1024  # 2 GB
+        with patch("app.services.health_monitor.psutil.virtual_memory", return_value=mock_mem):
+            assert _check_memory() is None
+
+    def test_memory_critically_low(self):
+        """Less than 500 MB available → returns error reason."""
+        from app.services.health_monitor import _check_memory
+
+        mock_mem = MagicMock()
+        mock_mem.available = 200 * 1024 * 1024  # 200 MB
+        with patch("app.services.health_monitor.psutil.virtual_memory", return_value=mock_mem):
+            result = _check_memory()
+            assert result is not None
+            assert "Memory critically low" in result
+            assert "200 MB" in result
+
+    def test_memory_check_exception(self):
+        """psutil raises → returns error reason."""
+        from app.services.health_monitor import _check_memory
+
+        with patch("app.services.health_monitor.psutil.virtual_memory", side_effect=RuntimeError("no psutil")):
+            result = _check_memory()
+            assert result is not None
+            assert "Memory check failed" in result
+
+
+class TestCheckOutputDir:
+    """Verify _check_output_dir detects non-writable output directory."""
+
+    def test_output_dir_writable(self):
+        """Output dir is writable → returns None (healthy)."""
+        from app.services.health_monitor import _check_output_dir
+
+        with patch("app.services.health_monitor.os.access", return_value=True):
+            assert _check_output_dir() is None
+
+    def test_output_dir_not_writable(self):
+        """Output dir is not writable → returns error reason."""
+        from app.services.health_monitor import _check_output_dir
+
+        with patch("app.services.health_monitor.os.access", return_value=False):
+            result = _check_output_dir()
+            assert result == "Output directory not writable"
+
+    def test_output_dir_check_exception(self):
+        """os.access raises → returns error reason."""
+        from app.services.health_monitor import _check_output_dir
+
+        with patch("app.services.health_monitor.os.access", side_effect=OSError("permission denied")):
+            result = _check_output_dir()
+            assert result is not None
+            assert "Output dir check failed" in result
+
+
+class TestCheckRedis:
+    """Verify _check_redis detects unreachable Redis."""
+
+    def test_redis_not_configured(self):
+        """REDIS_URL is empty → skip check, returns None."""
+        from app.services.health_monitor import _check_redis
+
+        with patch("app.services.health_monitor.REDIS_URL", ""):
+            result = _run_async(_check_redis())
+            assert result is None
+
+    def test_redis_healthy(self):
+        """Redis responds to ping → returns None (healthy)."""
+        mock_client = AsyncMock()
+        mock_client.ping = AsyncMock(return_value=True)
+        mock_client.aclose = AsyncMock()
+
+        mock_aioredis = MagicMock()
+        mock_aioredis.from_url = MagicMock(return_value=mock_client)
+
+        with patch("app.services.health_monitor.REDIS_URL", "redis://localhost:6379"):
+            with patch.dict("sys.modules", {"redis.asyncio": mock_aioredis, "redis": MagicMock()}):
+                # Re-import to pick up patched module
+                import importlib
+
+                import app.services.health_monitor as hm
+
+                importlib.reload(hm)
+                try:
+                    result = _run_async(hm._check_redis())
+                    assert result is None
+                finally:
+                    importlib.reload(hm)
+
+    def test_redis_unreachable(self):
+        """Redis connection fails → returns error reason."""
+        from app.services.health_monitor import _check_redis
+
+        mock_aioredis = MagicMock()
+        mock_aioredis.from_url = MagicMock(side_effect=ConnectionError("Connection refused"))
+
+        with patch("app.services.health_monitor.REDIS_URL", "redis://localhost:6379"):
+            with patch.dict("sys.modules", {"redis": MagicMock(), "redis.asyncio": mock_aioredis}):
+                result = _run_async(_check_redis())
+                assert result is not None
+                assert "Redis unreachable" in result
+
+
+class TestCheckModel:
+    """Verify _check_model detects missing transcription models."""
+
+    def test_model_loaded(self):
+        """At least one model loaded → returns None (healthy)."""
+        from app.services.health_monitor import _check_model
+
+        old_models = dict(state.loaded_models)
+        old_preload = dict(state.model_preload)
+        try:
+            state.loaded_models[("base", "cpu")] = MagicMock()
+            state.model_preload["status"] = "ready"
+            assert _check_model() is None
+        finally:
+            state.loaded_models = old_models
+            state.model_preload = old_preload
+
+    def test_no_model_loaded(self):
+        """No models loaded and not loading → returns error reason."""
+        from app.services.health_monitor import _check_model
+
+        old_models = dict(state.loaded_models)
+        old_preload = dict(state.model_preload)
+        try:
+            state.loaded_models.clear()
+            state.model_preload["status"] = "idle"
+            result = _check_model()
+            assert result == "No transcription model available"
+        finally:
+            state.loaded_models = old_models
+            state.model_preload = old_preload
+
+    def test_model_currently_loading(self):
+        """Models loading (status='loading') → skip check, returns None."""
+        from app.services.health_monitor import _check_model
+
+        old_models = dict(state.loaded_models)
+        old_preload = dict(state.model_preload)
+        try:
+            state.loaded_models.clear()
+            state.model_preload["status"] = "loading"
+            assert _check_model() is None
+        finally:
+            state.loaded_models = old_models
+            state.model_preload = old_preload
+
+
+class TestCriticalStateMiddlewareResponse:
+    """Verify middleware serves HTML to browsers and JSON to API clients during critical state."""
+
+    def setup_method(self):
+        self.snapshot = _save_critical_state()
+        from fastapi.testclient import TestClient
+
+        from app.main import app
+
+        self.client = TestClient(app, base_url="https://testserver")
+
+    def teardown_method(self):
+        _restore_critical_state(self.snapshot)
+
+    def test_browser_gets_html_during_critical(self):
+        """Browser requesting / during critical state gets styled HTML 503."""
+        state.system_critical = True
+        state.system_critical_reasons = ["Database unreachable"]
+        try:
+            resp = self.client.get("/", headers={"Accept": "text/html"})
+            assert resp.status_code == 503
+            assert "text/html" in resp.headers.get("content-type", "")
+            assert "SubForge" in resp.text
+            assert "Database unreachable" in resp.text
+        finally:
+            state.system_critical = False
+            state.system_critical_reasons = []
+
+    def test_api_client_gets_json_during_critical(self):
+        """API client requesting /upload during critical state gets JSON 503."""
+        state.system_critical = True
+        state.system_critical_reasons = ["Disk space critically low"]
+        try:
+            resp = self.client.get("/upload", headers={"Accept": "application/json"})
+            assert resp.status_code == 503
+            data = resp.json()
+            assert data["critical"] is True
+        finally:
+            state.system_critical = False
+            state.system_critical_reasons = []
+
+    def test_assets_passthrough_during_critical(self):
+        """Static assets pass through during critical state."""
+        state.system_critical = True
+        state.system_critical_reasons = ["Test"]
+        try:
+            resp = self.client.get("/assets/index.js")
+            assert resp.status_code != 503
+        finally:
+            state.system_critical = False
+            state.system_critical_reasons = []
+
+    def test_health_passthrough_during_critical(self):
+        """GET /health passes through during critical state."""
+        state.system_critical = True
+        state.system_critical_reasons = ["Test"]
+        try:
+            resp = self.client.get("/health")
+            assert resp.status_code == 200
+        finally:
+            state.system_critical = False
+            state.system_critical_reasons = []
+
+    def test_system_info_passthrough_during_critical(self):
+        """GET /system-info passes through during critical state."""
+        state.system_critical = True
+        state.system_critical_reasons = ["Test"]
+        try:
+            resp = self.client.get("/system-info")
+            assert resp.status_code == 200
+        finally:
+            state.system_critical = False
+            state.system_critical_reasons = []
+
+    def test_multiple_reasons_in_html(self):
+        """Multiple critical reasons all appear in the HTML response."""
+        state.system_critical = True
+        state.system_critical_reasons = ["Database unreachable", "Disk full"]
+        try:
+            resp = self.client.get("/", headers={"Accept": "text/html"})
+            assert "Database unreachable" in resp.text
+            assert "Disk full" in resp.text
+        finally:
+            state.system_critical = False
+            state.system_critical_reasons = []
