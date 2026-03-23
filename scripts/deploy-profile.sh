@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# deploy-profile.sh — Branch-aware Docker profile deployment.
+# deploy-profile.sh — Branch-aware Docker deployment.
 #
-# Ensures each Docker profile builds from its designated branch:
-#   - cpu (production): always builds from 'main'
-#   - newui (staging):  builds from NEWUI_BRANCH (default: current branch)
+# Switches to the target branch, builds, and deploys.
+# No argument = production. "newui" = subdomain staging.
 #
 # Usage:
-#   ./scripts/deploy-profile.sh cpu              # build prod from main
-#   ./scripts/deploy-profile.sh cpu --tag        # build prod + create git tag
-#   ./scripts/deploy-profile.sh newui            # build newui from NEWUI_BRANCH
-#   ./scripts/deploy-profile.sh newui feat/foo   # build newui from feat/foo
+#   ./scripts/deploy-profile.sh              # deploy prod from PROD_BRANCH
+#   ./scripts/deploy-profile.sh --tag        # deploy prod + create git tag
+#   ./scripts/deploy-profile.sh newui        # deploy newui from NEWUI_BRANCH
+#   ./scripts/deploy-profile.sh newui feat/x # deploy newui from specific branch
 #
 # Environment:
-#   NEWUI_BRANCH  — branch for newui profile (overridden by CLI arg)
+#   PROD_BRANCH   — branch for production (default: main)
+#   NEWUI_BRANCH  — branch for newui (default: current branch)
 #
 # — Harbor (DevOps Engineer)
 
@@ -29,8 +29,49 @@ if [ -f .env ]; then
   set +a
 fi
 
-PROFILE="${1:?Usage: deploy-profile.sh <cpu|newui> [branch|--tag]}"
-SECOND_ARG="${2:-}"
+# ── Parse arguments ──────────────────────────────────────────────────────────
+
+PROFILE="cpu"
+TAG_FLAG=false
+TARGET_BRANCH=""
+
+case "${1:-}" in
+  newui)
+    PROFILE="newui"
+    if [ -n "${2:-}" ]; then
+      TARGET_BRANCH="$2"
+    elif [ -n "${NEWUI_BRANCH:-}" ]; then
+      TARGET_BRANCH="$NEWUI_BRANCH"
+    fi
+    ;;
+  --tag)
+    TAG_FLAG=true
+    ;;
+  "")
+    # No args = production deploy
+    ;;
+  *)
+    # First arg could be a branch name for prod, or unknown
+    if git rev-parse --verify "$1" &>/dev/null; then
+      TARGET_BRANCH="$1"
+      if [ "${2:-}" = "--tag" ]; then
+        TAG_FLAG=true
+      fi
+    else
+      echo "✗ Unknown argument: $1" >&2
+      echo "Usage: deploy-profile.sh [newui [branch]] [--tag]" >&2
+      exit 1
+    fi
+    ;;
+esac
+
+# Default target branch based on profile
+if [ -z "$TARGET_BRANCH" ]; then
+  case "$PROFILE" in
+    cpu)   TARGET_BRANCH="${PROD_BRANCH:-main}" ;;
+    newui) TARGET_BRANCH="$(git rev-parse --abbrev-ref HEAD)" ;;
+  esac
+fi
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -39,12 +80,11 @@ err()  { echo "✗ $*" >&2; exit 1; }
 
 current_branch() { git rev-parse --abbrev-ref HEAD; }
 
-# Save and restore working state safely
 save_state() {
   ORIG_BRANCH="$(current_branch)"
   if ! git diff --quiet || ! git diff --cached --quiet; then
     STASHED=true
-    git stash push -m "deploy-profile: auto-stash before $PROFILE deploy"
+    git stash push -m "deploy: auto-stash before deploy"
     log "Stashed uncommitted changes"
   else
     STASHED=false
@@ -62,36 +102,7 @@ restore_state() {
   fi
 }
 
-# Ensure restore happens on exit (success or failure)
 trap restore_state EXIT
-
-# ── Determine target branch ─────────────────────────────────────────────────
-
-case "$PROFILE" in
-  cpu)
-    TAG_FLAG=false
-    if [ "$SECOND_ARG" = "--tag" ]; then
-      TAG_FLAG=true
-    elif [ -n "$SECOND_ARG" ]; then
-      # Allow explicit branch override: deploy-profile.sh cpu <branch>
-      PROD_BRANCH_OVERRIDE="$SECOND_ARG"
-    fi
-    TARGET_BRANCH="${PROD_BRANCH_OVERRIDE:-${PROD_BRANCH:-main}}"
-    ;;
-  newui)
-    if [ -n "$SECOND_ARG" ] && [ "$SECOND_ARG" != "--tag" ]; then
-      TARGET_BRANCH="$SECOND_ARG"
-    elif [ -n "${NEWUI_BRANCH:-}" ]; then
-      TARGET_BRANCH="$NEWUI_BRANCH"
-    else
-      TARGET_BRANCH="$(current_branch)"
-    fi
-    TAG_FLAG=false
-    ;;
-  *)
-    err "Unknown profile: $PROFILE (expected 'cpu' or 'newui')"
-    ;;
-esac
 
 # ── Validate ─────────────────────────────────────────────────────────────────
 
@@ -112,7 +123,7 @@ if [ "$(current_branch)" != "$TARGET_BRANCH" ]; then
   log "Checked out: $TARGET_BRANCH"
 fi
 
-# ── Pull latest from remote (if tracking branch exists) ─────────────────────
+# ── Pull latest from remote ─────────────────────────────────────────────────
 
 if git rev-parse --verify "origin/$TARGET_BRANCH" &>/dev/null; then
   git pull --ff-only origin "$TARGET_BRANCH" --quiet 2>/dev/null && log "Pulled latest from origin/$TARGET_BRANCH" || log "No remote changes (or not fast-forwardable)"
@@ -126,7 +137,7 @@ sudo docker compose --profile "$PROFILE" up -d --build --force-recreate
 # ── Health check ─────────────────────────────────────────────────────────────
 
 case "$PROFILE" in
-  cpu)  PORT=8000 ;;
+  cpu)   PORT=8000 ;;
   newui) PORT=8001 ;;
 esac
 
