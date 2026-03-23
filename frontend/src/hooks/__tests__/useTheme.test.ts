@@ -92,10 +92,4 @@ describe('useTheme', () => {
     expect(result.current.theme).toBe('system')
   })
 
-  // ── state isolation ───────────────────────────────────────────────────────
-
-  it('each test starts clean (beforeEach verification)', () => {
-    expect(localStorage.getItem('theme')).toBeNull()
-    expect(document.documentElement.getAttribute('data-theme')).toBeNull()
-  })
 })

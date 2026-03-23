@@ -113,10 +113,4 @@ describe('preferencesStore', () => {
     expect(s.autoCopy).toBe(false)
   })
 
-  // ── state isolation ───────────────────────────────────────────────────────
-
-  it('each test starts with fresh defaults (beforeEach verification)', () => {
-    expect(store().defaultModel).toBe('base')
-    expect(store().autoCopy).toBe(false)
-  })
 })

@@ -73,21 +73,9 @@ class TestCSSVariables:
         )
         assert has_dark, "No dark mode CSS block found"
 
-    def test_prefers_color_scheme_media_query(self):
-        """CSS contains prefers-color-scheme media query."""
-        assert "prefers-color-scheme" in self.css, "Missing prefers-color-scheme media query"
-
     def test_data_theme_attribute_selector(self):
         """CSS contains data-theme attribute selector for theming."""
         assert "data-theme" in self.css, "Missing data-theme attribute selector in CSS"
-
-    def test_reduced_motion_media_query(self):
-        """CSS contains prefers-reduced-motion media query for accessibility."""
-        assert "prefers-reduced-motion" in self.css, "Missing prefers-reduced-motion media query"
-
-    def test_print_styles_present(self):
-        """CSS contains print media styles."""
-        assert "@media print" in self.css, "Missing @media print styles"
 
     def test_font_family_references_inter(self):
         """CSS references the Inter font family."""

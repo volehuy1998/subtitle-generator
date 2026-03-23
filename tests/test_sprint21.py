@@ -11,7 +11,6 @@ Tests cover:
 
 import asyncio
 
-import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -255,71 +254,11 @@ class TestSessionTimeline:
         assert isinstance(data["events"], list)
 
 
-# ── Frontend Tracker Tests ──
-
-
-@pytest.mark.skip(reason="Frontend migrated to React")
-class TestFrontendTracker:
-    """Test frontend JS tracker exists in HTML."""
-
-    def _html(self):
-        return client.get("/").text
-
-    def test_track_function_exists(self):
-        assert "function track(" in self._html()
-
-    def test_flush_function_exists(self):
-        assert "function _flushTrack" in self._html()
-
-    def test_batch_endpoint_called(self):
-        assert "/track/batch" in self._html()
-
-    def test_click_tracking(self):
-        """Should track button clicks via event delegation."""
-        assert "addEventListener('click'" in self._html()
-
-    def test_flow_tracking_upload(self):
-        assert "upload_start" in self._html()
-
-    def test_flow_tracking_done(self):
-        assert "transcription_done" in self._html()
-
-    def test_flow_tracking_download(self):
-        assert "download_click" in self._html()
-
-    def test_flow_tracking_embed(self):
-        assert "embed_start" in self._html()
-
-    def test_error_tracking(self):
-        """Should capture JS errors."""
-        html = self._html()
-        assert "js_error" in html
-        assert "promise_rejection" in html
-
-    def test_page_load_tracking(self):
-        assert "page_load" in self._html()
-
-    def test_panel_view_tracking(self):
-        html = self._html()
-        assert "editor_open" in html
-        assert "preview_open" in html
-        assert "embed_panel_toggle" in html
-
-    def test_beforeunload_flush(self):
-        """Should flush events on page unload."""
-        assert "beforeunload" in self._html()
-
-
 # ── Migration Tests ──
 
 
 class TestMigration003:
     """Test Alembic migration file."""
-
-    def test_migration_exists(self):
-        from pathlib import Path
-
-        assert Path("alembic/versions/003_ui_events.py").exists()
 
     def test_migration_has_upgrade(self):
         from pathlib import Path

@@ -97,11 +97,4 @@ describe('uiStore', () => {
     expect(store().dbOk).toBe(true)
   })
 
-  // ── state isolation ───────────────────────────────────────────────────────
-
-  it('each test starts with fresh defaults (beforeEach verification)', () => {
-    expect(store().appMode).toBe('transcribe')
-    expect(store().sseConnected).toBe(false)
-    expect(store().healthPanelOpen).toBe(false)
-  })
 })

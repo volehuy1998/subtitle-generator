@@ -25,19 +25,4 @@ describe('Badge', () => {
     expect(innerSpans.length).toBe(0)
   })
 
-  it.each(['default', 'success', 'warning', 'danger', 'info'] as const)(
-    'variant=%s renders without crashing',
-    (variant) => {
-      render(<Badge variant={variant}>Tag</Badge>)
-      expect(screen.getByText('Tag')).toBeInTheDocument()
-    },
-  )
-
-  it.each(['sm', 'md'] as const)(
-    'size=%s renders without crashing',
-    (size) => {
-      render(<Badge size={size}>Tag</Badge>)
-      expect(screen.getByText('Tag')).toBeInTheDocument()
-    },
-  )
 })

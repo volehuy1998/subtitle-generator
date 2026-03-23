@@ -154,11 +154,4 @@ describe('taskStore', () => {
     expect(s.embedDownloadUrl).toBeNull()
   })
 
-  // ── state isolation between tests ─────────────────────────────────────────
-
-  it('each test starts fresh (beforeEach reset verification)', () => {
-    // If reset() didn't run, taskId from the "setTaskId" test above would bleed in.
-    expect(store().taskId).toBeNull()
-    expect(store().liveSegments).toHaveLength(0)
-  })
 })

@@ -91,9 +91,4 @@ describe('toastStore', () => {
     expect(store().toasts).toHaveLength(1)
   })
 
-  // ── state isolation ───────────────────────────────────────────────────────
-
-  it('each test starts with empty toasts (beforeEach verification)', () => {
-    expect(store().toasts).toHaveLength(0)
-  })
 })

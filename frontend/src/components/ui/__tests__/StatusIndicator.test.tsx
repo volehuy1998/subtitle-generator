@@ -3,14 +3,6 @@ import { render, screen } from '@testing-library/react'
 import { StatusIndicator } from '../StatusIndicator'
 
 describe('StatusIndicator', () => {
-  it.each(['online', 'offline', 'warning', 'loading', 'idle'] as const)(
-    'status=%s renders without crashing',
-    (status) => {
-      const { container } = render(<StatusIndicator status={status} />)
-      expect(container.firstElementChild).toBeInTheDocument()
-    },
-  )
-
   it('label prop text visible', () => {
     render(<StatusIndicator status="online" label="Connected" />)
     expect(screen.getByText('Connected')).toBeInTheDocument()

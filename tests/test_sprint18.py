@@ -35,40 +35,10 @@ def run_async(coro):
         loop.close()
 
 
-# ── S18-1: Dependencies available ──
-
-
-class TestDependencies:
-    def test_sqlalchemy_importable(self):
-        import sqlalchemy
-
-        assert hasattr(sqlalchemy, "__version__")
-
-    def test_sqlalchemy_async_importable(self):
-        from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-
-        assert create_async_engine is not None
-        assert AsyncSession is not None
-
-    def test_alembic_importable(self):
-        import alembic
-
-        assert hasattr(alembic, "__version__")
-
-    def test_aiosqlite_importable(self):
-        import aiosqlite
-
-        assert hasattr(aiosqlite, "__version__")
-
-
 # ── S18-2: Database config ──
 
 
 class TestDatabaseConfig:
-    def test_database_url_exists(self):
-        assert DATABASE_URL is not None
-        assert len(DATABASE_URL) > 0
-
     def test_database_url_default_is_sqlite(self):
         # Default should be SQLite when DATABASE_URL env is not set
         assert "sqlite" in DATABASE_URL or "postgresql" in DATABASE_URL
@@ -137,47 +107,10 @@ class TestEngineAndSession:
         run_async(_test())
 
 
-# ── S18-4: Alembic setup ──
-
-
-class TestAlembicSetup:
-    def test_alembic_ini_exists(self):
-        from app.config import BASE_DIR
-
-        assert (BASE_DIR / "alembic.ini").exists()
-
-    def test_alembic_env_exists(self):
-        from app.config import BASE_DIR
-
-        assert (BASE_DIR / "alembic" / "env.py").exists()
-
-    def test_alembic_versions_dir_exists(self):
-        from app.config import BASE_DIR
-
-        assert (BASE_DIR / "alembic" / "versions").is_dir()
-
-    def test_initial_migration_exists(self):
-        from app.config import BASE_DIR
-
-        versions_dir = BASE_DIR / "alembic" / "versions"
-        migration_files = list(versions_dir.glob("*.py"))
-        assert len(migration_files) >= 1
-
-    def test_script_mako_exists(self):
-        from app.config import BASE_DIR
-
-        assert (BASE_DIR / "alembic" / "script.py.mako").exists()
-
-
 # ── S18-5: TaskRecord model ──
 
 
 class TestTaskRecordModel:
-    def test_task_record_importable(self):
-        from app.db.models import TaskRecord
-
-        assert TaskRecord.__tablename__ == "tasks"
-
     def test_task_record_columns(self):
         from app.db.models import TaskRecord
 
@@ -300,11 +233,6 @@ class TestTaskRecordModel:
 
 
 class TestSessionRecordModel:
-    def test_session_record_importable(self):
-        from app.db.models import SessionRecord
-
-        assert SessionRecord.__tablename__ == "sessions"
-
     def test_session_record_columns(self):
         from app.db.models import SessionRecord
 

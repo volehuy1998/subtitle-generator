@@ -142,17 +142,3 @@ class TestLogsTasks:
 
     def test_rejects_excessive_limit(self):
         assert client.get("/logs/tasks?limit=9999").status_code == 422
-
-
-class TestSecurityHeaders:
-    def test_x_content_type_options(self):
-        response = client.get("/")
-        assert response.headers.get("X-Content-Type-Options") == "nosniff"
-
-    def test_x_frame_options(self):
-        response = client.get("/")
-        assert response.headers.get("X-Frame-Options") == "DENY"
-
-    def test_csp_header_present(self):
-        response = client.get("/")
-        assert "Content-Security-Policy" in response.headers

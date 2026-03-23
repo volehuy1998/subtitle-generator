@@ -35,11 +35,6 @@ def run_async(coro):
 class TestJsonFormatter:
     """Test structured JSON log formatter."""
 
-    def test_formatter_exists(self):
-        from app.logging_setup import JsonFormatter
-
-        assert JsonFormatter is not None
-
     def test_json_output_is_valid(self):
         from app.logging_setup import JsonFormatter
 
@@ -146,11 +141,6 @@ class TestJsonFormatter:
 class TestLogSanitization:
     """Test that sensitive data is redacted in logs."""
 
-    def test_sanitize_function_exists(self):
-        from app.logging_setup import sanitize_log_message
-
-        assert callable(sanitize_log_message)
-
     def test_redacts_api_keys(self):
         from app.logging_setup import sanitize_log_message
 
@@ -179,11 +169,6 @@ class TestLogSanitization:
         msg = "Processing task abc-123, step 3 of 5"
         sanitized = sanitize_log_message(msg)
         assert sanitized == msg
-
-    def test_sanitizing_formatter_exists(self):
-        from app.logging_setup import SanitizingJsonFormatter
-
-        assert SanitizingJsonFormatter is not None
 
     def test_sanitizing_formatter_redacts(self):
         from app.logging_setup import SanitizingJsonFormatter
@@ -239,11 +224,6 @@ class TestCorrelationIds:
 class TestLogOutputConfig:
     """Test configurable log output targets."""
 
-    def test_log_output_env_var_exists(self):
-        from app.config import LOG_OUTPUT
-
-        assert LOG_OUTPUT in ("stdout", "file", "both", "json")
-
     def test_log_json_only_env_var(self):
         from app.config import LOG_JSON_ONLY
 
@@ -260,10 +240,6 @@ class TestLogOutputConfig:
 
 class TestLogExportEndpoint:
     """Test GET /admin/logs endpoint."""
-
-    def test_logs_endpoint_exists(self):
-        res = client.get("/admin/logs")
-        assert res.status_code in (200, 401, 403)
 
     def test_logs_returns_entries(self):
         res = client.get("/admin/logs")
@@ -321,11 +297,6 @@ class TestLogPushConfig:
 
         assert isinstance(LOG_SYSLOG_HOST, str)
 
-    def test_webhook_handler_exists(self):
-        from app.logging_setup import WebhookLogHandler
-
-        assert WebhookLogHandler is not None
-
     def test_webhook_handler_is_handler(self):
         from app.logging_setup import WebhookLogHandler
 
@@ -339,11 +310,6 @@ class TestLogPushConfig:
 class TestAccessLogFormat:
     """Test structured HTTP access logging."""
 
-    def test_request_log_middleware_exists(self):
-        from app.middleware.request_log import RequestLogMiddleware
-
-        assert RequestLogMiddleware is not None
-
     def test_health_request_logged_structured(self):
         """A request to a non-quiet path should appear in structured logs."""
         res = client.get("/system-info")
@@ -355,11 +321,6 @@ class TestAccessLogFormat:
 
 class TestSecurityEventLogging:
     """Test that security events are logged in structured format."""
-
-    def test_log_security_event_function_exists(self):
-        from app.logging_setup import log_security_event
-
-        assert callable(log_security_event)
 
     def test_security_event_logged(self):
         from app.logging_setup import log_security_event
@@ -378,11 +339,6 @@ class TestSecurityEventLogging:
 
 class TestTaskLifecycleLogging:
     """Test consistent task lifecycle events."""
-
-    def test_log_task_event_exists(self):
-        from app.logging_setup import log_task_event
-
-        assert callable(log_task_event)
 
     def test_log_task_event_with_context(self):
         from app.logging_setup import clear_task_context, log_task_event, set_task_context

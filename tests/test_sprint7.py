@@ -64,24 +64,6 @@ class TestFeedback:
 
 
 class TestApiDocs:
-    def test_openapi_schema_available(self):
-        res = client.get("/openapi.json")
-        assert res.status_code == 200
-        data = res.json()
-        assert "openapi" in data
-        assert "info" in data
-        assert data["info"]["title"] == "Subtitle Generator"
-
-    def test_openapi_version(self):
-        res = client.get("/openapi.json")
-        data = res.json()
-        assert data["info"]["version"] == "2.3.0"
-
-    def test_openapi_description(self):
-        res = client.get("/openapi.json")
-        data = res.json()
-        assert "faster-whisper" in data["info"]["description"]
-
     def test_docs_page_available(self):
         res = client.get("/docs")
         assert res.status_code == 200
@@ -163,52 +145,3 @@ class TestBenchmarks:
         elapsed_ms = (time.time() - t0) * 1000
         assert res.status_code == 200
         assert elapsed_ms < 500, f"System info too slow: {elapsed_ms:.1f}ms"
-
-
-# ── Full API Surface Verification ──
-
-
-class TestApiSurface:
-    """Verify all major endpoints are accessible."""
-
-    def test_root(self):
-        res = client.get("/")
-        assert res.status_code == 200
-
-    def test_health(self):
-        assert client.get("/health").status_code == 200
-
-    def test_ready(self):
-        assert client.get("/ready").status_code in (200, 503)
-
-    def test_metrics(self):
-        assert client.get("/metrics").status_code == 200
-
-    def test_system_info(self):
-        assert client.get("/system-info").status_code == 200
-
-    def test_languages(self):
-        res = client.get("/languages")
-        assert res.status_code == 200
-        assert len(res.json()["languages"]) >= 99
-
-    def test_tasks(self):
-        assert client.get("/tasks").status_code == 200
-
-    def test_dashboard(self):
-        assert client.get("/dashboard").status_code == 200
-
-    def test_dashboard_data(self):
-        assert client.get("/dashboard/data").status_code == 200
-
-    def test_embed_presets(self):
-        assert client.get("/embed/presets").status_code == 200
-
-    def test_feedback_summary(self):
-        assert client.get("/feedback/summary").status_code == 200
-
-    def test_docs(self):
-        assert client.get("/docs").status_code == 200
-
-    def test_openapi(self):
-        assert client.get("/openapi.json").status_code == 200

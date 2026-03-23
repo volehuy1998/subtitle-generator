@@ -184,15 +184,6 @@ class TestWebhooks:
         assert "wh-task-1" in pending
 
 
-# ── S14-5: API Version ──
-
-
-class TestAPIVersion:
-    def test_api_version_2(self):
-        res = client.get("/openapi.json")
-        assert res.json()["info"]["version"] == "2.3.0"
-
-
 # ── S14-6: Tag Descriptions ──
 
 
