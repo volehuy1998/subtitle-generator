@@ -28,7 +28,7 @@
     "react-dom": "^19.2.4",
     "react-dropzone": "^15.0.0",
     "tailwind-merge": "^3.5.0",
-    "tailwindcss": "^4.2.1",
+    "tailwindcss": "^4.2.2",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
@@ -46,10 +46,10 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
     "jsdom": "^29.0.0",
-    "msw": "^2.12.11",
+    "msw": "^2.12.14",
     "openapi-typescript": "^7.4.4",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.56.1",
+    "typescript-eslint": "^8.57.1",
     "vite": "^6.4.1",
     "vitest": "^4.1.0"
   }
