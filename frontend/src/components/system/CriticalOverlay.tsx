@@ -11,7 +11,7 @@ export default function CriticalOverlay() {
 
   if (health?.system_critical !== true) return null
 
-  const reasons = health.system_critical_reasons ?? []
+  const reasons: string[] = health.system_critical_reasons ?? []
 
   return (
     <div

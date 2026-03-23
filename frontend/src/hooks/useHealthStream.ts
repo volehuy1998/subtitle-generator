@@ -8,6 +8,7 @@ export function useHealthStream() {
   const setSystemHealth = useUIStore(s => s.setSystemHealth)
   const setModelPreloadStatus = useUIStore(s => s.setModelPreloadStatus)
   const setHealthMetrics = useUIStore(s => s.setHealthMetrics)
+  const setHealth = useUIStore(s => s.setHealth)
   const gracePeriodRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -28,6 +29,7 @@ export function useHealthStream() {
     es.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data)
+        setHealth(data)
         if (data.system_critical) {
           setSystemHealth('critical')
         } else if (data.disk_percent > 90 || data.cpu_percent > 95) {

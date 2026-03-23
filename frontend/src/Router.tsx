@@ -20,6 +20,7 @@ import { AboutPage } from './pages/AboutPage'
 import { SecurityPage } from './pages/SecurityPage'
 import { ContactPage } from './pages/ContactPage'
 import { SettingsPage } from './pages/SettingsPage'
+import CriticalOverlay from './components/system/CriticalOverlay'
 
 function PageContent({ page }: { page: string }) {
   switch (page) {
@@ -65,6 +66,7 @@ export function Router() {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--color-bg)' }}>
       <a href="#main-content" className="sr-only skip-nav">Skip to main content</a>
       <Header />
+      <CriticalOverlay />
       <main id="main-content" style={{ flex: 1 }}>
         <PageContent page={route.page} />
       </main>
