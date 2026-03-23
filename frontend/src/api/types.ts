@@ -103,6 +103,8 @@ export interface HealthStatus {
   gpu_vram_used?: number | null
   gpu_vram_free?: number | null
   model_preload?: ModelPreloadStatus
+  system_critical?: boolean
+  system_critical_reasons?: string[]
 }
 
 export interface ModelPreloadStatus {
