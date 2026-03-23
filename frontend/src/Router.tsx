@@ -1,7 +1,7 @@
 /**
  * Router — SPA router with shared layout (Header + Footer on every page).
  *
- * All pages are wrapped in a consistent layout: skip-link, ConnectionBanner,
+ * All pages are wrapped in a consistent layout: skip-link,
  * Header, main content, Footer. Individual pages no longer render their own
  * Header/Footer — the Router provides them.
  *
@@ -14,7 +14,6 @@ import { useUIStore } from './store/uiStore'
 import { matchRoute } from './navigation'
 import { Header } from './components/layout/Header'
 import { Footer } from './components/layout/Footer'
-import { ConnectionBanner } from './components/system/ConnectionBanner'
 import { App as MainApp } from './pages/App'
 import { StatusPage } from './pages/StatusPage'
 import { AboutPage } from './pages/AboutPage'
@@ -65,7 +64,6 @@ export function Router() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--color-bg)' }}>
       <a href="#main-content" className="sr-only skip-nav">Skip to main content</a>
-      <ConnectionBanner />
       <Header />
       <main id="main-content" style={{ flex: 1 }}>
         <PageContent page={route.page} />
