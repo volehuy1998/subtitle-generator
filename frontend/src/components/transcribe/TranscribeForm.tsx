@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useDropzone } from 'react-dropzone'
+import { useDropzone, ErrorCode } from 'react-dropzone'
+import type { FileRejection } from 'react-dropzone'
 import { api } from '@/api/client'
 import { useUIStore } from '@/store/uiStore'
 import { usePreferencesStore } from '@/store/preferencesStore'
+import { useToastStore } from '@/store/toastStore'
 import type { SystemInfo, TranslationPair, ModelPreloadStatus } from '@/api/types'
 
 export interface UploadOptions {
@@ -51,6 +53,7 @@ function Skeleton({ className }: { className?: string }) {
 export function TranscribeForm({ onUpload }: Props) {
   const { dbOk } = useUIStore()
   const prefs = usePreferencesStore()
+  const addToast = useToastStore((s) => s.addToast)
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null)
   const [languages, setLanguages] = useState<Record<string, string>>({})
   const [translationTargets, setTranslationTargets] = useState<TranslationPair[]>([])
@@ -62,23 +65,30 @@ export function TranscribeForm({ onUpload }: Props) {
   const [format, setFormat] = useState<string>(prefs.defaultFormat)
   const [translateTo, setTranslateTo] = useState<string>('')
   const [preload, setPreload] = useState<ModelPreloadStatus | null>(null)
+  const [initError, setInitError] = useState<string | null>(null)
   const preloadPoll = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  useEffect(() => {
+  const loadSystemInfo = useCallback(() => {
+    setLoading(true)
+    setInitError(null)
     Promise.all([api.systemInfo(), api.languages(), api.translationLanguages()])
       .then(([info, langs, transLangs]) => {
         setSystemInfo(info)
         setLanguages(langs.languages)
         setTranslationTargets(transLangs.pairs)
         setDevice(info.cuda_available ? 'cuda' : 'cpu')
-        // Initialize preload state from system info
         if (info.model_preload) {
           setPreload(info.model_preload)
         }
       })
-      .catch(() => {})
+      .catch(() => {
+        setInitError('Could not load system information. Check your connection and try again.')
+      })
       .finally(() => setLoading(false))
   }, [])
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch on mount
+  useEffect(() => { loadSystemInfo() }, [loadSystemInfo])
 
   // Poll model preload status while loading
   useEffect(() => {
@@ -121,11 +131,25 @@ export function TranscribeForm({ onUpload }: Props) {
     onUpload(file, { device, model, language, format, translateTo, modelLoaded: isModelLoaded, firstReadyModel: firstReady })
   }, [onUpload, device, model, language, format, translateTo, preload, modelPreloadState])
 
+  const onDropRejected = useCallback((rejections: FileRejection[]) => {
+    const rejection = rejections[0]
+    if (!rejection) return
+    const errorCode = rejection.errors[0]?.code
+    if (errorCode === ErrorCode.FileTooLarge) {
+      addToast('error', 'File is too large. Maximum size is 2 GB.')
+    } else if (errorCode === ErrorCode.FileInvalidType) {
+      addToast('error', 'Unsupported file format. Accepted: MP4, MKV, MOV, AVI, WEBM, MP3, WAV, FLAC, AAC, OGG, M4A.')
+    } else {
+      addToast('error', rejection.errors[0]?.message ?? 'File rejected.')
+    }
+  }, [addToast])
+
   const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
     onDrop,
+    onDropRejected,
     accept: { 'video/*': [], 'audio/*': [] },
     multiple: false,
-    maxSize: 500 * 1024 * 1024,
+    maxSize: 2 * 1024 * 1024 * 1024,
   })
 
   const chipBase = 'px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer select-none'
@@ -147,6 +171,37 @@ export function TranscribeForm({ onUpload }: Props) {
           Uploads are disabled until the database connection is restored.
           No new transcription tasks can be started.
         </p>
+      </div>
+    )
+  }
+
+  if (initError && !loading) {
+    return (
+      <div
+        className="flex flex-col items-center justify-center gap-3 rounded-xl p-10 text-center"
+        role="alert"
+        style={{ background: 'var(--color-warning-light, #FEF3C7)', border: '1px solid var(--color-warning-border, #FCD34D)' }}
+      >
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <circle cx="16" cy="16" r="14" stroke="var(--color-warning, #D97706)" strokeWidth="2" fill="none" />
+          <path d="M16 9v8M16 21v2" stroke="var(--color-warning, #D97706)" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+        <p className="text-sm font-semibold" style={{ color: 'var(--color-warning, #D97706)' }}>
+          {initError}
+        </p>
+        <button
+          type="button"
+          onClick={loadSystemInfo}
+          className="px-4 py-2 rounded-lg text-sm font-semibold"
+          style={{
+            background: 'var(--color-warning, #D97706)',
+            color: 'white',
+            border: 'none',
+            cursor: 'pointer',
+          }}
+        >
+          Retry
+        </button>
       </div>
     )
   }
@@ -565,7 +620,7 @@ export function TranscribeForm({ onUpload }: Props) {
             className="text-xs"
             style={{ color: 'var(--color-text-3)' }}
           >
-            MP4 · MKV · MOV · AVI · MP3 · WAV · M4A · up to 500 MB
+            MP4 · MKV · MOV · AVI · MP3 · WAV · M4A · up to 2 GB
           </span>
           <span
             className="text-xs mt-1"

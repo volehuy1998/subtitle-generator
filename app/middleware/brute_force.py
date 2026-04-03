@@ -74,6 +74,8 @@ class BruteForceMiddleware(BaseHTTPMiddleware):
         if is_ip_blocked(client_ip):
             return JSONResponse(
                 status_code=429,
-                content={"detail": "Too many failed attempts. Try again later."},
+                content={
+                    "detail": f"Too many failed attempts. Your IP is temporarily blocked for {BLOCK_SEC // 60} minutes."
+                },
             )
         return await call_next(request)

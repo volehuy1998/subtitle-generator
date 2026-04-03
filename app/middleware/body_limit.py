@@ -12,6 +12,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from app.config import MAX_FILE_SIZE
+from app.utils.formatting import format_bytes
 
 logger = logging.getLogger("subtitle-generator")
 
@@ -42,7 +43,9 @@ class BodyLimitMiddleware(BaseHTTPMiddleware):
                 logger.warning(f"BODY_LIMIT Rejected {request.method} {path}: {length} bytes > {limit} limit")
                 return JSONResponse(
                     status_code=413,
-                    content={"detail": f"Request body too large ({length} bytes). Maximum: {limit} bytes."},
+                    content={
+                        "detail": f"File too large ({format_bytes(length)}). Maximum allowed: {format_bytes(limit)}."
+                    },
                 )
 
         return await call_next(request)
