@@ -59,9 +59,7 @@ services:
   # Serves on 127.0.0.1:8000 behind nginx reverse proxy (TLS terminated by nginx)
 
   subtitle-generator:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/volehuy1998/subtitle-generator:${IMAGE_TAG:-latest}
     ports:
       - "127.0.0.1:8000:8000"
     volumes:
@@ -97,9 +95,7 @@ services:
   # Serves on 127.0.0.1:8001 behind nginx reverse proxy
 
   subtitle-generator-newui:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/volehuy1998/subtitle-generator:${IMAGE_TAG:-latest}
     ports:
       - "127.0.0.1:8001:8000"
     volumes:
@@ -134,9 +130,7 @@ services:
   # Serves on 127.0.0.1:8002 behind nginx reverse proxy
 
   subtitle-generator-beta:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/volehuy1998/subtitle-generator:${IMAGE_TAG:-latest}
     ports:
       - "127.0.0.1:8002:8000"
     volumes:
@@ -216,9 +210,7 @@ services:
   # Scale API: docker compose --profile distributed up -d --scale subtitle-api=3
 
   subtitle-api:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/volehuy1998/subtitle-generator:${IMAGE_TAG:-latest}
     ports:
       - "8000"
     volumes:
@@ -251,9 +243,7 @@ services:
 
   # CPU worker node (one per server without GPU)
   subtitle-worker-cpu:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/volehuy1998/subtitle-generator:${IMAGE_TAG:-latest}
     volumes:
       - ./uploads:/app/uploads
       - ./outputs:/app/outputs

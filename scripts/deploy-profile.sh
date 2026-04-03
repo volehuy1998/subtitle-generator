@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# deploy-profile.sh — Branch-aware Docker deployment.
+# deploy-profile.sh — Registry-based Docker deployment.
 #
-# Switches to the target branch, builds, and deploys.
+# Pulls the latest image from ghcr.io and deploys.
 # No argument = production. "newui" = subdomain staging.
 #
 # Usage:
@@ -143,8 +143,10 @@ fi
 
 # ── Build and deploy ─────────────────────────────────────────────────────────
 
-log "Building Docker profile: $PROFILE"
-sudo docker compose --profile "$PROFILE" up -d --build --force-recreate
+log "Pulling latest image..."
+sudo docker compose --profile "$PROFILE" pull
+log "Deploying Docker profile: $PROFILE"
+sudo docker compose --profile "$PROFILE" up -d --force-recreate
 
 # ── Health check ─────────────────────────────────────────────────────────────
 
