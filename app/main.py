@@ -54,6 +54,17 @@ async def lifespan(app: FastAPI):
     # Apply tuning to config
     _apply_tuning(caps["tuning"])
 
+    # Initialize dedicated thread pool for pipeline tasks
+    from concurrent.futures import ThreadPoolExecutor
+
+    from app.config import MAX_CONCURRENT_TASKS
+
+    state.pipeline_executor = ThreadPoolExecutor(
+        max_workers=MAX_CONCURRENT_TASKS,
+        thread_name_prefix="pipeline",
+    )
+    logger.info(f"STARTUP Pipeline executor initialized with {MAX_CONCURRENT_TASKS} worker(s)")
+
     # Load task history from DB (with JSON file fallback)
     from app.db.task_backend_db import DatabaseTaskBackend
     from app.services.task_backend import get_task_backend
@@ -169,6 +180,11 @@ async def lifespan(app: FastAPI):
                     task["status"] = "error"
                     task["message"] = "Server restarting. Please retry your transcription."
                     logger.info(f"SHUTDOWN [{tid[:8]}] Marked active task as error")
+
+    # Shut down pipeline executor
+    if state.pipeline_executor is not None:
+        state.pipeline_executor.shutdown(wait=False)
+        logger.info("SHUTDOWN Pipeline executor shut down")
 
     logger.info("SHUTDOWN Saving task history and analytics...")
 

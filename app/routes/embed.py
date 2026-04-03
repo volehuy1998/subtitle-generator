@@ -237,7 +237,9 @@ async def quick_embed(
 
     video_path = UPLOAD_DIR / preserved
     if not video_path.exists():
-        raise HTTPException(404, "Preserved video file not found (may have been cleaned up)")
+        raise HTTPException(
+            404, "The original video has been cleaned up. Please re-upload the video to embed subtitles."
+        )
 
     # Security check
     if not str(video_path.resolve()).startswith(str(UPLOAD_DIR.resolve())):

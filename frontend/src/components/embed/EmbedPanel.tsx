@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { api } from '@/api/client'
+import { useToastStore } from '@/store/toastStore'
 import type { TranslationPair } from '@/api/types'
 
 interface Props {
@@ -18,11 +19,15 @@ export function EmbedPanel({ taskId, alreadyTranslated }: Props) {
   const [translationTargets, setTranslationTargets] = useState<TranslationPair[]>([])
   const esRef = useRef<EventSource | null>(null)
 
+  const addToast = useToastStore((s) => s.addToast)
+
   useEffect(() => {
     api.translationLanguages()
       .then((res) => setTranslationTargets(res.pairs))
-      .catch(() => {})
-  }, [])
+      .catch(() => {
+        addToast('warning', 'Could not load translation languages.')
+      })
+  }, [addToast])
 
   // Clean up SSE on unmount
   useEffect(() => {
@@ -97,6 +102,24 @@ export function EmbedPanel({ taskId, alreadyTranslated }: Props) {
     }
   }
 
+  const handleDownload = useCallback(async (url: string) => {
+    try {
+      const resp = await fetch(url)
+      if (resp.ok) {
+        window.location.href = url
+        return
+      }
+      if (resp.status === 404) {
+        addToast('error', 'This file has expired. Please re-process your file.')
+      } else {
+        const body = await resp.json().catch(() => null)
+        addToast('error', body?.detail ?? `Download failed (${resp.status})`)
+      }
+    } catch {
+      addToast('error', 'Network error — could not reach the server.')
+    }
+  }, [addToast])
+
   if (embedState === 'done' && downloadUrl) {
     return (
       <div className="flex flex-col gap-3">
@@ -110,18 +133,18 @@ export function EmbedPanel({ taskId, alreadyTranslated }: Props) {
           </svg>
           Subtitles embedded — ready to download
         </div>
-        <a
-          href={downloadUrl}
-          download
+        <button
+          type="button"
+          onClick={() => handleDownload(downloadUrl)}
           className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg text-sm font-semibold"
-          style={{ background: 'var(--color-primary)', color: 'white', textDecoration: 'none' }}
+          style={{ background: 'var(--color-primary)', color: 'white', border: 'none', cursor: 'pointer' }}
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
             <path d="M7 2v7M3.5 6.5l3.5 3.5 3.5-3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             <path d="M2 11h10" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
           Download Video with Subtitles
-        </a>
+        </button>
       </div>
     )
   }
