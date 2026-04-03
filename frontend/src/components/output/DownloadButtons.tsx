@@ -5,9 +5,10 @@
  * — Pixel (Sr. Frontend), Sprint L46
  */
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { api } from '@/api/client'
 import { usePreferencesStore } from '@/store/preferencesStore'
+import { useToastStore } from '@/store/toastStore'
 
 interface Props {
   taskId: string
@@ -61,16 +62,57 @@ function getDownloadUrl(taskId: string, fmt: ExportFormat): string {
   return api.downloadUrl(taskId, fmt)
 }
 
+/** Fetch-based download button — shows toast on 404 or error instead of navigating to raw JSON. */
+function SafeDownloadButton({
+  url,
+  className,
+  children,
+}: {
+  url: string
+  className?: string
+  children: React.ReactNode
+}) {
+  const addToast = useToastStore((s) => s.addToast)
+
+  const handleClick = useCallback(async () => {
+    try {
+      const resp = await fetch(url)
+      if (resp.ok) {
+        window.location.href = url
+        return
+      }
+      if (resp.status === 404) {
+        addToast('error', 'This file has expired. Please re-process your file.')
+      } else {
+        const body = await resp.json().catch(() => null)
+        const detail = body?.detail ?? `Download failed (${resp.status})`
+        addToast('error', detail)
+      }
+    } catch {
+      addToast('error', 'Network error — could not reach the server.')
+    }
+  }, [url, addToast])
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className={className}
+      style={{ textDecoration: 'none', cursor: 'pointer', border: 'none' }}
+    >
+      {children}
+    </button>
+  )
+}
+
 export function DownloadButtons({ taskId, format, segments = 0 }: Props) {
   // If a specific format was requested (legacy prop), render a single button
   if (format === 'srt' || format === 'vtt') {
     const meta = FORMAT_META[format]
     return (
-      <a
-        href={api.downloadUrl(taskId, format)}
-        download
+      <SafeDownloadButton
+        url={api.downloadUrl(taskId, format)}
         className="btn-download btn-interactive flex items-center gap-3 w-full px-4 py-2.5 rounded-lg border text-sm font-medium group"
-        style={{ textDecoration: 'none' }}
       >
         <DownloadIcon />
         <div className="flex-1 flex flex-col">
@@ -85,7 +127,7 @@ export function DownloadButtons({ taskId, format, segments = 0 }: Props) {
         >
           .{meta.ext}
         </span>
-      </a>
+      </SafeDownloadButton>
     )
   }
 
@@ -157,11 +199,9 @@ function FormatSelector({ taskId, segments }: { taskId: string; segments: number
       </div>
 
       {/* Download button for selected format */}
-      <a
-        href={getDownloadUrl(taskId, selected)}
-        download
+      <SafeDownloadButton
+        url={getDownloadUrl(taskId, selected)}
         className="btn-download btn-interactive flex items-center gap-3 w-full px-4 py-2.5 rounded-lg border text-sm font-medium group"
-        style={{ textDecoration: 'none' }}
       >
         <DownloadIcon />
         <div className="flex-1 flex flex-col">
@@ -188,7 +228,7 @@ function FormatSelector({ taskId, segments }: { taskId: string; segments: number
             </span>
           )}
         </div>
-      </a>
+      </SafeDownloadButton>
 
       {/* Preview link */}
       <button

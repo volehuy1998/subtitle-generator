@@ -14,6 +14,7 @@ import { KeyboardShortcutsDialog } from '@/components/shortcuts/KeyboardShortcut
 import { useTaskStore } from '@/store/taskStore'
 import { useUIStore } from '@/store/uiStore'
 import { useSystemStore } from '@/store/systemStore'
+import { useToastStore } from '@/store/toastStore'
 import { api } from '@/api/client'
 
 type AppTab = 'transcribe' | 'embed'
@@ -22,6 +23,7 @@ export function App() {
   const { healthPanelOpen, setHealthPanelOpen, appMode, setAppMode, health } = useUIStore()
   const store = useTaskStore()
   const prefetch = useSystemStore((s) => s.prefetch)
+  const addToast = useToastStore((s) => s.addToast)
 
   // Phase Lumen: keyboard shortcuts dialog — Pixel (Sr. Frontend), Sprint L48
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
@@ -95,6 +97,7 @@ export function App() {
       })
       .catch(() => {
         localStorage.removeItem('sg_currentTaskId')
+        addToast('info', 'Your previous session has expired.')
       })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
