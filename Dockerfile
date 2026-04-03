@@ -1,56 +1,51 @@
-# Multi-stage build for subtitle generator
-# Stage 1: Node — build React frontend
-FROM node:20-slim AS frontend-build
+# SubForge — multi-stage Docker build
+# Stage 1: Build frontend + install Python deps
+FROM python:3.12-slim AS builder
 
-WORKDIR /frontend
-COPY frontend/package*.json ./
-RUN npm install
-COPY frontend/ ./
-RUN npm run build
-
-# Stage 2: Base with system dependencies
-FROM python:3.12-slim AS base
-
-# Install ffmpeg and system deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ffmpeg \
-    libsndfile1 \
+    curl && rm -rf /var/lib/apt/lists/*
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
-
-# Stage 3: Python dependencies
-FROM base AS deps
+WORKDIR /build
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
-# Security: scan dependencies for known vulnerabilities
-RUN pip install pip-audit && pip-audit --ignore-vuln PYSEC-2022-42969 || true
+COPY frontend/package*.json frontend/
+RUN cd frontend && npm ci --ignore-scripts
+COPY frontend/ frontend/
+RUN cd frontend && npm run build
 
-# Stage 4: Production image
-FROM deps AS production
+# Stage 2: Minimal runtime image
+FROM python:3.12-slim AS runtime
 
-# Create non-root user for security
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg libsndfile1 curl \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser
+WORKDIR /app
 
-# Copy application code
-COPY . .
+COPY --from=builder /install /usr/local
+COPY app/ app/
+COPY main.py profiler.py entrypoint.sh alembic.ini ./
+COPY alembic/ alembic/
+COPY templates/ templates/
+COPY --from=builder /build/frontend/dist frontend/dist/
 
-# Copy React build from frontend stage
-COPY --from=frontend-build /frontend/dist ./frontend/dist
-
-# Create required directories
 RUN mkdir -p uploads outputs logs \
+    && chmod +x entrypoint.sh \
     && chown -R appuser:appuser /app
 
 USER appuser
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD python -c "import urllib.request,ssl; urllib.request.urlopen('https://localhost:8000/health',context=ssl._create_unverified_context())" || python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
-
 EXPOSE 8000
 
-# Entrypoint handles bind-mount permissions and starts uvicorn
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8000/health/live || exit 1
+
 ENTRYPOINT ["./entrypoint.sh"]

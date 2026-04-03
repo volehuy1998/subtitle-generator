@@ -1,0 +1,65 @@
+# beta.openlabs.club — public beta environment
+# Proxy to Docker beta profile on port 8002
+#
+# Install:
+#   sudo cp nginx/beta.openlabs.club /etc/nginx/sites-available/beta.openlabs.club
+#   sudo ln -s /etc/nginx/sites-available/beta.openlabs.club /etc/nginx/sites-enabled/
+#   sudo certbot --nginx -d beta.openlabs.club
+#   sudo nginx -t && sudo systemctl reload nginx
+#
+# — Harbor (DevOps Engineer)
+
+# HTTP → HTTPS redirect
+server {
+    listen 80;
+    server_name beta.openlabs.club;
+    location /.well-known/acme-challenge/ { root /var/www/certbot; }
+    location / { return 301 https://$host$request_uri; }
+}
+
+# beta.openlabs.club — public beta
+server {
+    listen 443 ssl;
+    server_name beta.openlabs.club;
+
+    ssl_certificate     /etc/letsencrypt/live/beta.openlabs.club/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/beta.openlabs.club/privkey.pem;
+
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Frame-Options DENY always;
+    add_header X-Content-Type-Options nosniff always;
+
+    client_max_body_size 20G;
+
+    error_page 413 /error-pages/413.html;
+    error_page 502 /error-pages/502.html;
+    error_page 503 /error-pages/503.html;
+    error_page 504 /error-pages/504.html;
+    location /error-pages/ {
+        root /app/nginx;
+        internal;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:8002;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # SSE support
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 86400s;
+        proxy_send_timeout 3600s;
+
+        # WebSocket support
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}

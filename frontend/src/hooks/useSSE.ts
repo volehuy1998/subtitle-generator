@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback } from 'react'
 import { useTaskStore } from '@/store/taskStore'
 import { api } from '@/api/client'
 
-const MIN_RETRY = 1000
+const MIN_RETRY = 200
 const MAX_RETRY = 30000
 
 export function useSSE(taskId: string | null) {

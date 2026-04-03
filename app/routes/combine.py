@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import re
 import uuid
 from pathlib import Path
 from typing import Literal, Optional
@@ -32,6 +33,14 @@ logger = logging.getLogger("subtitle-generator")
 router = APIRouter(tags=["Combine"])
 
 VIDEO_EXTENSIONS = {".mp4", ".mkv", ".avi", ".webm", ".mov"}
+
+# Strip internal file paths from error messages before they reach users — Bolt (Backend)
+_PATH_RE = re.compile(r"(/[a-zA-Z0-9_./-]+)+")
+
+
+def _sanitize_combine_error(exc: Exception) -> str:
+    """Remove internal paths from combine error messages."""
+    return _PATH_RE.sub("<path>", str(exc))[:200]
 
 
 def _validate_subtitle_file(path: Path) -> bool:
@@ -263,10 +272,11 @@ async def combine_video_subtitle(
             )
         except Exception as e:
             logger.error(f"COMBINE [{task_id[:8]}] Failed: {e}")
+            sanitized = _sanitize_combine_error(e)
             state.tasks[task_id]["status"] = "error"
-            state.tasks[task_id]["message"] = str(e)
+            state.tasks[task_id]["message"] = sanitized
             log_task_event(task_id, "combine_error", error=str(e))
-            emit_event(task_id, "combine_error", {"message": f"Combine failed: {e}"})
+            emit_event(task_id, "combine_error", {"message": f"Combine failed: {sanitized}"})
         finally:
             video_path.unlink(missing_ok=True)
             sub_path.unlink(missing_ok=True)

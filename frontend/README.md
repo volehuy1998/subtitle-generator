@@ -1,73 +1,61 @@
-# React + TypeScript + Vite
+# SubForge Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React SPA for the SubForge subtitle generator.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| Layer            | Technology                          |
+|------------------|-------------------------------------|
+| Framework        | React 19 (StrictMode)               |
+| Language         | TypeScript (strict)                 |
+| Build            | Vite 6                              |
+| State            | Zustand (taskStore, uiStore)        |
+| Styling          | Tailwind CSS v4 + CSS custom properties |
+| Real-time        | SSE (EventSource) + WebSocket       |
+| Testing          | Vitest + Testing Library + MSW      |
+| E2E              | Playwright (129 tests)              |
 
-## React Compiler
+## Setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev       # Dev server at http://localhost:5173 (proxies API to :8000)
+npm run build     # Production build
+npm run test      # Run all tests
+npm run coverage  # Coverage report
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Architecture
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
 ```
+src/
+  pages/          App, StatusPage, AboutPage, ContactPage, SecurityPage
+  components/     Organized by feature (transcribe/, embed/, progress/, output/, system/, layout/)
+  hooks/          useSSE, useHealthStream, useTaskQueue
+  store/          taskStore.ts (task state), uiStore.ts (UI chrome)
+  api/            client.ts (typed HTTP client), types.ts (API types)
+```
+
+### State Management
+
+- **taskStore**: Active task state (progress, segments, timings, download URLs). Single-task model.
+- **uiStore**: UI state (active tab, health panel, SSE connection status, theme).
+
+### Real-Time
+
+Two independent SSE connections:
+1. **Health stream** (`/health/stream`) -- mounted once at app root, feeds system status
+2. **Task stream** (`/events/{taskId}`) -- per-task, handles 13 event types with exponential backoff
+
+### Routing
+
+Custom SPA router using `history.pushState` + custom `spa-navigate` events.
+
+## Testing
+
+372 unit/integration tests + 129 Playwright E2E tests covering:
+- Store logic, hooks, API client
+- Component rendering and interaction
+- Responsive layouts, cross-browser behavior
+- WCAG 2.1 AA accessibility
+- Upload flow, embed flow, SPA navigation
