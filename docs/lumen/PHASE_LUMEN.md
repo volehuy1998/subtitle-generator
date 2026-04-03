@@ -301,7 +301,7 @@ Phase Lumen sprints are numbered `L1`, `L2`, `L3`, etc. (separate from the exist
 
 1. Specific functionality on `lumen.openlabs.club`
 2. Tests proving it works
-3. PR with engineer reviews
+3. PR with code review
 4. Investor can preview at any time
 
 ### Quality Gate (Before Promotion to Production)
@@ -342,7 +342,7 @@ docs/
     ├── PHASE_LUMEN.md          # This document
     ├── DESIGN_SYSTEM.md        # Color, typography, spacing tokens
     ├── COMPONENT_LIBRARY.md    # Component specs and usage
-    └── SPRINT_LOG.md           # Sprint-by-sprint progress log
+    # SPRINT_LOG.md merged into docs/ROADMAP.md (Phase Lumen Sprint History section)
 
 tests/
 └── test_lumen/

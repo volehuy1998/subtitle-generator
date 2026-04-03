@@ -6,6 +6,7 @@ import logging
 import queue
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 from app.config import MAX_TASK_HISTORY, TASK_HISTORY_FILE
 
@@ -41,6 +42,9 @@ model_preload: dict = {
 
 # Session preferences: session_id -> {default_model, default_format, default_language, auto_copy}
 session_preferences: dict[str, dict] = {}
+
+# Dedicated thread pool for pipeline tasks (initialized at startup)
+pipeline_executor: ThreadPoolExecutor | None = None
 
 # Shutdown flag - when True, no new tasks accepted
 shutting_down: bool = False
