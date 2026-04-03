@@ -22,3 +22,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "Docs-only change -- test skipped"
+
+  Frontend-Tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Docs-only change -- frontend tests skipped"
+
+  Build-Docker:
+    name: Build Docker
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Docs-only change -- docker build skipped"

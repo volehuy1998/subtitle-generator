@@ -7,7 +7,6 @@
 1. **Distributed deployment** -- 5-server architecture (API nodes, worker nodes, data tier)
 2. **API key hash migration** -- HMAC-SHA256 migration for existing SHA-256 records (production blocker)
 3. **Static analysis** -- mypy/pyright integration in CI
-4. **Review gate fix** -- Resolve pagination bug in `review-gate.yml`
 
 ## Completed Milestones
 
