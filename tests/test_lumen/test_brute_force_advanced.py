@@ -122,7 +122,7 @@ class TestBruteForceMiddlewareResponse:
             resp = client.get("/health")
 
         assert resp.status_code == 429
-        assert resp.json()["detail"] == "Too many failed attempts. Try again later."
+        assert resp.json()["detail"] == "Too many failed attempts. Your IP is temporarily blocked for 10 minutes."
 
     def test_non_blocked_ip_passes(self):
         """Non-blocked IP passes through (200)."""

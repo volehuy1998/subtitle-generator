@@ -295,7 +295,9 @@ async def upload(
                 raise HTTPException(
                     413,
                     detail=api_error(
-                        FILE_TOO_LARGE, "File too large. Maximum size is 2 GB.", request_id=get_request_id()
+                        FILE_TOO_LARGE,
+                        f"File too large ({format_bytes(size)}). Maximum size is {format_bytes(MAX_FILE_SIZE)}.",
+                        request_id=get_request_id(),
                     ),
                 )
             f.write(chunk)

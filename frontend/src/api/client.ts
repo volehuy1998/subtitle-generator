@@ -88,7 +88,19 @@ export const api = {
         }
       }
 
-      xhr.onerror = () => reject(new Error('Network error'))
+      xhr.onerror = () => {
+        if (xhr.status === 413) {
+          reject(new Error('File too large. The server limit is 2 GB.'))
+        } else if (xhr.status === 0) {
+          reject(new Error(navigator.onLine
+            ? 'Connection lost during upload. Please try again.'
+            : 'You appear to be offline. Check your network connection.'))
+        } else if (xhr.status >= 500) {
+          reject(new Error('Server is temporarily unavailable. Please try again in a moment.'))
+        } else {
+          reject(new Error(`Upload failed (${xhr.status || 'network error'}). Please try again.`))
+        }
+      }
       xhr.onabort = () => reject(new Error('Upload cancelled'))
       xhr.send(fd)
     })
