@@ -62,10 +62,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         headers = get_rate_limit_headers(info)
 
         if not allowed:
+            retry_after = info.get("retry_after", 0)
             logger.warning(f"RATE_LIMIT {client_ip} exceeded {limit}/{window}s on {path}")
             return JSONResponse(
                 status_code=429,
-                content={"detail": "Rate limit exceeded. Try again later."},
+                content={"detail": f"Rate limit exceeded. Try again in {retry_after} seconds."},
                 headers=headers,
             )
 

@@ -1,101 +1,36 @@
-# .github/workflows/docs.yml
-# Triggered only for docs-only changes.
-# Provides passing "Lint" and "Test" stub checks so docs-only PRs can merge.
-# Also runs lightweight link validation (non-blocking advisory job).
-
 name: Docs
 
 on:
   push:
     branches: [main]
     paths:
-      - '**.md'
-      - 'docs/**'
-      - 'LICENSE'
-      - 'CODE_OF_CONDUCT.md'
-      - 'CONTRIBUTING.md'
-      - '.github/PULL_REQUEST_TEMPLATE.md'
+      - "docs/**"
+      - "**.md"
   pull_request:
     branches: [main]
     paths:
-      - '**.md'
-      - 'docs/**'
-      - 'LICENSE'
-      - 'CODE_OF_CONDUCT.md'
-      - 'CONTRIBUTING.md'
-      - '.github/PULL_REQUEST_TEMPLATE.md'
+      - "docs/**"
+      - "**.md"
 
 jobs:
-  # Stubs — provide passing required checks for docs-only PRs.
-  # Every required status check must have a matching job name here,
-  # otherwise docs-only PRs will hang waiting for checks that never run.
   Lint:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Docs-only change — skipped"
+      - run: echo "Docs-only change -- lint skipped"
 
   Test:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Docs-only change — skipped"
+      - run: echo "Docs-only change -- test skipped"
 
-  backend-tests:
-    name: Backend Tests
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Docs-only change — skipped"
-
-  frontend-tests:
+  Frontend-Tests:
     name: Frontend Tests
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Docs-only change — skipped"
+      - run: echo "Docs-only change -- frontend tests skipped"
 
-  build:
-    name: Build
+  Build-Docker:
+    name: Build Docker
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Docs-only change — skipped"
-
-  schema-validation:
-    name: Schema Validation
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Docs-only change — skipped"
-
-  semgrep-sast:
-    name: Semgrep SAST
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Docs-only change — skipped"
-
-  dependency-audit:
-    name: Dependency Audit
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Docs-only change — skipped"
-
-  codeql:
-    name: CodeQL
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Docs-only change — skipped"
-
-  # Advisory: link validation (does not block merge)
-  docs-validate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Check broken local file links in README.md
-        run: |
-          python3 -c "
-          import re, os, sys
-          with open('README.md') as f:
-              content = f.read()
-          links = re.findall(r'\[.*?\]\((?!http|#|mailto)(.*?)\)', content)
-          broken = [l for l in links if l and not os.path.exists(l)]
-          if broken:
-              print(f'Broken links found: {broken}')
-              sys.exit(1)
-          print(f'All {len(links)} local links valid')
-          "
+      - run: echo "Docs-only change -- docker build skipped"

@@ -59,9 +59,7 @@ services:
   # Serves on 127.0.0.1:8000 behind nginx reverse proxy (TLS terminated by nginx)
 
   subtitle-generator:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/volehuy1998/subtitle-generator:${IMAGE_TAG:-latest}
     ports:
       - "127.0.0.1:8000:8000"
     volumes:
@@ -97,9 +95,7 @@ services:
   # Serves on 127.0.0.1:8001 behind nginx reverse proxy
 
   subtitle-generator-newui:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/volehuy1998/subtitle-generator:${IMAGE_TAG:-latest}
     ports:
       - "127.0.0.1:8001:8000"
     volumes:
@@ -128,15 +124,13 @@ services:
     profiles:
       - newui
 
-  # ── Phase Lumen development preview ─────────────────────────────────────────
-  # Usage: docker compose --profile lumen up -d --build
-  # Serves Lumen build on 127.0.0.1:8002 for nginx reverse proxy
-  # Development phase: professional UI overhaul with stability + performance
+  # ── Beta subdomain — PUBLIC BETA ─────────────────────────────────────────────
+  # Branch: BETA_BRANCH env var (defaults to main).
+  # Usage: ./scripts/deploy-profile.sh beta [branch-name]
+  # Serves on 127.0.0.1:8002 behind nginx reverse proxy
 
-  subtitle-generator-lumen:
-    build:
-      context: .
-      dockerfile: Dockerfile
+  subtitle-generator-beta:
+    image: ghcr.io/volehuy1998/subtitle-generator:${IMAGE_TAG:-latest}
     ports:
       - "127.0.0.1:8002:8000"
     volumes:
@@ -155,8 +149,7 @@ services:
       - MAX_CONCURRENT_TASKS=${MAX_CONCURRENT_TASKS:-}
       - FILE_RETENTION_HOURS=${FILE_RETENTION_HOURS:-24}
       - GITHUB_TOKEN=${GITHUB_TOKEN:-}
-      - CORS_ORIGINS=https://lumen.${DOMAIN:-openlabs.club}
-      - FRONTEND=react
+      - CORS_ORIGINS=https://beta.openlabs.club
     depends_on:
       postgres:
         condition: service_healthy
@@ -164,7 +157,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     profiles:
-      - lumen
+      - beta
 
   # ── Single-server (GPU) ─────────────────────────────────────────────────────
   # Usage: docker compose --profile gpu up -d
@@ -217,9 +210,7 @@ services:
   # Scale API: docker compose --profile distributed up -d --scale subtitle-api=3
 
   subtitle-api:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/volehuy1998/subtitle-generator:${IMAGE_TAG:-latest}
     ports:
       - "8000"
     volumes:
@@ -252,9 +243,7 @@ services:
 
   # CPU worker node (one per server without GPU)
   subtitle-worker-cpu:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/volehuy1998/subtitle-generator:${IMAGE_TAG:-latest}
     volumes:
       - ./uploads:/app/uploads
       - ./outputs:/app/outputs

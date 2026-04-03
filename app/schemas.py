@@ -31,6 +31,7 @@ class UploadResponse(BaseModel):
 
 TaskStatusLiteral = Literal[
     "queued",
+    "preparing",
     "uploading",
     "probing",
     "extracting",
