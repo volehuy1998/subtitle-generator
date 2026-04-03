@@ -8,14 +8,14 @@ Browser clients receive a styled HTML page; API clients receive JSON.
 This is the single enforcement point — no individual route needs its own
 health checks. The background health monitor (app.services.health_monitor)
 continuously evaluates system health and sets/clears the critical flag.
+
+Converted from BaseHTTPMiddleware to pure ASGI for performance
+— Forge (Sr. Backend Engineer)
 """
 
+import json
 import logging
 from pathlib import Path
-
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
-from starlette.responses import HTMLResponse, JSONResponse
 
 from app import state
 
@@ -51,10 +51,12 @@ _PASSTHROUGH_PREFIXES = (
 )
 
 
-def _wants_html(request: Request) -> bool:
+def _wants_html_from_headers(headers: list[tuple[bytes, bytes]]) -> bool:
     """Return True if the client prefers HTML (i.e. a browser)."""
-    accept = request.headers.get("accept", "")
-    return "text/html" in accept
+    for key, value in headers:
+        if key == b"accept":
+            return b"text/html" in value
+    return False
 
 
 def _build_critical_html(reasons: list[str]) -> str:
@@ -65,33 +67,111 @@ def _build_critical_html(reasons: list[str]) -> str:
     return _CRITICAL_TEMPLATE.replace("{{REASONS}}", items)
 
 
-class CriticalStateMiddleware(BaseHTTPMiddleware):
-    """Block all user-facing requests when the system is in critical state."""
+class CriticalStateMiddleware:
+    """Block all user-facing requests when the system is in critical state.
 
-    async def dispatch(self, request: Request, call_next):
+    Pure ASGI implementation — no BaseHTTPMiddleware overhead.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
         if not state.system_critical:
-            return await call_next(request)
+            await self.app(scope, receive, send)
+            return
 
-        path = request.url.path.rstrip("/") or "/"
+        path = scope.get("path", "/").rstrip("/") or "/"
 
         # Allow health/monitoring endpoints through
         if any(path.startswith(prefix) for prefix in _PASSTHROUGH_PREFIXES):
-            return await call_next(request)
+            await self.app(scope, receive, send)
+            return
 
         reasons = state.system_critical_reasons if state.system_critical_reasons else ["Unknown"]
+        headers_list = scope.get("headers", [])
 
         # Browser clients get a styled HTML page
-        if _wants_html(request) and _CRITICAL_TEMPLATE:
+        if _wants_html_from_headers(headers_list) and _CRITICAL_TEMPLATE:
             html = _build_critical_html(reasons)
-            return HTMLResponse(content=html, status_code=503)
+            body = html.encode("utf-8")
+            await send(
+                {
+                    "type": "http.response.start",
+                    "status": 503,
+                    "headers": [
+                        [b"content-type", b"text/html; charset=utf-8"],
+                        [b"content-length", str(len(body)).encode()],
+                    ],
+                }
+            )
+            await send(
+                {
+                    "type": "http.response.body",
+                    "body": body,
+                }
+            )
+            return
 
         # API clients get JSON
         reasons_str = "; ".join(reasons)
-        return JSONResponse(
-            status_code=503,
-            content={
+        payload = json.dumps(
+            {
                 "detail": f"Service in critical state — all operations suspended. Reason: {reasons_str}",
                 "critical": True,
                 "reasons": list(reasons),
-            },
+            }
+        ).encode("utf-8")
+
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 503,
+                "headers": [
+                    [b"content-type", b"application/json"],
+                    [b"content-length", str(len(payload)).encode()],
+                ],
+            }
         )
+        await send(
+            {
+                "type": "http.response.body",
+                "body": payload,
+            }
+        )
+
+
+# ── Legacy BaseHTTPMiddleware version (kept for rollback reference) ──
+#
+# from starlette.middleware.base import BaseHTTPMiddleware
+# from starlette.requests import Request
+# from starlette.responses import HTMLResponse, JSONResponse
+#
+# def _wants_html(request: Request) -> bool:
+#     accept = request.headers.get("accept", "")
+#     return "text/html" in accept
+#
+# class CriticalStateMiddleware(BaseHTTPMiddleware):
+#     async def dispatch(self, request: Request, call_next):
+#         if not state.system_critical:
+#             return await call_next(request)
+#         path = request.url.path.rstrip("/") or "/"
+#         if any(path.startswith(prefix) for prefix in _PASSTHROUGH_PREFIXES):
+#             return await call_next(request)
+#         reasons = state.system_critical_reasons if state.system_critical_reasons else ["Unknown"]
+#         if _wants_html(request) and _CRITICAL_TEMPLATE:
+#             html = _build_critical_html(reasons)
+#             return HTMLResponse(content=html, status_code=503)
+#         reasons_str = "; ".join(reasons)
+#         return JSONResponse(
+#             status_code=503,
+#             content={
+#                 "detail": f"Service in critical state — all operations suspended. Reason: {reasons_str}",
+#                 "critical": True,
+#                 "reasons": list(reasons),
+#             },
+#         )

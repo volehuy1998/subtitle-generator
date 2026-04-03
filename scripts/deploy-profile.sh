@@ -9,10 +9,13 @@
 #   ./scripts/deploy-profile.sh --tag        # deploy prod + create git tag
 #   ./scripts/deploy-profile.sh newui        # deploy newui from NEWUI_BRANCH
 #   ./scripts/deploy-profile.sh newui feat/x # deploy newui from specific branch
+#   ./scripts/deploy-profile.sh beta         # deploy beta from BETA_BRANCH
+#   ./scripts/deploy-profile.sh beta feat/y  # deploy beta from specific branch
 #
 # Environment:
 #   PROD_BRANCH   — branch for production (default: main)
 #   NEWUI_BRANCH  — branch for newui (default: current branch)
+#   BETA_BRANCH   — branch for beta (default: main)
 #
 # — Harbor (DevOps Engineer)
 
@@ -44,6 +47,14 @@ case "${1:-}" in
       TARGET_BRANCH="$NEWUI_BRANCH"
     fi
     ;;
+  beta)
+    PROFILE="beta"
+    if [ -n "${2:-}" ]; then
+      TARGET_BRANCH="$2"
+    elif [ -n "${BETA_BRANCH:-}" ]; then
+      TARGET_BRANCH="$BETA_BRANCH"
+    fi
+    ;;
   --tag)
     TAG_FLAG=true
     ;;
@@ -59,7 +70,7 @@ case "${1:-}" in
       fi
     else
       echo "✗ Unknown argument: $1" >&2
-      echo "Usage: deploy-profile.sh [newui [branch]] [--tag]" >&2
+      echo "Usage: deploy-profile.sh [newui|beta [branch]] [--tag]" >&2
       exit 1
     fi
     ;;
@@ -70,6 +81,7 @@ if [ -z "$TARGET_BRANCH" ]; then
   case "$PROFILE" in
     cpu)   TARGET_BRANCH="${PROD_BRANCH:-main}" ;;
     newui) TARGET_BRANCH="$(git rev-parse --abbrev-ref HEAD)" ;;
+    beta)  TARGET_BRANCH="${BETA_BRANCH:-main}" ;;
   esac
 fi
 
@@ -139,6 +151,7 @@ sudo docker compose --profile "$PROFILE" up -d --build --force-recreate
 case "$PROFILE" in
   cpu)   PORT=8000 ;;
   newui) PORT=8001 ;;
+  beta)  PORT=8002 ;;
 esac
 
 log "Waiting for health check on port $PORT..."

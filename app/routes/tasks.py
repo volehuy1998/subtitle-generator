@@ -209,19 +209,32 @@ async def retranscribe(task_id: str, request: Request):
 
     shutil.copy2(original_file, new_file)
 
-    # Dispatch pipeline
+    # Dispatch pipeline via dedicated executor
     from app.services.pipeline import process_video
 
-    asyncio.create_task(
-        asyncio.to_thread(
-            process_video,
-            new_task_id,
-            new_file,
-            new_model,
-            task.get("device", "cpu"),
-            new_language,
+    loop = asyncio.get_event_loop()
+    if state.pipeline_executor is not None:
+        loop.run_in_executor(
+            state.pipeline_executor,
+            lambda: process_video(
+                new_task_id,
+                new_file,
+                new_model,
+                task.get("device", "cpu"),
+                new_language,
+            ),
         )
-    )
+    else:
+        asyncio.create_task(
+            asyncio.to_thread(
+                process_video,
+                new_task_id,
+                new_file,
+                new_model,
+                task.get("device", "cpu"),
+                new_language,
+            )
+        )
 
     logger.info(f"RETRANSCRIBE [{task_id[:8]}] -> [{new_task_id[:8]}] model={new_model} lang={new_language}")
     log_task_event(new_task_id, "retranscribe", original_task_id=task_id, model_size=new_model, language=new_language)

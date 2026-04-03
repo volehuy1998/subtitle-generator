@@ -1,117 +1,79 @@
-# SubForge Development Makefile
-# Google SWE Practice: All CI steps must be reproducible locally.
-# Run `make ci-fast` before pushing. Run `make ci-full` for comprehensive checks.
+# SubForge Makefile — all CI steps reproducible locally
+PYTHON  := python3
+PYTEST  := $(PYTHON) -m pytest
+RUFF    := ruff
+FRONTEND := frontend
 
-.PHONY: help setup dev run db db-stop test test-fast test-full lint format ci-fast ci-full build build-frontend audit docker-up docker-up-gpu docker-down docker-logs migrate migrate-new clean health
+.PHONY: help ci-fast ci-full dev dev-docker test test-fast test-frontend \
+        lint format docker-up docker-down docker-build docker-beta \
+        migrate health clean
 
-help: ## Show available commands
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+help: ## Show targets
+	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | sort | \
+		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
 
-# ── Setup ────────────────────────────────────────────────────────────────────
+# ── CI ───────────────────────────────────────────────────────────────────────
+ci-fast: lint test-fast ## Presubmit: lint + unit tests (< 2 min)
+	@echo "ci-fast passed"
 
-setup: ## Install dependencies and create directories
-	pip install -r requirements.txt
-	pip install -r requirements-dev.txt 2>/dev/null || true
-	mkdir -p uploads outputs logs
-	cd frontend && npm ci
-	@echo "Setup complete."
+ci-full: lint test build ## Post-submit: lint + all tests + build
+	@echo "ci-full passed"
 
 # ── Development ──────────────────────────────────────────────────────────────
-
-db: ## Start only PostgreSQL in Docker (for local dev)
-	docker compose up postgres -d
-	@echo "PostgreSQL running on localhost:5432"
-
-db-stop: ## Stop PostgreSQL container
-	docker compose stop postgres
-
-dev: ## Run app locally with hot-reload
-	DATABASE_URL=postgresql+asyncpg://subtitle:subtitle@localhost:5432/subtitle_generator \
+dev: ## Run with hot-reload
 	uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --workers 1
 
-run: ## Run in production mode
-	python main.py
+dev-docker: ## Docker compose up (cpu profile)
+	docker compose --profile cpu up --build -d
 
-# ── Linting (Google Style Guide) ─────────────────────────────────────────────
+# ── Testing ──────────────────────────────────────────────────────────────────
+test: ## All backend tests
+	$(PYTEST) tests/ -v --tb=short
 
-lint: ## Run all linters (Python ruff + ruff format + TypeScript)
-	ruff check .
-	ruff format --check .
-	cd frontend && npx tsc -b --noEmit
+test-fast: ## Unit tests only (< 60s)
+	$(PYTEST) tests/ -v --tb=short -q
 
-format: ## Auto-format all code (Python + imports)
-	ruff check --fix .
-	ruff format .
+test-frontend: ## Frontend vitest
+	cd $(FRONTEND) && npx vitest run
 
-# ── Testing (Google Test Pyramid) ─────────────────────────────────────────────
+# ── Lint & Format ────────────────────────────────────────────────────────────
+lint: ## Ruff check + eslint + tsc
+	$(RUFF) check .
+	$(RUFF) format --check .
+	cd $(FRONTEND) && npx tsc -b --noEmit
 
-test: ## Run all backend tests
-	python3 -m pytest tests/ -v --tb=short
-
-test-fast: ## Run small (unit) tests only — presubmit target (< 60s)
-	python3 -m pytest tests/ -v --tb=short -q
-
-test-full: ## Run all tests with coverage + frontend tests
-	python3 -m pytest tests/ -v --tb=short --cov=app --cov-report=term-missing
-	cd frontend && npx vitest run
-
-# ── CI Pipelines (Google Presubmit/Post-submit) ──────────────────────────────
-
-ci-fast: lint test-fast ## Presubmit: lint + fast tests (< 2 min target)
-	@echo ""
-	@echo "  ✓ ci-fast passed — safe to push"
-
-ci-full: lint test-full build-frontend ## Post-submit: lint + all tests + coverage + build
-	@echo ""
-	@echo "  ✓ ci-full passed"
-
-# ── Build ────────────────────────────────────────────────────────────────────
-
-build: ## Build frontend + Docker image
-	cd frontend && npm run build
-	docker build -t subtitle-generator:dev .
-
-build-frontend: ## Build frontend only
-	cd frontend && npm run build
-
-# ── Security (Google Dependency Management) ──────────────────────────────────
-
-audit: ## Audit dependencies for known vulnerabilities
-	@echo "Python dependencies:"
-	pip-audit -r requirements.txt 2>/dev/null || echo "  Install pip-audit: pip install pip-audit"
-	@echo ""
-	@echo "Frontend dependencies:"
-	cd frontend && npm audit --audit-level=high 2>/dev/null || true
+format: ## Auto-format (ruff + prettier)
+	$(RUFF) check --fix .
+	$(RUFF) format .
+	cd $(FRONTEND) && npx prettier --write src/
 
 # ── Docker ───────────────────────────────────────────────────────────────────
+docker-up: ## Start cpu profile
+	docker compose --profile cpu up -d
 
-docker-up: ## Start services (CPU mode) with Docker Compose
-	./scripts/deploy-profile.sh cpu
-
-docker-up-gpu: ## Start services (GPU mode) with Docker Compose
-	docker compose --profile gpu up --build -d
-
-docker-down: ## Stop all Docker containers
+docker-down: ## Stop all containers
 	docker compose --profile cpu --profile gpu down
 
-docker-logs: ## Tail Docker container logs
-	docker compose --profile cpu logs -f --tail=50
+docker-build: ## Build Docker image
+	docker build -t subtitle-generator:dev .
+
+docker-beta: ## Deploy staging via deploy-profile.sh
+	./scripts/deploy-profile.sh newui
 
 # ── Database ─────────────────────────────────────────────────────────────────
-
-migrate: ## Run database migrations
+migrate: ## Alembic upgrade head
 	alembic upgrade head
 
-migrate-new: ## Create a new migration (usage: make migrate-new msg="description")
-	alembic revision --autogenerate -m "$(msg)"
+# ── Operations ───────────────────────────────────────────────────────────────
+health: ## Check health endpoints
+	@curl -sf http://localhost:8000/health/live  && echo " :8000 OK"  || echo " :8000 FAIL"
+	@curl -sf http://localhost:8001/health/live  && echo " :8001 OK"  || echo " :8001 FAIL"
 
-# ── Utilities ────────────────────────────────────────────────────────────────
+build: ## Build frontend
+	cd $(FRONTEND) && npm run build
 
-health: ## Check if the service is running
-	@curl -sf http://localhost:8000/health && echo " OK" || echo " FAIL — service not running"
-
-clean: ## Remove build artifacts, caches, and temp files
-	rm -rf __pycache__ .pytest_cache .ruff_cache coverage.xml
-	rm -rf frontend/dist frontend/coverage
+clean: ## Remove build artifacts
+	rm -rf __pycache__ .pytest_cache .ruff_cache coverage.xml htmlcov
+	rm -rf $(FRONTEND)/dist $(FRONTEND)/coverage
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
-	@echo "Cleaned build artifacts and caches."
+	@echo "Cleaned."

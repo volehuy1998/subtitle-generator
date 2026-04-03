@@ -13,6 +13,7 @@ import { ConfirmationDialog } from '@/components/transcribe/ConfirmationDialog'
 import { KeyboardShortcutsDialog } from '@/components/shortcuts/KeyboardShortcutsDialog'
 import { useTaskStore } from '@/store/taskStore'
 import { useUIStore } from '@/store/uiStore'
+import { useSystemStore } from '@/store/systemStore'
 import { api } from '@/api/client'
 
 type AppTab = 'transcribe' | 'embed'
@@ -20,6 +21,7 @@ type AppTab = 'transcribe' | 'embed'
 export function App() {
   const { healthPanelOpen, setHealthPanelOpen, appMode, setAppMode, health } = useUIStore()
   const store = useTaskStore()
+  const prefetch = useSystemStore((s) => s.prefetch)
 
   // Phase Lumen: keyboard shortcuts dialog — Pixel (Sr. Frontend), Sprint L48
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
@@ -33,6 +35,9 @@ export function App() {
     file: File;
     opts: { device: string; model: string; language: string; format: string; translateTo?: string; modelLoaded: boolean; firstReadyModel: string | null };
   } | null>(null)
+
+  // Phase 4: Prefetch static system data on mount — Pixel (Sr. Frontend)
+  useEffect(() => { prefetch() }, [prefetch])
 
   // Track completed tasks when user is on Embed tab — Pixel (Sr. Frontend), Sprint L55
   useEffect(() => {

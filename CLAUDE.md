@@ -41,6 +41,8 @@ ruff format --check --diff .      # format check
 ./scripts/deploy-profile.sh cpu --tag     # prod from main + git tag
 ./scripts/deploy-profile.sh newui         # staging from NEWUI_BRANCH
 ./scripts/deploy-profile.sh newui feat/x  # staging from specific branch
+./scripts/deploy-profile.sh beta          # beta from BETA_BRANCH
+./scripts/deploy-profile.sh beta feat/y   # beta from specific branch
 docker compose --profile gpu up --build   # GPU (manual)
 
 # Makefile (Google SWE: all CI steps reproducible locally)
@@ -298,7 +300,7 @@ Upload → probe (ffprobe) → extract audio (ffmpeg→WAV) → load model → t
 
 ### Module Layout
 - **`app/routes/`** (30 modules) — FastAPI routers, one per feature domain
-- **`app/services/`** (32 modules) — Business logic: pipeline, transcription, model_manager, translation, subtitle_embed, diarization, analytics, health_monitor, cleanup, rate_limiter, quarantine, audit, pubsub
+- **`app/services/`** (33 modules) — Business logic: pipeline, transcription, model_manager, translation, subtitle_embed, diarization, analytics, health_monitor, cleanup, rate_limiter, quarantine, audit, pubsub
 - **`app/middleware/`** (13 modules) — Auth, security headers, session, request logging, brute force, body limit, compression, CORS, rate limit, slow query logging, critical state, version
 - **`app/db/`** — SQLAlchemy async models (14 tables), PostgreSQL via asyncpg, SQLite fallback via aiosqlite
 - **`app/utils/`** — SRT/VTT/JSON generation, line-breaking, media probing, file validation, security helpers
@@ -314,6 +316,7 @@ The React SPA (`frontend/src/`) is the primary frontend. Each Docker profile bui
 |-------------|--------|--------|-----|
 | **Production** | `openlabs.club` | `prod-editorial-nav` | Lumen + Editorial header/footer |
 | **Staging** | `newui.openlabs.club` | `feat/editorial-redesign` (via `NEWUI_BRANCH`) | Premium Editorial (full redesign) |
+| **Beta** | `beta.openlabs.club` | `main` (via `BETA_BRANCH`) | Public beta |
 
 **Jinja Templates** (`templates/*.html`) are a legacy fallback served only on bare-metal deployments without `npm run build`, or when `FRONTEND=templates` is set. Docker always serves the React SPA.
 
@@ -527,7 +530,7 @@ Three pillars:
 
 **Full spec:** `docs/lumen/PHASE_LUMEN.md`
 
-## Long-Term Development Plan (`docs/DEVELOPMENT_PLAN.md`)
+## Long-Term Development Plan (in `docs/ROADMAP.md`)
 Investor-approved priorities:
 1. **UX Principles:** User confirmation before any process, brighter/lighter UI (use `feature-dev` plugin), process liveness indicators
 2. **Performance:** Model loading optimization (60-120s → preloaded), transcription speed improvements
@@ -552,7 +555,8 @@ Investor-approved priorities:
 ### Current Deployment
 - **openlabs.club** — production (port 8000, `PRELOAD_MODEL=large`), built from `prod-editorial-nav` branch (Lumen + Editorial header/footer)
 - **newui.openlabs.club** — staging (port 8001, `PRELOAD_MODEL=large`), built from `feat/editorial-redesign` branch (Premium Editorial full redesign)
-- Both on **localhost**. Nginx reverse proxies both domains to Docker containers (TLS terminated by nginx)
+- **beta.openlabs.club** — public beta (port 8002, `PRELOAD_MODEL=large`), built from `BETA_BRANCH` (default: `main`)
+- All on **localhost**. Nginx reverse proxies all domains to Docker containers (TLS terminated by nginx)
 - Docker requires `sudo` (user `claude-user` not in docker group)
 
 ### Branch-per-Environment Model
@@ -562,6 +566,7 @@ Investor-approved priorities:
 | `main` | Clean production source (Lumen UI) | — (source of truth) | — |
 | `prod-editorial-nav` | Production deploy (Lumen + editorial header/footer) | openlabs.club | `PROD_BRANCH` |
 | `feat/editorial-redesign` | New UI development (Premium Editorial) | newui.openlabs.club | `NEWUI_BRANCH` |
+| `main` (configurable) | Public beta environment | beta.openlabs.club | `BETA_BRANCH` |
 
 - **`main`** has no experimental UI code. All new UI work happens on feature branches.
 - **Git tags** on production deploys mark each release for auditing/rollback.
@@ -635,8 +640,9 @@ Investor-approved priorities:
 
 - `openlabs.club` → production, stable, investor-facing. Built from `PROD_BRANCH` (currently `prod-editorial-nav`).
 - `newui.openlabs.club` → preview/staging. Built from `NEWUI_BRANCH` (currently `feat/editorial-redesign`).
+- `beta.openlabs.club` → public beta. Built from `BETA_BRANCH` (default: `main`).
 - Investor reviews on newui. Only after explicit approval → merge to `main`, update `PROD_BRANCH`, redeploy.
-- Both domains are on the **same server** (localhost). Nginx reverse proxies to Docker containers.
+- All three domains are on the **same server** (localhost). Nginx reverse proxies to Docker containers.
 - **`main` must never contain experimental UI code** — all new UI work goes on feature branches.
 - Use `./scripts/deploy-profile.sh` for all deployments — it handles branch checkout safely.
 
