@@ -33,7 +33,7 @@ WORKDIR /app
 
 COPY --from=builder /install /usr/local
 COPY app/ app/
-COPY main.py entrypoint.sh alembic.ini ./
+COPY main.py profiler.py entrypoint.sh alembic.ini ./
 COPY alembic/ alembic/
 COPY templates/ templates/
 COPY --from=builder /build/frontend/dist frontend/dist/
