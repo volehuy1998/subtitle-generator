@@ -1,6 +1,6 @@
 [project]
 name = "subforge"
-version = "2.5.0"
+version = "2.5.1"
 description = "AI-powered subtitle generator using faster-whisper"
 requires-python = ">=3.12"
 
