@@ -33,7 +33,16 @@ server {
     add_header X-Frame-Options DENY always;
     add_header X-Content-Type-Options nosniff always;
 
-    client_max_body_size 2G;
+    client_max_body_size 20G;
+
+    error_page 413 /error-pages/413.html;
+    error_page 502 /error-pages/502.html;
+    error_page 503 /error-pages/503.html;
+    error_page 504 /error-pages/504.html;
+    location /error-pages/ {
+        root /app/nginx;
+        internal;
+    }
 
     location / {
         proxy_pass http://127.0.0.1:8002;
