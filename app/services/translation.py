@@ -68,7 +68,7 @@ def install_translation_package(source_lang: str, target_lang: str) -> bool:
         return False
 
 
-def get_translation_model(source_lang: str, target_lang: str):
+def get_translation_model(source_lang: str, target_lang: str, task_id: str = ""):
     """Get a cached argos-translate model, loading on first use.
 
     Uses double-checked locking pattern matching model_manager.py.
@@ -84,6 +84,16 @@ def get_translation_model(source_lang: str, target_lang: str):
     with state.translation_model_lock:
         if key in state.translation_models:
             return state.translation_models[key]
+
+        # Emit SSE event before downloading — Bolt (Backend)
+        if task_id:
+            from app.services.sse import emit_event
+
+            emit_event(
+                task_id,
+                "translate_progress",
+                {"message": "Downloading translation model... This may take a moment.", "percent": 0},
+            )
 
         # Ensure package is installed
         if not install_translation_package(source_lang, target_lang):
@@ -137,7 +147,7 @@ def translate_segments(segments: list, source_lang: str, target_lang: str, task_
         return segments
 
     # Use argos-translate for non-English targets
-    model = get_translation_model(source_lang, target_lang)
+    model = get_translation_model(source_lang, target_lang, task_id=task_id)
     if model is None:
         logger.warning(
             f"TRANSLATE [{task_id[:8]}] No model available for {source_lang} -> {target_lang}. "

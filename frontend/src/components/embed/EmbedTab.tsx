@@ -14,6 +14,7 @@ import { ModeSelector } from './ModeSelector'
 import { StyleOptions } from './StyleOptions'
 import { EmbedConfirmationDialog } from './EmbedConfirmationDialog'
 import { useUIStore } from '@/store/uiStore'
+import { useToastStore } from '@/store/toastStore'
 import type { EmbedMode } from '@/store/uiStore'
 import type { TranslationPair } from '@/api/types'
 
@@ -102,6 +103,7 @@ const SubtitleIcon = () => (
 
 export function EmbedTab() {
   const { dbOk } = useUIStore()
+  const addToast = useToastStore((s) => s.addToast)
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [subtitleFile, setSubtitleFile] = useState<File | null>(null)
   const [mode, setMode] = useState<EmbedMode>('soft')
@@ -115,11 +117,37 @@ export function EmbedTab() {
   const [translateTo, setTranslateTo] = useState<string>('')
   const [translationTargets, setTranslationTargets] = useState<TranslationPair[]>([])
 
-  useEffect(() => {
+  const [initError, setInitError] = useState<string | null>(null)
+
+  const loadTranslations = useCallback(() => {
+    setInitError(null)
     api.translationLanguages()
       .then((res) => setTranslationTargets(res.pairs))
-      .catch(() => {})
+      .catch(() => {
+        setInitError('Could not load system information. Check your connection and try again.')
+      })
   }, [])
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch on mount
+  useEffect(() => { loadTranslations() }, [loadTranslations])
+
+  const handleSafeDownload = useCallback(async (url: string) => {
+    try {
+      const resp = await fetch(url)
+      if (resp.ok) {
+        window.location.href = url
+        return
+      }
+      if (resp.status === 404) {
+        addToast('error', 'This file has expired. Please re-process your file.')
+      } else {
+        const body = await resp.json().catch(() => null)
+        addToast('error', body?.detail ?? `Download failed (${resp.status})`)
+      }
+    } catch {
+      addToast('error', 'Network error — could not reach the server.')
+    }
+  }, [addToast])
 
   // Cleanup ref for polling — prevents state updates after unmount
   const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -231,6 +259,38 @@ export function EmbedTab() {
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in">
+      {/* Init error — shown when translation API fails to load */}
+      {initError && (
+        <div
+          className="flex items-center gap-3 px-4 py-3 rounded-lg text-xs animate-fade-in"
+          role="alert"
+          style={{
+            background: 'var(--color-warning-light, #FEF3C7)',
+            color: 'var(--color-warning, #D97706)',
+            border: '1px solid var(--color-warning-border, #FCD34D)',
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.4" fill="none" />
+            <path d="M7 4v4M7 10v1" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+          <span className="flex-1">{initError}</span>
+          <button
+            type="button"
+            onClick={loadTranslations}
+            className="text-xs font-semibold px-2 py-1 rounded"
+            style={{
+              background: 'var(--color-warning, #D97706)',
+              color: 'white',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* Header — Prism (UI/UX Engineer) */}
       <div className="flex items-start gap-3">
         <div
@@ -439,18 +499,18 @@ export function EmbedTab() {
             </span>
           </div>
 
-          <a
-            href={downloadUrl}
-            download
+          <button
+            type="button"
+            onClick={() => handleSafeDownload(downloadUrl)}
             className="btn-download btn-interactive flex items-center justify-center gap-2 w-full px-4 py-3 rounded-lg text-sm font-semibold"
-            style={{ textDecoration: 'none' }}
+            style={{ border: 'none', cursor: 'pointer' }}
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
               <path d="M7 2v7M3.5 6.5l3.5 3.5 3.5-3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M2 11h10" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
             Download Video
-          </a>
+          </button>
 
           <button
             type="button"
