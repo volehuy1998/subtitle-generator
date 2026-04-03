@@ -342,7 +342,7 @@ docs/
     ├── PHASE_LUMEN.md          # This document
     ├── DESIGN_SYSTEM.md        # Color, typography, spacing tokens
     ├── COMPONENT_LIBRARY.md    # Component specs and usage
-    └── SPRINT_LOG.md           # Sprint-by-sprint progress log
+    # SPRINT_LOG.md merged into docs/ROADMAP.md (Phase Lumen Sprint History section)
 
 tests/
 └── test_lumen/

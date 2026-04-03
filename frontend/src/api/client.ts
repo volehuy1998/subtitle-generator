@@ -14,12 +14,51 @@ const json = async <T>(res: Response): Promise<T> => {
   return res.json() as Promise<T>
 }
 
+// ── Stale-while-revalidate cache ──
+interface CacheEntry<T> {
+  data: T
+  ts: number
+}
+
+/**
+ * Return cached data immediately when fresh, or serve stale + revalidate in background.
+ * Falls back to a live fetch when no cache exists.
+ */
+export async function cachedFetch<T>(key: string, fetcher: () => Promise<T>, maxAgeMs: number): Promise<T> {
+  try {
+    const raw = localStorage.getItem(key)
+    if (raw) {
+      const entry: CacheEntry<T> = JSON.parse(raw)
+      if (Date.now() - entry.ts < maxAgeMs) {
+        return entry.data
+      }
+      // Stale — return cached value but revalidate in background
+      fetcher()
+        .then((fresh) => localStorage.setItem(key, JSON.stringify({ data: fresh, ts: Date.now() })))
+        .catch(() => { /* background revalidation failed, keep stale */ })
+      return entry.data
+    }
+  } catch {
+    // Corrupt cache entry — fall through to live fetch
+  }
+
+  const data = await fetcher()
+  try {
+    localStorage.setItem(key, JSON.stringify({ data, ts: Date.now() }))
+  } catch {
+    // localStorage full or unavailable
+  }
+  return data
+}
+
+const CACHE_5_MIN = 5 * 60 * 1000
+
 export const api = {
   systemInfo: () =>
-    fetch('/system-info').then(r => json<SystemInfo>(r)),
+    cachedFetch<SystemInfo>('sg_cache_systemInfo', () => fetch('/system-info').then(r => json<SystemInfo>(r)), CACHE_5_MIN),
 
   languages: () =>
-    fetch('/languages').then(r => json<LanguagesResponse>(r)),
+    cachedFetch<LanguagesResponse>('sg_cache_languages', () => fetch('/languages').then(r => json<LanguagesResponse>(r)), CACHE_5_MIN),
 
   upload: (fd: FormData) =>
     fetch('/upload', { method: 'POST', body: fd }).then(r => json<UploadResponse>(r)),
@@ -102,7 +141,11 @@ export const api = {
     fetch('/translation/languages').then(r => json<TranslationLanguagesResponse>(r)),
 
   modelStatus: () =>
-    fetch('/api/model-status').then(r => json<{ preload: ModelPreloadStatus }>(r)).then(d => d.preload),
+    cachedFetch<ModelPreloadStatus>(
+      'sg_cache_modelStatus',
+      () => fetch('/api/model-status').then(r => json<{ preload: ModelPreloadStatus }>(r)).then(d => d.preload),
+      CACHE_5_MIN,
+    ),
 
   tasksBySession: () =>
     fetch('/tasks?session_only=true').then(r => json<TasksResponse>(r)),

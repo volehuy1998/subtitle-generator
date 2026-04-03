@@ -13,6 +13,7 @@ from starlette.responses import StreamingResponse
 from app import state
 from app.config import MAX_CONCURRENT_TASKS, OUTPUT_DIR, UPLOAD_DIR
 from app.schemas import HealthResponse, SystemStatusResponse
+from app.services.response_cache import ttl_cache
 
 logger = logging.getLogger("subtitle-generator")
 
@@ -22,7 +23,8 @@ _start_time = time.time()
 
 
 @router.get("/health", response_model=HealthResponse)
-async def health():
+@ttl_cache(seconds=2)
+async def health(request: Request):
     """Liveness probe - is the service running?
 
     Returns 200 if the process is alive. Suitable for Kubernetes liveness probes,
@@ -187,7 +189,8 @@ async def component_health():
 
 
 @router.get("/api/model-status")
-async def model_status():
+@ttl_cache(seconds=5)
+async def model_status(request: Request):
     """Get model preload and per-model readiness for frontend display.
 
     Returns preload progress and per-model status (ready/loading/not_loaded)
@@ -202,7 +205,8 @@ async def model_status():
 
 
 @router.get("/api/capabilities")
-async def capabilities():
+@ttl_cache(seconds=3600)
+async def capabilities(request: Request):
     """Report which features are available based on system dependencies."""
     from app.config import AUDIO_ONLY_EXTENSIONS, FFMPEG_AVAILABLE, FFPROBE_AVAILABLE, VIDEO_EXTENSIONS
 

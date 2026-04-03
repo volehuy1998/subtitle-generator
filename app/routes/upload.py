@@ -1,8 +1,15 @@
-"""Upload route with security validation."""
+"""Upload route with security validation.
+
+Phase 3 optimization: file save + magic byte validation happen synchronously,
+then task_id is returned immediately. Heavy operations (audio probing, ClamAV
+scan) run in the background "preparing" phase before the pipeline starts.
+— Forge (Sr. Backend Engineer)
+"""
 
 import asyncio
 import logging
 import uuid
+from pathlib import Path
 from typing import Literal, Optional
 
 from fastapi import APIRouter, Form, HTTPException, Request, UploadFile
@@ -17,16 +24,13 @@ from app.config import (
     VALID_MODELS,
 )
 from app.errors import (
-    DURATION_EXCEEDED,
     FFMPEG_UNAVAILABLE,
     FILE_TOO_LARGE,
     FILE_TOO_SMALL,
     MAGIC_BYTES_MISMATCH,
-    NO_AUDIO_STREAM,
     SYSTEM_CRITICAL,
     TASK_LIMIT_REACHED,
     UNSUPPORTED_FORMAT,
-    VIRUS_DETECTED,
     api_error,
 )
 from app.logging_setup import get_request_id, log_task_event
@@ -37,13 +41,152 @@ from app.services.audit import log_audit_event
 from app.services.gpu import auto_select_model
 from app.services.pipeline import process_video
 from app.services.quarantine import quarantine_file, scan_with_clamav
-from app.services.sse import create_event_queue
+from app.services.sse import create_event_queue, emit_event
 from app.utils.formatting import format_bytes
 from app.utils.security import detect_mime_type, sanitize_filename, validate_file_extension, validate_magic_bytes
 
 logger = logging.getLogger("subtitle-generator")
 
 router = APIRouter(tags=["Upload"])
+
+
+def _prepare_and_process(
+    task_id: str,
+    video_path: Path,
+    safe_filename: str,
+    client_ip: str,
+    size: int,
+    model_size: str,
+    device: str,
+    language: str,
+    word_timestamps: bool,
+    initial_prompt: str,
+    diarize: bool,
+    num_speakers: Optional[int],
+    max_line_chars: int,
+    translate_to_english: bool,
+    auto_embed: str,
+    translate_to: str,
+) -> None:
+    """Background preparation + pipeline dispatch.
+
+    Runs in the pipeline thread pool. Handles audio probing and ClamAV scanning
+    in a "preparing" phase, emitting SSE events for user feedback. On failure,
+    sets task to error status. On success, proceeds to process_video().
+    — Forge (Sr. Backend Engineer), Phase 3 Upload Optimization
+    """
+    task = state.tasks.get(task_id)
+    if task is None:
+        logger.error(f"PREPARE [{task_id[:8]}] Task not found in state, aborting")
+        return
+
+    try:
+        # ── Phase: preparing (probe + scan) ──────────────────────────────
+        task["status"] = "preparing"
+        task["message"] = "Preparing: validating media file..."
+        task["percent"] = 0
+        emit_event(task_id, "preparing", {"status": "preparing", "message": "Validating media file...", "percent": 0})
+
+        # Audio stream + duration validation (requires ffprobe)
+        from app.config import FFPROBE_AVAILABLE, MAX_AUDIO_DURATION
+
+        if FFPROBE_AVAILABLE:
+            from app.utils.media import get_audio_duration, has_audio_stream
+
+            emit_event(
+                task_id,
+                "upload_progress",
+                {"status": "preparing", "message": "Probing audio stream...", "percent": 10},
+            )
+
+            if not has_audio_stream(video_path):
+                video_path.unlink(missing_ok=True)
+                logger.warning(f"PREPARE [{task_id[:8]}] Rejected: no audio stream in '{safe_filename}'")
+                task["status"] = "error"
+                task["message"] = "This file has no audio track. Please upload a file with audio."
+                emit_event(
+                    task_id,
+                    "error",
+                    {"status": "error", "message": task["message"], "error_code": "NO_AUDIO_STREAM"},
+                )
+                return
+
+            emit_event(
+                task_id,
+                "upload_progress",
+                {"status": "preparing", "message": "Checking audio duration...", "percent": 30},
+            )
+
+            duration = get_audio_duration(video_path)
+            if duration > MAX_AUDIO_DURATION:
+                video_path.unlink(missing_ok=True)
+                logger.warning(
+                    f"PREPARE [{task_id[:8]}] Rejected: duration {duration:.0f}s exceeds "
+                    f"{MAX_AUDIO_DURATION}s limit for '{safe_filename}'"
+                )
+                task["status"] = "error"
+                task["message"] = "File duration exceeds the 4-hour limit. Please upload a shorter file."
+                emit_event(
+                    task_id,
+                    "error",
+                    {"status": "error", "message": task["message"], "error_code": "DURATION_EXCEEDED"},
+                )
+                return
+
+        # ClamAV virus scan (optional — graceful if ClamAV is not installed/running)
+        emit_event(
+            task_id,
+            "upload_progress",
+            {"status": "preparing", "message": "Scanning for threats...", "percent": 60},
+        )
+
+        av_result = scan_with_clamav(str(video_path))
+        if not av_result["clean"]:
+            log_audit_event(
+                "virus_detected", ip=client_ip, filename=safe_filename, size=size, threat=av_result.get("threat")
+            )
+            quarantine_file(video_path, reason="virus_detected", ip=client_ip, threat=av_result.get("threat"))
+            logger.warning(f"PREPARE [{task_id[:8]}] Rejected: ClamAV detected threat '{av_result.get('threat')}'")
+            task["status"] = "error"
+            task["message"] = "File rejected: virus or malware detected."
+            emit_event(
+                task_id,
+                "error",
+                {"status": "error", "message": task["message"], "error_code": "VIRUS_DETECTED"},
+            )
+            return
+
+        # ── Preparation complete — transition to pipeline ────────────────
+        emit_event(
+            task_id,
+            "upload_progress",
+            {"status": "preparing", "message": "Preparation complete. Starting pipeline...", "percent": 100},
+        )
+        task["status"] = "queued"
+        task["message"] = "Preparation complete. Starting processing..."
+
+        process_video(
+            task_id,
+            video_path,
+            model_size,
+            device,
+            language,
+            word_timestamps=word_timestamps,
+            initial_prompt=initial_prompt,
+            diarize=diarize,
+            num_speakers=num_speakers,
+            max_line_chars=max_line_chars,
+            translate_to_english=translate_to_english,
+            auto_embed=auto_embed,
+            translate_to=translate_to,
+        )
+
+    except Exception as e:
+        logger.error(f"PREPARE [{task_id[:8]}] Unexpected error during preparation: {e}")
+        if task_id in state.tasks:
+            state.tasks[task_id]["status"] = "error"
+            state.tasks[task_id]["message"] = f"Preparation failed: {e}"
+        emit_event(task_id, "error", {"status": "error", "message": f"Preparation failed: {e}"})
 
 
 @router.post("/upload", response_model=UploadResponse)
@@ -170,7 +313,7 @@ async def upload(
             ),
         )
 
-    # Validate magic bytes (actual file content, not just extension)
+    # Validate magic bytes (actual file content, not just extension) — fast, sync
     if not validate_magic_bytes(video_path):
         client_ip = request.client.host if request.client else "unknown"
         log_audit_event(
@@ -185,55 +328,6 @@ async def upload(
                 "File content does not match a recognized media format.",
                 request_id=get_request_id(),
             ),
-        )
-
-    # Validate audio stream presence (reject video-only or corrupt files early)
-    from app.config import FFPROBE_AVAILABLE, MAX_AUDIO_DURATION
-
-    if FFPROBE_AVAILABLE:
-        from app.utils.media import get_audio_duration, has_audio_stream
-
-        if not has_audio_stream(video_path):
-            video_path.unlink(missing_ok=True)
-            logger.warning(f"UPLOAD [{task_id[:8]}] Rejected: no audio stream in '{safe_filename}'")
-            raise HTTPException(
-                400,
-                detail=api_error(
-                    NO_AUDIO_STREAM,
-                    "This file has no audio track. Please upload a file with audio.",
-                    request_id=get_request_id(),
-                ),
-            )
-
-        # Validate duration limit
-        duration = get_audio_duration(video_path)
-        if duration > MAX_AUDIO_DURATION:
-            video_path.unlink(missing_ok=True)
-            logger.warning(
-                f"UPLOAD [{task_id[:8]}] Rejected: duration {duration:.0f}s exceeds "
-                f"{MAX_AUDIO_DURATION}s limit for '{safe_filename}'"
-            )
-            raise HTTPException(
-                400,
-                detail=api_error(
-                    DURATION_EXCEEDED,
-                    "File duration exceeds the 4-hour limit. Please upload a shorter file.",
-                    request_id=get_request_id(),
-                ),
-            )
-
-    # ClamAV virus scan (optional — graceful if ClamAV is not installed/running)
-    client_ip = request.client.host if request.client else "unknown"
-    av_result = scan_with_clamav(str(video_path))
-    if not av_result["clean"]:
-        log_audit_event(
-            "virus_detected", ip=client_ip, filename=safe_filename, size=size, threat=av_result.get("threat")
-        )
-        quarantine_file(video_path, reason="virus_detected", ip=client_ip, threat=av_result.get("threat"))
-        logger.warning(f"UPLOAD [{task_id[:8]}] Rejected: ClamAV detected threat '{av_result.get('threat')}'")
-        raise HTTPException(
-            400,
-            detail=api_error(VIRUS_DETECTED, "File rejected: virus or malware detected.", request_id=get_request_id()),
         )
 
     upload_time = time.time() - t0
@@ -270,10 +364,13 @@ async def upload(
 
     is_video = ext in VIDEO_EXTENSIONS
 
+    # Capture client IP before returning (request object won't be available in background)
+    client_ip = request.client.host if request.client else "unknown"
+
     state.tasks[task_id] = {
         "status": "queued",
         "percent": 0,
-        "message": "Upload complete. Starting processing...",
+        "message": "Upload complete. Preparing for processing...",
         "filename": safe_filename,
         "language_requested": language,
         "session_id": session_id,
@@ -340,25 +437,54 @@ async def upload(
             translate_to=translate_to,
         )
     else:
-        # Standalone: process locally in background thread
-        asyncio.create_task(
-            asyncio.to_thread(
-                process_video,
-                task_id,
-                video_path,
-                model_size,
-                device,
-                language,
-                word_timestamps=word_timestamps,
-                initial_prompt=initial_prompt,
-                diarize=diarize,
-                num_speakers=num_speakers,
-                max_line_chars=max_line_chars,
-                translate_to_english=translate_to_english,
-                auto_embed=auto_embed,
-                translate_to=translate_to,
+        # Standalone: prepare (probe + scan) then process in dedicated pipeline thread pool
+        # Audio probing and ClamAV scanning are deferred to background to return task_id faster
+        loop = asyncio.get_event_loop()
+        if state.pipeline_executor is not None:
+            loop.run_in_executor(
+                state.pipeline_executor,
+                lambda: _prepare_and_process(
+                    task_id,
+                    video_path,
+                    safe_filename,
+                    client_ip,
+                    size,
+                    model_size,
+                    device,
+                    language,
+                    word_timestamps=word_timestamps,
+                    initial_prompt=initial_prompt,
+                    diarize=diarize,
+                    num_speakers=num_speakers,
+                    max_line_chars=max_line_chars,
+                    translate_to_english=translate_to_english,
+                    auto_embed=auto_embed,
+                    translate_to=translate_to,
+                ),
             )
-        )
+        else:
+            # Fallback if executor not initialized (e.g., during tests)
+            asyncio.create_task(
+                asyncio.to_thread(
+                    _prepare_and_process,
+                    task_id,
+                    video_path,
+                    safe_filename,
+                    client_ip,
+                    size,
+                    model_size,
+                    device,
+                    language,
+                    word_timestamps=word_timestamps,
+                    initial_prompt=initial_prompt,
+                    diarize=diarize,
+                    num_speakers=num_speakers,
+                    max_line_chars=max_line_chars,
+                    translate_to_english=translate_to_english,
+                    auto_embed=auto_embed,
+                    translate_to=translate_to,
+                )
+            )
 
     return {
         "task_id": task_id,
