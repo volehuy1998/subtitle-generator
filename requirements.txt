@@ -12,7 +12,7 @@ sqlalchemy[asyncio]>=2.0
 asyncpg
 alembic
 aiosqlite
-redis>=5.0
+redis>=7.4.0
 celery>=5.3
 boto3
 argostranslate>=1.9
