@@ -15,4 +15,4 @@ aiosqlite
 redis>=5.0
 celery>=5.3
 boto3
-argostranslate>=1.9
+argostranslate>=1.11.0
