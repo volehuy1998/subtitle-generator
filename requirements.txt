@@ -8,7 +8,7 @@ torch
 psutil
 filetype
 slowapi
-sqlalchemy[asyncio]>=2.0
+sqlalchemy[asyncio]>=2.0.49
 asyncpg
 alembic
 aiosqlite
